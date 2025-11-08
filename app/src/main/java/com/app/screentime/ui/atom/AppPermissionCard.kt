@@ -1,211 +1,230 @@
 package com.app.screentime.ui.atom
 
-import android.graphics.BlurMaskFilter
+import android.app.AppOpsManager
+import android.content.Intent
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.toArgb
-// Add this import for stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-// Make sure to import your R file
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.app.screentime.R
 import com.app.screentime.ui.theme.KakaoYellow
-import com.app.screentime.ui.theme.lightTextColor
+import com.app.screentime.ui.theme.NeutralBlackDark
+import com.app.screentime.ui.theme.hintTextColor
 
-val permissionBlackCardBg = Color(0xFF292929)
-
-// A custom shadow modifier for a more diffused look
-fun Modifier.shadow(
-    color: Color = permissionBlackCardBg,
-    borderRadius: Dp = 0.dp,
-    blurRadius: Dp = 0.dp,
-    offsetY: Dp = 0.dp,
-    offsetX: Dp = 0.dp,
-    spread: Dp = 0.dp,
-) = this.drawBehind {
-    this.drawIntoCanvas {
-        val paint = Paint()
-        val frameworkPaint = paint.asFrameworkPaint()
-        val spreadPixel = spread.toPx()
-        val leftPixel = (0f - spreadPixel) + offsetX.toPx()
-        val topPixel = (0f - spreadPixel) + offsetY.toPx()
-        val rightPixel = (this.size.width + spreadPixel)
-        val bottomPixel = (this.size.height + spreadPixel)
-
-        if (blurRadius != 0.dp) {
-            frameworkPaint.maskFilter =
-                (BlurMaskFilter(blurRadius.toPx(), BlurMaskFilter.Blur.NORMAL))
-        }
-        frameworkPaint.color = color.toArgb()
-        it.drawRoundRect(
-            left = leftPixel,
-            top = topPixel,
-            right = rightPixel,
-            bottom = bottomPixel,
-            radiusX = borderRadius.toPx(),
-            radiusY = borderRadius.toPx(),
-            paint
-        )
-    }
-}
-
-@Preview(showBackground = true)
+/**
+ * App Permission Card - Complete permission request screen
+ *
+ * This component handles all permission requests internally:
+ * - Checks current permission status
+ * - Requests permissions in order: Usage Stats → Notifications → VPN
+ * - Displays detailed explanation about why app usage data is required
+ * - Shows an "Allow" button to grant permissions
+ *
+ * @param modifier Modifier for the component
+ * @param onAllPermissionsGranted Callback when all permissions are granted
+ */
 @Composable
 fun AppPermissionCard(
     modifier: Modifier = Modifier,
-    hasUsageStats: Boolean = true,
-    hasNotification: Boolean = false,
-    hasVpn: Boolean = false,
-    onRequestUsageStats: () -> Unit = {},
-    onRequestNotification: () -> Unit = {},
-    onRequestVpn: () -> Unit = {},
-    onOpenSettings: () -> Unit = {}
+    onAllPermissionsGranted: () -> Unit = {}
 ) {
-    Column(
+    val context = LocalContext.current
+
+    // Permission state - only check Usage Stats for now
+    var hasUsageStatsPermission by remember { mutableStateOf(false) }
+
+    // Check permission on launch
+    LaunchedEffect(Unit) {
+        hasUsageStatsPermission = checkUsageStatsPermission(context)
+
+        // If permission is already granted, notify immediately
+        if (hasUsageStatsPermission) {
+            onAllPermissionsGranted()
+        }
+    }
+
+    // Usage stats permission launcher (opens settings)
+    val usageStatsPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
+        // Check permission after returning from settings
+        hasUsageStatsPermission = checkUsageStatsPermission(context)
+        if (hasUsageStatsPermission) {
+            // Usage Stats permission granted - move to next screen
+            onAllPermissionsGranted()
+        }
+    }
+
+    // Handle Allow button click
+    val handleAllowClick = {
+        if (!hasUsageStatsPermission) {
+            // Request Usage Stats permission
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+            intent.data = "package:${context.packageName}".toUri()
+            usageStatsPermissionLauncher.launch(intent)
+        } else {
+            // Permission already granted
+            onAllPermissionsGranted()
+        }
+    }
+    Box(
         modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .clip(RoundedCornerShape(15.dp))
-            .background(permissionBlackCardBg)
-            // 2. Add a soft border
-            .border(
-                width = 1.dp,
-                color = Color.White.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(15.dp)
-            )
-            .shadow(
-                color = Color.Black.copy(alpha = 0.2f),
-                borderRadius = 15.dp,
-                blurRadius = 15.dp,
-                offsetY = 4.dp,
-                spread = 2.dp
-            )
+            .fillMaxSize()
+            .background(NeutralBlackDark)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
         ) {
             Icon(
                 imageVector = Icons.Default.Security,
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier.size(80.dp),
                 contentDescription = stringResource(R.string.content_description_permissions_icon),
                 tint = KakaoYellow
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Title
+            AppText(
+                text = stringResource(R.string.permissions_required),
+                style = AppTextStyle.SubTitle
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                thickness = 1.dp,
+                color = hintTextColor
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Detailed Explanation
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 AppText(
-                    text = stringResource(R.string.permissions_required),
-                    style = AppTextStyle.SubTitle,
+                    text = stringResource(R.string.permission_explanation_title),
+                    style = AppTextStyle.Body,
+                    color = Color.White
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+
                 AppText(
-                    text = stringResource(R.string.permissions_card_description),
-                    color = lightTextColor,
-                    style = AppTextStyle.Label
+                    text = stringResource(R.string.permission_explanation_detail),
+                    style = AppTextStyle.Label,
+                    color = hintTextColor
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Why we need it section
+                AppText(
+                    text = stringResource(R.string.permission_why_required),
+                    style = AppTextStyle.Body,
+                    color = Color.White
+                )
+
+                AppText(
+                    text = stringResource(R.string.permission_why_required_detail),
+                    style = AppTextStyle.Label,
+                    color = hintTextColor
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // What we track section
+                AppText(
+                    text = stringResource(R.string.permission_what_we_track),
+                    style = AppTextStyle.Body,
+                    color = Color.White
+                )
+
+                AppText(
+                    text = stringResource(R.string.permission_what_we_track_detail),
+                    style = AppTextStyle.Label,
+                    color = hintTextColor
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Privacy assurance
+                AppText(
+                    text = stringResource(R.string.permission_privacy_assurance),
+                    style = AppTextStyle.Body,
+                    color = Color.White
+                )
+
+                AppText(
+                    text = stringResource(R.string.permission_privacy_assurance_detail),
+                    style = AppTextStyle.Label,
+                    color = hintTextColor
                 )
             }
+
+            // Spacer to push button to bottom
+            Spacer(modifier = Modifier.weight(1f))
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Allow Button
+            AppPrimaryButton(
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(R.string.action_allow),
+                onClick = handleAllowClick
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth(),
-            thickness = 1.dp,
-            color = lightTextColor
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        PermissionItem(
-            title = stringResource(R.string.permission_usage_stats_title),
-            description = stringResource(R.string.permission_usage_stats_description),
-            isGranted = hasUsageStats,
-            onRequest = onRequestUsageStats
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Notification Permission
-        PermissionItem(
-            title = stringResource(R.string.permission_notifications_title),
-            description = stringResource(R.string.permission_notifications_description),
-            isGranted = hasNotification,
-            onRequest = onRequestNotification
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // VPN Permission
-        PermissionItem(
-            title = stringResource(R.string.permission_vpn_title),
-            description = stringResource(R.string.permission_vpn_description),
-            isGranted = hasVpn,
-            onRequest = onRequestVpn
-        )
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
-@Composable
-private fun PermissionItem(
-    title: String, description: String,
-    isGranted: Boolean,
-    onRequest: () -> Unit = {}
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            AppText(
-                text = title,
-                style = AppTextStyle.Body,
-                fontWeight = FontWeight.Medium,
-                color = Color.White // Adjusted for better contrast
-            )
-            AppText(
-                text = description,
-                style = AppTextStyle.Label,
-                color = lightTextColor
-            )
-        }
-
-        AppSwitch(
-            checked = isGranted,
-            onCheckedChange = { onRequest() }
-        )
-    }
+/**
+ * Helper function to check usage stats permission
+ */
+private fun checkUsageStatsPermission(context: android.content.Context): Boolean {
+    val appOps = context.getSystemService(android.content.Context.APP_OPS_SERVICE) as AppOpsManager
+    val mode = appOps.checkOpNoThrow(
+        AppOpsManager.OPSTR_GET_USAGE_STATS,
+        android.os.Process.myUid(),
+        context.packageName
+    )
+    return mode == AppOpsManager.MODE_ALLOWED
 }
+

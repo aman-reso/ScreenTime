@@ -79,8 +79,21 @@
     <string name="zero_bytes">0 bytes</string>
 
     <!-- AppPermissionCard Strings -->
-    <string name="permissions_required">Permissions Required</string>
+    <string name="permissions_required">App Usage Permission Required</string>
     <string name="permissions_card_description">ScreenTime needs the following permissions to track your app usage:</string>
+
+    <!-- Detailed Permission Explanation -->
+    <string name="permission_explanation_title">Why We Need App Usage Data</string>
+    <string name="permission_explanation_detail">To provide you with accurate insights into your digital habits, ScreenTime requires access to your app usage statistics. This permission allows us to track which applications you use and how much time you spend on each one.</string>
+
+    <string name="permission_why_required">Why This Permission is Essential</string>
+    <string name="permission_why_required_detail">Without this permission, we cannot accurately measure your screen time, identify your most-used apps, or provide meaningful insights about your digital wellness. This data is the foundation of all features in ScreenTime, including daily usage reports, app usage trends, and personalized recommendations.</string>
+
+    <string name="permission_what_we_track">What We Track</string>
+    <string name="permission_what_we_track_detail">We only track essential information: app names, usage duration, and timestamps. We do NOT access your personal data, messages, passwords, or any sensitive information within apps. Your privacy is our top priority.</string>
+
+    <string name="permission_privacy_assurance">Your Privacy is Protected</string>
+    <string name="permission_privacy_assurance_detail">All usage data is stored locally on your device and is only used to generate your personal screen time reports. We never share your data with third parties, and you can revoke this permission at any time through your device settings.</string>
 
     <!-- Permission Item: App Usage -->
     <string name="permission_usage_stats_title">App Usage Access</string>
@@ -96,6 +109,7 @@
 
     <!-- General Actions -->
     <string name="action_grant">Grant</string>
+    <string name="action_allow">Allow</string>
     <string name="permission_granted_symbol">✓</string>
     <string name="content_description_permissions_icon">Permissions Icon</string>
 

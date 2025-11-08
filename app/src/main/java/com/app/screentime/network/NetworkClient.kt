@@ -46,6 +46,7 @@ class NetworkClient @Inject constructor() {
         install(DefaultRequest) {
             url(ApiEndpoints.LOCAL_BASE_URL)
             header("Content-Type", "application/json")
+            header("ngrok-skip-browser-warning", "true")
         }
 
         // Auth

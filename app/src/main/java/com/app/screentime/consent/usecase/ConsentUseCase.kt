@@ -7,6 +7,8 @@ import com.app.screentime.network.model.ApiConsentItem
 import com.app.screentime.network.model.ApiResponse
 import com.app.screentime.network.model.ConsentRequest
 import com.app.screentime.network.model.ConsentResponse
+import com.app.screentime.network.model.ConsentSubmissionRequest
+import com.app.screentime.network.model.ConsentSubmissionResponseItem
 import javax.inject.Inject
 
 /**
@@ -25,7 +27,16 @@ class ConsentUseCase @Inject constructor(
     }
 
     /**
-     * Submit consent data
+     * Submit consents with new structure
+     * @param request The consent submission request
+     * @return Result of API response (only check success field, ignore data)
+     */
+    suspend fun submitConsents(request: ConsentSubmissionRequest): Result<ApiResponse<List<ConsentSubmissionResponseItem>>> {
+        return consentRepository.submitConsents(request)
+    }
+
+    /**
+     * Submit consent data (legacy)
      * @param consentRequest The consent request
      * @return Result of consent response
      */

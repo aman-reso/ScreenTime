@@ -236,7 +236,18 @@ class NetworkRepository @Inject constructor(
     }
 
     /**
-     * Submit consent data
+     * Submit consents with new structure
+     */
+    suspend fun submitConsents(request: ConsentSubmissionRequest): Result<ApiResponse<List<ConsentSubmissionResponseItem>>> {
+        return try {
+            apiService.submitConsents(request)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Submit consent data (legacy)
      */
     suspend fun submitConsent(consentRequest: ConsentRequest): Result<ConsentResponse> {
         return try {

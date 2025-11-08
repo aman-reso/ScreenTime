@@ -6,6 +6,9 @@ import com.app.screentime.consent.mapper.ConsentMapper
 import com.app.screentime.consent.model.ConsentUiModel
 import com.app.screentime.consent.usecase.ConsentUseCase
 import com.app.screentime.network.model.ApiConsentItem
+import com.app.screentime.network.model.ConsentSubmissionItem
+import com.app.screentime.network.model.ConsentSubmissionRequest
+import com.app.screentime.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +21,8 @@ import javax.inject.Inject
 class ConsentViewModel @Inject constructor(
     private val consentUseCase: ConsentUseCase,
     private val consentMapper: ConsentMapper,
-    private val preferencesUseCase: PreferencesUseCase
+    private val preferencesUseCase: PreferencesUseCase,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConsentUiState())
@@ -59,7 +63,65 @@ class ConsentViewModel @Inject constructor(
     }
 
     /**
-     * Update consent values (list of boolean values)
+     * Submit consents to API
+     * @param consentValues Map of consent item index to boolean value
+     */
+    fun submitConsents(consentValues: Map<Int, Boolean>) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmitting = true, error = null)
+
+            val deviceId = preferencesManager.getUserId()
+            if (deviceId.isNullOrEmpty()) {
+                _uiState.value = _uiState.value.copy(
+                    isSubmitting = false,
+                    error = "Device not registered"
+                )
+                return@launch
+            }
+
+            // Map consent values to submission items
+            val consentItems = _uiState.value.consentItems
+            val submissionItems = consentItems.mapIndexed { index, item ->
+                val value = consentValues[index] ?: item.isMandatory
+                ConsentSubmissionItem(
+                    id = item.id,
+                    value = if (value) "accepted" else "rejected"
+                )
+            }
+
+            val request = ConsentSubmissionRequest(
+                deviceId = deviceId,
+                consents = submissionItems
+            )
+
+            consentUseCase.submitConsents(request).fold(
+                onSuccess = { apiResponse ->
+                    if (apiResponse.success == true) {
+                        preferencesUseCase.markConsentSheetShown()
+                        _uiState.value = _uiState.value.copy(
+                            isSubmitting = false,
+                            isSubmitted = true,
+                            error = null
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isSubmitting = false,
+                            error = apiResponse.message ?: "Failed to submit consents"
+                        )
+                    }
+                },
+                onFailure = { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        isSubmitting = false,
+                        error = exception.message ?: "Failed to submit consents"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Update consent values (list of boolean values) - legacy method
      */
     fun updateConsentValues(values: List<Boolean>) {
         // Store consent values if needed for future use

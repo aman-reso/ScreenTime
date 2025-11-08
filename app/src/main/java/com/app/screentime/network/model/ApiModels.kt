@@ -255,6 +255,19 @@ data class ConsentSubmissionRequest(
 )
 
 /**
+ * Consent submission response item model
+ */
+@Serializable
+data class ConsentSubmissionResponseItem(
+    val id: Int,
+    val deviceId: String? = null,
+    val consentId: Int? = null,
+    val consentName: String? = null,
+    val value: String? = null,
+    val submittedAt: String? = null
+)
+
+/**
  * Consent request model (legacy - kept for backward compatibility)
  */
 @Serializable

@@ -44,6 +44,13 @@ fun ConsentBottomSheetContent(
     // Get consent items from API response
     val consentItems = uiState.consentItems
 
+    // Call onAccept when submission is successful
+    LaunchedEffect(uiState.isSubmitted) {
+        if (uiState.isSubmitted) {
+            onAccept()
+        }
+    }
+
     // Track consent values - use individual state for each item
     // Recreate states when consentItems change
     val consentValueStates = remember(consentItems) {
@@ -104,8 +111,8 @@ fun ConsentBottomSheetContent(
                 ) {
                     AppLoader()
                 }
-            } else if (uiState.error != null) {
-                // Show error state
+            } else if (uiState.error != null && consentItems.isEmpty()) {
+                // Show error state when loading fails
                 AppText(
                     text = uiState.error ?: "Failed to load consents",
                     style = AppTextStyle.Label,
@@ -120,6 +127,16 @@ fun ConsentBottomSheetContent(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             } else {
+                // Display submission error if any
+                if (uiState.error != null && !uiState.isLoading) {
+                    AppText(
+                        text = uiState.error ?: "Failed to submit consents",
+                        style = AppTextStyle.Label,
+                        color = Color.Red
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                
                 // Display consent items from API
                 consentItems.forEachIndexed { index, consentItem ->
                     val state = consentValueStates[index]
@@ -147,19 +164,19 @@ fun ConsentBottomSheetContent(
             ) {
                 AppPrimaryButton(
                     modifier = Modifier.weight(1f),
-                    enabled = !uiState.isLoading && consentItems.isNotEmpty()
+                    text = if (uiState.isSubmitting) "Submitting..." else "Accept",
+                    enabled = !uiState.isLoading && !uiState.isSubmitting && consentItems.isNotEmpty()
                 ) {
                     // Get final consent values (mandatory items will always be true)
                     val finalValues = consentItems.mapIndexed { index, item ->
-                        if (item.isMandatory) {
+                        index to if (item.isMandatory) {
                             true
                         } else {
                             consentValueStates[index]?.value ?: false
                         }
-                    }
-                    viewModel.updateConsentValues(finalValues)
-                    viewModel.markConsentScreenShown()
-                    onAccept()
+                    }.toMap()
+                    viewModel.submitConsents(finalValues)
+                    // onAccept will be called after successful submission
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))

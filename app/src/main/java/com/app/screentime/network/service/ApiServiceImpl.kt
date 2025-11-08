@@ -440,7 +440,7 @@ class ApiServiceImpl @Inject constructor(
         }
     }
 
-    override suspend fun submitConsents(request: ConsentSubmissionRequest): Result<ApiResponse<Unit>> {
+    override suspend fun submitConsents(request: ConsentSubmissionRequest): Result<ApiResponse<List<ConsentSubmissionResponseItem>>> {
         return try {
             val response: HttpResponse = httpClient.post(ApiEndpoints.Consent.SUBMIT) {
                 contentType(ContentType.Application.Json)
@@ -448,7 +448,7 @@ class ApiServiceImpl @Inject constructor(
             }
 
             if (response.status.isSuccess()) {
-                val apiResponse: ApiResponse<Unit> = response.body()
+                val apiResponse: ApiResponse<List<ConsentSubmissionResponseItem>> = response.body()
                 Result.success(apiResponse)
             } else {
                 val errorBody = response.bodyAsText()

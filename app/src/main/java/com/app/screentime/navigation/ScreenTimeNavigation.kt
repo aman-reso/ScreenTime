@@ -30,6 +30,7 @@ import com.app.screentime.record.screen.RecordDetailScreen
 import com.app.screentime.search.screen.SearchScreen
 import com.app.screentime.profile.screen.ProfileScreen
 import com.app.screentime.statistics.screen.StatisticsScreen
+import com.app.screentime.ui.atom.AppPermissionCard
 import com.app.screentime.ui.bottomnavigation.AppBottomNavigation
 import com.app.screentime.ui.bottomnavigation.NavigationItem
 
@@ -102,12 +103,13 @@ fun ScreenTimeNavigation(
                 .navigationBarsPadding()
                 .padding(it),
             navController = navController,
-            startDestination = Screen.Landing.route
+            startDestination = Screen.Permission.route
         ) {
             composable(Screen.Landing.route) {
                 LandingScreen(
                     modifier = Modifier
                         .fillMaxSize(),
+                    navController = navController,
                     openSearchScreen = {
                         navigateToItem.invoke(Screen.Search.route)
                     }
@@ -150,6 +152,16 @@ fun ScreenTimeNavigation(
                     packageName = packageName,
                     navController = navController
                 )
+            }
+            composable(Screen.Permission.route) {
+                AppPermissionCard(onAllPermissionsGranted = {
+                    navController.navigate(Screen.Landing.route) {
+                        popUpTo(Screen.Permission.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                })
             }
         }
     }

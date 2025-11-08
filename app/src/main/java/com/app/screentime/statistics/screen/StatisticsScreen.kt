@@ -1,6 +1,7 @@
 package com.app.screentime.statistics.screen
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
@@ -41,11 +42,15 @@ fun StatisticsScreen(
         when {
             uiState.isLoading -> {
                 item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        AppLoader(type = AppLoaderType.CIRCULAR)
+                        AppLoader(
+                            type = AppLoaderType.CIRCULAR,
+                            modifier = Modifier
+                        )
                     }
                 }
             }

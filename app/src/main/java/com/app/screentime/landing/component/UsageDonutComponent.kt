@@ -90,15 +90,15 @@ fun UsageDonutComponent(
 private fun DonutChart(
     data: List<UsageData>, modifier: Modifier = Modifier, centerContent: @Composable () -> Unit = {}
 ) {
-    val animationProgress = remember { Animatable(0f) }
+//    val animationProgress = remember { Animatable(0f) }
 
-    LaunchedEffect(Unit) {
-        animationProgress.animateTo(
-            targetValue = 1f, animationSpec = tween(
-                durationMillis = 1000, easing = FastOutLinearInEasing
-            )
-        )
-    }
+//    LaunchedEffect(Unit) {
+//        animationProgress.animateTo(
+//            targetValue = 1f, animationSpec = tween(
+//                durationMillis = 1000, easing = FastOutLinearInEasing
+//            )
+//        )
+//    }
 
     Box(
         modifier = modifier.size(200.dp), contentAlignment = Alignment.Center
@@ -111,7 +111,7 @@ private fun DonutChart(
             var startAngle = -90f
 
             data.forEach { usageData ->
-                val sweepAngle = (usageData.percentage / 100f) * 360f * animationProgress.value
+                val sweepAngle = (usageData.percentage / 100f) * 360f * 1f
 
                 drawArc(
                     color = usageData.color,
