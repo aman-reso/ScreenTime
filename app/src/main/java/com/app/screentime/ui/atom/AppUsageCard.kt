@@ -1,0 +1,185 @@
+package com.app.screentime.ui.atom
+
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.draw.innerShadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.R
+import com.app.screentime.data.entity.AppUsage
+import com.app.screentime.record.repository.toReadableDataSize
+import com.app.screentime.ui.theme.lightTextColor
+
+
+/**
+ * App Usage List UI Component
+ * Displays a list of app usage cards with conditional rounded corners
+ * First item has top rounded corners, last item has bottom rounded corners
+ */
+@Composable
+fun LazyItemScope.AppUsageListUi(
+    appUsage: AppUsage, 
+    index: Int, 
+    totalCount: Int,
+    onClick: (() -> Unit)? = null
+) {
+    val shape = remember(index, totalCount) {
+        when {
+            index == 0 && totalCount == 1 -> RoundedCornerShape(12.dp) // Single item: all corners rounded
+            index == 0 -> RoundedCornerShape(
+                topStart = 12.dp, topEnd = 12.dp
+            ) // First item: top rounded
+            index == totalCount - 1 -> RoundedCornerShape(
+                bottomStart = 12.dp, bottomEnd = 12.dp
+            ) // Last item: bottom rounded
+            else -> RoundedCornerShape(0.dp) // Middle items: no rounded corners
+        }
+    }
+
+    AppUsageCard(
+        appUsage = appUsage, 
+        modifier = Modifier.fillParentMaxWidth(), 
+        shape = shape,
+        onClick = onClick
+    )
+}
+
+/**
+ * App Usage Card Component
+ * Displays app icon, app name, network usage, and screen time
+ */
+@Composable
+fun AppUsageCard(
+    appUsage: AppUsage, 
+    modifier: Modifier = Modifier, 
+    shape: Shape = RoundedCornerShape(12.dp),
+    onClick: (() -> Unit)? = null
+) {
+    AppUsageItemGlassyCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            ),
+        shape = shape
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                AppIcon(
+                    appInfo = appUsage.applicationInfo, size = 28.dp
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                if (!appUsage.appName.isNullOrBlank()) {
+                    AppText(
+                        text = appUsage.appName,
+                        style = AppTextStyle.Body,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.padding(vertical = 2.dp))
+
+                val totalDataUsage = remember(appUsage.wifiDataUsage, appUsage.mobileDataUsage) {
+                    appUsage.wifiDataUsage + appUsage.mobileDataUsage
+                }
+                val dataUsageText = remember(totalDataUsage) {
+                    if (totalDataUsage > 0) {
+                        totalDataUsage.toReadableDataSize()
+                    } else {
+                        null
+                    }
+                }
+                
+                if (dataUsageText != null) {
+                    AppText(
+                        text = dataUsageText, style = AppTextStyle.Label, color = Color(0xFF9E9E9E)
+                    )
+                } else {
+                    AppText(
+                        text = stringResource(R.string.zero_bytes),
+                        style = AppTextStyle.Label,
+                        color = lightTextColor
+                    )
+                }
+            }
+            appUsage.displayFormatScreenTime?.let {
+                AppText(
+                    text = it, style = AppTextStyle.Body
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppUsageItemGlassyCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp),
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .innerShadow(shape, Shadow(12.dp))
+            .clip(shape)
+            .border(
+                1.dp,
+                Brush.linearGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.45f),
+                        Color.White.copy(alpha = 0.05f)
+                    )
+                ),
+                shape = shape
+            )
+    ) {
+        content()
+    }
+}

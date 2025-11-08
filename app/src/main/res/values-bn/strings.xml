@@ -1,0 +1,116 @@
+<resources>
+    <!-- App Name -->
+    <string name="app_name">AppTime</string>
+    <string name="widget_description">আপনার দৈনিক স্ক্রিন টাইম এবং অ্যাপ ব্যবহার নিরীক্ষণ করুন</string>
+
+    <!-- Common Actions -->
+    <string name="close">বন্ধ করুন</string>
+    <string name="dismiss">খারিজ করুন</string>
+    <string name="retry">পুনরায় চেষ্টা করুন</string>
+    <string name="try_again">পুনরায় চেষ্টা করুন</string>
+    <string name="cancel">বাতিল করুন</string>
+    <string name="error">ত্রুটি</string>
+
+    <!-- Theme Selection Dialog -->
+    <string name="select_theme">থিম নির্বাচন করুন</string>
+    <string name="theme_light">লাইট</string>
+    <string name="theme_dark">ডার্ক</string>
+    <string name="theme_system">সিস্টেম</string>
+
+    <!-- Language Selection Dialog -->
+    <string name="select_language">ভাষা নির্বাচন করুন</string>
+    <string name="language_english">ইংরেজি</string>
+    <string name="language_hindi">হিন্দি</string>
+    <string name="language_bengali">বাংলা</string>
+
+    <!-- Profile Screen -->
+    <string name="one_time_password">ওয়ান-টাইম পাসওয়ার্ড</string>
+    <string name="otp_regenerate_message">এই কোড প্রতি 60 সেকেন্ডে পুনরায় তৈরি হয়।</string>
+    <string name="theme">থিম</string>
+    <string name="language">ভাষা</string>
+    <string name="profile">প্রোফাইল</string>
+    <string name="edit_profile">প্রোফাইল সম্পাদনা করুন</string>
+    <string name="privacy_policy">গোপনীয়তা নীতি</string>
+    <string name="terms_of_service">সেবার শর্তাবলী</string>
+    <string name="about">সম্পর্কে</string>
+    <string name="help_support">সাহায্য এবং সহায়তা</string>
+    <string name="appearance">চেহারা</string>
+    <string name="restriction">সীমাবদ্ধতা</string>
+    <string name="app_blocking">অ্যাপ ব্লকিং</string>
+    <string name="shorts_blocking">শর্টস ব্লকিং</string>
+    <string name="website_blocking">ওয়েবসাইট ব্লকিং</string>
+    <string name="failed_to_load_profile">প্রোফাইল লোড করতে ব্যর্থ: %1$s</string>
+    <string name="failed_to_update_profile">প্রোফাইল আপডেট করতে ব্যর্থ: %1$s</string>
+    <string name="failed_to_update_consent">সম্মতি আপডেট করতে ব্যর্থ: %1$s</string>
+    <string name="failed_to_clear_profile">প্রোফাইল সাফ করতে ব্যর্থ: %1$s</string>
+    <string name="failed_to_load_weekly_data">সাপ্তাহিক ডেটা লোড করতে ব্যর্থ: %1$s</string>
+
+    <!-- Landing Screen -->
+    <string name="today_screen_time">আজকের স্ক্রিন টাইম</string>
+    <string name="good_morning">সুপ্রভাত ☀️</string>
+    <string name="good_afternoon">শুভ অপরাহ্ন 🌤️</string>
+    <string name="good_evening">শুভ সন্ধ্যা 🌇</string>
+    <string name="good_night">শুভ রাত্রি 🌙</string>
+
+    <!-- Weekly Usage Chart -->
+    <string name="this_week">এই সপ্তাহ</string>
+    <string name="per_day_avg">প্রতি দিন গড় %1$dm</string>
+    <string name="minutes_format">%1$dm</string>
+
+    <!-- Statistics Screen -->
+    <string name="no_data_available">কোনো ডেটা উপলব্ধ নেই</string>
+    <string name="no_app_usage_for_day">এই দিনের জন্য কোনো অ্যাপ ব্যবহার নেই</string>
+
+    <!-- App Detail Screen -->
+    <string name="weekly_screen_time">সাপ্তাহিক স্ক্রিন টাইম</string>
+    <string name="weekly_network_usage">সাপ্তাহিক নেটওয়ার্ক ব্যবহার</string>
+    <string name="actions">ক্রিয়াসমূহ</string>
+    <string name="launch_app">অ্যাপ চালু করুন</string>
+    <string name="set_app_timer">অ্যাপ টাইমার সেট করুন</string>
+    <string name="block_for_minutes">5 মিনিটের জন্য ব্লক করুন</string>
+    <string name="internet_access">ইন্টারনেট অ্যাক্সেস</string>
+    <string name="app_settings">অ্যাপ সেটিংস</string>
+    <string name="failed_to_load_app_usage">অ্যাপ ব্যবহার ডেটা লোড করতে ব্যর্থ: %1$s</string>
+    <string name="failed_to_load_usage_data">ব্যবহার ডেটা লোড করতে ব্যর্থ: %1$s</string>
+    <string name="permission_denied">অনুমতি অস্বীকৃত: %1$s</string>
+
+    <!-- App Usage Card -->
+    <string name="zero_bytes">0 বাইট</string>
+
+    <!-- AppPermissionCard Strings -->
+    <string name="permissions_required">অনুমতিসমূহ প্রয়োজন</string>
+    <string name="permissions_card_description">ScreenTime আপনার অ্যাপ ব্যবহার ট্র্যাক করতে নিম্নলিখিত অনুমতিসমূহের প্রয়োজন:</string>
+
+    <!-- Permission Item: App Usage -->
+    <string name="permission_usage_stats_title">অ্যাপ ব্যবহার অ্যাক্সেস</string>
+    <string name="permission_usage_stats_description">কোন অ্যাপগুলি আপনি ব্যবহার করেন এবং কতক্ষণ ট্র্যাক করুন</string>
+
+    <!-- Permission Item: Notifications -->
+    <string name="permission_notifications_title">বিজ্ঞপ্তি</string>
+    <string name="permission_notifications_description">ব্যবহারের সতর্কতা এবং অনুস্মারক দেখান</string>
+
+    <!-- Permission Item: VPN -->
+    <string name="permission_vpn_title">VPN</string>
+    <string name="permission_vpn_description">ওয়েবসাইট এবং অ্যাপ ব্লক করতে VPN ব্যবহার করুন</string>
+
+    <!-- General Actions -->
+    <string name="action_grant">অনুমতি দিন</string>
+    <string name="permission_granted_symbol">✓</string>
+    <string name="content_description_permissions_icon">অনুমতি আইকন</string>
+
+    <!-- NetworkCard Strings -->
+    <string name="network_card_title">নেটওয়ার্ক</string>
+    <string name="network_wifi_label">WiFi</string>
+    <string name="network_cellular_label">সেলুলার</string>
+    <string name="content_description_network_icon">নেটওয়ার্ক প্রকার আইকন</string>
+
+    <!-- Consent Bottom Sheet -->
+    <string name="privacy_consent">গোপনীয়তা এবং সম্মতি</string>
+
+    <!-- TOTP Verification -->
+    <string name="verify_totp">TOTP যাচাই করুন</string>
+    <string name="enter_otp">OTP লিখুন</string>
+    <string name="verify">যাচাই করুন</string>
+    <string name="verifying">যাচাই করা হচ্ছে…</string>
+</resources>
+

@@ -1,0 +1,116 @@
+<resources>
+    <!-- App Name -->
+    <string name="app_name">AppTime</string>
+    <string name="widget_description">Monitor your daily screen time and app usage</string>
+    <string name="set_widget">Set Widget</string>
+
+    <!-- Common Actions -->
+    <string name="close">Close</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="retry">Retry</string>
+    <string name="try_again">Try Again</string>
+    <string name="cancel">Cancel</string>
+    <string name="error">Error</string>
+
+    <!-- Theme Selection Dialog -->
+    <string name="select_theme">Select Theme</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">System</string>
+
+    <!-- Language Selection Dialog -->
+    <string name="select_language">Select Language</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">Hindi</string>
+    <string name="language_bengali">Bengali</string>
+
+    <!-- Profile Screen -->
+    <string name="one_time_password">One-Time Password</string>
+    <string name="otp_regenerate_message">This code regenerates every 60 seconds.</string>
+    <string name="theme">Theme</string>
+    <string name="language">Language</string>
+    <string name="profile">Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="about">About</string>
+    <string name="help_support">Help &amp; Support</string>
+    <string name="appearance">Appearance</string>
+    <string name="restriction">Restriction</string>
+    <string name="app_blocking">App blocking</string>
+    <string name="shorts_blocking">Shorts blocking</string>
+    <string name="website_blocking">Website blocking</string>
+    <string name="failed_to_load_profile">Failed to load profile: %1$s</string>
+    <string name="failed_to_update_profile">Failed to update profile: %1$s</string>
+    <string name="failed_to_update_consent">Failed to update consent: %1$s</string>
+    <string name="failed_to_clear_profile">Failed to clear profile: %1$s</string>
+    <string name="failed_to_load_weekly_data">Failed to load weekly data: %1$s</string>
+
+    <!-- Landing Screen -->
+    <string name="today_screen_time">Today\'s Screen Time</string>
+    <string name="good_morning">Good Morning ☀️</string>
+    <string name="good_afternoon">Good Afternoon 🌤️</string>
+    <string name="good_evening">Good Evening 🌇</string>
+    <string name="good_night">Good Night 🌙</string>
+
+    <!-- Weekly Usage Chart -->
+    <string name="this_week">This week</string>
+    <string name="per_day_avg">%1$dm per day (avg)</string>
+    <string name="minutes_format">%1$dm</string>
+
+    <!-- Statistics Screen -->
+    <string name="no_data_available">No data available</string>
+    <string name="no_app_usage_for_day">No app usage for this day</string>
+
+    <!-- App Detail Screen -->
+    <string name="weekly_screen_time">Weekly Screen Time</string>
+    <string name="weekly_network_usage">Weekly Network Usage</string>
+    <string name="actions">Actions</string>
+    <string name="launch_app">Launch App</string>
+    <string name="set_app_timer">Set App Timer</string>
+    <string name="block_for_minutes">Block for 5 Min</string>
+    <string name="internet_access">Internet Access</string>
+    <string name="app_settings">App Settings</string>
+    <string name="failed_to_load_app_usage">Failed to load app usage data: %1$s</string>
+    <string name="failed_to_load_usage_data">Failed to load usage data: %1$s</string>
+    <string name="permission_denied">Permission denied: %1$s</string>
+
+    <!-- App Usage Card -->
+    <string name="zero_bytes">0 bytes</string>
+
+    <!-- AppPermissionCard Strings -->
+    <string name="permissions_required">Permissions Required</string>
+    <string name="permissions_card_description">ScreenTime needs the following permissions to track your app usage:</string>
+
+    <!-- Permission Item: App Usage -->
+    <string name="permission_usage_stats_title">App Usage Access</string>
+    <string name="permission_usage_stats_description">Track which apps you use and for how long</string>
+
+    <!-- Permission Item: Notifications -->
+    <string name="permission_notifications_title">Notifications</string>
+    <string name="permission_notifications_description">Show usage alerts and reminders</string>
+
+    <!-- Permission Item: VPN -->
+    <string name="permission_vpn_title">VPN</string>
+    <string name="permission_vpn_description">Use VPN to block websites and apps</string>
+
+    <!-- General Actions -->
+    <string name="action_grant">Grant</string>
+    <string name="permission_granted_symbol">✓</string>
+    <string name="content_description_permissions_icon">Permissions Icon</string>
+
+    <!-- NetworkCard Strings -->
+    <string name="network_card_title">Network</string>
+    <string name="network_wifi_label">WiFi</string>
+    <string name="network_cellular_label">Cellular</string>
+    <string name="content_description_network_icon">Network type icon</string>
+
+    <!-- Consent Bottom Sheet -->
+    <string name="privacy_consent">Privacy &amp; Consent</string>
+
+    <!-- TOTP Verification -->
+    <string name="verify_totp">Verify TOTP</string>
+    <string name="enter_otp">Enter OTP</string>
+    <string name="verify">Verify</string>
+    <string name="verifying">Verifying…</string>
+</resources>
