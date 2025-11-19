@@ -62,47 +62,6 @@ class PermissionManager(
             true
         }
     }
-
-    /**
-     * Requests usage stats permission by opening system settings
-     */
-    fun requestUsageStatsPermission(activity: Activity) {
-        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-        intent.data = "package:${context.packageName}".toUri()
-        activity.startActivity(intent)
-    }
-
-    /**
-     * Requests notification permission (Android 13+)
-     */
-    fun requestNotificationPermission(
-        activity: Activity,
-        launcher: ActivityResultLauncher<String>
-    ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
-
-    /**
-     * Updates permission state
-     */
-    fun updatePermissionState() {
-        _permissionState.value = PermissionState(
-            hasUsageStats = hasUsageStatsPermission(),
-            hasNotification = hasNotificationPermission(),
-            hasAllPermissions = hasAllPermissions()
-        )
-    }
-
-    /**
-     * Opens app settings for manual permission granting
-     */
-    fun openAppSettings(activity: Activity) {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        intent.data = "package:${context.packageName}".toUri()
-        activity.startActivity(intent)
-    }
 }
 
 /**

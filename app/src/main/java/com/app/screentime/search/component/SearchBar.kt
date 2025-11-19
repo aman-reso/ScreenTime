@@ -52,8 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.hintTextColor
-import com.app.screentime.ui.theme.lightTextColor
+import com.app.screentime.ui.theme.LocalAppColors
 
 @Composable
 fun GlassSearchBar(
@@ -71,19 +70,20 @@ fun GlassSearchBar(
     // Track focused state for UI / debug if needed
     var isFocused by remember { mutableStateOf(false) }
 
+    val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(15.dp))
-            .background(Color(0x0FFFFFFF))
+            .background(colors.card.copy(alpha = 0.0f))
             .border(
                 width = 1.dp,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color.White,
-                        Color.White,
-                        Color.White.copy(alpha = 0.42f)
+                        colors.textPrimary,
+                        colors.textPrimary,
+                        colors.textPrimary.copy(alpha = 0.42f)
                     )
                 ),
                 shape = RoundedCornerShape(15.dp)
@@ -114,7 +114,7 @@ fun GlassSearchBar(
                 }
                 .padding(horizontal = 16.dp),
             textStyle = TextStyle(
-                color = Color.White,
+                color = colors.textPrimary,
                 fontSize = 16.sp
             ),
             decorationBox = { innerTextField ->
@@ -130,7 +130,7 @@ fun GlassSearchBar(
                         if (query.isEmpty() && !isFocused) {
                             AppText(
                                 text = placeholder,
-                                color = hintTextColor,
+                                color = colors.textHint,
                                 style = AppTextStyle.Label
                             )
                         }
@@ -140,7 +140,7 @@ fun GlassSearchBar(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search",
-                        tint = lightTextColor,
+                        tint = colors.textLight,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -156,19 +156,20 @@ fun GlassSearchBarPlaceholder(
     placeholder: String = "Search Username",
     onClick: () -> Unit = {}
 ) {
+    val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(15.dp))
-            .background(Color(0x0FFFFFFF))
+            .background(colors.card.copy(alpha = 0.0f))
             .border(
                 width = 1.dp,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color.White,
-                        Color.White,
-                        Color.White.copy(alpha = 0.42f)
+                        colors.textPrimary,
+                        colors.textPrimary,
+                        colors.textPrimary.copy(alpha = 0.42f)
                     )
                 ),
                 shape = RoundedCornerShape(15.dp)
@@ -188,7 +189,7 @@ fun GlassSearchBarPlaceholder(
         ) {
             AppText(
                 text = placeholder,
-                color = hintTextColor,
+                color = colors.textHint,
                 style = AppTextStyle.Label,
                 modifier = Modifier.weight(1f)
             )
@@ -196,7 +197,7 @@ fun GlassSearchBarPlaceholder(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                tint = lightTextColor,
+                tint = colors.textLight,
                 modifier = Modifier.size(16.dp)
             )
         }

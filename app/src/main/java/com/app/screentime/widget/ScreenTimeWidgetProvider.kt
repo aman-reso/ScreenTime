@@ -33,7 +33,8 @@ class ScreenTimeWidgetProvider : GlanceAppWidget() {
             val topAppsJson = prefs[WidgetDataKeys.TOP_APPS] ?: "[]"
             ScreenTimeWidgetContent(
                 totalUsage = totalUsage,
-                topAppsJson = topAppsJson
+                topAppsJson = topAppsJson,
+                context = context
             )
         }
     }
@@ -51,15 +52,11 @@ class ScreenTimeWidgetReceiver : GlanceAppWidgetReceiver() {
 
         when (intent.action) {
             android.appwidget.AppWidgetManager.ACTION_APPWIDGET_ENABLED -> {
-                // Widget was added - ensure worker is scheduled
                 WidgetUpdateWorker.schedule(context)
-                // Trigger an immediate widget update via the worker
-                // The worker will fetch latest data and update the widget
-                CoroutineScope(Dispatchers.IO).launch {
+                CoroutineScope(Dispatchers.Default).launch {
                     try {
                         WidgetUpdateWorker.schedule(context)
                     } catch (e: Exception) {
-                        // If scheduling fails, at least try to update with current data
                         ScreenTimeWidgetProvider().updateAll(context)
                     }
                 }
@@ -68,7 +65,7 @@ class ScreenTimeWidgetReceiver : GlanceAppWidgetReceiver() {
             android.appwidget.AppWidgetManager.ACTION_APPWIDGET_DELETED -> {
                 // Clean up preferences if needed
                 // Check if any widgets are still active
-                val glanceManager = androidx.glance.appwidget.GlanceAppWidgetManager(context)
+//                val glanceManager = androidx.glance.appwidget.GlanceAppWidgetManager(context)
 //                val glanceIds = glanceManager.getGlanceIds(ScreenTimeWidgetProvider::class.java)
 //                if (glanceIds.isEmpty()) {
 //                    // No widgets left - could cancel worker, but we'll keep it running

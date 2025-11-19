@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
+import com.app.screentime.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -56,6 +57,17 @@ object WidgetSetupHelper {
             return
         }
 
+        // Ensure widget provider is properly initialized before requesting to pin
+        // This helps the system identify the widget correctly
+        try {
+            val widgetProvider = ScreenTimeWidgetProvider()
+            // Initialize the widget by updating it (this ensures it's properly registered)
+            widgetProvider.updateAll(context)
+        } catch (e: Exception) {
+            // Log error but continue with pin request
+            android.util.Log.e("WidgetSetupHelper", "Error initializing widget: ${e.message}")
+        }
+
         // Request to pin the widget
         val successCallback = android.app.PendingIntent.getBroadcast(
             context,
@@ -78,7 +90,7 @@ object WidgetSetupHelper {
         // Show a message to guide the user
         android.widget.Toast.makeText(
             context,
-            "Please long-press on home screen and select Widgets to add Screen Time widget",
+            context.getString(R.string.widget_setup_message),
             android.widget.Toast.LENGTH_LONG
         ).show()
     }

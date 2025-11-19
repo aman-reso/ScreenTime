@@ -23,9 +23,10 @@ import com.app.screentime.ui.atom.AppPrimaryButton
 import com.app.screentime.ui.atom.AppSecondaryButton
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.R
 import com.app.screentime.ui.atom.glassBottomSheetBackground
-import com.app.screentime.ui.theme.NeutralBlackDark
-import com.app.screentime.ui.theme.hintTextColor
+import com.app.screentime.ui.theme.LocalAppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,16 +36,20 @@ fun ConsentBottomSheetContent(
     onAccept: () -> Unit,
     viewModel: ConsentViewModel = hiltViewModel()
 ) {
+    val colors = LocalAppColors.current ?: return
+
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
     )
+
 
     val uiState by viewModel.uiState.collectAsState()
 
     // Get consent items from API response
     val consentItems = uiState.consentItems
 
-    // Call onAccept when submission is successful
+    // Call onAccept when submission completes (success or failure)
+    // This ensures the sheet is marked as displayed even if submission fails
     LaunchedEffect(uiState.isSubmitted) {
         if (uiState.isSubmitted) {
             onAccept()
@@ -60,20 +65,21 @@ fun ConsentBottomSheetContent(
     }
     ModalBottomSheet(
         modifier = Modifier,
-        sheetGesturesEnabled = false,
+        sheetGesturesEnabled = true,
         sheetState = sheetState,
         properties = ModalBottomSheetProperties(
-            shouldDismissOnClickOutside = false
+            shouldDismissOnClickOutside = true
         ),
         onDismissRequest = {
+            onDismiss()
         },
-        containerColor = NeutralBlackDark,
+        containerColor = colors.background,
         shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(NeutralBlackDark)
+                .background(colors.background)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
@@ -88,7 +94,9 @@ fun ConsentBottomSheetContent(
                 )
                 IconButton(onClick = onDismiss) {
                     Icon(
-                        imageVector = Icons.Default.Close, contentDescription = "Close"
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = colors.tint
                     )
                 }
             }
@@ -98,7 +106,7 @@ fun ConsentBottomSheetContent(
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(Modifier, DividerDefaults.Thickness, color = hintTextColor)
+            HorizontalDivider(Modifier, DividerDefaults.Thickness, color = colors.textHint)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -116,13 +124,13 @@ fun ConsentBottomSheetContent(
                 AppText(
                     text = uiState.error ?: "Failed to load consents",
                     style = AppTextStyle.Label,
-                    color = Color.Red
+                    color = colors.error
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             } else if (consentItems.isEmpty()) {
                 // Show empty state
                 AppText(
-                    text = "No consents available",
+                    text = stringResource(R.string.no_consents_available),
                     style = AppTextStyle.Label
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -132,11 +140,11 @@ fun ConsentBottomSheetContent(
                     AppText(
                         text = uiState.error ?: "Failed to submit consents",
                         style = AppTextStyle.Label,
-                        color = Color.Red
+                        color = colors.error
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
-                
+
                 // Display consent items from API
                 consentItems.forEachIndexed { index, consentItem ->
                     val state = consentValueStates[index]

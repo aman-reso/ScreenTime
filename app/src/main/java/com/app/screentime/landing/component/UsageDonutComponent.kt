@@ -40,7 +40,7 @@ import com.app.screentime.R
 import com.app.screentime.ui.atom.AppGlassyCard
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.lightTextColor
+import com.app.screentime.ui.theme.LocalAppColors
 
 @Composable
 fun UsageDonutComponent(
@@ -48,8 +48,8 @@ fun UsageDonutComponent(
     totalScreenTime: Long,
     modifier: Modifier = Modifier
 ) {
-    val usageData = report?.toUsageData() ?: return
-
+    val colors = LocalAppColors.current ?: return
+    val usageData = report?.toUsageData(colors.chartColors) ?: return
     Column(modifier = modifier.fillMaxWidth()) {
         AppText(text = stringResource(R.string.today_screen_time), style = AppTextStyle.SubTitle)
         Spacer(modifier = Modifier.height(16.dp))
@@ -99,7 +99,7 @@ private fun DonutChart(
 //            )
 //        )
 //    }
-
+    val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier.size(200.dp), contentAlignment = Alignment.Center
     ) {
@@ -137,6 +137,7 @@ private fun DonutChart(
 private fun UsageLegend(
     data: List<UsageData>, modifier: Modifier = Modifier
 ) {
+    val colors = LocalAppColors.current ?: return
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -163,14 +164,14 @@ private fun UsageLegend(
                         AppText(
                             text = usageData.name.take(12),
                             style = AppTextStyle.Label,
-                            color = lightTextColor,
+                            color = colors.textLight,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         AppText(
                             text = "${usageData.percentage.toInt()}%",
                             style = AppTextStyle.Label,
-                            color = lightTextColor
+                            color = colors.textLight
                         )
                     }
                 }
@@ -187,19 +188,11 @@ data class UsageData(
     val name: String, val percentage: Float, val color: Color
 )
 
-private fun List<AppUsage>.toUsageData(): List<UsageData> {
+private fun List<AppUsage>.toUsageData(chartColors: List<Color>): List<UsageData> {
     if (isEmpty()) return emptyList()
 
     val total = sumOf { it.appScreenTime }.coerceAtLeast(1L)
-    val palette = listOf(
-        Color(0xFF4CAF50), // green
-        Color(0xFF2196F3), // blue
-        Color(0xFFE91E63), // pink
-        Color(0xFFFF9800), // orange
-        Color(0xFF9C27B0), // purple
-        Color(0xFF00BCD4), // cyan
-        Color(0xFF8BC34A)  // light green
-    )
+    val palette = chartColors
 
     val sorted = this.sortedByDescending { it.appScreenTime }
     val top = sorted.take(5)
@@ -210,9 +203,11 @@ private fun List<AppUsage>.toUsageData(): List<UsageData> {
         UsageData(app.appName ?: app.packageName.orEmpty(), percent, palette[index % palette.size])
     }
 
+    // Use muted color from palette for "Others"
+    val othersColor = if (palette.size > 4) palette[4] else palette.lastOrNull() ?: Color(0xFF9E9E9E)
     val withOthers = if (othersTime > 0) {
         topSegments + UsageData(
-            "Others", (othersTime.toFloat() / total.toFloat()) * 100f, Color(0xFF9E9E9E)
+            "Others", (othersTime.toFloat() / total.toFloat()) * 100f, othersColor
         )
     } else topSegments
     return withOthers.filter { it.percentage > 0.1f }

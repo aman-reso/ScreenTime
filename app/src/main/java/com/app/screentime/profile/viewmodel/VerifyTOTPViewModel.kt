@@ -2,9 +2,7 @@ package com.app.screentime.profile.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.screentime.network.model.TOTPVerifyRequest
-import com.app.screentime.network.service.ApiService
-import com.app.screentime.security.TOTP
+import com.app.screentime.profile.repository.TOTPRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,28 +12,23 @@ import javax.inject.Inject
 
 @HiltViewModel
 class VerifyTOTPViewModel @Inject constructor(
-    private val apiService: ApiService
+    private val totpRepository: TOTPRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VerifyTOTPUiState())
     val uiState: StateFlow<VerifyTOTPUiState> = _uiState.asStateFlow()
 
     /**
-     * Verify TOTP code
+     * Verify TOTP code by username
+     * @param username Username of the user whose TOTP is being verified
+     * @param code TOTP code to verify
      */
-    fun verifyTOTP(code: String) {
+    fun verifyTOTPByUsername(username: String, code: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isVerifying = true, error = null)
 
             try {
-                val secret = "O5YRY4I2737IGHVYOHXM6T7RWWNAW3X7" // From TOTP class
-                val request = TOTPVerifyRequest(
-                    secret = secret,
-                    code = code,
-                    tolerance = 1
-                )
-
-                val result = apiService.verifyTOTP(request)
+                val result = totpRepository.verifyTOTPByUsername(username, code)
                 result.fold(
                     onSuccess = { response ->
                         val isValid = response.data?.valid == true
@@ -43,7 +36,8 @@ class VerifyTOTPViewModel @Inject constructor(
                             isVerifying = false,
                             isVerified = isValid,
                             isValid = isValid,
-                            error = if (!isValid) response.data?.message ?: "Invalid TOTP code" else null
+                            error = if (!isValid) response.data?.message
+                                ?: "Invalid TOTP code" else null
                         )
                     },
                     onFailure = { exception ->

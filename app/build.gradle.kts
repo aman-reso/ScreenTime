@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.jetbrains.kotlin.serialization)
-    // alias(libs.plugins.google.services)
-    // alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -17,13 +17,20 @@ android {
         applicationId = "com.app.screentime"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 20
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+//        ndk {
+//            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+//        }
     }
 
     buildTypes {
+        firebaseCrashlytics {
+            mappingFileUploadEnabled = false
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
@@ -136,8 +143,12 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     implementation(libs.androidx.core.splashscreen)
 
-    // Firebase
-    // implementation(platform(libs.firebase.bom))
-    // implementation(libs.firebase.crashlytics)
-    // implementation(libs.firebase.ads)
+//     Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.config)
+
+    // ConstraintLayout Compose
+    implementation(libs.androidx.constraintlayout.compose)
 }

@@ -3,7 +3,10 @@ package com.app.screentime.record.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.network.model.AppUsageStatsData
+import com.app.screentime.network.model.DailyUsage
 import com.app.screentime.network.model.UsageRecordResponse
+import com.app.screentime.record.model.TimelineListItem
 import com.app.screentime.record.usecase.RecordUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,49 +27,70 @@ class RecordDetailViewModel @Inject constructor(
     val uiState: StateFlow<RecordDetailUiState> = _uiState.asStateFlow()
 
     /**
-     * Get usage records for a user within a date range
+     * Get daily usage stats for a target user
+     * This is called after TOTP verification to view another user's usage
      */
-    fun getUsageRecords(
-        username: String,
-        startDate: String? = null,
-        endDate: String? = null
+    fun getDailyUsageStats(
+        targetUserId: String,
+        date: String? = null
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-            // Hardcoded date range for now
-            val start = startDate ?: "2023-10-01"
-            val end = endDate ?: "2023-10-31"
+            // Use today's date if not provided
+            val selectedDate = date ?: getTodayDate()
 
-            recordUseCase.getUsageRecordsByUsername(username, start, end)
+            // Get raw stats data first
+            val rawStatsResult = recordUseCase.getRawDailyStats(selectedDate, targetUserId)
+            val stats = rawStatsResult.getOrNull() ?: emptyList()
+
+            // Sort by eventTimestamp for timeline (descending - newest first)
+            val sortedStats = stats.sortedByDescending { stat ->
+                stat.eventTimestamp?.let {
+                    try {
+                        java.time.Instant.parse(it).toEpochMilli()
+                    } catch (e: Exception) {
+                        0L
+                    }
+                } ?: 0L
+            }
+
+            // Process timeline data
+            val timelineItems = recordUseCase.processTimelineData(sortedStats)
+
+            recordUseCase.getDailyUsageStats(selectedDate, targetUserId)
                 .fold(
-                    onSuccess = { records ->
+                    onSuccess = { dailyUsage ->
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            records = records,
+                            stats = sortedStats,
+                            timeLines = timelineItems,
+                            dailyUsage = dailyUsage,
+                            selectedDate = selectedDate,
                             error = null
                         )
                     },
                     onFailure = { exception ->
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = "Failed to load usage records: ${exception.message}",
-                            records = emptyList()
+                            error = "Failed to load daily usage stats: ${exception.message}",
+                            records = emptyList(),
+                            stats = sortedStats, // Still show stats even if dailyUsage fails
+                            timeLines = timelineItems
                         )
                     }
                 )
         }
     }
 
+
     /**
-     * Update the date range and refresh records
+     * Get today's date in yyyy-MM-dd format
      */
-    fun updateDateRange(startDate: String, endDate: String, username: String) {
-        _uiState.value = _uiState.value.copy(
-            startDate = startDate,
-            endDate = endDate
-        )
-        getUsageRecords(username, startDate, endDate)
+    private fun getTodayDate(): String {
+        val calendar = Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        return dateFormat.format(calendar.time)
     }
 
     /**
@@ -76,56 +100,18 @@ class RecordDetailViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(error = null)
     }
 
-// Commented out - using hardcoded dates for now
-// /**
-//  * Get default start date (30 days ago)
-//  */
-// private fun getDefaultStartDate(): String {
-//     val calendar = Calendar.getInstance()
-//     calendar.add(Calendar.DAY_OF_MONTH, -30)
-//     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-//     return dateFormat.format(calendar.time)
-// }
 
-// /**
-//  * Get default end date (today)
-//  */
-// private fun getDefaultEndDate(): String {
-//     val calendar = Calendar.getInstance()
-//     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-//     return dateFormat.format(calendar.time)
-// }
-
-    /**
-     * Get formatted total usage time
-     */
-    fun getFormattedTotalUsageTime(): String {
-        // Try to use usageTimeMinutes first, fall back to milliseconds
-        val totalMinutes = _uiState.value.records.sumOf { record ->
-            record.usageTimeMinutes?.toLong()
-                ?: (record.usageTimeMilliseconds ?: 0L) / 60000
-        }
-
-        return if (totalMinutes > 0) {
-            val hours = totalMinutes / 60
-            val minutes = totalMinutes % 60
-            when {
-                hours > 0 -> "${hours}h ${minutes}m"
-                else -> "${minutes}m"
-            }
-        } else {
-            "0m"
-        }
-    }
-
-// Note: formatUsageTime is now in the Screen composable
 }
 
 data class RecordDetailUiState(
     val isLoading: Boolean = false,
     val records: List<UsageRecordResponse> = emptyList(),
+    val stats: List<AppUsageStatsData> = emptyList(), // Raw stats from API
+    val timeLines: List<TimelineListItem> = emptyList(),
     val startDate: String = "2023-10-01",
     val endDate: String = "2023-10-31",
+    val selectedDate: String? = null,
+    val dailyUsage: DailyUsage? = null,
     val error: String? = null
 )
 

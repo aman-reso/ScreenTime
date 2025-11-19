@@ -8,7 +8,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,14 +20,15 @@ class SearchViewModel @Inject constructor(
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     /**
-     * Search users by username
+     * Search users by query string
+     * @param query Search query (username)
      */
-    fun searchUsers(username: String) {
-        if (username.isBlank()) {
+    fun searchUsers(query: String) {
+        if (query.isBlank()) {
             _uiState.value = _uiState.value.copy(
                 searchResults = emptyList(),
                 isLoading = false,
-                error = "Username cannot be empty"
+                error = "Search query cannot be empty"
             )
             return
         }
@@ -40,7 +40,7 @@ class SearchViewModel @Inject constructor(
                 searchResults = emptyList()
             )
 
-            searchUseCase.searchUsers(username).fold(
+            searchUseCase.searchUsers(query).fold(
                 onSuccess = { users ->
                     _uiState.value = _uiState.value.copy(
                         searchResults = users,

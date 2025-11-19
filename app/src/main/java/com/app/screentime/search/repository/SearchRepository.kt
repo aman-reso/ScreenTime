@@ -2,19 +2,20 @@ package com.app.screentime.search.repository
 
 import com.app.screentime.network.model.ApiResponse
 import com.app.screentime.network.model.UserSearchResult
-import com.app.screentime.network.repository.NetworkRepository
+import com.app.screentime.search.service.SearchService
 import javax.inject.Inject
 
 /**
  * Repository for search operations
  */
 class SearchRepository @Inject constructor(
-    private val networkRepository: NetworkRepository
+    private val searchService: SearchService
 ) {
     /**
-     * Search users by username
+     * Search users by query string
+     * @param query Search query (username)
      */
-    suspend fun searchUsers(username: String): Result<ApiResponse<List<UserSearchResult>>> {
-        return networkRepository.searchUsers(username)
+    suspend fun searchUsers(query: String): Result<ApiResponse<List<UserSearchResult>>> {
+        return searchService.searchUsers(query)
     }
 }

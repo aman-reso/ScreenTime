@@ -1,69 +1,51 @@
 package com.app.screentime.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
-    background = NeutralBlackDark,
-    onBackground = NeutralWhiteLight,
-    surfaceContainer = NeutralBlackDark,
-    surface = NeutralBlackDark
-)
-
-val DarkColorScheme = darkColorScheme(
-    primary = DarkPrimary,
-    onPrimary = DarkOnPrimary,
-    secondary = DarkSecondary,
-    onSecondary = DarkOnBackground,
-    tertiary = DarkTertiary,
-    onTertiary = DarkOnBackground,
-    background = NeutralBlackDark,
-    onBackground = NeutralWhiteLight,
-    surface = DarkSurface,
-    onSurface = DarkOnSurface,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = DarkOnSurfaceVariant,
-    error = DarkError,
-    onError = Color.White,
-    outline = DarkOutline,
-    inverseSurface = DarkInverseSurface,
-    inverseOnSurface = DarkInverseOnSurface,
-    inversePrimary = DarkInversePrimary
-)
+val LocalThemeMode = compositionLocalOf { false }
 
 @Composable
 fun ScreenTimeTheme(
     themeViewModel: ThemeViewModel = hiltViewModel(),
     content: @Composable () -> Unit
 ) {
-    val theme by themeViewModel.theme.collectAsState()
-    val useDarkTheme = when (theme) {
-        "Light" -> false
-        "Dark" -> true
-        else -> isSystemInDarkTheme()
+    val isSystemDark = isSystemInDarkTheme()
+    val themeString by themeViewModel.theme.collectAsState()
+
+    // Parse theme string to ThemeType
+    val themeType = remember(themeString) {
+        if (themeString == "System") {
+            if (isSystemDark) {
+                ThemeType.CLASSIC_DARK
+            } else {
+                ThemeType.CLASSIC_LIGHT
+            }
+        } else {
+            ThemeType.fromString(themeString)
+        }
     }
 
-    val colorScheme = if (useDarkTheme) DarkColorScheme else LightColorScheme
+    val useDarkTheme = themeType.isDark
+    val appColors = remember(themeType) {
+        getThemeColors(themeType)
+    }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalThemeMode provides useDarkTheme,
+        LocalAppColors provides appColors
+    ) {
+        MaterialTheme(
+            typography = Typography,
+            content = content
+        )
+    }
 }
+

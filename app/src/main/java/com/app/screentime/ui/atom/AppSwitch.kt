@@ -16,20 +16,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.app.screentime.ui.theme.lightTextColor
+import com.app.screentime.ui.theme.LocalAppColors
 
 @Composable
 fun AppSwitch(
     checked: Boolean = false,
     onCheckedChange: (Boolean) -> Unit = {}
 ) {
+    val colors = LocalAppColors.current ?: return
     val animatedChecked by animateFloatAsState(
         targetValue = if (checked) 1f else 0f,
         animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)
     )
     Switch(
         thumbContent = {
-
             val scale by animateFloatAsState(
                 targetValue = if (checked) 1f else 0.9f,
                 animationSpec = tween(200)
@@ -40,15 +40,15 @@ fun AppSwitch(
                 modifier = Modifier
                     .padding(4.dp)
                     .scale(scale),
-                tint = if (checked) Color.White else lightTextColor.copy(alpha = 1 - animatedChecked)
+                tint = if (checked) colors.textPrimary else colors.textLight.copy(alpha = 1 - animatedChecked)
             )
         },
         colors = SwitchDefaults.colors(
-            checkedThumbColor = Color(0xFF4B4B4B),
-            checkedTrackColor = Color(0xFFD7E538),
+            checkedThumbColor = colors.textMuted,
+            checkedTrackColor = colors.accent,
             checkedBorderColor = Color.Transparent,
-            uncheckedThumbColor = Color.White,
-            uncheckedTrackColor = Color(0xFF4B4B4B),
+            uncheckedThumbColor = colors.textPrimary,
+            uncheckedTrackColor = colors.textMuted,
             uncheckedBorderColor = Color.Transparent
         ),
         checked = checked,

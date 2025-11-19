@@ -1,5 +1,6 @@
 package com.app.screentime.preferences
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
@@ -24,6 +25,9 @@ class PreferencesManager @Inject constructor(
         private const val KEY_IS_REGISTERED = "is_device_registered"
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_CONSENT_SCREEN_SHOWN = "consent_screen_shown"
+        private const val KEY_LAST_SYNC_TIME = "last_sync_time"
+        private const val KEY_LAST_FOCUS_SYNC_TIME = "last_focus_sync_time"
+        private const val USER_REG_INFO = "user_reg_info"
     }
 
     private val prefs: SharedPreferences by lazy {
@@ -46,7 +50,7 @@ class PreferencesManager @Inject constructor(
 
     fun getUserId(): String? {
         return try {
-            val userRegInfoJson = prefs.getString("user_reg_info", null)
+            val userRegInfoJson = prefs.getString(USER_REG_INFO, null)
             if (userRegInfoJson != null) {
                 val registrationResponse =
                     Json.decodeFromString<DeviceRegistrationResponse>(userRegInfoJson)
@@ -66,7 +70,7 @@ class PreferencesManager @Inject constructor(
      */
     fun getUsername(): String? {
         return try {
-            val userRegInfoJson = prefs.getString("user_reg_info", null)
+            val userRegInfoJson = prefs.getString(USER_REG_INFO, null)
             if (userRegInfoJson != null) {
                 val registrationResponse =
                     Json.decodeFromString<DeviceRegistrationResponse>(userRegInfoJson)
@@ -79,6 +83,47 @@ class PreferencesManager @Inject constructor(
         }
     }
 
+    fun getUserInformation(): DeviceRegistrationResponse? {
+        return try {
+            val userRegInfoJson = prefs.getString(USER_REG_INFO, null)
+            if (userRegInfoJson != null) {
+                val registrationResponse =
+                    Json.decodeFromString<DeviceRegistrationResponse>(userRegInfoJson)
+                registrationResponse
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Get TOTP secret from stored registration data
+     */
+    fun getTOTPSecret(): String? {
+        return try {
+            val userRegInfoJson = prefs.getString(USER_REG_INFO, null)
+            if (userRegInfoJson != null) {
+                val registrationResponse =
+                    Json.decodeFromString<DeviceRegistrationResponse>(userRegInfoJson)
+                registrationResponse.totpSecret
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+
+    fun saveUserInformation(registrationResponse: DeviceRegistrationResponse) {
+        val registrationResponse =
+            Json.encodeToString(registrationResponse)
+        prefs.edit {
+            putString(USER_REG_INFO, registrationResponse)
+        }
+    }
 
     fun clearDeviceRegistration() {
         prefs.edit {
@@ -113,46 +158,24 @@ class PreferencesManager @Inject constructor(
         }
     }
 
-    fun getString(key: String, defaultValue: String = ""): String =
-        prefs.getString(key, defaultValue) ?: defaultValue
+    // Last Sync Time Management
+    fun getLastSyncTime(): Long = prefs.getLong(KEY_LAST_SYNC_TIME, 0L)
 
-    fun putInt(key: String, value: Int) {
+    fun setLastSyncTime(timestamp: Long) {
         prefs.edit {
-            putInt(key, value)
+            putLong(KEY_LAST_SYNC_TIME, timestamp)
         }
     }
 
-    fun getInt(key: String, defaultValue: Int = 0): Int = prefs.getInt(key, defaultValue)
-
-    fun putLong(key: String, value: Long) {
-        prefs.edit {
-            putLong(key, value)
-        }
+    // Last Focus Sync Time Management
+    fun getLastFocusSyncTime(): Long? {
+        val time = prefs.getLong(KEY_LAST_FOCUS_SYNC_TIME, 0L)
+        return if (time > 0L) time else null
     }
 
-    fun getLong(key: String, defaultValue: Long = 0L): Long = prefs.getLong(key, defaultValue)
-
-    fun putBoolean(key: String, value: Boolean) {
+    fun setLastFocusSyncTime(timestamp: Long) {
         prefs.edit {
-            putBoolean(key, value)
-        }
-    }
-
-    fun getBoolean(key: String, defaultValue: Boolean = false): Boolean =
-        prefs.getBoolean(key, defaultValue)
-
-    fun putFloat(key: String, value: Float) {
-        prefs.edit {
-            putFloat(key, value)
-        }
-    }
-
-    fun getFloat(key: String, defaultValue: Float = 0f): Float = prefs.getFloat(key, defaultValue)
-
-    // Clear all preferences
-    fun clearAll() {
-        prefs.edit {
-            clear()
+            putLong(KEY_LAST_FOCUS_SYNC_TIME, timestamp)
         }
     }
 }

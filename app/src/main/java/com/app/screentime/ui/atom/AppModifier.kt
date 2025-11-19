@@ -1,5 +1,6 @@
 package com.app.screentime.ui.atom
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,17 +11,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 
-fun Modifier.glassBottomSheetBackground(): Modifier =
-    this
-        .background(
-            Brush.verticalGradient(
-                listOf(
-                    Color(0xFF1C1C1C),
-                    Color(0xFF0D0D0D)
-                )
-            )
-        )
-        .clip(RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp))
+@SuppressLint("ModifierFactoryUnreferencedReceiver")
+fun Modifier.glassBottomSheetBackground(): Modifier = Modifier
+//    this
+//        .background(
+//            Brush.verticalGradient(
+//                listOf(
+//                    Color(0xFF1C1C1C),
+//                    Color(0xFF0D0D0D)
+//                )
+//            )
+//        )
+//        .clip(RoundedCornerShape(topStart = 15.dp, topEnd = 15.dp))
 
 
 //.border(

@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import com.app.screentime.R
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.*
+import com.app.screentime.ui.theme.LocalAppColors
 
 /**
  * Language selection dialog with radio buttons
@@ -31,11 +31,14 @@ fun LanguageSelectionDialog(
     onDismiss: () -> Unit,
     onLanguageSelected: (String) -> Unit
 ) {
+    val colors = LocalAppColors.current ?: return
+
     val languages = listOf(
         LanguageOption(stringResource(R.string.language_english), "en", "🇬🇧"),
         LanguageOption(stringResource(R.string.language_hindi), "hi", "🇮🇳"),
         LanguageOption(stringResource(R.string.language_bengali), "bn", "🇮🇳")
     )
+
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -46,7 +49,7 @@ fun LanguageSelectionDialog(
                 .fillMaxWidth(0.9f)
                 .wrapContentHeight(),
             shape = RoundedCornerShape(15.dp),
-            color = CardColor
+            color = colors.card
         ) {
             Column(
                 modifier = Modifier
@@ -58,7 +61,7 @@ fun LanguageSelectionDialog(
                     text = stringResource(R.string.select_language),
                     style = AppTextStyle.SubTitle,
                     fontWeight = FontWeight.Bold,
-                    color = TitleTextColor
+                    color = colors.textPrimary
                 )
 
                 languages.forEach { language ->
@@ -77,13 +80,13 @@ fun LanguageSelectionDialog(
                     TextButton(
                         onClick = onDismiss,
                         colors = ButtonDefaults.textButtonColors(
-                            contentColor = PrimaryGreen
+                            contentColor = colors.success
                         )
                     ) {
                         AppText(
                             text = stringResource(R.string.close),
                             style = AppTextStyle.Body,
-                            color = PrimaryGreen
+                            color = colors.success
                         )
                     }
                 }
@@ -100,20 +103,21 @@ private fun LanguageRadioOption(
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val colors = LocalAppColors.current ?: return
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(
-                if (selected) PrimaryGreen.copy(alpha = 0.15f)
-                else CardColor
+                if (selected) colors.success.copy(alpha = 0.15f)
+                else colors.card
             )
             .border(
                 width = if (selected) 1.dp else 0.dp,
                 brush = Brush.linearGradient(
                     listOf(
-                        PrimaryGreen.copy(alpha = 0.6f),
-                        PrimaryGreen.copy(alpha = 0.3f)
+                        colors.success.copy(alpha = 0.6f),
+                        colors.success.copy(alpha = 0.3f)
                     )
                 ),
                 shape = RoundedCornerShape(12.dp)
@@ -136,7 +140,7 @@ private fun LanguageRadioOption(
                 text = text,
                 style = AppTextStyle.Body,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                color = if (selected) PrimaryGreen else BodyTextColor
+                color = if (selected) colors.success else colors.textSecondary
             )
         }
 
@@ -144,8 +148,8 @@ private fun LanguageRadioOption(
             selected = selected,
             onClick = onClick,
             colors = RadioButtonDefaults.colors(
-                selectedColor = PrimaryGreen,
-                unselectedColor = MutedTextColor
+                selectedColor = colors.success,
+                unselectedColor = colors.textMuted
             )
         )
     }

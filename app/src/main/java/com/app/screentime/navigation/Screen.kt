@@ -18,4 +18,8 @@ sealed class Screen(val route: String) {
     }
 
     object Permission : Screen("permission")
+    object FocusMode : Screen("focus_mode")
+    object AppBlocking : Screen("app_blocking")
+    object Leaderboard : Screen("leaderboard")
+    object BlockedLinks : Screen("blocked_links")
 }

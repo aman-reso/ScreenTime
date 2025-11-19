@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,18 +29,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.app.screentime.R
-import com.app.screentime.ui.theme.KakaoYellow
-import com.app.screentime.ui.theme.NeutralBlackDark
-import com.app.screentime.ui.theme.hintTextColor
+import com.app.screentime.ui.theme.LocalAppColors
 
 /**
  * App Permission Card - Complete permission request screen
@@ -97,10 +99,11 @@ fun AppPermissionCard(
             onAllPermissionsGranted()
         }
     }
+    val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(NeutralBlackDark)
+            .background(colors.background)
     ) {
         Column(
             modifier = Modifier
@@ -114,7 +117,7 @@ fun AppPermissionCard(
                 imageVector = Icons.Default.Security,
                 modifier = Modifier.size(80.dp),
                 contentDescription = stringResource(R.string.content_description_permissions_icon),
-                tint = KakaoYellow
+                tint = colors.accent
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -130,7 +133,7 @@ fun AppPermissionCard(
             HorizontalDivider(
                 modifier = Modifier.fillMaxWidth(),
                 thickness = 1.dp,
-                color = hintTextColor
+                color = colors.textHint
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -143,13 +146,13 @@ fun AppPermissionCard(
                 AppText(
                     text = stringResource(R.string.permission_explanation_title),
                     style = AppTextStyle.Body,
-                    color = Color.White
+                    color = colors.textPrimary
                 )
 
                 AppText(
                     text = stringResource(R.string.permission_explanation_detail),
                     style = AppTextStyle.Label,
-                    color = hintTextColor
+                    color = colors.textHint
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -158,13 +161,13 @@ fun AppPermissionCard(
                 AppText(
                     text = stringResource(R.string.permission_why_required),
                     style = AppTextStyle.Body,
-                    color = Color.White
+                    color = colors.textPrimary
                 )
 
                 AppText(
                     text = stringResource(R.string.permission_why_required_detail),
                     style = AppTextStyle.Label,
-                    color = hintTextColor
+                    color = colors.textHint
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -173,13 +176,13 @@ fun AppPermissionCard(
                 AppText(
                     text = stringResource(R.string.permission_what_we_track),
                     style = AppTextStyle.Body,
-                    color = Color.White
+                    color = colors.textPrimary
                 )
 
                 AppText(
                     text = stringResource(R.string.permission_what_we_track_detail),
                     style = AppTextStyle.Label,
-                    color = hintTextColor
+                    color = colors.textHint
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -188,13 +191,13 @@ fun AppPermissionCard(
                 AppText(
                     text = stringResource(R.string.permission_privacy_assurance),
                     style = AppTextStyle.Body,
-                    color = Color.White
+                    color = colors.textPrimary
                 )
 
                 AppText(
                     text = stringResource(R.string.permission_privacy_assurance_detail),
                     style = AppTextStyle.Label,
-                    color = hintTextColor
+                    color = colors.textHint
                 )
             }
 
@@ -202,6 +205,65 @@ fun AppPermissionCard(
             Spacer(modifier = Modifier.weight(1f))
 
             Spacer(modifier = Modifier.height(32.dp))
+
+            // Privacy Policy and Terms and Conditions links
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AppText(
+                    text = stringResource(R.string.privacy_policy),
+                    style = AppTextStyle.Label,
+                    color = colors.success,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .clickable {
+                            try {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    "https://aman-reso.github.io/AppTime-HTML/privacy-policy.html".toUri()
+                                )
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                android.util.Log.e("AppPermissionCard", "Error opening Privacy Policy", e)
+                            }
+                        }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    textDecoration = TextDecoration.Underline
+                )
+                
+                AppText(
+                    text = " • ",
+                    style = AppTextStyle.Label,
+                    color = colors.textMuted
+                )
+                
+                AppText(
+                    text = stringResource(R.string.terms_of_service),
+                    style = AppTextStyle.Label,
+                    color = colors.success,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .clickable {
+                            try {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    "https://aman-reso.github.io/AppTime-HTML/terms-and-conditions.html".toUri()
+                                )
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                android.util.Log.e("AppPermissionCard", "Error opening Terms and Conditions", e)
+                            }
+                        }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    textDecoration = TextDecoration.Underline
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Allow Button
             AppPrimaryButton(

@@ -1,19 +1,34 @@
 package com.app.screentime.landing.screen
 
 import android.app.AppOpsManager
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.pullToRefresh
@@ -28,11 +43,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.screentime.permission.PermissionManager
+import com.app.screentime.R
 import com.app.screentime.consent.screen.ConsentBottomSheetContent
 import com.app.screentime.landing.component.GreetingUi
 import com.app.screentime.landing.component.UsageDonutComponent
@@ -42,8 +61,11 @@ import com.app.screentime.search.component.GlassSearchBar
 import com.app.screentime.search.component.GlassSearchBarPlaceholder
 import com.app.screentime.ui.atom.AppLoader
 import com.app.screentime.ui.atom.AppPermissionCard
+import com.app.screentime.ui.atom.AppText
+import com.app.screentime.ui.atom.AppTextStyle
 import com.app.screentime.ui.atom.AppUsageListUi
 import com.app.screentime.ui.atom.NetworkCard
+import com.app.screentime.ui.theme.LocalAppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,9 +77,79 @@ fun LandingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val appColors = LocalAppColors.current ?: return
 
+    // Permission manager
+    val permissionManager = remember { PermissionManager(context) }
 
-    // Consent bottom sheet state - check from preferences
+    // Notification permission state
+    var hasNotificationPermission by remember {
+        mutableStateOf(permissionManager.hasNotificationPermission())
+    }
+    var isPermissionDenied by remember { mutableStateOf(false) }
+
+    // Check if permission is denied (blocked)
+    fun checkIfPermissionDenied(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val isGranted = ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+            if (!isGranted) {
+                // Check if user has permanently denied (shouldShowRequestPermissionRationale returns false)
+                val activity = context as? androidx.activity.ComponentActivity
+                if (activity != null) {
+                    val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(
+                        activity,
+                        android.Manifest.permission.POST_NOTIFICATIONS
+                    )
+                    // If permission is not granted and we shouldn't show rationale, it's permanently denied
+                    return !shouldShowRationale
+                }
+            }
+        }
+        return false
+    }
+
+    // Notification permission launcher
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasNotificationPermission = isGranted
+        // Re-check permission status after result
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            hasNotificationPermission = permissionManager.hasNotificationPermission()
+            isPermissionDenied = !hasNotificationPermission && checkIfPermissionDenied()
+        }
+    }
+
+    // Settings launcher for opening app settings
+    val settingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
+        // Re-check permission after returning from settings
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            hasNotificationPermission = permissionManager.hasNotificationPermission()
+            isPermissionDenied = !hasNotificationPermission && checkIfPermissionDenied()
+        }
+    }
+
+    // Check notification permission on launch and request if not granted
+    // Only check on Android 13+ (TIRAMISU) where notification permission is required
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            hasNotificationPermission = permissionManager.hasNotificationPermission()
+            isPermissionDenied = !hasNotificationPermission && checkIfPermissionDenied()
+
+            // Directly request permission if not granted and not permanently denied
+            if (!hasNotificationPermission && !isPermissionDenied) {
+                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    // Consent bottom sheet state
     var showConsentSheet by remember { mutableStateOf(viewModel.shouldShowConsentScreen()) }
     var isRefreshing by remember { mutableStateOf(false) }
     // Pull-to-refresh state
@@ -68,19 +160,26 @@ fun LandingScreen(
         isRefreshing = uiState.isLoading
     }
 
-
+    // Show consent bottom sheet if not already displayed
     if (showConsentSheet) {
-        ConsentBottomSheetContent(username = "test-user", onDismiss = {
-            viewModel.markConsentShown()
-            showConsentSheet = false
-        }, onAccept = {
-            viewModel.markConsentShown()
-            showConsentSheet = false
-        })
+        ConsentBottomSheetContent(
+            username = uiState.username ?: "",
+            onDismiss = {
+                // Mark as displayed even if dismissed (no matter success or failure)
+                viewModel.markConsentShown()
+                showConsentSheet = false
+            },
+            onAccept = {
+                // Mark as displayed after acceptance (success case)
+                viewModel.markConsentShown()
+                showConsentSheet = false
+            }
+        )
     }
 
     Box(
         modifier = modifier
+            .background(appColors.background)
             .padding(horizontal = 8.dp)
             .pullToRefresh(isRefreshing, pullRefreshState, onRefresh = {
                 isRefreshing = true
@@ -89,41 +188,84 @@ fun LandingScreen(
     ) {
         when {
             uiState.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
                 ) {
-                    AppLoader()
+                    item {
+                        GreetingUi(
+                            username = uiState.username,
+                            onLeaderboardClick = {
+                                navController?.navigate(Screen.Leaderboard.route)
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    item {
+                        GlassSearchBarPlaceholder(
+                            onClick = {
+                                navController?.navigate(Screen.Search.route)
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AppLoader()
+                        }
+                    }
                 }
             }
 
             uiState.error != null -> {
-                Column(
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
+                    item {
+                        GreetingUi(
+                            username = uiState.username,
+                            onLeaderboardClick = {
+                                navController?.navigate(Screen.Leaderboard.route)
+                            }
                         )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    item {
+                        GlassSearchBarPlaceholder(
+                            onClick = {
+                                navController?.navigate(Screen.Search.route)
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            )
                         ) {
-                            Text(
-                                text = "Error",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = uiState.error ?: "",
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = { viewModel.clearError() }) {
-                                Text("Dismiss")
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text(
+                                    text = "Error",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = uiState.error ?: "",
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = { viewModel.clearError() }) {
+                                    Text("Dismiss")
+                                }
                             }
                         }
                     }
@@ -135,11 +277,65 @@ fun LandingScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     item {
-                        GreetingUi(username = uiState.username)
+                        GreetingUi(
+                            username = uiState.username,
+                            onLeaderboardClick = {
+                                navController?.navigate(Screen.Leaderboard.route)
+                            }
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
                     }
+
+                    // Show notification permission warning if denied
+                    if (isPermissionDenied && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        item {
+                            NotificationPermissionWarningCard(
+                                onEnableClick = {
+                                    // First check if we can show the permission dialog
+                                    val activity = context as? androidx.activity.ComponentActivity
+                                    if (activity != null) {
+                                        val canShowDialog = ActivityCompat.shouldShowRequestPermissionRationale(
+                                            activity,
+                                            android.Manifest.permission.POST_NOTIFICATIONS
+                                        )
+                                        
+                                        if (canShowDialog) {
+                                            // Can show dialog, request permission again
+                                            notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                        } else {
+                                            // Permission is permanently denied, open settings
+                                            val intent =
+                                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                    data =
+                                                        Uri.fromParts("package", context.packageName, null)
+                                                }
+                                            settingsLauncher.launch(intent)
+                                        }
+                                    } else {
+                                        // Fallback: open settings if we can't determine
+                                        val intent =
+                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                data =
+                                                    Uri.fromParts("package", context.packageName, null)
+                                            }
+                                        settingsLauncher.launch(intent)
+                                    }
+                                },
+                                onRequestClick = {
+                                    // Try requesting permission again
+                                    notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+
                     item {
-                        GlassSearchBarPlaceholder(onClick = openSearchScreen)
+                        GlassSearchBarPlaceholder(
+                            onClick = {
+                                navController?.navigate(Screen.Search.route)
+                            }
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
@@ -152,6 +348,19 @@ fun LandingScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
+
+                    item {
+                        NetworkCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            wifiDataUsage = uiState.todayTotalWifiDataUsage,
+                            wifiDataUsageDisplay = uiState.displayWifiDataUsage,
+                            cellularDataUsage = uiState.todayTotalMobileDataUsage,
+                            cellularDataUsageDisplay = uiState.displayMobileDataUsage,
+                            totalDataDisplayName = uiState.displayTotalDataUsage
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
 
                     val topUsedAppsList = uiState.topUsedApps ?: emptyList()
                     val totalCount = topUsedAppsList.size
@@ -173,23 +382,6 @@ fun LandingScreen(
                             }
                         )
                     }
-
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        NetworkCard(
-                            modifier = Modifier.fillMaxWidth(),
-                            wifiDataUsage = uiState.todayTotalWifiDataUsage,
-                            wifiDataUsageDisplay = uiState.displayWifiDataUsage,
-                            cellularDataUsage = uiState.todayTotalMobileDataUsage,
-                            cellularDataUsageDisplay = uiState.displayMobileDataUsage,
-                            totalDataDisplayName = uiState.displayTotalDataUsage
-                        )
-                    }
-
-
-                    item {
-                        Spacer(modifier = Modifier.padding(horizontal = 16.dp))
-                    }
                 }
             }
         }
@@ -210,7 +402,69 @@ private fun checkUsageStatsPermission(context: android.content.Context): Boolean
     return mode == AppOpsManager.MODE_ALLOWED
 }
 
+/**
+ * Warning card shown when notification permission is denied
+ */
+@Composable
+private fun NotificationPermissionWarningCard(
+    onEnableClick: () -> Unit,
+    onRequestClick: () -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
 
-
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onEnableClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = colors.error.copy(alpha = 0.1f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = "Warning",
+                tint = colors.error,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                AppText(
+                    text = stringResource(R.string.notification_permission_required),
+                    style = AppTextStyle.Body,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = colors.error
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                AppText(
+                    text = stringResource(R.string.notification_permission_warning_message),
+                    style = AppTextStyle.Label,
+                    color = colors.textSecondary
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                onClick = onEnableClick,
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = colors.error
+                )
+            ) {
+                AppText(
+                    text = stringResource(R.string.enable),
+                    style = AppTextStyle.Label,
+                    color = colors.textOnPrimary
+                )
+            }
+        }
+    }
+}
 
 

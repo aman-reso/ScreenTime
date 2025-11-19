@@ -34,12 +34,43 @@
     <string name="privacy_policy">Privacy Policy</string>
     <string name="terms_of_service">Terms of Service</string>
     <string name="about">About</string>
+    <string name="about_app">About App</string>
     <string name="help_support">Help &amp; Support</string>
     <string name="appearance">Appearance</string>
     <string name="restriction">Restriction</string>
     <string name="app_blocking">App blocking</string>
     <string name="shorts_blocking">Shorts blocking</string>
     <string name="website_blocking">Website blocking</string>
+    <string name="ad_blocking">Ad Blocking</string>
+    <string name="ad_blocking_description">Block ads and trackers</string>
+    <string name="block_app">Block App</string>
+    <string name="set_app_limit">Set App Limit</string>
+    <string name="set_app_launch_limit">Set App Launch Limit</string>
+    <string name="app_restrictions">App Restrictions</string>
+    <string name="vpn_service">VPN Service</string>
+    <string name="enable_vpn">Enable VPN</string>
+    <string name="disable_vpn">Disable VPN</string>
+    <string name="vpn_service_description">Block websites and filter network traffic</string>
+    <string name="tap_to_stop_vpn">Tap to stop VPN service</string>
+    <string name="blocked_sites_count">%1$d blocked site(s)</string>
+    <string name="see_all_sites">See all sites</string>
+    <string name="blocked_sites">Blocked Sites</string>
+    <string name="no_blocked_sites">No sites blocked yet</string>
+    
+    <!-- Focus Mode -->
+    <string name="all_day_focus_mode">All Day Focus Mode</string>
+    <string name="all_day_focus_description">Timer won\'t reset when switching apps</string>
+    <string name="session_time">Session Time</string>
+    <string name="total_day_time">Total Today</string>
+    <string name="countdown_mode">Countdown Mode</string>
+    <string name="countdown_mode_description">25 minute Pomodoro timer</string>
+    <string name="session_duration">Session Duration</string>
+    <string name="session_duration_description">Set focus session duration in minutes</string>
+    <string name="minutes">minutes</string>
+    <string name="focus_history">Focus History</string>
+    <string name="no_history">No focus sessions yet</string>
+    <string name="completed">Completed</string>
+    <string name="duration">Duration</string>
     <string name="failed_to_load_profile">Failed to load profile: %1$s</string>
     <string name="failed_to_update_profile">Failed to update profile: %1$s</string>
     <string name="failed_to_update_consent">Failed to update consent: %1$s</string>
@@ -55,7 +86,7 @@
 
     <!-- Weekly Usage Chart -->
     <string name="this_week">This week</string>
-    <string name="per_day_avg">%1$dm per day (avg)</string>
+    <string name="per_day_avg">%1$dm per day</string>
     <string name="minutes_format">%1$dm</string>
 
     <!-- Statistics Screen -->
@@ -127,4 +158,31 @@
     <string name="enter_otp">Enter OTP</string>
     <string name="verify">Verify</string>
     <string name="verifying">Verifying…</string>
+    
+    <!-- Widget -->
+    <string name="screen_time">Screen Time</string>
+    <string name="refresh">Refresh</string>
+    <string name="no_app_data_available">No app data available</string>
+    
+    <!-- Leaderboard -->
+    <string name="no_leaderboard_data_available">No leaderboard data available</string>
+    
+    <!-- Consent -->
+    <string name="no_consents_available">No consents available</string>
+    
+    <!-- Widget Setup -->
+    <string name="widget_setup_message">Please long-press on home screen and select Widgets to add Screen Time widget</string>
+    
+    <!-- Notification Permission Warning -->
+    <string name="notification_permission_required">Notification Permission Required</string>
+    <string name="notification_permission_warning_message">Please enable notification permission in settings to receive alerts and reminders</string>
+    <string name="enable">Enable</string>
+    
+    <!-- Username Editing -->
+    <string name="edit_username">Edit Username</string>
+    <string name="username">Username</string>
+    <string name="enter_username">Enter username</string>
+    <string name="save">Save</string>
+    <string name="failed_to_update_username">Failed to update username: %1$s</string>
+    <string name="username_already_taken">Username already taken. Please choose a different username.</string>
 </resources>

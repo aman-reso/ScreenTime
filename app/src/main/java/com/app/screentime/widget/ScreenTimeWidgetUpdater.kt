@@ -53,7 +53,7 @@ class ScreenTimeWidgetUpdater(private val context: Context) {
                 JSONObject().apply {
                     put("packageName", app.packageName)
                     put("appName", app.appName)
-                    put("usageTime", app.appScreenTime)
+                    put("totalUsageTime", app.appScreenTime) // Fixed: Changed from "usageTime" to "totalUsageTime"
                 }
             )
         }

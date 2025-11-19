@@ -10,7 +10,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import com.app.screentime.ui.theme.NeutralBlackDark
+import com.app.screentime.ui.theme.LocalAppColors
 
 /**
  * Reusable app card component with default styling
@@ -24,10 +24,11 @@ import com.app.screentime.ui.theme.NeutralBlackDark
 @Composable
 fun AppCard(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = NeutralBlackDark,
+    backgroundColor: Color = LocalAppColors.current?.card ?: Color.Unspecified,
     shape: Shape = RoundedCornerShape(12.dp),
     content: @Composable () -> Unit
 ) {
+    val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
             .clip(shape)

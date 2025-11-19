@@ -33,7 +33,7 @@ import androidx.compose.ui.res.stringResource
 import com.app.screentime.R
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.record.repository.toReadableDataSize
-import com.app.screentime.ui.theme.lightTextColor
+import com.app.screentime.ui.theme.LocalAppColors
 
 
 /**
@@ -43,18 +43,18 @@ import com.app.screentime.ui.theme.lightTextColor
  */
 @Composable
 fun LazyItemScope.AppUsageListUi(
-    appUsage: AppUsage, 
-    index: Int, 
+    appUsage: AppUsage,
+    index: Int,
     totalCount: Int,
     onClick: (() -> Unit)? = null
 ) {
     val shape = remember(index, totalCount) {
-        when {
-            index == 0 && totalCount == 1 -> RoundedCornerShape(12.dp) // Single item: all corners rounded
-            index == 0 -> RoundedCornerShape(
+        when (index) {
+            0 if totalCount == 1 -> RoundedCornerShape(12.dp) // Single item: all corners rounded
+            0 -> RoundedCornerShape(
                 topStart = 12.dp, topEnd = 12.dp
             ) // First item: top rounded
-            index == totalCount - 1 -> RoundedCornerShape(
+            totalCount - 1 -> RoundedCornerShape(
                 bottomStart = 12.dp, bottomEnd = 12.dp
             ) // Last item: bottom rounded
             else -> RoundedCornerShape(0.dp) // Middle items: no rounded corners
@@ -62,8 +62,8 @@ fun LazyItemScope.AppUsageListUi(
     }
 
     AppUsageCard(
-        appUsage = appUsage, 
-        modifier = Modifier.fillParentMaxWidth(), 
+        appUsage = appUsage,
+        modifier = Modifier.fillParentMaxWidth(),
         shape = shape,
         onClick = onClick
     )
@@ -75,11 +75,12 @@ fun LazyItemScope.AppUsageListUi(
  */
 @Composable
 fun AppUsageCard(
-    appUsage: AppUsage, 
-    modifier: Modifier = Modifier, 
+    appUsage: AppUsage,
+    modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(12.dp),
     onClick: (() -> Unit)? = null
 ) {
+    val colors = LocalAppColors.current ?: return
     AppUsageItemGlassyCard(
         modifier = modifier
             .fillMaxWidth()
@@ -99,19 +100,20 @@ fun AppUsageCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(30.dp)
-                    .clip(CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                AppIcon(
-                    appInfo = appUsage.applicationInfo, size = 28.dp
-                )
+            appUsage.applicationInfo?.let {
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AppIcon(
+                        appInfo = it, size = 28.dp
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+
             }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -122,30 +124,35 @@ fun AppUsageCard(
                         fontWeight = FontWeight.Bold
                     )
                 }
+                if (appUsage.wifiDataUsage >= 0 || appUsage.mobileDataUsage >= 0) {
 
-                Spacer(modifier = Modifier.padding(vertical = 2.dp))
+                    Spacer(modifier = Modifier.padding(vertical = 2.dp))
 
-                val totalDataUsage = remember(appUsage.wifiDataUsage, appUsage.mobileDataUsage) {
-                    appUsage.wifiDataUsage + appUsage.mobileDataUsage
-                }
-                val dataUsageText = remember(totalDataUsage) {
-                    if (totalDataUsage > 0) {
-                        totalDataUsage.toReadableDataSize()
-                    } else {
-                        null
+                    val totalDataUsage =
+                        remember(appUsage.wifiDataUsage, appUsage.mobileDataUsage) {
+                            appUsage.wifiDataUsage + appUsage.mobileDataUsage
+                        }
+                    val dataUsageText = remember(totalDataUsage) {
+                        if (totalDataUsage > 0) {
+                            totalDataUsage.toReadableDataSize()
+                        } else {
+                            null
+                        }
                     }
-                }
-                
-                if (dataUsageText != null) {
-                    AppText(
-                        text = dataUsageText, style = AppTextStyle.Label, color = Color(0xFF9E9E9E)
-                    )
-                } else {
-                    AppText(
-                        text = stringResource(R.string.zero_bytes),
-                        style = AppTextStyle.Label,
-                        color = lightTextColor
-                    )
+
+                    if (dataUsageText != null) {
+                        AppText(
+                            text = dataUsageText,
+                            style = AppTextStyle.Label,
+                            color = colors.textMuted
+                        )
+                    } else {
+                        AppText(
+                            text = stringResource(R.string.zero_bytes),
+                            style = AppTextStyle.Label,
+                            color = colors.textLight
+                        )
+                    }
                 }
             }
             appUsage.displayFormatScreenTime?.let {
@@ -163,18 +170,19 @@ private fun AppUsageItemGlassyCard(
     shape: Shape = RoundedCornerShape(12.dp),
     content: @Composable () -> Unit
 ) {
+    val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .innerShadow(shape, Shadow(12.dp))
+//            .innerShadow(shape, Shadow(12.dp))
             .clip(shape)
             .border(
                 1.dp,
                 Brush.linearGradient(
                     listOf(
-                        Color.White.copy(alpha = 0.45f),
-                        Color.White.copy(alpha = 0.05f)
+                        colors.textPrimary.copy(alpha = 0.45f),
+                        colors.textPrimary.copy(alpha = 0.05f)
                     )
                 ),
                 shape = shape

@@ -34,6 +34,7 @@ class ConsentViewModel @Inject constructor(
 
     /**
      * Load consents from API
+     * Note: We don't mark as displayed here - only when user dismisses or submits
      */
     fun loadConsents() {
         viewModelScope.launch {
@@ -46,6 +47,8 @@ class ConsentViewModel @Inject constructor(
                             consentItems = apiResponse.data
                         )
                     } else {
+                        // Even if API fails, we still show the sheet (with error message)
+                        // User can dismiss it, which will mark it as displayed
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             error = apiResponse.message ?: "Failed to load consents"
@@ -53,6 +56,8 @@ class ConsentViewModel @Inject constructor(
                     }
                 },
                 onFailure = { exception ->
+                    // Even if loading fails, we still show the sheet (with error message)
+                    // User can dismiss it, which will mark it as displayed
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = exception.message ?: "Failed to load consents"
@@ -90,14 +95,14 @@ class ConsentViewModel @Inject constructor(
             }
 
             val request = ConsentSubmissionRequest(
-                deviceId = deviceId,
                 consents = submissionItems
             )
 
             consentUseCase.submitConsents(request).fold(
                 onSuccess = { apiResponse ->
+                    // Mark as displayed regardless of success or failure
+                    preferencesUseCase.markConsentSheetShown()
                     if (apiResponse.success == true) {
-                        preferencesUseCase.markConsentSheetShown()
                         _uiState.value = _uiState.value.copy(
                             isSubmitting = false,
                             isSubmitted = true,
@@ -106,13 +111,17 @@ class ConsentViewModel @Inject constructor(
                     } else {
                         _uiState.value = _uiState.value.copy(
                             isSubmitting = false,
+                            isSubmitted = true, // Still mark as submitted even if API failed
                             error = apiResponse.message ?: "Failed to submit consents"
                         )
                     }
                 },
                 onFailure = { exception ->
+                    // Mark as displayed even on failure
+                    preferencesUseCase.markConsentSheetShown()
                     _uiState.value = _uiState.value.copy(
                         isSubmitting = false,
+                        isSubmitted = true, // Mark as submitted even on failure
                         error = exception.message ?: "Failed to submit consents"
                     )
                 }

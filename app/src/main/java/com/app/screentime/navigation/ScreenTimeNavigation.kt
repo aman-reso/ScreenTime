@@ -1,5 +1,6 @@
 package com.app.screentime.navigation
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,14 +31,21 @@ import com.app.screentime.record.screen.RecordDetailScreen
 import com.app.screentime.search.screen.SearchScreen
 import com.app.screentime.profile.screen.ProfileScreen
 import com.app.screentime.statistics.screen.StatisticsScreen
+import com.app.screentime.focus.screen.FocusModeScreen
+import com.app.screentime.blocking.screen.AppBlockingScreen
+import com.app.screentime.blocking.screen.BlockedLinksScreen
+import com.app.screentime.leaderboard.screen.LeaderboardScreen
 import com.app.screentime.ui.atom.AppPermissionCard
 import com.app.screentime.ui.bottomnavigation.AppBottomNavigation
 import com.app.screentime.ui.bottomnavigation.NavigationItem
+import com.app.screentime.ui.theme.LocalAppColors
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ScreenTimeNavigation(
     navController: NavHostController = rememberNavController()
 ) {
+    val appColors = LocalAppColors.current ?: return
     // Define bottom navigation items
     val navigationItems = listOf(
         NavigationItem(
@@ -52,6 +60,13 @@ fun ScreenTimeNavigation(
             icon = Icons.Default.BarChart,
             selectedIcon = Icons.Default.Analytics,
             route = Screen.Statistics.route,
+            badge = null
+        ),
+        NavigationItem(
+            label = "Focus",
+            icon = Icons.Default.Timer,
+            selectedIcon = Icons.Default.Timer,
+            route = Screen.FocusMode.route,
             badge = null
         ),
         NavigationItem(
@@ -76,39 +91,44 @@ fun ScreenTimeNavigation(
             restoreState = true
         }
     }
-    Scaffold(topBar = {
+    Scaffold(
+        containerColor = appColors.background,
+        topBar = {
 
-    }, bottomBar = {
-        if (currentRoute in listOf(
-                Screen.Landing.route,
-                Screen.Statistics.route,
-                Screen.Profile.route
-            )
-        ) {
-            Box(
-                modifier = Modifier.wrapContentHeight(),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                AppBottomNavigation(
-                    items = navigationItems,
-                    selectedRoute = currentRoute,
-                    onItemClick = navigateToItem
+        }, bottomBar = {
+            if (currentRoute in listOf(
+                    Screen.Landing.route,
+                    Screen.Statistics.route,
+                    Screen.Profile.route,
+                    Screen.FocusMode.route,
                 )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .wrapContentHeight(),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    AppBottomNavigation(
+                        items = navigationItems,
+                        selectedRoute = currentRoute,
+                        onItemClick = navigateToItem,
+                    )
+                }
             }
-        }
-    }, modifier = Modifier.fillMaxSize()) {
+        }, modifier = Modifier.fillMaxSize()
+    ) { paddingValues ->
         NavHost(
             modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding()
-                .padding(it),
+                .fillMaxSize(),
             navController = navController,
             startDestination = Screen.Permission.route
         ) {
             composable(Screen.Landing.route) {
                 LandingScreen(
                     modifier = Modifier
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
                     navController = navController,
                     openSearchScreen = {
                         navigateToItem.invoke(Screen.Search.route)
@@ -117,17 +137,69 @@ fun ScreenTimeNavigation(
             }
 
             composable(Screen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
+                    navController = navController
+                )
             }
 
             composable(Screen.Statistics.route) {
                 StatisticsScreen(
+                    modifier = Modifier
+                        .background(appColors.background)
+                        .padding(bottom = paddingValues.calculateBottomPadding()),
+                    navController = navController
+                )
+            }
+
+            composable(Screen.FocusMode.route) {
+                FocusModeScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background)
+                )
+            }
+
+            composable(Screen.AppBlocking.route) {
+                AppBlockingScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
+                    navController = navController
+                )
+            }
+
+            composable(Screen.Leaderboard.route) {
+                LeaderboardScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
+                    navController = navController
+                )
+            }
+
+            composable(Screen.BlockedLinks.route) {
+                BlockedLinksScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
                     navController = navController
                 )
             }
 
             composable(Screen.Search.route) {
                 SearchScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
                     navController = navController
                 )
             }
@@ -135,6 +207,10 @@ fun ScreenTimeNavigation(
             composable(Screen.RecordDetail.route) { backStackEntry ->
                 val username = backStackEntry.arguments?.getString("username") ?: "test-user"
                 RecordDetailScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
                     navController = navController,
                     username = username
                 )
@@ -154,14 +230,19 @@ fun ScreenTimeNavigation(
                 )
             }
             composable(Screen.Permission.route) {
-                AppPermissionCard(onAllPermissionsGranted = {
-                    navController.navigate(Screen.Landing.route) {
-                        popUpTo(Screen.Permission.route) {
-                            inclusive = true
+                AppPermissionCard(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
+                    onAllPermissionsGranted = {
+                        navController.navigate(Screen.Landing.route) {
+                            popUpTo(Screen.Permission.route) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
                         }
-                        launchSingleTop = true
-                    }
-                })
+                    })
             }
         }
     }

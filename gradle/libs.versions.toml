@@ -1,5 +1,7 @@
 [versions]
-coreSplashscreen = "1.0.1"
+constraintlayoutCompose = "1.0.1"
+constraintlayoutComposeVersion = "1.1.1"
+coreSplashscreen = "1.2.0"
 security-crypto = "1.1.0"
 agp = "8.13.0"
 hiltNavigationCompose = "1.3.0"
@@ -10,18 +12,18 @@ junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
-composeBom = "2025.10.01"
+composeBom = "2025.11.00"
 hilt = "2.57.2"
 room = "2.8.3"
 materialIcons = "1.7.8"
-material3 = "1.5.0-alpha07"
-navigation = "2.9.5"
-nav3Core = "1.0.0-beta01"
+material3 = "1.5.0-alpha08"
+navigation = "2.9.6"
+nav3Core = "1.0.0-rc01"
 lifecycleViewmodelNav3 = "2.10.0-beta01"
 kotlinSerialization = "2.2.21"
 kotlinxSerializationCore = "1.9.0"
-material3AdaptiveNav3 = "1.3.0-alpha02"
-navigationRuntimeKtx = "2.9.5"
+material3AdaptiveNav3 = "1.3.0-alpha03"
+navigationRuntimeKtx = "2.9.6"
 jodaTime = "2.14.0"
 ktor = "3.3.1"
 hiltCommonVersion = "1.3.0"
@@ -32,14 +34,15 @@ glance = "1.1.1"
 uiGraphics = "1.9.4"
 datastore-preferences = "1.1.7"
 google-services = "4.4.4"
-firebase-crashlytics-plugin = "3.0.2"
-firebase-bom = "33.7.0"
-play-services-ads = "23.5.0"
+firebase-crashlytics-plugin = "3.0.6"
+firebase-bom = "34.5.0"
 
 [libraries]
+androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutComposeVersion" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 startup-android = { module = "androidx.startup:startup-runtime", version.ref = "startupAndroid" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
@@ -103,7 +106,8 @@ datastore-preferences = { group = "androidx.datastore", name = "datastore-prefer
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
-firebase-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "play-services-ads" }
+firebase-config = { group = "com.google.firebase", name = "firebase-config" }
+
 
 
 [plugins]

@@ -1,173 +1,460 @@
 package com.app.screentime.service
 
-import android.app.Service
+import android.app.*
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.VpnService
-import android.os.Binder
-import android.os.IBinder
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import com.app.screentime.blocker.AppBlockManager
-import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.SocketAddress
-import java.net.SocketException
-import java.nio.channels.DatagramChannel
+import androidx.core.app.NotificationCompat
+import com.app.screentime.R
+import com.app.screentime.database.ScreenTimeDatabase
+import com.app.screentime.database.repository.BlockedLinkRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.io.*
+import java.net.*
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
-/**
- * A VPN service that manages internet access by blocking specified apps.
- */
+
 class ScreenTimeVpnService : VpnService() {
-    companion object {
-        private const val TAG = "ScreenTime.VpnService"
+
+    private var vpnInterface: ParcelFileDescriptor? = null
+    private val TAG = "ScreenTimeVpn"
+
+    @Volatile
+    private var isRunning = false
+    private var packetHandlerThread: Thread? = null
+
+    // ✅ Blocklist (safe & smart) - Default domains
+    private val defaultBlockedDomains = setOf(
+        // Social & entertainment
+        "facebook.com", "www.facebook.com",
+        "instagram.com", "www.instagram.com",
+        "tiktok.com", "www.tiktok.com",
+        "snapchat.com", "www.snapchat.com",
+        "twitter.com", "x.com", "www.twitter.com",
+        "m.facebook.com",
+        "googleads.g.doubleclick.net",
+        // DNS-over-HTTPS (DoH) providers
+//        "dns.google",
+        "cloudflare-dns.com",
+        "mozilla.cloudflare-dns.com",
+        "one.one.one.one",
+        "security.cloudflare-dns.com",
+        "quad9.net",
+        "dns.quad9.net",
+        "dns.nextdns.io",
+        "ad.doubleclick.net",
+        "rr5---sn-gwpa-pmfe.googlevideo.com",
+        "www.googleadservices.com"
+    ).map { it.lowercase() }.toSet()
+
+    // Blocked domains from Room database (updated dynamically)
+    private val blockedDomainsFromDb = AtomicReference<Set<String>>(emptySet())
+
+    private val blockedLinkRepository by lazy {
+        val database = ScreenTimeDatabase.getDatabase(applicationContext)
+        BlockedLinkRepository(database.blockedLinkDao())
     }
 
-    private val mBinder = ServiceBinder(this@ScreenTimeVpnService)
-    private val mAtomicVpnThread = AtomicReference<Thread?>(null)
-    private var mVpnInterface: ParcelFileDescriptor? = null
-    private var mIsServiceRunning = false
+    // ✅ Common DoH IPs — for TCP blocking
+    private val dohIps = setOf(
+        "8.8.8.8", "8.8.4.4",         // Google DoH
+        "1.1.1.1", "1.0.0.1",         // Cloudflare
+        "9.9.9.9", "149.112.112.112"  // Quad9
+    )
+
+    private val realDnsServer = InetAddress.getByName("8.8.8.8")
+    private val tunIp = "10.0.0.2"
+    private val executor = Executors.newCachedThreadPool()
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    companion object {
+        const val NOTIFICATION_ID = 1
+        const val CHANNEL_ID = "screentime_vpn"
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ServiceBinder.ACTION_START_MINDFUL_SERVICE) {
-            startFgService()
-            return START_STICKY
-        }
+        // Check if this is a stop request
+        if (intent?.getBooleanExtra("stop", false) == true) {
+            stopVpn()
+            stopSelf()
+        } else {
+            if (isRunning) {
+                Log.d(TAG, "VPN already running, ignoring start request")
+                return START_NOT_STICKY
+            }
 
-        stopAndDisposeService()
+            createNotificationChannel()
+            loadBlockedLinks()
+            startForeground(NOTIFICATION_ID, createNotification())
+            startVpn()
+        }
         return START_NOT_STICKY
     }
 
-    private fun startFgService() {
-        if (mIsServiceRunning) return
-        try {
-            mIsServiceRunning = true
-            Log.d(TAG, "startFgService: VPN service started successfully")
-        } catch (e: Exception) {
-            Log.e(TAG, "startFgService: Failed to start VPN service", e)
-            stopAndDisposeService()
-        }
-    }
-
-    /**
-     * Restarts the VPN connection by disconnecting and then reconnecting the VPN.
-     */
-    private fun reconnectVpn() {
-        disconnectVpn()
-        connectVpn()
-        Log.d(TAG, "reconnectVpn: VPN reconnected successfully")
-    }
-
-    /**
-     * Establishes a VPN connection based on blocked apps.
-     * If there are no blocked apps, the service will stop itself.
-     */
-    private fun connectVpn() {
-        val blockedApps = AppBlockManager.getBlockedApps()
-        if (blockedApps.isEmpty()) {
-            Log.w(TAG, "connectVpn: Tried to Connect Vpn without any blocked apps, Exiting")
-            stopAndDisposeService()
+    // ---------------- VPN setup -----------------
+    private fun startVpn() {
+        if (isRunning) {
+            Log.w(TAG, "VPN already running")
             return
         }
 
-        val newThread = Thread(vpnThread, TAG)
-        setVpnThread(newThread)
-        newThread.start()
+        isRunning = true
+        val builder = Builder()
+            .setSession("ScreenTime Blocker")
+            .addAddress(tunIp, 32)
+            .addDnsServer(realDnsServer.hostAddress)
+            // ✅ Only capture DNS traffic, not all traffic
+            .addRoute(realDnsServer.hostAddress, 32)
+            .setMtu(1500)
+
+        vpnInterface = builder.establish()
+        if (vpnInterface == null) {
+            Log.e(TAG, "Failed to establish VPN")
+            isRunning = false
+            stopSelf()
+            return
+        }
+
+        Log.d(TAG, "VPN established")
+        val input = FileInputStream(vpnInterface!!.fileDescriptor).channel
+        val output = FileOutputStream(vpnInterface!!.fileDescriptor).channel
+        val buffer = ByteBuffer.allocate(32767)
+
+        packetHandlerThread = Thread { handlePackets(input, output, buffer) }
+        packetHandlerThread?.start()
     }
 
-    /**
-     * Disconnects the VPN connection if established.
-     */
-    private fun disconnectVpn() {
+    // ---------------- VPN stop -----------------
+    private fun stopVpn() {
+        Log.d(TAG, "Stopping VPN service")
+        isRunning = false
+        vpnInterface?.close()
+        vpnInterface = null
+        packetHandlerThread?.interrupt()
+        packetHandlerThread = null
+        stopForeground(STOP_FOREGROUND_REMOVE)
+
+        Log.d(TAG, "VPN service stopped")
+    }
+
+    private fun handlePackets(input: FileChannel, output: FileChannel, buffer: ByteBuffer) {
         try {
-            mVpnInterface?.close()
-            setVpnThread(null)
-            Log.d(TAG, "disconnectVpn: VPN disconnected successfully")
-        } catch (e: IOException) {
-            Log.e(TAG, "disconnectVpn: Failed to disconnect VPN", e)
+            while (isRunning) {
+                try {
+                    buffer.clear()
+                    val length = input.read(buffer)
+                    if (length > 0 && isRunning) {
+                        buffer.flip()
+                        processPacket(buffer, length, output)
+                    } else if (length < 0) {
+                        // EOF reached, VPN interface closed
+                        Log.d(TAG, "VPN interface closed (EOF)")
+                        break
+                    }
+                } catch (e: java.io.IOException) {
+                    if (isRunning) {
+                        Log.e(TAG, "Error reading from VPN interface", e)
+                    }
+                    break
+                }
+            }
+        } catch (e: Exception) {
+            if (isRunning) {
+                Log.e(TAG, "VPN loop error", e)
+            }
+        } finally {
+            Log.d(TAG, "Packet handler thread exiting")
+            isRunning = false
+            vpnInterface?.close()
         }
     }
 
-    /**
-     * Stops the foreground service and disconnects the VPN.
-     */
-    private fun stopAndDisposeService() {
-        disconnectVpn()
-        stopSelf()
+    // ---------------- Packet processing -----------------
+    private fun processPacket(packet: ByteBuffer, length: Int, output: FileChannel) {
+        if (length < 20) return
+        packet.position(0)
+        val versionIhl = packet.get().toInt() and 0xFF
+        if ((versionIhl shr 4) != 4) return // only IPv4
+
+        val ihl = versionIhl and 0x0F
+        val ipHeaderLen = ihl * 4
+        packet.position(9)
+        val protocol = packet.get().toInt() and 0xFF
+
+        packet.position(12)
+        val srcIp = readIp(packet)
+        packet.position(16)
+        val destIp = readIp(packet)
+
+        // 🚫 Block known DoH TCP endpoints
+        if (protocol == 6 && dohIps.contains(destIp)) {
+            Log.d(TAG, "🚫 Blocking TCP connection to DoH IP: $destIp")
+            return
+        }
+
+        if (protocol != 17) return // only UDP
+
+        packet.position(ipHeaderLen)
+        val srcPort = packet.short.toUShort().toInt()
+        val destPort = packet.short.toUShort().toInt()
+        val udpLen = packet.short.toUShort().toInt()
+
+        if (destPort != 53) return // only DNS
+
+        val udpPayloadStart = ipHeaderLen + 8
+        packet.position(udpPayloadStart)
+        val udpPayloadLen = udpLen - 8
+        if (udpPayloadLen < 12 || packet.remaining() < udpPayloadLen) return
+
+        val udpPayload = ByteArray(udpPayloadLen)
+        packet.get(udpPayload)
+
+        val dnsBuffer = ByteBuffer.wrap(udpPayload)
+        val (domain, nameLen, dnsId) = extractDnsDomain(dnsBuffer)
+        if (domain.isNullOrEmpty()) return
+
+        if (isBlocked(domain.lowercase())) {
+            Log.d(TAG, "❌ Blocked DNS query: $domain")
+            // Track blocked site in Room database
+            serviceScope.launch {
+                blockedLinkRepository.trackBlockedLink(domain.lowercase())
+            }
+            val questionBytes = ByteArray(nameLen + 4)
+            dnsBuffer.position(12)
+            dnsBuffer.get(questionBytes)
+            craftAndSendBlockedDnsResponse(dnsId, questionBytes, srcIp, srcPort, output)
+        } else {
+            Log.d(TAG, "✅ Allowing DNS query: $domain")
+            forwardDnsAsync(udpPayload, srcIp, srcPort, output)
+        }
+    }
+
+    // ---------------- DNS helper methods -----------------
+    private fun extractDnsDomain(buffer: ByteBuffer): Triple<String?, Int, Int> {
+        if (buffer.remaining() < 12) return Triple(null, 0, 0)
+        buffer.position(0)
+        val dnsId = buffer.short.toInt() and 0xFFFF
+        buffer.position(12)
+        val sb = StringBuilder()
+        var totalLen = 0
+        try {
+            while (buffer.hasRemaining()) {
+                val len = buffer.get().toInt() and 0xFF
+                totalLen++
+                if (len == 0) break
+                if (len > 63 || buffer.remaining() < len) return Triple(null, 0, dnsId)
+                repeat(len) { sb.append(buffer.get().toInt().toChar()) }
+                sb.append('.')
+                totalLen += len
+            }
+        } catch (e: Exception) {
+            return Triple(null, 0, dnsId)
+        }
+        return Triple(sb.trimEnd('.').toString(), totalLen, dnsId)
+    }
+
+    private fun isBlocked(domain: String): Boolean {
+        // Check default domains
+        if (defaultBlockedDomains.any { domain == it || domain.endsWith(".$it") }) {
+            return true
+        }
+        // Check domains from Room database
+        val dbDomains = blockedDomainsFromDb.get()
+        return dbDomains.any { domain == it || domain.endsWith(".$it") }
     }
 
     /**
-     * Returns a Runnable that configures and establishes the VPN connection.
+     * Load blocked links from Room database
      */
-    private val vpnThread: Runnable
-        get() = Runnable {
+    private fun loadBlockedLinks() {
+        serviceScope.launch {
             try {
-                DatagramChannel.open().use { tunnel ->
-                    check(this@ScreenTimeVpnService.protect(tunnel.socket())) { "Cannot protect the vpn socket tunnel" }
-                    val serverAddress: SocketAddress = InetSocketAddress("localhost", 0)
-                    tunnel.connect(serverAddress)
-                    tunnel.configureBlocking(false)
-
-                    val builder = this@ScreenTimeVpnService.Builder()
-                    builder.addAddress("192.168.0.0", 24)
-                    builder.addRoute("0.0.0.0", 0)
-
-                    // Add blocked app's packages
-                    for (packageName in AppBlockManager.getBlockedApps()) {
-                        try {
-                            builder.addDisallowedApplication(packageName)
-                        } catch (e: PackageManager.NameNotFoundException) {
-                            Log.w(TAG, "getVpnThread: Cannot find app with package $packageName")
-                        }
-                    }
-                    synchronized(this@ScreenTimeVpnService) {
-                        mVpnInterface = builder.establish()
-                        Log.d(TAG, "getVpnThread: VPN connected successfully")
-                    }
-                }
-            } catch (e: SocketException) {
-                Log.e(TAG, "getVpnThread: Cannot use socket for VPN", e)
-                stopAndDisposeService()
-            } catch (e: IOException) {
-                Log.e(TAG, "getVpnThread: VPN connection failed, exiting", e)
-                stopAndDisposeService()
-            } catch (e: IllegalArgumentException) {
-                Log.e(TAG, "getVpnThread: VPN connection failed, exiting", e)
-                stopAndDisposeService()
+                val links = blockedLinkRepository.getAllBlockedLinkStrings()
+                blockedDomainsFromDb.set(links.toSet())
+                Log.d(TAG, "Loaded ${links.size} blocked links from database")
             } catch (e: Exception) {
-                Log.e(TAG, "getVpnThread: Something went wrong", e)
-                stopAndDisposeService()
+                Log.e(TAG, "Error loading blocked links", e)
             }
         }
+    }
 
     /**
-     * Sets the current VPN thread, interrupting the previous thread if necessary.
+     * Reload blocked links (call this when links are added/removed)
      */
-    private fun setVpnThread(thread: Thread?) {
-        val oldThread = mAtomicVpnThread.getAndSet(thread)
-        oldThread?.interrupt()
+    fun reloadBlockedLinks() {
+        loadBlockedLinks()
+    }
+
+    // ---------------- DNS forwarding -----------------
+    private fun forwardDnsAsync(
+        udpPayload: ByteArray,
+        srcIp: String,
+        srcPort: Int,
+        output: FileChannel
+    ) {
+        executor.execute {
+            try {
+                DatagramSocket().use { socket ->
+                    protect(socket)
+                    socket.soTimeout = 5000
+                    val destAddr = InetSocketAddress(realDnsServer, 53)
+                    socket.send(DatagramPacket(udpPayload, udpPayload.size, destAddr))
+
+                    val recvBuf = ByteArray(512)
+                    val recvPacket = DatagramPacket(recvBuf, recvBuf.size)
+                    socket.receive(recvPacket)
+                    val resp = recvPacket.data.copyOf(recvPacket.length)
+
+                    sendUdpResponse(resp, realDnsServer.hostAddress, srcIp, 53, srcPort, output)
+                }
+            } catch (e: SocketTimeoutException) {
+                Log.w(TAG, "DNS timeout")
+            } catch (e: Exception) {
+                Log.e(TAG, "DNS forward error", e)
+            }
+        }
+    }
+
+    // ---------------- Craft blocked DNS response -----------------
+    private fun craftAndSendBlockedDnsResponse(
+        dnsId: Int,
+        question: ByteArray,
+        srcIp: String,
+        srcPort: Int,
+        output: FileChannel
+    ) {
+        val resp = ByteBuffer.allocate(512)
+        resp.putShort(dnsId.toShort())
+        resp.putShort(0x8180.toShort()) // standard response
+        resp.putShort(1) // QDCOUNT
+        resp.putShort(1) // ANCOUNT
+        resp.putShort(0)
+        resp.putShort(0)
+        resp.put(question)
+        resp.putShort(0xc00c.toShort())
+        resp.putShort(1.toShort())
+        resp.putShort(1.toShort())
+        resp.putInt(300)
+        resp.putShort(4.toShort())
+        resp.putInt(0) // 0.0.0.0
+        resp.flip()
+        val data = ByteArray(resp.remaining())
+        resp.get(data)
+        sendUdpResponse(data, realDnsServer.hostAddress, srcIp, 53, srcPort, output)
+        Log.d(TAG, "Sent fake DNS response for blocked domain to $srcIp:$srcPort")
+    }
+
+    // ---------------- UDP/IP packet builder -----------------
+    private fun sendUdpResponse(
+        udpPayload: ByteArray,
+        srcIp: String,
+        destIp: String,
+        srcPort: Int,
+        destPort: Int,
+        output: FileChannel
+    ) {
+        val udpLen = 8 + udpPayload.size
+        val ipLen = 20 + udpLen
+        val packet = ByteBuffer.allocate(ipLen)
+
+        packet.put(0x45.toByte())
+        packet.put(0)
+        packet.putShort(ipLen.toShort())
+        packet.putShort(0)
+        packet.putShort(0)
+        packet.put(64.toByte())
+        packet.put(17.toByte())
+        packet.putShort(0)
+        packet.put(InetAddress.getByName(srcIp).address)
+        packet.put(InetAddress.getByName(destIp).address)
+
+        packet.putShort(srcPort.toShort())
+        packet.putShort(destPort.toShort())
+        packet.putShort(udpLen.toShort())
+        packet.putShort(0)
+        packet.put(udpPayload)
+        packet.flip()
+
+        val header = ByteArray(20)
+        packet.position(0)
+        packet.get(header, 0, 20)
+        val checksum = computeChecksum(header)
+        packet.putShort(10, checksum)
+
+        packet.position(0)
+        synchronized(output) {
+            output.write(packet)
+        }
+    }
+
+    private fun computeChecksum(data: ByteArray): Short {
+        var sum = 0
+        var i = 0
+        while (i < data.size - 1) {
+            val word = ((data[i].toInt() and 0xFF) shl 8) + (data[i + 1].toInt() and 0xFF)
+            sum += word
+            if (sum > 0xFFFF) sum = (sum and 0xFFFF) + 1
+            i += 2
+        }
+        if (data.size % 2 != 0) {
+            val last = (data[data.size - 1].toInt() and 0xFF) shl 8
+            sum += last
+            if (sum > 0xFFFF) sum = (sum and 0xFFFF) + 1
+        }
+        return (sum.inv() and 0xFFFF).toShort()
+    }
+
+    private fun readIp(buf: ByteBuffer): String {
+        val b = ByteArray(4)
+        buf.get(b)
+        return "${b[0].toUByte()}.${b[1].toUByte()}.${b[2].toUByte()}.${b[3].toUByte()}"
+    }
+
+    // ---------------- Notification -----------------
+    private fun createNotification(): Notification =
+        NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("ScreenTime Active")
+            .setContentText("Blocking ${blockedDomainsFromDb.get().size} domains")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setOngoing(true)
+            .build()
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID, "ScreenTime VPN",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        }
     }
 
     override fun onDestroy() {
-        disconnectVpn()
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        Log.d(TAG, "onDestroy: VPN service destroyed successfully")
+        Log.d(TAG, "onDestroy called")
+        stopVpn()
+        executor.shutdown()
+        try {
+            if (!executor.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                executor.shutdownNow()
+            }
+        } catch (e: InterruptedException) {
+            executor.shutdownNow()
+            Thread.currentThread().interrupt()
+        }
+        // Optionally clear blocked sites when VPN is stopped
+        // BlockedSitesManager.clearBlockedSites(this)
         super.onDestroy()
     }
-
-    override fun onBind(intent: Intent): IBinder? {
-        return if (intent.action == ServiceBinder.ACTION_BIND_TO_MINDFUL) mBinder else null
-    }
 }
 
-/**
- * ServiceBinder is a generic binder class used to provide a reference to a service.
- * It allows the client to retrieve the service instance that is bound to it.
- */
-class ServiceBinder<T : Service?>(val service: T) : Binder() {
-    companion object {
-        const val ACTION_START_MINDFUL_SERVICE: String = "com.app.screentime.action.startMindfulService"
-        const val ACTION_BIND_TO_MINDFUL: String = "com.app.screentime.action.bindToMindful"
-    }
-}
+
+

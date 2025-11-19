@@ -1,73 +1,115 @@
 package com.app.screentime.ui.theme
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// ==================== SURFACE / BACKGROUND ====================
 
-val DarkBackground = Color(0xFF0D1117)
-val HeaderColor = Color(0xFF161B22)
-val CardColor = Color(0xFF1F242C)
-val PrimaryBlue = Color(0xFF8AB4F8)
-val PrimaryBlueVariant = Color(0xFF4A90E2)
-val TealAccent = Color(0xFF03DAC6)
-val TitleTextColor = Color(0xFFFFFFFF)
-val SubtitleTextColor = Color(0xFFB0BEC5)
-val BodyTextColor = Color(0xFFE0E0E0)
-val MutedTextColor = Color(0xFF9E9E9E)
-val DividerColor = Color(0xFF2C2C2C)
-val ErrorColor = Color(0xFFFF6B6B)
-val ButtonBackground = Color(0xFF1E88E5)
-val ButtonText = Color(0xFFFFFFFF)
+val LightBackground = Color(0xFFFFFFFF)
+val DarkBackground = Color(0xFF0E161E)
 
-// App-specific color scheme (used in both light and dark mode)
-val NeutralBlackDark = Color(0xFF0E161E)   // Neutral/black/Dark background
-val NeutralWhiteLight = Color(0xFFFFFFFF)    // Neutral/White/Light text
-val PrimaryGreen = Color(0xFF28AE60)
-val cardBackground = Color(0xFF1E1E2D)
-val ErrorRed = Color(0xFFDC4453)
+val LightCard = Color(0xFFF5F5F5)
+val DarkCard = Color(0xFF1F242C)
+
+// ==================== TEXT COLORS ====================
+
+val LightTextPrimary = Color(0xFF0E161E)
+val DarkTextPrimary = Color(0xFFFFFFFF)
+
+val LightTextSecondary = Color(0xFF1C1C1C)
+val DarkTextSecondary = Color(0xFFE0E0E0)
+
+val LightTextMuted = Color(0xFF777777)
+val DarkTextMuted = Color(0xFF9E9E9E)
+
+val LightTextLight = Color(0xFF5E6871)
+val DarkTextLight = Color(0xFF9BA4B0)
+
+val LightTextHint = Color(0xFF79869B)
+val DarkTextHint = Color(0xFF8B949E)
+
+// ==================== BRAND / ACCENT ====================
+
+val LightPrimary = Color(0xFF28AE60)
+val DarkPrimary = Color(0xFF42C77A)
+
+val LightError = Color(0xFFDC4453)
+val DarkError = Color(0xFFCF6679)
+
+val LightBorder = Color(0x1A000000)
+val DarkBorder = Color(0x29FFFFFF)
+
+// Icon tint colors
+val LightTint = Color(0xFF0E161E) // Same as textPrimary for light mode
+val DarkTint = Color(0xFFFFFFFF) // Same as textPrimary for dark mode
+
+// Special accent colors (same for light and dark)
 val KakaoYellow = Color(0xFFB8ED55)
-val borderColor = Color(0x29FFEFEF)
 
-// Base dark colors
-val DarkSurface = Color(0xFF161B22)          // Slightly lighter card background
-val DarkSurfaceVariant = Color(0xFF1E242C)   // Used for secondary surfaces
-val DarkPrimary = Color(0xFF8AB4F8)          // Calm blue accent
-val DarkSecondary = Color(0xFF58A6FF)        // Bright cyan-blue for buttons/links
-val DarkTertiary = Color(0xFFBB86FC)         // Purple tone for highlights
-val DarkError = Color(0xFFCF6679)            // Soft red
-val DarkOutline = Color(0xFF30363D)          // Border lines
-val DarkOnPrimary = Color(0xFF0A0C10)        // Text on blue buttons
-val DarkOnBackground = Color(0xFFE6EDF3)     // Primary text
-val DarkOnSurface = Color(0xFFDCE3EA)        // Secondary text
-val DarkOnSurfaceVariant = Color(0xFF9BA4B0) // Muted text
-val DarkInverseSurface = Color(0xFFE6EDF3)
-val DarkInverseOnSurface = Color(0xFF0D1117)
-val DarkInversePrimary = Color(0xFF4799EB)
+// ==================== COMPOSABLE HELPERS ====================
 
-// 🖤 Primary (Black Shades)
-val Primary100 = Color(0xFF0E151E) // Black 100%
-val Primary80 = Color(0xFF818181) // Black 80%
-val Primary50 = Color(0xFFB0B2B4) // Black 50%
-val Primary30 = Color(0xFFD9D9D9) // Black 30%
-val Primary10 = Color(0xFFF4F4F4) // Black 10%
+@Composable
+fun appColor(light: Color, dark: Color): Color {
+    val useDarkTheme = LocalThemeMode.current
+    return if (useDarkTheme) dark else light
+}
 
-// 💚 Green Shades
-val Green100 = Color(0xFF034B25) // Green 100%
-val Green80 = Color(0xFF35650F) // Green 80%
-val Green50 = Color(0xFF4A8E14) // Green 50%
-val Green30 = Color(0xFF97D700) // Green 30%
-val Green10 = Color(0xFFE6EDE9) // Green 10%
+// Commonly used adaptive colors
+@Composable
+fun backgroundColor() = appColor(LightBackground, DarkBackground)
+@Composable
+fun cardColor() = appColor(LightCard, DarkCard)
+@Composable
+fun textPrimaryColor() = appColor(LightTextPrimary, DarkTextPrimary)
+@Composable
+fun textSecondaryColor() = appColor(LightTextSecondary, DarkTextSecondary)
+@Composable
+fun textMutedColor() = appColor(LightTextMuted, DarkTextMuted)
+@Composable
+fun textLightColor() = appColor(LightTextLight, DarkTextLight)
+@Composable
+fun textHintColor() = appColor(LightTextHint, DarkTextHint)
+@Composable
+fun primaryColor() = appColor(LightPrimary, DarkPrimary)
+@Composable
+fun errorColor() = appColor(LightError, DarkError)
+@Composable
+fun borderColor() = appColor(LightBorder, DarkBorder)
+@Composable
+fun tintColor() = appColor(LightTint, DarkTint)
 
-// ❤️ Red Shades
-val Red100 = Color(0xFFDA4343) // Red 100%
-val Red80 = Color(0xFFE16969) // Red 80%
-val Red50 = Color(0xFFECA1A1) // Red 50%
-val Red30 = Color(0xFFF8D9D9) // Red 30%
-val Red10 = Color(0xFFFBECEC) // Red 10%
-val lightTextColor = Color(0xFF79869B)
-val hintTextColor = Color(0xFF5e6871)
+// ==================== APP COLOR MODEL ====================
 
-// Primary/Green
+data class AppColors(
+    val background: Color,
+    val card: Color,
+    val textPrimary: Color,
+    val textSecondary: Color,
+    val textMuted: Color,
+    val textLight: Color,
+    val textHint: Color,
+    val border: Color,
+    val success: Color,
+    val error: Color,
+    val accent: Color, // KakaoYellow or other accent color
+    val tint: Color, // Icon tint color
+    // Rank colors (for leaderboard)
+    val rankGold: Color = success.copy(alpha = 0.9f), // Use success color as gold
+    val rankSilver: Color = textMuted, // Use muted color as silver
+    val rankBronze: Color = error.copy(alpha = 0.7f), // Use error color as bronze
+    // Text on colored backgrounds
+    val textOnPrimary: Color = textPrimary, // Text color on primary/success background
+    // Chart colors palette
+    val chartColors: List<Color> = listOf(
+        success,
+        accent,
+        error.copy(alpha = 0.8f),
+        textSecondary.copy(alpha = 0.6f),
+        textMuted.copy(alpha = 0.8f)
+    )
+)
+
+val LocalAppColors = staticCompositionLocalOf<AppColors?> { null }
+

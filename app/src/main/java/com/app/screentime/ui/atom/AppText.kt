@@ -9,11 +9,13 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.app.screentime.R
 import com.app.screentime.ui.theme.InterFontFamily
+import com.app.screentime.ui.theme.LocalAppColors
 
 enum class AppTextStyle {
     Body, Title, Footnote, Label, SubTitle
@@ -24,16 +26,16 @@ fun AppText(
     modifier: Modifier = Modifier,
     text: String,
     style: AppTextStyle = AppTextStyle.Body,
-    color: Color = Color(0xFFFFFFFF),
+    color: Color = LocalAppColors.current?.textPrimary ?: Color.Unspecified,
     textAlign: TextAlign? = null,
     fontSize: TextUnit? = null,
     lineHeight: TextUnit? = null,
     fontWeight: FontWeight? = null,
     baseFontFamily: FontFamily = InterFontFamily,
     maxLines: Int = Int.MAX_VALUE,
-    overflow: TextOverflow = TextOverflow.Clip
+    overflow: TextOverflow = TextOverflow.Clip,
+    textDecoration: TextDecoration = TextDecoration.None
 ) {
-
     val textStyle = when (style) {
         AppTextStyle.Body -> TextStyle(
             fontSize = fontSize ?: 14.sp,
@@ -81,7 +83,7 @@ fun AppText(
         text = text,
         textAlign = textAlign,
         style = textStyle,
-        modifier = modifier, overflow = overflow
+        modifier = modifier, overflow = overflow, textDecoration = textDecoration
     )
 }
 

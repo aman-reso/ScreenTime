@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.screentime.ui.theme.LocalAppColors
 
 
 @Composable
@@ -38,26 +39,27 @@ fun AppGlassyCard(
     showBorder: Boolean = true,
     content: @Composable () -> Unit = {}
 ) {
+    val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .innerShadow(RoundedCornerShape(10.dp), shadow = Shadow(10.dp))
             .clip(RoundedCornerShape(10.dp))
-            .apply {
+            .background(colors.card)
+            .then(
                 if (showBorder) {
-                    border(
+                    Modifier.border(
                         1.dp,
                         Brush.linearGradient(
                             listOf(
-                                Color.White.copy(alpha = 0.45f),
-                                Color.White.copy(alpha = 0.05f)
+                                colors.textPrimary.copy(alpha = 0.45f),
+                                colors.textPrimary.copy(alpha = 0.05f)
                             )
                         ),
                         shape = RoundedCornerShape(10.dp)
                     )
-                }
-            }
+                } else Modifier
+            )
     ) {
         content()
     }
@@ -83,4 +85,4 @@ private fun createGlassBorderGradient(borderColor: Color, alpha: Float): Brush {
     )
 }
 
-val bgColor = Color(0xFF0E161E)
+// Removed hardcoded bgColor - use LocalAppColors.current.background instead

@@ -29,7 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.lightTextColor
+import com.app.screentime.ui.theme.LocalAppColors
 import kotlin.random.Random
 
 @Preview(showBackground = true)
@@ -41,7 +41,7 @@ fun ConsentingSection(
     isMandatory: Boolean = false,
     onCheckedChange: (Boolean) -> Unit = {}
 ) {
-
+    val colors = LocalAppColors.current ?: return
     val animatedChecked by animateFloatAsState(
         targetValue = if (checked) 1f else 0f,
         animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)
@@ -55,7 +55,7 @@ fun ConsentingSection(
 
         Column(modifier = Modifier.weight(1f)) {
             AppText(text = title, style = AppTextStyle.Body)
-            AppText(text = description, style = AppTextStyle.Label, color = lightTextColor)
+            AppText(text = description, style = AppTextStyle.Label, color = colors.textLight)
         }
 
         Switch(
@@ -65,22 +65,21 @@ fun ConsentingSection(
                     targetValue = if (checked) 1f else 0.9f,
                     animationSpec = tween(200)
                 )
-
                 Icon(
                     imageVector = if (checked) Icons.Rounded.Check else Icons.Rounded.Close,
                     contentDescription = "Checked",
                     modifier = Modifier
                         .padding(4.dp)
                         .scale(scale),
-                    tint = if (checked) Color.White else lightTextColor.copy(alpha = 1 - animatedChecked)
+                    tint = if (checked) colors.textPrimary else colors.textLight.copy(alpha = 1 - animatedChecked)
                 )
             },
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color(0xFF4B4B4B),
-                checkedTrackColor = Color(0xFFD7E538),
+                checkedThumbColor = colors.textMuted,
+                checkedTrackColor = colors.accent,
                 checkedBorderColor = Color.Transparent,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = Color(0xFF4B4B4B),
+                uncheckedThumbColor = colors.textPrimary,
+                uncheckedTrackColor = colors.textMuted,
                 uncheckedBorderColor = Color.Transparent
             ),
             checked = if (isMandatory) true else checked,

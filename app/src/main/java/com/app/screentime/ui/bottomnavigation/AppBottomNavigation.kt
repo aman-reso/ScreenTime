@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.app.screentime.ui.atom.AppText
+import com.app.screentime.ui.theme.LocalAppColors
 
 /**
  * Navigation item data class
@@ -34,10 +36,16 @@ fun AppBottomNavigation(
     onItemClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val appColors = LocalAppColors.current ?: return
     NavigationBar(
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface
+        containerColor = appColors.background,
+        contentColor = appColors.textPrimary,
+        windowInsets = WindowInsets(
+            left = 0.dp,
+            top = 0.dp,
+            right = 0.dp,
+        )
     ) {
         items.forEach { item ->
             val isSelected = selectedRoute == item.route
@@ -46,7 +54,7 @@ fun AppBottomNavigation(
             } else {
                 item.icon
             }
-            
+
             NavigationBarItem(
                 icon = {
                     BadgedBox(badge = { item.badge?.let { Badge { Text("$it") } } }) {
@@ -56,7 +64,7 @@ fun AppBottomNavigation(
                         )
                     }
                 },
-                label = { Text(item.label) },
+                label = { AppText(text = item.label) },
                 selected = isSelected,
                 onClick = { onItemClick(item.route) },
                 colors = NavigationBarItemDefaults.colors(
@@ -97,7 +105,7 @@ fun CustomBottomNavigation(
             } else {
                 item.icon
             }
-            
+
             NavigationBarItem(
                 icon = {
                     BadgedBox(badge = { item.badge?.let { Badge { Text("$it") } } }) {
@@ -159,7 +167,7 @@ fun FloatingBottomNavigation(
                     } else {
                         item.icon
                     }
-                    
+
                     NavigationBarItem(
                         icon = {
                             BadgedBox(badge = { item.badge?.let { Badge { Text("$it") } } }) {

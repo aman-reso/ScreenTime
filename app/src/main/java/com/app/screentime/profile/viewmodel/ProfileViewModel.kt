@@ -66,39 +66,81 @@ class ProfileViewModel @Inject constructor(
         return buildList {
             // Profile Section
             add(ProfileSettingsUi.ProfileData(context.getString(R.string.profile)))
-            add(ProfileSettingsUi.AccountDetails(text = context.getString(R.string.edit_profile)))
+
+            // App Restrictions Section (Productivity) - First with icon
+            add(ProfileSettingsUi.SectionTitle(context.getString(R.string.app_restrictions)))
+            add(
+                ProfileSettingsUi.Other(
+                    context.getString(R.string.block_app),
+                    url = "",
+                    key = "block_app"
+                )
+            )
+            add(
+                ProfileSettingsUi.Other(
+                    context.getString(R.string.set_app_limit),
+                    url = "",
+                    key = "set_app_limit"
+                )
+            )
+            add(
+                ProfileSettingsUi.Other(
+                    context.getString(R.string.set_app_launch_limit),
+                    url = "",
+                    key = "set_app_launch_limit"
+                )
+            )
+            add(
+                ProfileSettingsUi.Other(
+                    context.getString(R.string.enable_vpn),
+                    url = "",
+                    key = "vpn_service"
+                )
+            )
+
+            // Appearance Section - Second
+            add(ProfileSettingsUi.SectionTitle(context.getString(R.string.appearance)))
+            add(ProfileSettingsUi.Other(context.getString(R.string.theme), url = "", key = "theme"))
+            add(ProfileSettingsUi.Other(context.getString(R.string.language), "", key = "language"))
+            add(
+                ProfileSettingsUi.Other(
+                    context.getString(R.string.set_widget),
+                    url = "",
+                    key = "widget"
+                )
+            )
+
+            // Other items
+            add(
+                ProfileSettingsUi.AccountDetails(
+                    text = context.getString(R.string.one_time_password),
+                    key = "totp"
+                )
+            )
+
+            // About App Section
+            add(ProfileSettingsUi.SectionTitle(context.getString(R.string.about_app)))
             add(
                 ProfileSettingsUi.Other(
                     context.getString(R.string.privacy_policy),
-                    "https://example.com/privacy"
+                    "https://aman-reso.github.io/AppTime-HTML/privacy-policy.html",
+                    key = "privacy_policy"
                 )
             )
             add(
                 ProfileSettingsUi.Other(
                     context.getString(R.string.terms_of_service),
-                    "https://example.com/terms"
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    context.getString(R.string.about),
-                    "https://example.com/about"
+                    "https://aman-reso.github.io/AppTime-HTML/terms-and-conditions.html",
+                    key = "terms_of_service"
                 )
             )
             add(
                 ProfileSettingsUi.Other(
                     context.getString(R.string.help_support),
-                    "https://example.com/help"
+                    "",
+                    key = "help_support"
                 )
             )
-            add(ProfileSettingsUi.SectionTitle(context.getString(R.string.appearance)))
-            add(ProfileSettingsUi.Other(context.getString(R.string.theme), url = "", key = "theme"))
-            add(ProfileSettingsUi.Other(context.getString(R.string.language), "", key = "language"))
-            add(ProfileSettingsUi.Other(context.getString(R.string.set_widget), url = "", key = "widget"))
-            add(ProfileSettingsUi.SectionTitle(context.getString(R.string.restriction)))
-            add(ProfileSettingsUi.Restriction(context.getString(R.string.app_blocking)))
-            add(ProfileSettingsUi.Restriction(context.getString(R.string.shorts_blocking)))
-            add(ProfileSettingsUi.Restriction(context.getString(R.string.website_blocking)))
         }
     }
 
@@ -211,6 +253,49 @@ class ProfileViewModel @Inject constructor(
      */
     fun resetUpdateStatus() {
         _internalState.value = _internalState.value.copy(isUpdated = false)
+    }
+
+    /**
+     * Update username
+     * Returns true if successful, false otherwise
+     */
+    fun updateUsername(newUsername: String, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            _internalState.value = _internalState.value.copy(isUpdating = true, error = null)
+
+            try {
+                val result = profileUseCase.updateUsername(newUsername)
+                if (result) {
+                    // Reload profile to reflect changes
+                    val updatedProfile = profileUseCase.getProfile()
+                    val profileSettingsList = createProfileSettingsList(updatedProfile)
+
+                    _uiState.value = ProfileSettingUiData(data = profileSettingsList)
+                    _internalState.value = _internalState.value.copy(
+                        isUpdating = false,
+                        profile = updatedProfile,
+                        error = null,
+                        isUpdated = true
+                    )
+                    onSuccess() // Call success callback to dismiss bottom sheet
+                } else {
+                    _internalState.value = _internalState.value.copy(
+                        isUpdating = false,
+                        error = context.getString(R.string.failed_to_update_username, "Unknown error")
+                    )
+                }
+            } catch (e: Exception) {
+                val errorMessage = if (e.message?.contains("already taken", ignoreCase = true) == true) {
+                    context.getString(R.string.username_already_taken)
+                } else {
+                    context.getString(R.string.failed_to_update_username, e.message ?: "")
+                }
+                _internalState.value = _internalState.value.copy(
+                    isUpdating = false,
+                    error = errorMessage
+                )
+            }
+        }
     }
 }
 

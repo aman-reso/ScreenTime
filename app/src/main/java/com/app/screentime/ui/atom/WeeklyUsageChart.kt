@@ -32,11 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.app.screentime.landing.screen.DailyUsageEntry
 import androidx.compose.ui.res.stringResource
 import com.app.screentime.R
-import com.app.screentime.ui.theme.ErrorRed
-import com.app.screentime.ui.theme.KakaoYellow
-import com.app.screentime.ui.theme.NeutralWhiteLight
-import com.app.screentime.ui.theme.PrimaryGreen
-import com.app.screentime.ui.theme.lightTextColor
+import com.app.screentime.record.repository.formatDuration
+import com.app.screentime.ui.theme.LocalAppColors
 
 @Composable
 fun WeeklyUsageChart(
@@ -55,6 +52,7 @@ fun WeeklyUsageChart(
     val totalMinutes = weeklyUsage.sumOf { it.usageMinutes }
     val avgMinutes = if (weeklyUsage.isNotEmpty()) totalMinutes / weeklyUsage.size else 0
 
+    val colors = LocalAppColors.current ?: return
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -63,14 +61,14 @@ fun WeeklyUsageChart(
         AppText(
             text = stringResource(R.string.this_week),
             style = AppTextStyle.Body,
-            color = NeutralWhiteLight,
+            color = colors.textPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(Modifier.height(4.dp))
         AppText(
-            text = stringResource(R.string.per_day_avg, avgMinutes),
+            text = "Average ${formatDuration(avgMinutes.toLong() * 1000 * 60)}",
             style = AppTextStyle.Body,
-            color = ErrorRed
+            color = colors.error
         )
         Spacer(Modifier.height(16.dp))
 
@@ -88,11 +86,11 @@ fun WeeklyUsageBarChart(
     selectedDayIndex: Int? = null,
     onBarClick: ((Int) -> Unit)? = null
 ) {
+    val colors = LocalAppColors.current ?: return
     val numberOfYSteps = 4
     val maxMinutes = usageEntries.maxOfOrNull { it.usageMinutes } ?: 0
     val yStepValue = (maxMinutes / numberOfYSteps).coerceAtLeast(1)
     val scaleSteps = (0..numberOfYSteps).map { it * yStepValue }
-
     val animationProgress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
         animationProgress.animateTo(
@@ -125,7 +123,7 @@ fun WeeklyUsageBarChart(
                     }
                     val y = size.height - (size.height / numberOfYSteps) * index
                     drawLine(
-                        color = lightTextColor,
+                        color = colors.textLight,
                         start = Offset(0f, y),
                         end = Offset(size.width, y),
                         strokeWidth = 1f,
@@ -148,11 +146,11 @@ fun WeeklyUsageBarChart(
 
                     val isSelected = selectedDayIndex == index
                     val barColor = if (isSelected) {
-                        PrimaryGreen.copy(alpha = 0.9f)
+                        colors.success.copy(alpha = 0.9f)
                     } else if (entry.usageMinutes >= (maxMinutes * 0.7)) {
-                        PrimaryGreen
+                        colors.success
                     } else {
-                        KakaoYellow
+                        colors.accent
                     }
 
                     val barModifier = if (onBarClick != null) {
@@ -179,7 +177,7 @@ fun WeeklyUsageBarChart(
                         AppText(
                             text = entry.dayLabel,
                             style = AppTextStyle.Label,
-                            color = if (isSelected) PrimaryGreen else Color.White,
+                            color = if (isSelected) colors.success else colors.textPrimary,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
                         )
                     }
@@ -197,9 +195,9 @@ fun WeeklyUsageBarChart(
             scaleSteps.reversed().forEach { minuteValue ->
                 if (minuteValue != 0) {
                     AppText(
-                        text = stringResource(R.string.minutes_format, minuteValue),
+                        text = formatDuration(minuteValue.toLong() * 1000 * 60),
                         style = AppTextStyle.Label,
-                        color = Color.White
+                        color = colors.textPrimary
                     )
                 } else {
                     Spacer(modifier = Modifier.height(0.dp))

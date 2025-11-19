@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.ScreenTime" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@color/splash_dark_blue</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowFullscreen">false</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowSplashScreenBackground">@color/black</item>
-        <item name="android:windowSplashScreenAnimationDuration">200</item>
+    <!-- 🌙 App main theme -->
+    <style name="Theme.ScreenTime" parent="android:Theme.Material.NoActionBar">
         <item name="android:supportsPictureInPicture">true</item>
-        <item name="postSplashScreenTheme">@style/Theme.ScreenTime</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/outline_watch_screentime_24
-        </item>
-
     </style>
+
+    <!-- 🚀 Splash Screen Theme -->
+    <style name="Theme.ScreenTime.Splash" parent="Theme.SplashScreen">
+        <!-- Solid background (no weird blending) -->
+        <item name="windowSplashScreenBackground">@color/splash_dark_blue</item>
+
+        <!-- Your static or animated splash icon -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/rounded_hourglass_24</item>
+
+        <!-- Optional animation duration -->
+        <item name="windowSplashScreenAnimationDuration">200</item>
+
+        <!-- Where to go after splash -->
+        <item name="postSplashScreenTheme">@style/Theme.ScreenTime</item>
+    </style>
+
 </resources>
+

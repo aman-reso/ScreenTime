@@ -2,6 +2,7 @@ package com.app.screentime.profile.component
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,9 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,8 +28,7 @@ import com.app.screentime.network.model.UserProfile
 import com.app.screentime.ui.atom.AppIcon
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.borderColor
-import com.app.screentime.ui.theme.lightTextColor
+import com.app.screentime.ui.theme.LocalAppColors
 
 @Composable
 fun UserProfileCard(
@@ -33,12 +36,13 @@ fun UserProfileCard(
     userId: String? = null,
     onUsernameClick: (() -> Unit)? = null
 ) {
+    val colors = LocalAppColors.current ?: return
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(24.dp))
         Box(
             modifier = Modifier
                 .size(100.dp)
-                .border(3.dp, color = borderColor, shape = CircleShape)
+                .border(3.dp, color = colors.border, shape = CircleShape)
                 .align(Alignment.CenterHorizontally)
         ) {
             Icon(
@@ -46,32 +50,47 @@ fun UserProfileCard(
                 contentDescription = "Avatar",
                 modifier = Modifier
                     .padding(8.dp)
-                    .matchParentSize()
+                    .matchParentSize(),
+                tint = colors.textLight
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
         val displayName = username ?: userId ?: "Random Generated"
-        AppText(
-            text = displayName,
-            style = AppTextStyle.SubTitle,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(
-                    if (onUsernameClick != null && displayName != "Random Generated") {
+                    if (onUsernameClick != null && displayName != "User") {
                         Modifier.clickable { onUsernameClick() }
                     } else {
                         Modifier
                     }
                 ),
-            textAlign = TextAlign.Center
-        )
-        AppText(
-            text = "Joined On Nov 10, 2024",
-            style = AppTextStyle.Label,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            color = lightTextColor
-        )
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AppText(
+                text = displayName,
+                style = AppTextStyle.SubTitle,
+                textAlign = TextAlign.Center
+            )
+            if (onUsernameClick != null && displayName != "User") {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit Username",
+                    tint = colors.tint,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+//        AppText(
+//            text = "Joined On Nov 10, 2024",
+//            style = AppTextStyle.Label,
+//            modifier = Modifier.fillMaxWidth(),
+//            textAlign = TextAlign.Center,
+//            color = colors.textLight
+//        )
         Spacer(modifier = Modifier.height(24.dp))
     }
 }

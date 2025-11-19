@@ -32,8 +32,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.app.screentime.R
 import androidx.compose.ui.unit.dp
-import com.app.screentime.ui.theme.KakaoYellow
-import com.app.screentime.ui.theme.NeutralWhiteLight
+import com.app.screentime.ui.theme.LocalAppColors
 
 /**
  * Network data usage card component
@@ -52,6 +51,8 @@ fun NetworkCard(
     cellularDataUsageDisplay: String? = null,
     totalDataDisplayName: String? = null,
 ) {
+    val colors = LocalAppColors.current ?: return
+
     val totalDataUsage = wifiDataUsage + cellularDataUsage
     val wifiPercentage = if (totalDataUsage > 0) {
         (wifiDataUsage.toFloat() / totalDataUsage.toFloat() * 100f).toInt()
@@ -78,14 +79,14 @@ fun NetworkCard(
                     // Use string resource for the title
                     text = stringResource(R.string.network_card_title),
                     style = AppTextStyle.Title,
-                    color = NeutralWhiteLight
+                    color = colors.textPrimary
                 )
                 totalDataDisplayName?.let {
                     Spacer(modifier = Modifier.weight(1f))
                     AppText(
                         text = it,
                         style = AppTextStyle.Body,
-                        color = NeutralWhiteLight
+                        color = colors.textPrimary
                     )
                 }
             }
@@ -107,7 +108,7 @@ fun NetworkCard(
             NetworkUsageSection(
                 label = buildString {
                     append(stringResource(R.string.network_cellular_label))
-                    wifiDataUsageDisplay?.let {
+                    cellularDataUsageDisplay?.let {
                         append(" (")
                         append(it)
                         append(")")
@@ -141,6 +142,7 @@ private fun NetworkUsageSection(
         animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
     )
 
+    val colors = LocalAppColors.current ?: return
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -149,19 +151,20 @@ private fun NetworkUsageSection(
             imageVector = imageVector,
             // Use string resource for content description
             contentDescription = stringResource(R.string.content_description_network_icon),
+            tint = colors.tint,
             modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.width(4.dp))
         AppText(
             text = label,
             style = AppTextStyle.Label,
-            color = NeutralWhiteLight
+            color = colors.textPrimary
         )
         Spacer(modifier = Modifier.weight(1f))
         AppText(
             text = "$percentage%",
             style = AppTextStyle.Label,
-            color = NeutralWhiteLight
+            color = colors.textPrimary
         )
     }
 
@@ -171,7 +174,7 @@ private fun NetworkUsageSection(
             .fillMaxWidth()
             .height(8.dp)
             .clip(RoundedCornerShape(4.dp)),
-        color = KakaoYellow,
-        trackColor = NeutralWhiteLight.copy(alpha = 0.3f)
+        color = colors.accent,
+        trackColor = colors.textPrimary.copy(alpha = 0.3f)
     )
 }

@@ -45,6 +45,7 @@ import com.app.screentime.profile.screen.VerifyTOTPBottomSheetContent
 import com.app.screentime.search.component.GlassSearchBar
 import com.app.screentime.search.component.UserSearchResultItem
 import com.app.screentime.search.viewmodel.SearchViewModel
+import com.app.screentime.ui.theme.LocalAppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,13 +62,13 @@ fun SearchScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 8.dp)
         ) {
+            val colors = LocalAppColors.current
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -77,6 +78,7 @@ fun SearchScreen(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = "Back",
+                    tint = colors?.tint ?: MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(32.dp)
                         .clickable {
@@ -172,7 +174,7 @@ fun SearchScreen(
                     ) {
                         items(
                             items = uiState.searchResults,
-                            key = { user -> user.userId ?: user.username ?: "" },
+                            key = { user -> user.username ?: "" },
                             contentType = { "user_search_result_item" }
                         ) { user ->
                             UserSearchResultItem(
@@ -192,6 +194,7 @@ fun SearchScreen(
             // --- TOTP Bottom Sheet ---
             if (showVerifyTOTP && selectedUsername != null) {
                 VerifyTOTPBottomSheetContent(
+                    username = selectedUsername,
                     onDismiss = {
                         showVerifyTOTP = false
                         selectedUsername = null

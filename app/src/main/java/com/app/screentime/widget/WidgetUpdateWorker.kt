@@ -122,6 +122,17 @@ class WidgetUpdateWorker @AssistedInject constructor(
         }
 
         /**
+         * Trigger immediate widget update (one-time work)
+         */
+        fun triggerImmediateUpdate(context: Context) {
+            val workRequest = androidx.work.OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
+                .addTag(WORK_NAME)
+                .build()
+            WorkManager.getInstance(context).enqueue(workRequest)
+            Log.d(TAG, "WidgetUpdateWorker: Triggered immediate widget update")
+        }
+
+        /**
          * Cancel the widget update work
          */
         fun cancel(context: Context) {

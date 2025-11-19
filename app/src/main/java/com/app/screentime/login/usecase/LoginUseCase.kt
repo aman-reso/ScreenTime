@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import androidx.core.content.edit
+import com.app.screentime.preferences.PreferencesManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
 
@@ -17,27 +18,15 @@ import kotlinx.serialization.json.Json
  */
 class LoginUseCase @Inject constructor(
     private val loginRepository: LoginRepository,
-    @ApplicationContext
-    private val context: Context,
+    private val preferencesManager: PreferencesManager,
 ) {
-    companion object {
-        private const val TAG = "LoginUseCase"
-        private const val USER_REG_INFO = "user_reg_info"
-        private const val PREF_NAME = "screentime_prefs"
-        private const val KEY_USER_ID = "user_id"
-        private const val KEY_DEVICE_ID = "device_id"
-        private const val KEY_IS_REGISTERED = "is_device_registered"
-    }
-
-    private fun saveRegistrationData(deviceRegistrationResponse: DeviceRegistrationResponse) {
-        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        prefs.edit {
-            putString(USER_REG_INFO, Json.encodeToString(deviceRegistrationResponse))
-        }
-    }
 
     suspend fun registerDevice() {
-        loginRepository.registerDevice()
+        loginRepository.registerDevice().onFailure {
+
+        }.onSuccess {
+            preferencesManager.saveUserInformation(it)
+        }
     }
 
 }

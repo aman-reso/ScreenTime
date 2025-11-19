@@ -23,9 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.app.screentime.R
-import com.app.screentime.ui.theme.ErrorRed
-import com.app.screentime.ui.theme.NeutralBlackDark
-import com.app.screentime.ui.theme.lightTextColor
+import com.app.screentime.ui.theme.LocalAppColors
 
 @Preview(showBackground = true)
 @Composable
@@ -35,9 +33,10 @@ fun AppErrorCard(
     subTitleText: String? = "Something went wrong please try again",
     callback: () -> Unit = {}
 ) {
+    val colors = LocalAppColors.current ?: return
     Box(
         modifier
-            .background(color = NeutralBlackDark)
+            .background(color = colors.background)
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
         Column {
@@ -45,13 +44,13 @@ fun AppErrorCard(
                 modifier = Modifier
                     .wrapContentWidth()
                     .wrapContentHeight()
-                    .border(width = 1.dp, color = ErrorRed, shape = CircleShape)
+                    .border(width = 1.dp, color = colors.error, shape = CircleShape)
                     .align(Alignment.CenterHorizontally)
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
                     contentDescription = "",
-                    tint = ErrorRed,
+                    tint = colors.error,
                     modifier = Modifier
                         .size(30.dp)
                         .padding(4.dp)
@@ -65,7 +64,7 @@ fun AppErrorCard(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                     style = AppTextStyle.SubTitle,
-                    color = ErrorRed
+                    color = colors.error
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
@@ -75,7 +74,7 @@ fun AppErrorCard(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                     style = AppTextStyle.Label,
-                    color = lightTextColor
+                    color = colors.textLight
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))

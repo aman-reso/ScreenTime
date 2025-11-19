@@ -18,12 +18,30 @@ class ThemeViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = "System"
+            initialValue = ThemeType.CLASSIC_LIGHT.name
         )
 
-    fun setTheme(theme: String) {
+    fun setTheme(themeType: ThemeType) {
         viewModelScope.launch {
-            themeRepository.setTheme(theme)
+            themeRepository.setTheme(themeType.name)
         }
+    }
+
+    fun setTheme(themeString: String) {
+        viewModelScope.launch {
+            themeRepository.setTheme(themeString)
+        }
+    }
+
+    fun getAvailableThemes(): List<ThemeType> {
+        return ThemeType.values().toList()
+    }
+
+    fun getLightThemes(): List<ThemeType> {
+        return ThemeType.values().filter { !it.isDark }
+    }
+
+    fun getDarkThemes(): List<ThemeType> {
+        return ThemeType.values().filter { it.isDark }
     }
 }

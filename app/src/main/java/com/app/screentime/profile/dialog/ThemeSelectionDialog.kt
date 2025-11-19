@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,10 +21,12 @@ import androidx.compose.ui.res.stringResource
 import com.app.screentime.R
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.*
+import com.app.screentime.ui.theme.LocalAppColors
+import com.app.screentime.ui.theme.ThemeType
+import com.app.screentime.ui.theme.getThemeColors
 
 /**
- * Theme selection dialog with radio buttons
+ * Theme selection dialog with all theme variations
  */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,11 +36,10 @@ fun ThemeSelectionDialog(
     onDismiss: () -> Unit,
     onThemeSelected: (String) -> Unit
 ) {
-    val themes = listOf(
-        ThemeOption(stringResource(R.string.theme_light), "Light"),
-        ThemeOption(stringResource(R.string.theme_dark), "Dark"),
-        ThemeOption(stringResource(R.string.theme_system), "System")
-    )
+    val colors = LocalAppColors.current ?: return
+
+    val lightThemes = ThemeType.values().filter { !it.isDark }
+    val darkThemes = ThemeType.values().filter { it.isDark }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -45,12 +48,13 @@ fun ThemeSelectionDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .wrapContentHeight(),
+                .fillMaxHeight(0.8f),
             shape = RoundedCornerShape(15.dp),
-            color = CardColor
+            color = colors.card
         ) {
             AlertDialogContent(
-                themes = themes,
+                lightThemes = lightThemes,
+                darkThemes = darkThemes,
                 currentTheme = currentTheme,
                 onThemeSelected = onThemeSelected,
                 onDismiss = onDismiss
@@ -61,32 +65,72 @@ fun ThemeSelectionDialog(
 
 @Composable
 private fun AlertDialogContent(
-    themes: List<ThemeOption>,
+    lightThemes: List<ThemeType>,
+    darkThemes: List<ThemeType>,
     currentTheme: String,
     onThemeSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val colors = LocalAppColors.current ?: return
+    
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        // Title
         AppText(
             text = stringResource(R.string.select_theme),
             style = AppTextStyle.SubTitle,
             fontWeight = FontWeight.Bold,
-            color = TitleTextColor
+            color = colors.textPrimary,
+            modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        themes.forEach { theme ->
-            ThemeRadioOption(
-                text = theme.displayName,
-                selected = currentTheme == theme.value,
-                onClick = { onThemeSelected(theme.value) }
-            )
+        // Scrollable theme list
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            // Light Themes Section
+            item {
+                AppText(
+                    text = "Light Themes",
+                    style = AppTextStyle.Body,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
+                )
+            }
+            items(lightThemes) { themeType ->
+                ThemePreviewOption(
+                    themeType = themeType,
+                    selected = currentTheme == themeType.name,
+                    onClick = { onThemeSelected(themeType.name) }
+                )
+            }
+
+            // Dark Themes Section
+            item {
+                AppText(
+                    text = "Dark Themes",
+                    style = AppTextStyle.Body,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
+                )
+            }
+            items(darkThemes) { themeType ->
+                ThemePreviewOption(
+                    themeType = themeType,
+                    selected = currentTheme == themeType.name,
+                    onClick = { onThemeSelected(themeType.name) }
+                )
+            }
         }
 
+        // Close button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
@@ -94,13 +138,13 @@ private fun AlertDialogContent(
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = PrimaryGreen
+                    contentColor = colors.success
                 )
             ) {
                 AppText(
                     text = stringResource(R.string.close),
                     style = AppTextStyle.Body,
-                    color = PrimaryGreen
+                    color = colors.success
                 )
             }
         }
@@ -109,54 +153,101 @@ private fun AlertDialogContent(
 
 
 @Composable
-private fun ThemeRadioOption(
-    text: String,
+private fun ThemePreviewOption(
+    themeType: ThemeType,
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val currentColors = LocalAppColors.current ?: return
+    val themeColors = getThemeColors(themeType)
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(
-                if (selected) PrimaryGreen.copy(alpha = 0.15f)
-                else CardColor
+                if (selected) currentColors.success.copy(alpha = 0.15f)
+                else currentColors.card
             )
             .border(
-                width = if (selected) 1.dp else 0.dp,
-                brush = Brush.linearGradient(
-                    listOf(
-                        PrimaryGreen.copy(alpha = 0.6f),
-                        PrimaryGreen.copy(alpha = 0.3f)
-                    )
-                ),
+                width = if (selected) 2.dp else 1.dp,
+                color = if (selected) currentColors.success else currentColors.border,
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        AppText(
-            text = text,
-            style = AppTextStyle.Body,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = if (selected) PrimaryGreen else BodyTextColor
-        )
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Color preview box
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(themeColors.background)
+                    .border(1.dp, themeColors.border, RoundedCornerShape(8.dp))
+            ) {
+                // Show a small preview of the theme
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    // Background color
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(themeColors.background)
+                    )
+                    // Card color preview
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(12.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(themeColors.card)
+                            .align(Alignment.TopCenter)
+                    )
+                    // Primary color accent
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(themeColors.success)
+                            .align(Alignment.BottomCenter)
+                    )
+                }
+            }
+            
+            Column(modifier = Modifier.weight(1f)) {
+                AppText(
+                    text = themeType.displayName,
+                    style = AppTextStyle.Body,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (selected) currentColors.success else currentColors.textPrimary
+                )
+                AppText(
+                    text = if (themeType.isDark) "Dark Mode" else "Light Mode",
+                    style = AppTextStyle.Label,
+                    color = currentColors.textMuted
+                )
+            }
+        }
 
         RadioButton(
             selected = selected,
             onClick = onClick,
             colors = RadioButtonDefaults.colors(
-                selectedColor = PrimaryGreen,
-                unselectedColor = MutedTextColor
+                selectedColor = currentColors.success,
+                unselectedColor = currentColors.textMuted
             )
         )
     }
 }
-
-private data class ThemeOption(
-    val displayName: String,
-    val value: String
-)
 

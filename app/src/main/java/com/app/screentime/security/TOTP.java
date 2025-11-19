@@ -12,18 +12,29 @@ public class TOTP {
     private static final String HMAC_ALGO = "HmacSHA1"; // RFC default
     private static final int DIGITS = 6;                // 6-digit code
     private static final long TIME_STEP_SECONDS = 60L;  // 60 seconds = 1 minute
-    static String base32Secret = "O5YRY4I2737IGHVYOHXM6T7RWWNAW3X7"; // example only
+    static String base32Secret = "O5YRY4I2737IGHVYOHXM6T7RWWNAW3X7"; // example only (fallback)
 
     /**
      * Generate a TOTP code for the supplied Base32-encoded secret.
      *
+     * @param secret Base32-encoded secret key (if null, uses default)
      * @return zero-padded numeric code as String
      */
-    public static String generateTOTP() {
-        byte[] key = base32Decode(base32Secret);
+    public static String generateTOTP(String secret) {
+        String secretToUse = (secret != null && !secret.isEmpty()) ? secret : base32Secret;
+        byte[] key = base32Decode(secretToUse);
         long timestamp = Instant.now().getEpochSecond();
         long counter = timestamp / TIME_STEP_SECONDS;
         return generateTOTPFromKeyAndCounter(key, counter, DIGITS, HMAC_ALGO);
+    }
+
+    /**
+     * Generate a TOTP code using the default secret (for backward compatibility).
+     *
+     * @return zero-padded numeric code as String
+     */
+    public static String generateTOTP() {
+        return generateTOTP(null);
     }
 
     private static String generateTOTPFromKeyAndCounter(byte[] key, long counter, int digits, String hmacAlgo) {

@@ -11,12 +11,12 @@ class SearchUseCase @Inject constructor(
     private val searchRepository: SearchRepository
 ) {
     /**
-     * Search users by username
-     * @param username The username to search for
+     * Search users by query string
+     * @param query Search query (username)
      * @return Result of search results
      */
-    suspend fun searchUsers(username: String): Result<List<UserSearchResult>> {
-        return searchRepository.searchUsers(username).map { apiResponse ->
+    suspend fun searchUsers(query: String): Result<List<UserSearchResult>> {
+        return searchRepository.searchUsers(query).map { apiResponse ->
             apiResponse.data ?: emptyList()
         }
     }

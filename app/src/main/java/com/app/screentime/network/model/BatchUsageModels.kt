@@ -7,7 +7,6 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class BatchUsageRecord(
-    val deviceId: String,
     val appName: String,
     val packageName: String,
     val usageTimeMilliseconds: Long,

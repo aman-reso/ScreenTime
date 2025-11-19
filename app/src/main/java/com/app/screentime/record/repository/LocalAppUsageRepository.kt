@@ -83,7 +83,7 @@ class LocalAppUsageRepository(
             appsUsageList, mobileDataUsage, wifiDataUsage
         )
 
-        return appsUsageList
+        return appsUsageList.distinctBy { it.packageName }
     }
 
     /**
@@ -226,7 +226,7 @@ fun formatDuration(ms: Long): String {
 
     return when {
         hours > 0 -> {
-            if (minutes > 0) "$hours hr $minutes min" else "$hours hr"
+            if (minutes > 0) "$hours h $minutes m" else "$hours hr"
         }
 
         minutes > 0 -> "$minutes min"

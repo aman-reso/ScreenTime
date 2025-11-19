@@ -1,9 +1,10 @@
 package com.app.screentime.network.sync
 
 import com.app.screentime.data.entity.AppUsage
-import com.app.screentime.network.repository.NetworkRepository
+import com.app.screentime.network.repository.screentime.ScreenTimeRepository
 import com.app.screentime.network.utils.NetworkUtils
 import com.app.screentime.record.repository.AppEvent
+import com.app.screentime.network.model.ScreenTimeUsageRequest
 import org.joda.time.DateTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -13,67 +14,21 @@ import javax.inject.Singleton
  */
 @Singleton
 class DataSyncService @Inject constructor(
-    private val networkRepository: NetworkRepository,
+    private val screenTimeRepository: ScreenTimeRepository,
     private val networkUtils: NetworkUtils
 ) {
 
     /**
-     * Sync app usage data to server
+     * Sync batch usage events to server
      */
-    suspend fun syncAppUsageData(
-        userId: String,
-        appEvent: List<AppEvent>
+    suspend fun syncBatchUsageEvents(
+        request: com.app.screentime.network.model.BatchUsageEventsRequest
     ): SyncResult {
         if (!networkUtils.isNetworkAvailable()) {
             return SyncResult.NoNetwork
         }
-
         return try {
-            val result = networkRepository.syncAppUsageData(
-                userId = userId,
-                appEvent = appEvent,
-                timezone = DateTime.now().toString()
-            )
-
-            when {
-                result.isSuccess -> {
-                    val apiResponse = result.getOrNull()
-                    if (apiResponse?.success == true) {
-                        SyncResult.Success
-                    } else {
-                        SyncResult.Error(apiResponse?.message ?: "API returned error")
-                    }
-                }
-
-                else -> SyncResult.Error(
-                    result.exceptionOrNull()?.message ?: "Unknown error"
-                )
-            }
-        } catch (e: Exception) {
-            SyncResult.Error(e.message ?: "Unknown error")
-        }
-    }
-
-    /**
-     * Sync hourly usage data to server
-     */
-    suspend fun syncHourlyUsageData(
-        userId: String,
-        deviceId: String,
-        hourlyAppUsage: Map<Int, List<AppUsage>>
-    ): SyncResult {
-        if (!networkUtils.isNetworkAvailable()) {
-            return SyncResult.NoNetwork
-        }
-
-        return try {
-            val today = DateTime.now().toString("yyyy-MM-dd")
-            val result = networkRepository.syncHourlyUsageData(
-                userId = userId,
-                deviceId = deviceId,
-                hourlyAppUsage = hourlyAppUsage,
-                date = today
-            )
+            val result = screenTimeRepository.syncBatchUsageEvents(request)
 
             when {
                 result.isSuccess -> {

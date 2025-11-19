@@ -6,6 +6,7 @@ import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.record.repository.toReadableDataSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Calendar
 import javax.inject.Inject
 
 /**
@@ -23,18 +24,18 @@ class LandingUsecase @Inject constructor(
         return withContext(Dispatchers.Default) {
             try {
                 val todayReport = localAppUsageRepository.fetchAppUsageTodayTillNow()
-                
+
                 // Calculate totals once and reuse
                 val totalScreenTime = todayReport.sumOf { it.appScreenTime }
                 val totalWifiData = todayReport.sumOf { it.wifiDataUsage }
                 val totalMobileData = todayReport.sumOf { it.mobileDataUsage }
                 val totalData = totalWifiData + totalMobileData
-                
+
                 // Sort apps by screen time (descending) - use sequence for better performance
                 val topUsedApps = todayReport.asSequence()
                     .sortedByDescending { it.appScreenTime }
                     .toList()
-                
+
                 val todayUsageData = TodayUsageData(
                     todayTotalScreenTime = totalScreenTime,
                     todayTotalWifiDataUsage = totalWifiData,
@@ -44,7 +45,7 @@ class LandingUsecase @Inject constructor(
                     displayMobileDataUsage = totalMobileData.toReadableDataSize(),
                     displayTotalDataUsage = totalData.toReadableDataSize()
                 )
-                
+
                 Result.success(todayUsageData)
             } catch (e: SecurityException) {
                 Result.failure(SecurityException("Permission denied: ${e.message}"))

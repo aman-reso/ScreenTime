@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.app.screentime.ui.theme.LocalAppColors
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -23,11 +24,11 @@ fun AppSecondaryButton(
     enabled: Boolean = true,
     onClick: () -> Unit = {}
 ) {
-
+    val colors = LocalAppColors.current ?: return
     val gradient = Brush.linearGradient(
         colors = listOf(
-            Color.White.copy(alpha = 0.83f),
-            Color.White.copy(alpha = 0.44f)
+            colors.textPrimary.copy(alpha = 0.83f),
+            colors.textPrimary.copy(alpha = 0.44f)
         )
     )
 
@@ -35,12 +36,12 @@ fun AppSecondaryButton(
         modifier = modifier
             .shadow(
                 elevation = 17.dp,
-                spotColor = Color(0x4722B496),
-                ambientColor = Color(0x4722B496)
+                spotColor = colors.success.copy(alpha = 0.28f),
+                ambientColor = colors.success.copy(alpha = 0.28f)
             )
             .border(
                 width = 1.dp,
-                color = Color.White.copy(alpha = if (enabled) 0.5f else 0.2f),
+                color = colors.textPrimary.copy(alpha = if (enabled) 0.5f else 0.2f),
                 shape = RoundedCornerShape(10.dp)
             )
             .background(
@@ -53,7 +54,7 @@ fun AppSecondaryButton(
     ) {
         AppText(
             text = text,
-            color = Color.White.copy(alpha = if (enabled) 1f else 0.4f),
+            color = colors.textPrimary.copy(alpha = if (enabled) 1f else 0.4f),
             style = AppTextStyle.Body
         )
     }
@@ -67,15 +68,16 @@ fun AppPrimaryButton(
     enabled: Boolean = true,
     onClick: () -> Unit = {}
 ) {
+    val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
             .shadow(
                 elevation = 17.dp,
-                spotColor = Color(0x4722B496),
-                ambientColor = Color(0x4722B496)
+                spotColor = colors.success.copy(alpha = 0.28f),
+                ambientColor = colors.success.copy(alpha = 0.28f)
             )
             .background(
-                color = if (enabled) Color(0xFF22B496) else Color(0x4422B496),
+                color = if (enabled) colors.success else colors.success.copy(alpha = 0.27f),
                 shape = RoundedCornerShape(10.dp)
             )
             .clickable(enabled = enabled, onClick = onClick)
@@ -84,7 +86,7 @@ fun AppPrimaryButton(
     ) {
         AppText(
             text = text,
-            color = Color.White.copy(alpha = if (enabled) 1f else 0.4f),
+            color = colors.textPrimary.copy(alpha = if (enabled) 1f else 0.4f),
             style = AppTextStyle.Body
         )
     }
