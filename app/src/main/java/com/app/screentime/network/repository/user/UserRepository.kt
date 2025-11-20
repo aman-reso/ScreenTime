@@ -41,6 +41,18 @@ class UserRepository @Inject constructor(
             "user_reg_info",
             json.encodeToString(DeviceRegistrationResponse.serializer(), deviceRegistrationResponse)
         )
+        
+        // Parse and save lastSyncTime if present
+        deviceRegistrationResponse.lastSyncTime?.let { lastSyncTimeString ->
+            try {
+                val instant = java.time.Instant.parse(lastSyncTimeString)
+                val timestampMillis = instant.toEpochMilli()
+                preferencesManager.setLastSyncTime(timestampMillis)
+            } catch (e: Exception) {
+                // Log error but don't fail registration if timestamp parsing fails
+                android.util.Log.e("UserRepository", "Failed to parse lastSyncTime: $lastSyncTimeString", e)
+            }
+        }
     }
 
     suspend fun getUserProfile(userId: String): Result<ApiResponse<UserProfile>> {

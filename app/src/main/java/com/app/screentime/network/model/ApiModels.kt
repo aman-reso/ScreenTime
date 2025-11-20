@@ -204,7 +204,7 @@ data class DeviceRegistrationResponse(
     val totpEnabled: Boolean = false,
     val totpPeriod: Int = 60,
     val updatedAt: String? = null,
-    val lastSyncTime: Long? = null,
+    val lastSyncTime: String? = null, // ISO 8601 format timestamp string (e.g., "2025-11-17T01:52:57.500Z")
     val email: String? = null,
     val name: String? = null
 ) {

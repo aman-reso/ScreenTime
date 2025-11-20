@@ -14,15 +14,28 @@ import javax.inject.Inject
  * Handles business logic for fetching and processing today's usage data
  */
 class LandingUsecase @Inject constructor(
-    private val localAppUsageRepository: LocalAppUsageRepository
+    private val localAppUsageRepository: LocalAppUsageRepository,
 ) {
     /**
      * Get today's usage data with optimized calculations
      * @return Result containing today's usage data or error
      */
     suspend fun getTodayUsageData(): Result<TodayUsageData> {
-        return withContext(Dispatchers.Default) {
+        return withContext(Dispatchers.Main) {
+
             try {
+
+                val currentTime = System.currentTimeMillis()
+                val midNightCal = Calendar.getInstance()
+                midNightCal[Calendar.HOUR_OF_DAY] = 0
+                midNightCal[Calendar.MINUTE] = 0
+                midNightCal[Calendar.SECOND] = 0
+                midNightCal[Calendar.MILLISECOND] = 0
+
+                val allEvents = localAppUsageRepository.collectEventsForSync(
+                    startMsEpoch = midNightCal.timeInMillis, endMsEpoch = currentTime
+                )
+                val size = allEvents.filter { it.duration != null }.sumOf { it.duration ?: 0 }
                 val todayReport = localAppUsageRepository.fetchAppUsageTodayTillNow()
 
                 // Calculate totals once and reuse
@@ -31,7 +44,6 @@ class LandingUsecase @Inject constructor(
                 val totalMobileData = todayReport.sumOf { it.mobileDataUsage }
                 val totalData = totalWifiData + totalMobileData
 
-                // Sort apps by screen time (descending) - use sequence for better performance
                 val topUsedApps = todayReport.asSequence()
                     .sortedByDescending { it.appScreenTime }
                     .toList()

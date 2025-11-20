@@ -4,6 +4,7 @@ import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.app.usage.UsageStatsManager.INTERVAL_DAILY
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -124,108 +125,69 @@ class ScreenUsageHelper constructor(private val context: Context) {
 
     fun collectEvents(start: Long, end: Long): List<AppEvent> {
 
-        val openedApps = mutableMapOf<String, Long>()
-        val result = mutableListOf<AppEvent>()
-
+        val eventsList = mutableListOf<AppEvent>()
         val events = usageStatsManager.queryEvents(start, end)
         val event = UsageEvents.Event()
+        val activeApps = mutableMapOf<String, Long>()
 
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
 
             val pkg = event.packageName ?: continue
-
-            // App name (optional, you already had this)
-            val name = getAppName(pkg)
-
-            // We only track user-launchable apps
-            if (!isUserApp(pkg)) {
+            if (isLauncherApp(packageName = pkg)) {
                 continue
             }
+            if (!hasLaunchableActivity(packageName = pkg)) {
+                continue
+            }
+            val name = getAppName(pkg)
 
             when (event.eventType) {
 
-                UsageEvents.Event.MOVE_TO_FOREGROUND -> {
-
-                    val now = event.timeStamp
-
-                    // If this app is already open → continue same session
-                    if (openedApps.containsKey(pkg)) {
-                        continue
-                    }
-
-                    // Close any other currently opened user apps
-                    val toClose = openedApps.filter { (otherPkg, _) ->
-                        otherPkg != pkg && isUserApp(otherPkg)
-                    }
-
-                    for ((otherPkg, startTime) in toClose) {
-                        val otherName = getAppName(otherPkg)
-                        result.add(
-                            AppEvent(
-                                event = "MOVE_TO_FOREGROUND",
-                                appName = otherName,
-                                packageName = otherPkg,
-                                timestamp = now,
-                                duration = now - startTime
-                            )
-                        )
-                        openedApps.remove(otherPkg)
-                    }
-
-                    // Start new session
-                    openedApps[pkg] = now
-                    result.add(AppEvent("MOVE_TO_FOREGROUND", name, pkg, now))
+                UsageEvents.Event.ACTIVITY_RESUMED -> {
+//                    eventsList.add(
+//                        AppEvent(
+//                            event = "MOVE_TO_FOREGROUND",
+//                            appName = name,
+//                            packageName = pkg,
+//                            timestamp = event.timeStamp
+//                        )
+//                    )
+                    activeApps[pkg] = event.timeStamp
                 }
 
-
-                UsageEvents.Event.MOVE_TO_BACKGROUND -> {
-
-                    val startTime = openedApps[pkg] ?: continue
-
-                    result.add(
+                UsageEvents.Event.ACTIVITY_PAUSED, UsageEvents.Event.ACTIVITY_STOPPED -> {
+                    val startTime = activeApps[pkg] ?: continue
+                    val endTime = event.timeStamp
+                    eventsList.add(
                         AppEvent(
                             event = "MOVE_TO_BACKGROUND",
                             appName = name,
                             packageName = pkg,
                             timestamp = event.timeStamp,
-                            duration = event.timeStamp - startTime
+                            duration = endTime - startTime
                         )
                     )
-
-                    openedApps.remove(pkg)
+                    activeApps.remove(pkg)
                 }
             }
         }
 
-        return result.sortedBy { it.timestamp }
+        return eventsList
     }
 
-
-    fun isSystemApp(pkg: String): Boolean {
-        val appInfo = context.packageManager.getApplicationInfo(pkg, 0)
-        return (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
-                (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+    private fun isLauncherApp(packageName: String): Boolean {
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+        }
+        val resolveInfo = context.packageManager.resolveActivity(intent, 0)
+        return resolveInfo?.activityInfo?.packageName == packageName
     }
 
-    fun isUserApp(pkg: String): Boolean {
+    private fun hasLaunchableActivity(packageName: String): Boolean {
         val pm = context.packageManager
-
-        // Check if app is launchable (= has launcher activity)
-        pm.getLaunchIntentForPackage(pkg) ?: return false   // Not a user-facing app
-
-        // Exclude launcher itself
-        val launcherPkgs = listOf(
-            "com.android.launcher",
-            "com.google.android.apps.nexuslauncher",
-            "com.miui.home",
-            "com.oneplus.launcher",
-            "com.sec.android.app.launcher",
-        )
-        if (pkg in launcherPkgs) return false
-
-        return true
+        val intent = pm.getLaunchIntentForPackage(packageName)
+        return intent != null
     }
-
 
 }

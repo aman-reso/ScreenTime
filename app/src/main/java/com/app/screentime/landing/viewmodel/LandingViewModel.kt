@@ -13,6 +13,7 @@ import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.widget.ScreenTimeWidgetHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,7 +55,7 @@ class LandingViewModel @Inject constructor(
      */
 
     internal fun loadRealUsageDataFromHelper() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             landingUsecase.getTodayUsageData()
                 .fold(
