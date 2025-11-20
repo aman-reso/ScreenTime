@@ -18,7 +18,7 @@ import com.app.screentime.ui.theme.InterFontFamily
 import com.app.screentime.ui.theme.LocalAppColors
 
 enum class AppTextStyle {
-    Body, Title, Footnote, Label, SubTitle
+    Body, Title, Footnote, Label, SubTitle, Caption
 }
 
 @Composable
@@ -73,6 +73,14 @@ fun AppText(
             fontSize = fontSize ?: 18.sp,
             lineHeight = lineHeight ?: 22.sp,
             fontWeight = fontWeight ?: FontWeight(700), // Medium = 500
+            fontFamily = baseFontFamily,
+            color = color
+        )
+
+        AppTextStyle.Caption -> TextStyle(
+            fontSize = fontSize ?: 11.sp,
+            lineHeight = lineHeight ?: 14.sp,
+            fontWeight = fontWeight ?: FontWeight(500),
             fontFamily = baseFontFamily,
             color = color
         )

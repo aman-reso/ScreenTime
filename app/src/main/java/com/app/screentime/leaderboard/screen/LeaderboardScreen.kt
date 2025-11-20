@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.screentime.leaderboard.viewmodel.LeaderboardViewModel
+import com.app.screentime.navigation.Screen
 import com.app.screentime.network.model.LeaderboardEntry
 import com.app.screentime.record.repository.formatDuration
 import com.app.screentime.ui.atom.AppText
@@ -128,6 +129,29 @@ fun LeaderboardScreen(
                         )
                     }
                 }
+            }
+
+            if (navController != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                FilledTonalButton(
+                    onClick = { navController.navigate(Screen.Challenges.route) },
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Flag,
+                        contentDescription = "Challenges",
+                        tint = colors.success
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    AppText(
+                        text = "View Challenges",
+                        style = AppTextStyle.Body,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.success
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
             // Tabs

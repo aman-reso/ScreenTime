@@ -128,6 +128,9 @@ dependencies {
     // Glance Widget dependencies
     implementation(libs.glance.appwidget)
 
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
     // Security/Crypto for EncryptedSharedPreferences
     implementation(libs.androidx.security.crypto)
 

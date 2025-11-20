@@ -1,5 +1,7 @@
 package com.app.screentime.network.di
 
+import com.app.screentime.challenge.service.ChallengeService
+import com.app.screentime.challenge.service.ChallengeServiceImpl
 import com.app.screentime.consent.service.ConsentService
 import com.app.screentime.consent.service.ConsentServiceImpl
 import com.app.screentime.login.service.LoginService
@@ -113,6 +115,13 @@ abstract class NetworkModule {
     @Binds
     @Singleton
     abstract fun bindLeaderboardService(leaderboardServiceImpl: LeaderboardServiceImpl): LeaderboardService
+
+    /**
+     * Bind ChallengeService implementation
+     */
+    @Binds
+    @Singleton
+    abstract fun bindChallengeService(challengeServiceImpl: ChallengeServiceImpl): ChallengeService
 
     /**
      * Bind FocusService implementation

@@ -22,4 +22,8 @@ sealed class Screen(val route: String) {
     object AppBlocking : Screen("app_blocking")
     object Leaderboard : Screen("leaderboard")
     object BlockedLinks : Screen("blocked_links")
+    object Challenges : Screen("challenges")
+    object ChallengeDetail : Screen("challenge_detail/{challengeId}") {
+        fun createRoute(challengeId: String) = "challenge_detail/$challengeId"
+    }
 }

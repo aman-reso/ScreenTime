@@ -26,6 +26,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.app.screentime.appdetail.screen.SingleAppUsageDetailScreen
+import com.app.screentime.challenge.screen.ChallengeDetailScreen
+import com.app.screentime.challenge.screen.ChallengeListScreen
 import com.app.screentime.landing.screen.LandingScreen
 import com.app.screentime.record.screen.RecordDetailScreen
 import com.app.screentime.search.screen.SearchScreen
@@ -70,6 +72,13 @@ fun ScreenTimeNavigation(
             badge = null
         ),
         NavigationItem(
+            label = "Challenges",
+            icon = Icons.Default.Flag,
+            selectedIcon = Icons.Default.Flag,
+            route = Screen.Challenges.route,
+            badge = null
+        ),
+        NavigationItem(
             label = "Profile",
             icon = Icons.Default.Person,
             selectedIcon = Icons.Default.Person,
@@ -101,6 +110,7 @@ fun ScreenTimeNavigation(
                     Screen.Statistics.route,
                     Screen.Profile.route,
                     Screen.FocusMode.route,
+                    Screen.Challenges.route,
                 )
             ) {
                 Box(
@@ -176,6 +186,28 @@ fun ScreenTimeNavigation(
 
             composable(Screen.Leaderboard.route) {
                 LeaderboardScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
+                    navController = navController
+                )
+            }
+
+            composable(Screen.Challenges.route) {
+                ChallengeListScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .background(appColors.background),
+                    navController = navController
+                )
+            }
+
+            composable(Screen.ChallengeDetail.route) { backStackEntry ->
+                val challengeId = backStackEntry.arguments?.getString("challengeId") ?: return@composable
+                ChallengeDetailScreen(
+                    challengeId = challengeId,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(bottom = paddingValues.calculateBottomPadding())

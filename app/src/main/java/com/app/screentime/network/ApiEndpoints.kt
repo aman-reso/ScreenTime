@@ -110,4 +110,12 @@ object ApiEndpoints {
         const val HISTORY = "/api/v1/notifications/history"
         const val SETTINGS = "/api/v1/notifications/settings"
     }
+
+    // 12. Challenges API endpoints
+    object Challenges {
+        const val APP_RANKINGS = "/api/challenges/app-rankings"
+        const val LEADERBOARD = "/api/challenges/{challengeId}/leaderboard"
+        const val JOIN = "/api/challenges/{challengeId}/join"
+    }
+
 }
