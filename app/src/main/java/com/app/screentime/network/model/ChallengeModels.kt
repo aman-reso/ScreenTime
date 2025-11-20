@@ -13,6 +13,147 @@ data class ChallengeOverviewResponse(
 )
 
 /**
+ * Active challenges response from /api/challenges/active
+ */
+@Serializable
+data class ActiveChallengesResponse(
+    val challenges: List<Challenge> = emptyList()
+)
+
+/**
+ * User challenges response from /api/challenges/user
+ */
+@Serializable
+data class UserChallengesResponse(
+    val challenges: List<UserChallenge> = emptyList()
+)
+
+/**
+ * Challenge model from active challenges endpoint
+ */
+@Serializable
+data class Challenge(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val reward: String,
+    val startTime: String, // ISO 8601 format
+    val endTime: String, // ISO 8601 format
+    val thumbnail: String? = null,
+    val hasJoined: Boolean = false
+)
+
+/**
+ * User challenge model from user challenges endpoint
+ */
+@Serializable
+data class UserChallenge(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val reward: String,
+    val startTime: String, // ISO 8601 format
+    val endTime: String, // ISO 8601 format
+    val thumbnail: String? = null,
+    val challengeType: String? = null, // "LESS_SCREENTIME" or "MORE_SCREENTIME"
+    val isActive: Boolean,
+    val joinedAt: String? = null, // ISO 8601 format
+    val isPast: Boolean
+)
+
+/**
+ * Challenge details response from /api/challenges/{challengeId}
+ */
+@Serializable
+data class ChallengeDetails(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val reward: String,
+    val startTime: String, // ISO 8601 format
+    val endTime: String, // ISO 8601 format
+    val thumbnail: String? = null,
+    val challengeType: String? = null,
+    val isActive: Boolean,
+    val participantCount: Int,
+    val createdAt: String? = null // ISO 8601 format
+)
+
+/**
+ * Join challenge request
+ */
+@Serializable
+data class JoinChallengeRequest(
+    val challengeId: Int
+)
+
+/**
+ * Join challenge response
+ */
+@Serializable
+data class JoinChallengeResponse(
+    val challengeId: Int,
+    val userId: String? = null,
+    val joinedAt: String? = null, // ISO 8601 format
+    val message: String? = null
+)
+
+/**
+ * Challenge rankings response from /api/challenges/{challengeId}/rankings
+ */
+@Serializable
+data class ChallengeRankingsResponse(
+    val challengeId: Int,
+    val challengeTitle: String,
+    val challengeType: String, // "LESS_SCREENTIME" or "MORE_SCREENTIME"
+    val rankings: List<ChallengeRanking> = emptyList(),
+    val userRank: ChallengeRanking? = null,
+    val totalParticipants: Int
+)
+
+/**
+ * Individual ranking entry
+ */
+@Serializable
+data class ChallengeRanking(
+    val rank: Int,
+    val userId: String,
+    val totalDuration: Long, // milliseconds
+    val appCount: Int
+)
+
+/**
+ * Submit challenge stats request
+ */
+@Serializable
+data class ChallengeStatsRequest(
+    val challengeId: Int,
+    val appName: String,
+    val packageName: String,
+    val startSyncTime: String, // ISO 8601 format
+    val endSyncTime: String, // ISO 8601 format
+    val duration: Long // milliseconds
+)
+
+/**
+ * Batch challenge stats request
+ */
+@Serializable
+data class BatchChallengeStatsRequest(
+    val challengeId: Int,
+    val stats: List<ChallengeStatsRequest>
+)
+
+/**
+ * Batch challenge stats response
+ */
+@Serializable
+data class BatchChallengeStatsResponse(
+    val submitted: Int,
+    val totalDuration: Long // milliseconds
+)
+
+/**
  * Individual challenge ranking info for a single app.
  */
 @Serializable

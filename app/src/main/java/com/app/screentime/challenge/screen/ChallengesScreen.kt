@@ -1,11 +1,13 @@
 package com.app.screentime.challenge.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,15 +15,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -31,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.shadow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -48,11 +56,7 @@ import coil.compose.AsyncImage
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.screentime.challenge.viewmodel.ChallengeViewModel
-import com.app.screentime.challenge.viewmodel.ChallengesUiState
-import com.app.screentime.network.model.ChallengeAppRanking
-import com.app.screentime.network.model.ChallengeCompetitor
-import com.app.screentime.network.model.ChallengeReward
-import com.app.screentime.network.model.ChallengeTrend
+import com.app.screentime.network.model.Challenge
 import com.app.screentime.record.repository.formatDuration
 import com.app.screentime.ui.atom.AppLoader
 import com.app.screentime.ui.atom.AppText
@@ -75,7 +79,14 @@ fun ChallengeDetailScreen(
 ) {
     val colors = LocalAppColors.current ?: return
     val uiState by viewModel.uiState.collectAsState()
-    val selectedChallenge = uiState.challenges.find { it.challengeId == challengeId }
+    val challengeIdInt = challengeId.toIntOrNull()
+    val selectedChallenge = challengeIdInt?.let { id ->
+        uiState.challenges.find { it.id == id }
+    }
+
+    androidx.compose.runtime.LaunchedEffect(challengeIdInt) {
+        challengeIdInt?.let { viewModel.loadChallengeDetails(it) }
+    }
 
     Box(
         modifier = modifier
@@ -83,16 +94,25 @@ fun ChallengeDetailScreen(
             .background(colors.background)
     ) {
         when {
-            uiState.isLoading -> {
+            uiState.isLoading || uiState.isLoadingDetails -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     AppLoader(color = colors.success)
                 }
             }
 
-            uiState.error != null -> {
+            uiState.error != null || uiState.detailsError != null -> {
                 ChallengeErrorState(
-                    message = uiState.error,
-                    onRetry = viewModel::refresh
+                    message = uiState.detailsError ?: uiState.error ?: "Failed to load challenge",
+                    onRetry = {
+                        challengeIdInt?.let { viewModel.loadChallengeDetails(it) }
+                    }
+                )
+            }
+
+            challengeIdInt == null -> {
+                ChallengeErrorState(
+                    message = "Invalid challenge ID.",
+                    onRetry = { navController?.popBackStack() }
                 )
             }
 
@@ -103,18 +123,15 @@ fun ChallengeDetailScreen(
                 )
             }
 
-            !selectedChallenge.isJoined -> {
-                ChallengeNotJoinedState(
-                    challenge = selectedChallenge,
-                    onBack = { navController?.popBackStack() }
-                )
-            }
-
             else -> {
                 ChallengeContent(
                     challenge = selectedChallenge,
+                    challengeDetails = uiState.challengeDetails,
+                    challengeRankings = uiState.challengeRankings,
                     lastUpdated = uiState.lastUpdated,
-                    onRefresh = viewModel::refresh,
+                    onRefresh = {
+                        challengeIdInt?.let { viewModel.loadChallengeDetails(it) }
+                    },
                     navController = navController
                 )
             }
@@ -124,7 +141,9 @@ fun ChallengeDetailScreen(
 
 @Composable
 private fun ChallengeContent(
-    challenge: ChallengeAppRanking,
+    challenge: Challenge,
+    challengeDetails: com.app.screentime.network.model.ChallengeDetails?,
+    challengeRankings: com.app.screentime.network.model.ChallengeRankingsResponse?,
     lastUpdated: String?,
     onRefresh: () -> Unit,
     navController: NavController?
@@ -134,67 +153,143 @@ private fun ChallengeContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 8.dp)
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Header
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 12.dp)
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (navController != null) {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = colors.tint
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (navController != null) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = "Back",
+                                tint = colors.tint,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        AppText(
+                            text = challenge.title,
+                            style = AppTextStyle.Title,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary
                         )
                     }
                 }
-                Column {
-                    AppText(
-                        text = challenge.appName,
-                        style = AppTextStyle.Title,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
-                    )
-                    AppText(
-                        text = challenge.description ?: "Track your rank and stay focused.",
-                        style = AppTextStyle.Label,
-                        color = colors.textSecondary
+                IconButton(
+                    onClick = onRefresh,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Refresh",
+                        tint = colors.success,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
-            }
-            IconButton(onClick = onRefresh) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Refresh",
-                    tint = colors.success
-                )
             }
         }
 
         lastUpdated?.let {
-            Spacer(modifier = Modifier.height(4.dp))
-            AppText(
-                text = "Updated $it",
-                style = AppTextStyle.Caption,
-                color = colors.textMuted
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                AppText(
+                    text = "Updated $it",
+                    style = AppTextStyle.Caption,
+                    color = colors.textMuted
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                horizontal = 8.dp,
+                vertical = 8.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                ChallengeCard(challenge = challenge)
+                ChallengeCard(
+                    challenge = challenge,
+                    challengeDetails = challengeDetails
+                )
+            }
+
+            // Show participant count and rank
+            item {
+                ChallengeStatsCard(
+                    participantCount = challengeDetails?.participantCount,
+                    userRank = challengeRankings?.userRank?.rank,
+                    totalParticipants = challengeRankings?.totalParticipants,
+                    userDuration = challengeRankings?.userRank?.totalDuration
+                )
+            }
+
+            // Show rankings if available
+            challengeRankings?.rankings?.takeIf { it.isNotEmpty() }?.let { rankings ->
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.EmojiEvents,
+                                contentDescription = null,
+                                tint = colors.success,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            AppText(
+                                text = "Top Rankings",
+                                style = AppTextStyle.SubTitle,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            )
+                        }
+                        AppText(
+                            text = "${rankings.size} players",
+                            style = AppTextStyle.Label,
+                            color = colors.textSecondary
+                        )
+                    }
+                }
+
+                itemsIndexed(rankings.take(10)) { index, ranking ->
+                    ChallengeRankingItem(
+                        rank = ranking.rank,
+                        userId = ranking.userId,
+                        duration = ranking.totalDuration,
+                        rankPosition = index + 1
+                    )
+                }
             }
         }
     }
@@ -223,95 +318,499 @@ private fun ChallengeImage(
 }
 
 @Composable
-private fun ChallengeCard(challenge: ChallengeAppRanking) {
+private fun ChallengeCard(
+    challenge: Challenge,
+    challengeDetails: com.app.screentime.network.model.ChallengeDetails?
+) {
     val colors = LocalAppColors.current ?: return
-    val rankProgress = if (challenge.totalParticipants <= 0) 0f
-    else 1f - ((challenge.userRank - 1f) / challenge.totalParticipants.toFloat())
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = colors.card),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(20.dp)
+    val startDate = formatDate(challenge.startTime)
+    val endDate = formatDate(challenge.endTime)
+    val isActive = challengeDetails?.isActive ?: true
+
+    Column(
+        modifier = Modifier.padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (challenge.iconUrl != null) {
-                ChallengeImage(
-                    imageUrl = challenge.iconUrl,
-                    appName = challenge.appName,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(160.dp)
-                )
+        // Thumbnail
+        if (challenge.thumbnail != null) {
+            ChallengeImage(
+                imageUrl = challenge.thumbnail,
+                appName = challenge.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            )
+        }
+
+        // Title and Description
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            AppText(
+                text = challenge.title,
+                style = AppTextStyle.SubTitle,
+                fontWeight = FontWeight.Bold,
+                color = colors.textPrimary
+            )
+            AppText(
+                text = challenge.description,
+                style = AppTextStyle.Body,
+                color = colors.textSecondary
+            )
+        }
+
+        // Reward Badge
+        if (challenge.reward.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.success.copy(alpha = 0.1f))
+                    .border(
+                        width = 1.dp,
+                        color = colors.success.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.WorkspacePremium,
+                        contentDescription = null,
+                        tint = colors.success,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    AppText(
+                        text = challenge.reward,
+                        style = AppTextStyle.Label,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.success
+                    )
+                }
             }
-            
+        }
+
+        // Status Badge
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    if (isActive) colors.success.copy(alpha = 0.1f)
+                    else colors.textMuted.copy(alpha = 0.1f)
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (isActive) colors.success.copy(alpha = 0.3f)
+                    else colors.textMuted.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    imageVector = Icons.Default.Flag,
+                    contentDescription = null,
+                    tint = if (isActive) colors.success else colors.textMuted,
+                    modifier = Modifier.size(16.dp)
+                )
+                AppText(
+                    text = if (isActive) "Active Challenge" else "Inactive",
+                    style = AppTextStyle.Caption,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isActive) colors.success else colors.textMuted
+                )
+            }
+        }
+
+        // Date Range
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    tint = colors.textMuted,
+                    modifier = Modifier.size(18.dp)
+                )
                 Column(modifier = Modifier.weight(1f)) {
                     AppText(
-                        text = challenge.appName,
-                        style = AppTextStyle.SubTitle,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary,
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        text = "Start Date",
+                        style = AppTextStyle.Caption,
+                        color = colors.textMuted
                     )
-                    challenge.description?.let {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        AppText(
-                            text = it,
-                            style = AppTextStyle.Label,
-                            color = colors.textSecondary,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                    AppText(
+                        text = startDate,
+                        style = AppTextStyle.Label,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textPrimary
+                    )
                 }
-                RankBadge(rank = challenge.userRank)
             }
-
-            RankProgressIndicator(
-                progress = rankProgress,
-                userRank = challenge.userRank,
-                total = challenge.totalParticipants
-            )
-
-            ChallengeMetricsRow(challenge)
-
-            if (challenge.rewards.isNotEmpty()) {
-                ChallengeRewardsSection(rewards = challenge.rewards)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    tint = colors.textMuted,
+                    modifier = Modifier.size(18.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    AppText(
+                        text = "End Date",
+                        style = AppTextStyle.Caption,
+                        color = colors.textMuted
+                    )
+                    AppText(
+                        text = endDate,
+                        style = AppTextStyle.Label,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textPrimary
+                    )
+                }
             }
-
-            if (challenge.topCompetitors.isNotEmpty()) {
-                ChallengeLeaders(topCompetitors = challenge.topCompetitors)
-            }
-
-            //JoinChallengeCard()
         }
     }
 }
 
 @Composable
-private fun ChallengeMetricsRow(challenge: ChallengeAppRanking) {
+private fun ChallengeStatsCard(
+    participantCount: Int?,
+    userRank: Int?,
+    totalParticipants: Int?,
+    userDuration: Long?
+) {
+    val colors = LocalAppColors.current ?: return
+
+    val participants = participantCount ?: totalParticipants ?: 0
+
+    Column(
+        modifier = Modifier.padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.EmojiEvents,
+                contentDescription = null,
+                tint = colors.success,
+                modifier = Modifier.size(24.dp)
+            )
+            AppText(
+                text = "Challenge Statistics",
+                style = AppTextStyle.SubTitle,
+                fontWeight = FontWeight.Bold,
+                color = colors.textPrimary
+            )
+        }
+
+        // Stats Grid
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // First Row: Participants and Rank
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Participant Count
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.success.copy(alpha = 0.08f))
+                        .border(
+                            width = 1.dp,
+                            color = colors.success.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Group,
+                                contentDescription = null,
+                                tint = colors.success,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            AppText(
+                                text = "Participants",
+                                style = AppTextStyle.Caption,
+                                color = colors.textMuted
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        AppText(
+                            text = participants.toString(),
+                            style = AppTextStyle.Title,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary
+                        )
+                    }
+                }
+
+                // User Rank
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (userRank != null) colors.success.copy(alpha = 0.08f)
+                            else colors.textMuted.copy(alpha = 0.08f)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (userRank != null) colors.success.copy(alpha = 0.2f)
+                            else colors.textMuted.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = if (userRank != null) colors.success else colors.textMuted,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            AppText(
+                                text = "Your Rank",
+                                style = AppTextStyle.Caption,
+                                color = colors.textMuted
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        if (userRank != null) {
+                            AppText(
+                                text = "#$userRank",
+                                style = AppTextStyle.Title,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.success
+                            )
+                        } else {
+                            AppText(
+                                text = "Not ranked",
+                                style = AppTextStyle.Body,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+                }
+            }
+
+            // User Duration if available
+            userDuration?.let { duration ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.accent.copy(alpha = 0.08f))
+                        .border(
+                            width = 1.dp,
+                            color = colors.accent.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Timer,
+                                contentDescription = null,
+                                tint = colors.accent,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            AppText(
+                                text = "Your Duration",
+                                style = AppTextStyle.Caption,
+                                color = colors.textMuted
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        AppText(
+                            text = formatDuration(duration),
+                            style = AppTextStyle.SubTitle,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary
+                        )
+                    }
+                }
+            }
+
+            // Rank summary
+            if (userRank != null && totalParticipants != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colors.success.copy(alpha = 0.1f))
+                        .padding(12.dp)
+                ) {
+                    AppText(
+                        text = "You are ranked #$userRank out of $totalParticipants participants",
+                        style = AppTextStyle.Label,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.success
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChallengeRankingItem(
+    rank: Int,
+    userId: String,
+    duration: Long,
+    rankPosition: Int
+) {
+    val colors = LocalAppColors.current ?: return
+
+    val rankColor = when (rankPosition) {
+        1 -> colors.rankGold
+        2 -> colors.rankSilver
+        3 -> colors.rankBronze
+        else -> colors.card
+    }
+
+    val cardBackground = if (rankPosition <= 3) {
+        rankColor.copy(alpha = 0.08f)
+    } else {
+        colors.card
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(color = cardBackground, shape = RoundedCornerShape(12.dp))
+            .then(
+                if (rankPosition <= 3) {
+                    Modifier.border(
+                        width = 1.5.dp,
+                        color = rankColor,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                } else Modifier
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Rank Badge
+            Box(
+                modifier = Modifier
+                    .size(if (rankPosition <= 3) 48.dp else 40.dp)
+                    .shadow(
+                        elevation = if (rankPosition <= 3) 4.dp else 2.dp,
+                        shape = CircleShape,
+                        spotColor = if (rankPosition <= 3) rankColor.copy(alpha = 0.5f) else colors.textPrimary.copy(
+                            alpha = 0.2f
+                        )
+                    )
+                    .background(
+                        color = if (rankPosition <= 3) rankColor else colors.card,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (rankPosition <= 3) {
+                    Icon(
+                        imageVector = when (rankPosition) {
+                            1 -> Icons.Default.EmojiEvents
+                            2 -> Icons.Default.MilitaryTech
+                            else -> Icons.Default.Star
+                        },
+                        contentDescription = null,
+                        tint = colors.textOnPrimary,
+                        modifier = Modifier.size(if (rankPosition == 1) 24.dp else 20.dp)
+                    )
+                } else {
+                    AppText(
+                        text = "#$rank",
+                        style = AppTextStyle.Body,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary
+                    )
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                AppText(
+                    text = userId,
+                    style = AppTextStyle.Body,
+                    fontWeight = if (rankPosition <= 3) FontWeight.Bold else FontWeight.Medium,
+                    color = colors.textPrimary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Timer,
+                        contentDescription = null,
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    AppText(
+                        text = formatDuration(duration),
+                        style = AppTextStyle.Label,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textSecondary
+                    )
+                }
+            }
+
+            if (rankPosition <= 3) {
+                Icon(
+                    imageVector = Icons.Default.EmojiEvents,
+                    contentDescription = null,
+                    tint = rankColor.copy(alpha = 0.6f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChallengeMetricsRow(challenge: Challenge) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         ChallengeMetric(
-            label = challenge.metricLabel ?: "Your usage",
-            value = challenge.userMetricValue?.let { formatMetric(it, challenge.metricUnit) } ?: "--"
+            label = "Start Time",
+            value = formatDate(challenge.startTime)
         )
         ChallengeMetric(
-            label = "Participants",
-            value = "${challenge.totalParticipants}"
-        )
-        ChallengeMetric(
-            label = "Percentile",
-            value = formatPercentile(challenge)
+            label = "End Time",
+            value = formatDate(challenge.endTime)
         )
     }
 }
@@ -343,7 +842,10 @@ private fun RankBadge(rank: Int) {
             .background(colors.success.copy(alpha = 0.15f))
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = null,
@@ -360,191 +862,7 @@ private fun RankBadge(rank: Int) {
     }
 }
 
-@Composable
-private fun RankProgressIndicator(progress: Float, userRank: Int, total: Int) {
-    val colors = LocalAppColors.current ?: return
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            AppText(
-                text = "Ahead of ${(progress * 100).roundToInt()}% players",
-                style = AppTextStyle.Label,
-                color = colors.textSecondary
-            )
-            AppText(
-                text = "$userRank / $total",
-                style = AppTextStyle.Label,
-                color = colors.textSecondary
-            )
-        }
-        LinearProgressIndicator(
-            progress = { progress.coerceIn(0f, 1f) },
-            color = colors.success,
-            trackColor = colors.border
-        )
-    }
-}
-
-@Composable
-private fun ChallengeRewardsSection(rewards: List<ChallengeReward>) {
-    val colors = LocalAppColors.current ?: return
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.WorkspacePremium,
-                contentDescription = null,
-                tint = colors.accent,
-                modifier = Modifier.size(16.dp)
-            )
-            AppText(
-                text = "Rewards",
-                style = AppTextStyle.Label,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.textPrimary
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            rewards.forEach { reward ->
-                RewardItem(reward = reward)
-            }
-        }
-    }
-}
-
-@Composable
-private fun RewardItem(reward: ChallengeReward) {
-    val colors = LocalAppColors.current ?: return
-    val rewardIcon = when (reward.type.lowercase()) {
-        "badge" -> Icons.Default.MilitaryTech
-        "trophy" -> Icons.Default.EmojiEvents
-        "points" -> Icons.Default.Star
-        else -> Icons.Default.WorkspacePremium
-    }
-    
-    val rewardColor = when (reward.tier?.lowercase()) {
-        "gold" -> colors.rankGold
-        "silver" -> colors.rankSilver
-        "bronze" -> colors.rankBronze
-        else -> colors.accent
-    }
-    
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(rewardColor.copy(alpha = 0.12f))
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = rewardIcon,
-            contentDescription = null,
-            tint = rewardColor,
-            modifier = Modifier.size(12.dp)
-        )
-        reward.points?.let {
-            AppText(
-                text = "+$it",
-                style = AppTextStyle.Caption,
-                fontWeight = FontWeight.SemiBold,
-                color = rewardColor,
-                maxLines = 1
-            )
-        } ?: run {
-            AppText(
-                text = reward.title,
-                style = AppTextStyle.Caption,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.textPrimary,
-                maxLines = 1
-            )
-        }
-    }
-}
-
-@Composable
-private fun ChallengeLeaders(topCompetitors: List<ChallengeCompetitor>) {
-    val colors = LocalAppColors.current ?: return
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Flag,
-                contentDescription = null,
-                tint = colors.tint,
-                modifier = Modifier.size(18.dp)
-            )
-            AppText(
-                text = "Top challengers",
-                style = AppTextStyle.Body,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.textPrimary
-            )
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            topCompetitors.take(3).forEach { competitor ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(colors.background),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            AppText(
-                                text = competitor.rank.toString(),
-                                style = AppTextStyle.Label,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            )
-                        }
-                        Column {
-                            AppText(
-                                text = competitor.username,
-                                style = AppTextStyle.Body,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.textPrimary
-                            )
-                            competitor.displayValue?.let {
-                                AppText(
-                                    text = it,
-                                    style = AppTextStyle.Caption,
-                                    color = colors.textMuted
-                                )
-                            }
-                        }
-                    }
-                    val formattedMetric = competitor.displayValue
-                        ?: competitor.metricValue?.let { formatMetric(it, null) }
-                        ?: "--"
-                    AppText(
-                        text = formattedMetric,
-                        style = AppTextStyle.Body,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary
-                    )
-                }
-            }
-        }
-    }
-}
+// Removed unused functions that referenced old ChallengeAppRanking model
 
 @Composable
 private fun JoinChallengeCard() {
@@ -617,7 +935,7 @@ private fun ChallengeErrorState(message: String?, onRetry: () -> Unit) {
 
 @Composable
 private fun ChallengeNotJoinedState(
-    challenge: ChallengeAppRanking,
+    challenge: Challenge,
     onBack: () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return
@@ -643,7 +961,7 @@ private fun ChallengeNotJoinedState(
         )
         Spacer(modifier = Modifier.height(12.dp))
         AppText(
-            text = "You need to join the ${challenge.appName} challenge before you can view rankings and details.",
+            text = "You need to join the ${challenge.title} challenge before you can view rankings and details.",
             style = AppTextStyle.Body,
             color = colors.textSecondary,
             modifier = Modifier.padding(horizontal = 16.dp)
@@ -651,7 +969,11 @@ private fun ChallengeNotJoinedState(
         Spacer(modifier = Modifier.height(32.dp))
         FilledTonalButton(
             onClick = onBack,
-            colors = ButtonDefaults.filledTonalButtonColors(containerColor = colors.success.copy(alpha = 0.15f))
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = colors.success.copy(
+                    alpha = 0.15f
+                )
+            )
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -702,16 +1024,14 @@ private fun ChallengeEmptyState() {
     }
 }
 
-private fun formatPercentile(challenge: ChallengeAppRanking): String {
-    val percentile = challenge.percentile
-    return when {
-        percentile != null -> "${percentile.roundToInt()}%"
-        challenge.totalParticipants > 0 -> {
-            val rank = max(1, challenge.userRank)
-            val computed = (1f - ((rank - 1f) / challenge.totalParticipants)) * 100
-            "${computed.roundToInt()}%"
-        }
-        else -> "--"
+private fun formatDate(isoDateString: String): String {
+    return try {
+        val instant = java.time.Instant.parse(isoDateString)
+        val dateTime = instant.atZone(java.time.ZoneId.systemDefault())
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy")
+        dateTime.format(formatter)
+    } catch (e: Exception) {
+        isoDateString
     }
 }
 
@@ -730,6 +1050,8 @@ private fun ChallengeDetailScreenPreview() {
     ChallengePreviewTheme {
         ChallengeContent(
             challenge = previewChallenges.first(),
+            challengeDetails = null,
+            challengeRankings = null,
             lastUpdated = "Moments ago",
             onRefresh = {},
             navController = null
@@ -738,76 +1060,14 @@ private fun ChallengeDetailScreenPreview() {
 }
 
 private val previewChallenges = listOf(
-    ChallengeAppRanking(
-        challengeId = "preview-youtube",
-        appName = "YouTube",
-        packageName = "com.google.android.youtube",
-        iconUrl = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=400&fit=crop",
-        description = "Keep your watch time focused and below 120 minutes.",
-        metricLabel = "Daily usage",
-        metricUnit = "min",
-        goalValue = 120,
-        userRank = 4,
-        totalParticipants = 150,
-        userMetricValue = 90,
-        percentile = 94.0,
-        trend = ChallengeTrend(direction = "up", delta = 6.0),
-        topCompetitors = listOf(
-            ChallengeCompetitor("ZenMaster", 1, displayValue = "40 min"),
-            ChallengeCompetitor("FocusFox", 2, displayValue = "55 min"),
-            ChallengeCompetitor("BalanceBuddy", 3, displayValue = "62 min")
-        ),
-        isJoined = true,
-        rewards = listOf(
-            ChallengeReward(
-                type = "badge",
-                title = "Focus Master Badge",
-                description = "Earned for maintaining watch time under 2 hours",
-                points = 100,
-                tier = "gold"
-            ),
-            ChallengeReward(
-                type = "points",
-                title = "Bonus Points",
-                description = "500 points for top 10 finish",
-                points = 500
-            )
-        )
-    ),
-    ChallengeAppRanking(
-        challengeId = "preview-insta",
-        appName = "Instagram",
-        packageName = "com.instagram.android",
-        iconUrl = "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=800&h=400&fit=crop",
-        description = "Beat your circle by staying below 60 minutes.",
-        metricLabel = "Daily usage",
-        metricUnit = "min",
-        goalValue = 60,
-        userRank = 11,
-        totalParticipants = 235,
-        userMetricValue = 48,
-        percentile = 81.0,
-        trend = ChallengeTrend(direction = "steady", delta = 0.0),
-        topCompetitors = listOf(
-            ChallengeCompetitor("PhotoPro", 1, displayValue = "22 min"),
-            ChallengeCompetitor("MindfulMike", 2, displayValue = "28 min"),
-            ChallengeCompetitor("QuietMode", 3, displayValue = "33 min")
-        ),
-        isJoined = true,
-        rewards = listOf(
-            ChallengeReward(
-                type = "trophy",
-                title = "Social Media Champion",
-                description = "Trophy for completing the Instagram challenge",
-                tier = "silver"
-            ),
-            ChallengeReward(
-                type = "points",
-                title = "Challenge Points",
-                description = "300 points for participation",
-                points = 300
-            )
-        )
+    Challenge(
+        id = 1,
+        title = "Reduce Screen Time Challenge",
+        description = "Reduce your daily screen time by 30%",
+        reward = "Premium Badge",
+        startTime = "2024-01-15T00:00:00Z",
+        endTime = "2024-01-31T23:59:59Z",
+        thumbnail = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=400&fit=crop"
     )
 )
 
@@ -817,10 +1077,12 @@ private fun ChallengeCardPreview() {
     ChallengePreviewTheme {
         Column(
             modifier = Modifier
-                .background(LocalAppColors.current?.background ?: androidx.compose.ui.graphics.Color.White)
+                .background(
+                    LocalAppColors.current?.background ?: androidx.compose.ui.graphics.Color.White
+                )
                 .padding(16.dp)
         ) {
-            ChallengeCard(challenge = previewChallenges.first())
+            ChallengeCard(challenge = previewChallenges.first(), null)
         }
     }
 }
@@ -831,7 +1093,9 @@ private fun JoinChallengeCardPreview() {
     ChallengePreviewTheme {
         Column(
             modifier = Modifier
-                .background(LocalAppColors.current?.background ?: androidx.compose.ui.graphics.Color.White)
+                .background(
+                    LocalAppColors.current?.background ?: androidx.compose.ui.graphics.Color.White
+                )
                 .padding(16.dp)
         ) {
             JoinChallengeCard()

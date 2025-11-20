@@ -10,7 +10,7 @@ object ApiEndpoints {
 
     // Base URL will be fetched from Firebase Remote Config
     // This is a fallback value
-    private const val DEFAULT_BASE_URL = "https://dcc7871457c1.ngrok-free.app"
+    private const val DEFAULT_BASE_URL = "https://7d76ddc7b74f.ngrok-free.app"
 
     // Lazy initialization of RemoteConfigManager
     private var remoteConfigManager: RemoteConfigManager? = null
@@ -26,7 +26,8 @@ object ApiEndpoints {
      * Get base URL from Remote Config or fallback to default
      */
     fun getBaseUrl(): String {
-        return remoteConfigManager?.getBaseUrl() ?: DEFAULT_BASE_URL
+        return DEFAULT_BASE_URL
+//        return remoteConfigManager?.getBaseUrl() ?: DEFAULT_BASE_URL
     }
 
     // 1. Registration API endpoints
@@ -39,8 +40,6 @@ object ApiEndpoints {
         const val GET_PROFILE = "/api/v1/user/profile"
         const val UPDATE_PROFILE = "/api/v1/user/profile"
         const val UPDATE_USERNAME = "/api/v1/user/username"
-        const val GET_SETTINGS = "/api/v1/user/settings"
-        const val UPDATE_SETTINGS = "/api/v1/user/settings"
         const val GET_PREFERENCES = "/api/v1/user/preferences"
         const val UPDATE_PREFERENCES = "/api/v1/user/preferences"
     }
@@ -113,9 +112,13 @@ object ApiEndpoints {
 
     // 12. Challenges API endpoints
     object Challenges {
-        const val APP_RANKINGS = "/api/challenges/app-rankings"
-        const val LEADERBOARD = "/api/challenges/{challengeId}/leaderboard"
-        const val JOIN = "/api/challenges/{challengeId}/join"
+        const val ACTIVE = "/api/challenges/active"
+        const val JOIN = "/api/challenges/join"
+        const val USER = "/api/challenges/user"
+        const val DETAILS = "/api/challenges/{challengeId}"
+        const val RANKINGS = "/api/challenges/{challengeId}/rankings"
+        const val STATS = "/api/challenges/stats"
+        const val STATS_BATCH = "/api/challenges/stats/batch"
     }
 
 }
