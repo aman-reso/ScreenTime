@@ -11,21 +11,27 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.Outbound
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.Outbound
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
@@ -33,6 +39,7 @@ import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,13 +49,20 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -128,9 +142,12 @@ fun ChallengeDetailScreen(
                     challenge = selectedChallenge,
                     challengeDetails = uiState.challengeDetails,
                     challengeRankings = uiState.challengeRankings,
-                    lastUpdated = uiState.lastUpdated,
+                    isJoining = uiState.joiningChallengeIds.contains(selectedChallenge.id),
                     onRefresh = {
                         challengeIdInt?.let { viewModel.loadChallengeDetails(it) }
+                    },
+                    onJoinChallenge = {
+                        challengeIdInt?.let { viewModel.joinChallenge(it) }
                     },
                     navController = navController
                 )
@@ -144,153 +161,382 @@ private fun ChallengeContent(
     challenge: Challenge,
     challengeDetails: com.app.screentime.network.model.ChallengeDetails?,
     challengeRankings: com.app.screentime.network.model.ChallengeRankingsResponse?,
-    lastUpdated: String?,
+    isJoining: Boolean = false,
     onRefresh: () -> Unit,
+    onJoinChallenge: () -> Unit,
     navController: NavController?
 ) {
     val colors = LocalAppColors.current ?: return
+    val hasJoined = challenge.hasJoined
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp)
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        // Header
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .padding(horizontal = 8.dp)
+        )
+        {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp)
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (navController != null) {
-                        IconButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = "Back",
-                                tint = colors.tint,
-                                modifier = Modifier.size(24.dp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (navController != null) {
+                            IconButton(
+                                onClick = { navController.popBackStack() },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                    contentDescription = "Back",
+                                    tint = colors.tint,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            AppText(
+                                text = challenge.title,
+                                style = AppTextStyle.Title,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
                             )
                         }
                     }
-                    Column(modifier = Modifier.weight(1f)) {
+                    IconButton(
+                        onClick = onRefresh,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = colors.success,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val listState = rememberLazyListState()
+            val scrollOffset = remember {
+                derivedStateOf {
+                    if (listState.firstVisibleItemIndex == 0) {
+                        listState.firstVisibleItemScrollOffset.toFloat()
+                    } else {
+                        0f
+                    }
+                }
+            }
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    bottom = if (!hasJoined) 100.dp else 16.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                // Top Image with Parallax Effect
+                item {
+                    if (challenge.thumbnail != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(300.dp)
+                                .clip(RoundedCornerShape(0.dp))
+                        ) {
+                            ChallengeImage(
+                                imageUrl = challenge.thumbnail,
+                                appName = challenge.title,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(350.dp) // Slightly taller to allow parallax movement
+                                    .graphicsLayer {
+                                        translationY = scrollOffset.value * 0.5f
+                                    }
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         AppText(
                             text = challenge.title,
                             style = AppTextStyle.Title,
                             fontWeight = FontWeight.Bold,
                             color = colors.textPrimary
                         )
+
+                        AppText(
+                            text = challenge.description,
+                            style = AppTextStyle.Body,
+                            color = colors.textSecondary
+                        )
+
+                        if (challenge.reward.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colors.success.copy(alpha = 0.1f))
+                                    .border(
+                                        width = 1.dp,
+                                        color = colors.success.copy(alpha = 0.3f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.WorkspacePremium,
+                                        contentDescription = null,
+                                        tint = colors.success,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    AppText(
+                                        text = challenge.reward,
+                                        style = AppTextStyle.Label,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.success
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
-                IconButton(
-                    onClick = onRefresh,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Refresh",
-                        tint = colors.success,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-        }
 
-        lastUpdated?.let {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                AppText(
-                    text = "Updated $it",
-                    style = AppTextStyle.Caption,
-                    color = colors.textMuted
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                horizontal = 8.dp,
-                vertical = 8.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                ChallengeCard(
-                    challenge = challenge,
-                    challengeDetails = challengeDetails
-                )
-            }
-
-            // Show participant count and rank
-            item {
-                ChallengeStatsCard(
-                    participantCount = challengeDetails?.participantCount,
-                    userRank = challengeRankings?.userRank?.rank,
-                    totalParticipants = challengeRankings?.totalParticipants,
-                    userDuration = challengeRankings?.userRank?.totalDuration
-                )
-            }
-
-            // Show rankings if available
-            challengeRankings?.rankings?.takeIf { it.isNotEmpty() }?.let { rankings ->
+                // Participants Section
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.EmojiEvents,
-                                contentDescription = null,
-                                tint = colors.success,
-                                modifier = Modifier.size(20.dp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(colors.card)
+                            .border(
+                                width = 1.dp,
+                                color = colors.border.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(16.dp)
                             )
+                            .padding(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             AppText(
-                                text = "Top Rankings",
+                                text = "Participants",
+                                style = AppTextStyle.SubTitle,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    ParticipantAvatarStack(
+                                        participantCount = challengeRankings?.totalParticipants
+                                            ?: challengeDetails?.participantCount ?: 0
+                                    )
+                                    Column {
+                                        val participantCount = challengeRankings?.totalParticipants
+                                            ?: challengeDetails?.participantCount ?: 0
+                                        AppText(
+                                            text = if (participantCount > 25) "$participantCount+ participants" else "$participantCount participants",
+                                            style = AppTextStyle.Label,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.textPrimary
+                                        )
+                                    }
+                                }
+
+                                if (challengeRankings?.rankings?.isNotEmpty() == true) {
+                                    Icon(
+                                        imageVector = Icons.Default.Outbound,
+                                        contentDescription = "View all participants",
+                                        tint = colors.textMuted,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Current User Rank Section
+                challengeRankings?.userRank?.let { userRank ->
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(colors.success.copy(alpha = 0.1f))
+                                .border(
+                                    width = 1.5.dp,
+                                    color = colors.success.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    AppText(
+                                        text = "Your Rank",
+                                        style = AppTextStyle.Caption,
+                                        color = colors.textMuted
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = null,
+                                            tint = colors.success,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        AppText(
+                                            text = "#${userRank.rank}",
+                                            style = AppTextStyle.SubTitle,
+                                            fontWeight = FontWeight.Bold,
+                                            color = colors.success
+                                        )
+                                    }
+                                }
+
+                                Column(horizontalAlignment = Alignment.End) {
+                                    AppText(
+                                        text = "Your Duration",
+                                        style = AppTextStyle.Caption,
+                                        color = colors.textMuted
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    AppText(
+                                        text = formatDuration(userRank.totalDuration),
+                                        style = AppTextStyle.SubTitle,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.textPrimary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Top Participants List
+                challengeRankings?.rankings?.takeIf { it.isNotEmpty() }?.let { rankings ->
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            AppText(
+                                text = "Top Participants",
                                 style = AppTextStyle.SubTitle,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             )
                         }
-                        AppText(
-                            text = "${rankings.size} players",
-                            style = AppTextStyle.Label,
-                            color = colors.textSecondary
+                    }
+
+                    itemsIndexed(rankings.take(10)) { index, ranking ->
+                        ChallengeRankingItem(
+                            rank = ranking.rank,
+                            userId = ranking.userId,
+                            duration = ranking.totalDuration,
+                            rankPosition = index + 1,
+                            isCurrentUser = challengeRankings.userRank?.userId == ranking.userId
                         )
                     }
                 }
-
-                itemsIndexed(rankings.take(10)) { index, ranking ->
-                    ChallengeRankingItem(
-                        rank = ranking.rank,
-                        userId = ranking.userId,
-                        duration = ranking.totalDuration,
-                        rankPosition = index + 1
-                    )
-                }
             }
+
+            // Join Challenge Button at Bottom
+        }
+        if (!hasJoined) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                GradientJoinButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    isLoading = isJoining,
+                    enabled = !isJoining,
+                    label = "Join Challenge",
+                    onClick = onJoinChallenge
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GradientJoinButton(
+    modifier: Modifier = Modifier,
+    isLoading: Boolean,
+    enabled: Boolean,
+    label: String,
+    onClick: () -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
+    val gradient = Brush.horizontalGradient(listOf(colors.accent, colors.success))
+    val disabledBrush = Brush.horizontalGradient(
+        listOf(colors.border, colors.border)
+    )
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(22.dp))
+            .background(if (enabled) gradient else disabledBrush)
+            .clickable(enabled = enabled && !isLoading) { onClick() }
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                color = colors.textOnPrimary,
+                strokeWidth = 2.dp
+            )
+        } else {
+            AppText(
+                text = label,
+                style = AppTextStyle.Label,
+                fontWeight = FontWeight.Bold,
+                color = colors.textOnPrimary
+            )
         }
     }
 }
@@ -679,11 +925,53 @@ private fun ChallengeStatsCard(
 }
 
 @Composable
+private fun ParticipantAvatarStack(participantCount: Int) {
+    val colors = LocalAppColors.current ?: return
+    val avatarSize = 32.dp
+    val overlap = 18.dp
+    // Generate sample avatars based on participant count
+    val avatarCount = minOf(3, participantCount)
+    val sampleParticipants = listOf(
+        Color(0xFFFFC1C1) to "AM",
+        Color(0xFFB3E5FC) to "JK",
+        Color(0xFFFFF59D) to "LS"
+    ).take(avatarCount)
+
+    if (sampleParticipants.isEmpty()) return
+
+    val totalWidth = avatarSize + overlap * (sampleParticipants.size - 1)
+    Box(
+        modifier = Modifier
+            .width(totalWidth)
+            .height(avatarSize)
+    ) {
+        sampleParticipants.forEachIndexed { index, (bgColor, initials) ->
+            Box(
+                modifier = Modifier
+                    .offset(x = overlap * index)
+                    .size(avatarSize)
+                    .clip(CircleShape)
+                    .background(bgColor),
+                contentAlignment = Alignment.Center
+            ) {
+                AppText(
+                    text = initials,
+                    style = AppTextStyle.Caption,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun ChallengeRankingItem(
     rank: Int,
     userId: String,
     duration: Long,
-    rankPosition: Int
+    rankPosition: Int,
+    isCurrentUser: Boolean = false
 ) {
     val colors = LocalAppColors.current ?: return
 
@@ -694,10 +982,10 @@ private fun ChallengeRankingItem(
         else -> colors.card
     }
 
-    val cardBackground = if (rankPosition <= 3) {
-        rankColor.copy(alpha = 0.08f)
-    } else {
-        colors.card
+    val cardBackground = when {
+        isCurrentUser -> colors.success.copy(alpha = 0.15f)
+        rankPosition <= 3 -> rankColor.copy(alpha = 0.08f)
+        else -> colors.card
     }
 
     Box(
@@ -705,13 +993,21 @@ private fun ChallengeRankingItem(
             .fillMaxWidth()
             .background(color = cardBackground, shape = RoundedCornerShape(12.dp))
             .then(
-                if (rankPosition <= 3) {
-                    Modifier.border(
+                when {
+                    isCurrentUser -> Modifier.border(
+                        width = 1.5.dp,
+                        color = colors.success,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    rankPosition <= 3 -> Modifier.border(
                         width = 1.5.dp,
                         color = rankColor,
                         shape = RoundedCornerShape(12.dp)
                     )
-                } else Modifier
+
+                    else -> Modifier
+                }
             )
     ) {
         Row(
@@ -760,12 +1056,34 @@ private fun ChallengeRankingItem(
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                AppText(
-                    text = userId,
-                    style = AppTextStyle.Body,
-                    fontWeight = if (rankPosition <= 3) FontWeight.Bold else FontWeight.Medium,
-                    color = colors.textPrimary
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AppText(
+                        text = userId,
+                        style = AppTextStyle.Body,
+                        fontWeight = if (isCurrentUser || rankPosition <= 3) FontWeight.Bold else FontWeight.Medium,
+                        color = colors.textPrimary
+                    )
+                    if (isCurrentUser) {
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = colors.success.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            AppText(
+                                text = "You",
+                                style = AppTextStyle.Label,
+                                color = colors.success,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1052,9 +1370,8 @@ private fun ChallengeDetailScreenPreview() {
             challenge = previewChallenges.first(),
             challengeDetails = null,
             challengeRankings = null,
-            lastUpdated = "Moments ago",
             onRefresh = {},
-            navController = null
+            navController = null, onJoinChallenge = {}
         )
     }
 }

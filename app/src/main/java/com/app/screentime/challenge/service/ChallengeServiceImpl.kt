@@ -12,6 +12,7 @@ import com.app.screentime.network.model.UserChallengesResponse
 import com.app.screentime.network.model.BatchChallengeStatsRequest
 import com.app.screentime.network.model.BatchChallengeStatsResponse
 import com.app.screentime.network.model.ChallengeStatsRequest
+import com.app.screentime.network.model.ChallengeLastSyncResponse
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
@@ -213,6 +214,34 @@ class ChallengeServiceImpl @Inject constructor(
                 Result.success(response.body())
             } else {
                 Result.failure(IllegalStateException("Failed to submit batch challenge stats: ${response.status}"))
+            }
+        } catch (e: ClientRequestException) {
+            Result.failure(
+                IllegalStateException(
+                    "Client error ${e.response.status}: ${e.response.bodyAsText()}",
+                    e
+                )
+            )
+        } catch (e: ServerResponseException) {
+            Result.failure(
+                IllegalStateException(
+                    "Server error ${e.response.status}: ${e.response.bodyAsText()}",
+                    e
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getChallengeLastSyncTime(challengeId: Int): Result<ApiResponse<ChallengeLastSyncResponse>> {
+        return try {
+            val endpoint = ApiEndpoints.Challenges.LAST_SYNC.replace("{challengeId}", challengeId.toString())
+            val response = httpClient.get(endpoint)
+            if (response.status.isSuccess()) {
+                Result.success(response.body())
+            } else {
+                Result.failure(IllegalStateException("Failed to get last sync time: ${response.status}"))
             }
         } catch (e: ClientRequestException) {
             Result.failure(

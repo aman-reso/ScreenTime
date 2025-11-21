@@ -10,6 +10,7 @@ import com.app.screentime.network.model.UserChallengesResponse
 import com.app.screentime.network.model.BatchChallengeStatsRequest
 import com.app.screentime.network.model.BatchChallengeStatsResponse
 import com.app.screentime.network.model.ChallengeStatsRequest
+import com.app.screentime.network.model.ChallengeLastSyncResponse
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,5 +44,9 @@ class ChallengeRepository @Inject constructor(
 
     suspend fun submitBatchChallengeStats(request: BatchChallengeStatsRequest): Result<ApiResponse<BatchChallengeStatsResponse>> {
         return challengeService.submitBatchChallengeStats(request)
+    }
+
+    suspend fun getChallengeLastSyncTime(challengeId: Int): Result<ApiResponse<ChallengeLastSyncResponse>> {
+        return challengeService.getChallengeLastSyncTime(challengeId)
     }
 }

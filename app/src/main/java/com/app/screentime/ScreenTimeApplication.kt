@@ -8,6 +8,7 @@ import androidx.work.WorkManager
 import com.app.screentime.config.RemoteConfigManager
 import com.app.screentime.login.usecase.LoginUseCase
 import com.app.screentime.network.ApiEndpoints
+import com.app.screentime.sync.ChallengeSyncWorker
 import com.app.screentime.sync.DataSyncWorker
 import com.app.screentime.sync.FocusSyncWorker
 import com.app.screentime.utils.Logger
@@ -61,6 +62,10 @@ class ScreenTimeApplication : Application(), Configuration.Provider {
         // Schedule focus mode stats sync
         FocusSyncWorker.schedule(this)
         WidgetUpdateWorker.schedule(this)
+        // Sync pre-existing joined challenges from server (handles challenges joined before DB creation)
+        ChallengeSyncWorker.syncPreExistingChallenges(this)
+        // Reschedule active challenge syncs
+        ChallengeSyncWorker.rescheduleActiveChallenges(this)
     }
 
     override val workManagerConfiguration: Configuration

@@ -21,21 +21,19 @@ class LandingUsecase @Inject constructor(
      * @return Result containing today's usage data or error
      */
     suspend fun getTodayUsageData(): Result<TodayUsageData> {
-        return withContext(Dispatchers.Main) {
-
+        return withContext(Dispatchers.IO) {
             try {
-
-                val currentTime = System.currentTimeMillis()
-                val midNightCal = Calendar.getInstance()
-                midNightCal[Calendar.HOUR_OF_DAY] = 0
-                midNightCal[Calendar.MINUTE] = 0
-                midNightCal[Calendar.SECOND] = 0
-                midNightCal[Calendar.MILLISECOND] = 0
-
-                val allEvents = localAppUsageRepository.collectEventsForSync(
-                    startMsEpoch = midNightCal.timeInMillis, endMsEpoch = currentTime
-                )
-                val size = allEvents.filter { it.duration != null }.sumOf { it.duration ?: 0 }
+//                val currentTime = System.currentTimeMillis()
+//                val midNightCal = Calendar.getInstance()
+//                midNightCal[Calendar.HOUR_OF_DAY] = 0
+//                midNightCal[Calendar.MINUTE] = 0
+//                midNightCal[Calendar.SECOND] = 0
+//                midNightCal[Calendar.MILLISECOND] = 0
+//
+//                val allEvents = localAppUsageRepository.collectEventsForSync(
+//                    startMsEpoch = midNightCal.timeInMillis, endMsEpoch = currentTime
+//                )
+//                val size = allEvents.filter { it.duration != null }.sumOf { it.duration ?: 0 }
                 val todayReport = localAppUsageRepository.fetchAppUsageTodayTillNow()
 
                 // Calculate totals once and reuse

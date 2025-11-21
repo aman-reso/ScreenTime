@@ -64,13 +64,13 @@ fun ScreenTimeNavigation(
             route = Screen.Statistics.route,
             badge = null
         ),
-        NavigationItem(
-            label = "Focus",
-            icon = Icons.Default.Timer,
-            selectedIcon = Icons.Default.Timer,
-            route = Screen.FocusMode.route,
-            badge = null
-        ),
+//        NavigationItem(
+//            label = "Focus",
+//            icon = Icons.Default.Timer,
+//            selectedIcon = Icons.Default.Timer,
+//            route = Screen.FocusMode.route,
+//            badge = null
+//        ),
         NavigationItem(
             label = "Challenges",
             icon = Icons.Default.Flag,

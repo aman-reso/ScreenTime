@@ -119,6 +119,7 @@ object ApiEndpoints {
         const val RANKINGS = "/api/challenges/{challengeId}/rankings"
         const val STATS = "/api/challenges/stats"
         const val STATS_BATCH = "/api/challenges/stats/batch"
+        const val LAST_SYNC = "/api/challenges/{challengeId}/last-sync"
     }
 
 }

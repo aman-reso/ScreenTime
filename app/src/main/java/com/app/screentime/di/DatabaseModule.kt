@@ -4,6 +4,7 @@ import android.content.Context
 import com.app.screentime.database.ScreenTimeDatabase
 import com.app.screentime.database.dao.BlockedLinkDao
 import com.app.screentime.database.dao.FocusTimeDao
+import com.app.screentime.database.dao.JoinedChallengeDao
 import com.app.screentime.database.dao.NotificationDao
 import dagger.Module
 import dagger.Provides
@@ -37,5 +38,10 @@ object DatabaseModule {
     @Provides
     fun provideNotificationDao(database: ScreenTimeDatabase): NotificationDao {
         return database.notificationDao()
+    }
+    
+    @Provides
+    fun provideJoinedChallengeDao(database: ScreenTimeDatabase): JoinedChallengeDao {
+        return database.joinedChallengeDao()
     }
 }

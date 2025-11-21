@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,18 +42,27 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.shadow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -81,148 +92,389 @@ fun ChallengeListScreen(
     val colors = LocalAppColors.current ?: return
     val uiState by viewModel.uiState.collectAsState()
 
+    val tabs = listOf("Challenges", "Joined")
+    val pagerState = rememberPagerState(pageCount = { tabs.size }, initialPage = 0)
+    val coroutineScope = rememberCoroutineScope()
+
     val upcomingChallenges = remember { sampleUpcomingChallenges }
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
-            .padding(top = 12.dp)
     ) {
-        Header(onRefresh = viewModel::refresh)
-        LazyColumn(
+        // Custom Segmented Control
+        Box(
             modifier = Modifier
-                .fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            item {
-                SectionTitle("Current challenges", colors.tint)
-            }
-
-            when {
-                uiState.isLoading -> {
-                    item {
-                        Spacer(modifier = Modifier.height(80.dp))
-                        AppLoader(color = colors.success)
+            SegmentedControl(
+                items = tabs,
+                selectedIndex = pagerState.currentPage,
+                onItemSelected = { index ->
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(index)
                     }
                 }
+            )
+        }
 
-                uiState.error != null -> {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            AppText(
-                                text = uiState.error ?: "Unable to load challenges.",
-                                style = AppTextStyle.Body,
-                                color = colors.error
-                            )
-                            TextButton(onClick = viewModel::refresh) {
-                                AppText(
-                                    text = "Retry",
-                                    style = AppTextStyle.Label,
-                                    color = colors.success
-                                )
-                            }
-                        }
-                    }
+        // Tab Content with Pager
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            when (page) {
+                0 -> {
+                    // All Challenges Tab
+                    ChallengesTab(
+                        uiState = uiState,
+                        navController = navController,
+                        viewModel = viewModel,
+                        upcomingChallenges = upcomingChallenges
+                    )
                 }
 
-                uiState.challenges.isEmpty() -> {
-                    item {
-                        AppText(
-                            text = "No current challenges available right now.",
-                            style = AppTextStyle.Label,
-                            color = colors.textMuted
-                        )
-                    }
+                1 -> {
+                    // Joined Challenges Tab
+                    JoinedChallengesTab(
+                        uiState = uiState,
+                        navController = navController,
+                        viewModel = viewModel
+                    )
                 }
-
-                else -> {
-                    items(uiState.challenges, key = { it.id }) { challenge ->
-                        CurrentChallengeCard(
-                            challenge = challenge,
-                            isJoining = uiState.joiningChallengeIds.contains(challenge.id),
-                            onViewDetails = {
-                                navController?.navigate(
-                                    Screen.ChallengeDetail.createRoute(challenge.id.toString())
-                                )
-                            },
-                            onJoin = {
-                                viewModel.joinChallenge(challenge.id)
-                            }
-                        )
-                    }
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                SectionTitle("Upcoming challenges", colors.textSecondary)
-            }
-
-            items(upcomingChallenges, key = { it.id }) { challenge ->
-                UpcomingChallengeCard(challenge = challenge)
             }
         }
     }
 }
 
 @Composable
-private fun Header(onRefresh: () -> Unit) {
+private fun ChallengesTab(
+    uiState: com.app.screentime.challenge.viewmodel.ChallengesUiState,
+    navController: NavController?,
+    viewModel: ChallengeViewModel,
+    upcomingChallenges: List<UpcomingChallenge>
+) {
     val colors = LocalAppColors.current ?: return
-    Row(
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            SectionTitle("Current challenges", colors.tint)
+        }
+
+        when {
+            uiState.isLoading -> {
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
+                    AppLoader(color = colors.success)
+                }
+            }
+
+            uiState.error != null -> {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AppText(
+                            text = uiState.error,
+                            style = AppTextStyle.Body,
+                            color = colors.error
+                        )
+                        TextButton(onClick = viewModel::refresh) {
+                            AppText(
+                                text = "Retry",
+                                style = AppTextStyle.Label,
+                                color = colors.success
+                            )
+                        }
+                    }
+                }
+            }
+
+            uiState.challenges.isEmpty() -> {
+                item {
+                    AppText(
+                        text = "No current challenges available right now.",
+                        style = AppTextStyle.Label,
+                        color = colors.textMuted
+                    )
+                }
+            }
+
+            else -> {
+                items(uiState.challenges, key = { it.id }) { challenge ->
+                    CurrentChallengeCard(
+                        challenge = challenge,
+                        isJoining = uiState.joiningChallengeIds.contains(challenge.id),
+                        onViewDetails = {
+                            navController?.navigate(
+                                Screen.ChallengeDetail.createRoute(challenge.id.toString())
+                            )
+                        },
+                        onJoin = {
+                            viewModel.joinChallenge(challenge.id)
+                        }
+                    )
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            SectionTitle("Upcoming challenges", colors.textSecondary)
+        }
+
+        items(upcomingChallenges, key = { it.id }) { challenge ->
+            UpcomingChallengeCard(challenge = challenge)
+        }
+    }
+}
+
+@Composable
+private fun JoinedChallengesTab(
+    uiState: com.app.screentime.challenge.viewmodel.ChallengesUiState,
+    navController: NavController?,
+    viewModel: ChallengeViewModel
+) {
+    val colors = LocalAppColors.current ?: return
+    val joinedChallenges = uiState.challenges.filter { it.hasJoined }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        when {
+            uiState.isLoading -> {
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
+                    AppLoader(color = colors.success)
+                }
+            }
+
+            uiState.error != null -> {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AppText(
+                            text = uiState.error ?: "Unable to load challenges.",
+                            style = AppTextStyle.Body,
+                            color = colors.error
+                        )
+                        TextButton(onClick = viewModel::refresh) {
+                            AppText(
+                                text = "Retry",
+                                style = AppTextStyle.Label,
+                                color = colors.success
+                            )
+                        }
+                    }
+                }
+            }
+
+            joinedChallenges.isEmpty() -> {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Flag,
+                            contentDescription = null,
+                            tint = colors.textMuted,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        AppText(
+                            text = "No joined challenges",
+                            style = AppTextStyle.SubTitle,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary
+                        )
+                        AppText(
+                            text = "Join challenges from the Challenges tab to see them here.",
+                            style = AppTextStyle.Body,
+                            color = colors.textSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+
+            else -> {
+                items(joinedChallenges, key = { it.id }) { challenge ->
+                    CurrentChallengeCard(
+                        challenge = challenge,
+                        isJoining = uiState.joiningChallengeIds.contains(challenge.id),
+                        onViewDetails = {
+                            navController?.navigate(
+                                Screen.ChallengeDetail.createRoute(challenge.id.toString())
+                            )
+                        },
+                        onJoin = {
+                            viewModel.joinChallenge(challenge.id)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Header(
+    onRefresh: () -> Unit,
+    useMockData: Boolean,
+    onToggleMockData: () -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(
-                        color = colors.success.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(12.dp)
-                    ),
-                contentAlignment = Alignment.Center
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = null,
-                    tint = colors.success,
-                    modifier = Modifier.size(24.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = colors.success.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.EmojiEvents,
+                        contentDescription = null,
+                        tint = colors.success,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Column {
+                    AppText(
+                        text = "Challenges",
+                        style = AppTextStyle.Title,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary
+                    )
+                    AppText(
+                        text = "Join a challenge to improve your ranking",
+                        style = AppTextStyle.Label,
+                        color = colors.textSecondary
+                    )
+                }
             }
-            Column {
-                AppText(
-                    text = "Challenges",
-                    style = AppTextStyle.Title,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.textPrimary
-                )
-                AppText(
-                    text = "Join a challenge to improve your ranking",
-                    style = AppTextStyle.Label,
-                    color = colors.textSecondary
+            IconButton(onClick = onRefresh) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Refresh",
+                    tint = colors.success
                 )
             }
         }
-        IconButton(onClick = onRefresh) {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = "Refresh",
-                tint = colors.success
+
+        // Mock Data Toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AppText(
+                text = "Use Mock Data",
+                style = AppTextStyle.Label,
+                color = colors.textSecondary
             )
+            Switch(
+                checked = useMockData,
+                onCheckedChange = { onToggleMockData() }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SegmentedControl(
+    items: List<String>,
+    selectedIndex: Int,
+    onItemSelected: (Int) -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
+
+    // Create a gradient-like background color (reddish-purple translucent)
+    val backgroundColor = colors.success.copy(alpha = 0.2f).let { baseColor ->
+        androidx.compose.ui.graphics.Color(
+            red = (baseColor.red * 255 + 20).coerceAtMost(255f) / 255f,
+            green = (baseColor.green * 255 - 10).coerceAtLeast(0f) / 255f,
+            blue = (baseColor.blue * 255 + 30).coerceAtMost(255f) / 255f,
+            alpha = 0.25f
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(backgroundColor)
+            .padding(4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            items.forEachIndexed { index, item ->
+                val isSelected = selectedIndex == index
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            if (isSelected) {
+                                colors.card // White/light background for selected
+                            } else {
+                                Color.Transparent
+                            }
+                        )
+                        .clickable { onItemSelected(index) }
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AppText(
+                        text = item,
+                        style = AppTextStyle.Body,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) {
+                            colors.textPrimary // Dark text for selected (white background)
+                        } else {
+                            colors.textOnPrimary.copy(alpha = 0.95f) // White/light text for unselected
+                        }
+                    )
+                }
+            }
         }
     }
 }
@@ -246,7 +498,7 @@ private fun ChallengeImage(
     val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(colors.border.copy(alpha = 0.1f)),
         contentAlignment = Alignment.Center
     ) {
@@ -268,126 +520,178 @@ private fun CurrentChallengeCard(
 ) {
     val colors = LocalAppColors.current ?: return
     val hasJoined = challenge.hasJoined
+
+    // Format dates
+    val startDate = formatDate(challenge.startTime)
+    val endDate = formatDate(challenge.endTime)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(320.dp)
-            .clip(RoundedCornerShape(32.dp))
-            .background(colors.card)
             .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(32.dp),
+                elevation = 4.dp,
+                shape = RoundedCornerShape(12.dp),
                 spotColor = colors.success.copy(alpha = 0.2f)
-            )
+            ),
     ) {
-        if (challenge.thumbnail != null) {
-            ChallengeImage(
-                imageUrl = challenge.thumbnail,
-                appName = challenge.title,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .height(200.dp)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, colors.background.copy(alpha = 0.95f))
-                    )
-                )
-        )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .fillMaxWidth()
-                .padding(16.dp)
-                .clip(RoundedCornerShape(26.dp))
-                .background(colors.card.copy(alpha = 0.95f))
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                AppText(
-                    text = challenge.title,
-                    style = AppTextStyle.SubTitle,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.textPrimary,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-                AppText(
-                    text = challenge.description,
-                    style = AppTextStyle.Label,
-                    color = colors.textSecondary,
-                    maxLines = 2,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            // Image on the left - 60dp height, top-aligned
+            if (challenge.thumbnail != null) {
+                ChallengeImage(
+                    imageUrl = challenge.thumbnail,
+                    appName = challenge.title,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(8.dp))
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Content on the right
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                // Title and Subtitle at top (aligned with image top)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    ParticipantAvatarStack()
-                    Column {
-                        AppText(
-                            text = "25+ participants",
-                            style = AppTextStyle.Label,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.textPrimary
-                        )
-                        AppText(
-                            text = "Growing daily",
-                            style = AppTextStyle.Caption,
-                            color = colors.textSecondary
-                        )
-                    }
+                    // Title
+                    AppText(
+                        text = challenge.title,
+                        style = AppTextStyle.SubTitle,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+
+                    // Subtitle (description)
+                    AppText(
+                        text = challenge.description,
+                        style = AppTextStyle.Label,
+                        color = colors.textSecondary,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                GradientJoinButton(
-                    modifier = Modifier,
-                    isLoading = isJoining,
-                    enabled = !hasJoined && !isJoining,
-                    label = if (hasJoined) "Already Joined" else "Join Challenge",
-                    onClick = {
-                        if (!hasJoined) {
-                            onJoin()
+
+                // Spacer to push other content to bottom of image area
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Other content below (positioned at bottom of image)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Reward Badge (if available)
+                    if (challenge.reward.isNotEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(colors.success.copy(alpha = 0.1f))
+                                .border(
+                                    width = 1.dp,
+                                    color = colors.success.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(6.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.WorkspacePremium,
+                                    contentDescription = null,
+                                    tint = colors.success,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                AppText(
+                                    text = challenge.reward,
+                                    style = AppTextStyle.Caption,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.success,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
-                )
-            }
-        }
 
-        OutlinedButton(
-            onClick = onViewDetails,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .clip(RoundedCornerShape(22.dp)),
-            border = androidx.compose.foundation.BorderStroke(1.dp, colors.card.copy(alpha = 0.6f))
-        ) {
-            Icon(
-                imageVector = Icons.Default.Outbound,
-                contentDescription = null,
-                tint = colors.tint
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            AppText(
-                text = "Details",
-                style = AppTextStyle.Label,
-                fontWeight = FontWeight.Medium,
-                color = colors.tint
-            )
+                    // Date Range
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            tint = colors.textMuted,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        AppText(
+                            text = startDate,
+                            style = AppTextStyle.Caption,
+                            color = colors.textMuted
+                        )
+                        AppText(
+                            text = "•",
+                            style = AppTextStyle.Caption,
+                            color = colors.textMuted
+                        )
+                        AppText(
+                            text = endDate,
+                            style = AppTextStyle.Caption,
+                            color = colors.textMuted
+                        )
+                    }
+
+                    // Action Buttons Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        GradientJoinButton(
+                            modifier = Modifier.weight(1f),
+                            isLoading = isJoining,
+                            enabled = !hasJoined && !isJoining,
+                            label = if (hasJoined) "Already Joined" else "Join Challenge",
+                            onClick = {
+                                if (!hasJoined) {
+                                    onJoin()
+                                }
+                            }
+                        )
+                        OutlinedButton(
+                            onClick = onViewDetails,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Outbound,
+                                contentDescription = null,
+                                tint = colors.tint,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            AppText(
+                                text = "Details",
+                                style = AppTextStyle.Label,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.tint
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -513,7 +817,7 @@ private fun UpcomingChallengeCard(challenge: UpcomingChallenge) {
                     color = colors.textSecondary
                 )
             }
-            
+
             // Start Date
             Box(
                 modifier = Modifier
@@ -544,7 +848,7 @@ private fun UpcomingChallengeCard(challenge: UpcomingChallenge) {
                     )
                 }
             }
-            
+
             // Waitlist Button
             FilledTonalButton(
                 onClick = { /* TODO: waitlist action */ },
@@ -610,7 +914,9 @@ private fun CurrentChallengeCardPreview() {
     ChallengePreviewTheme {
         Column(
             modifier = Modifier
-                .background(LocalAppColors.current?.background ?: androidx.compose.ui.graphics.Color.White)
+                .background(
+                    LocalAppColors.current?.background ?: androidx.compose.ui.graphics.Color.White
+                )
                 .padding(16.dp)
         ) {
             CurrentChallengeCard(
@@ -628,7 +934,9 @@ private fun UpcomingChallengeCardPreview() {
     ChallengePreviewTheme {
         Column(
             modifier = Modifier
-                .background(LocalAppColors.current?.background ?: androidx.compose.ui.graphics.Color.White)
+                .background(
+                    LocalAppColors.current?.background ?: androidx.compose.ui.graphics.Color.White
+                )
                 .padding(16.dp)
         ) {
             UpcomingChallengeCard(challenge = sampleUpcomingChallenges.first())

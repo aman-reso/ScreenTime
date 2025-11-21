@@ -10,6 +10,7 @@ import com.app.screentime.network.model.UserChallengesResponse
 import com.app.screentime.network.model.BatchChallengeStatsRequest
 import com.app.screentime.network.model.BatchChallengeStatsResponse
 import com.app.screentime.network.model.ChallengeStatsRequest
+import com.app.screentime.network.model.ChallengeLastSyncResponse
 
 /** Interface to obtain challenge leaderboards and ranks. */
 interface ChallengeService {
@@ -47,4 +48,9 @@ interface ChallengeService {
      * Submit batch challenge stats (auth required)
      */
     suspend fun submitBatchChallengeStats(request: BatchChallengeStatsRequest): Result<ApiResponse<BatchChallengeStatsResponse>>
+    
+    /**
+     * Get last sync time for a challenge (auth required)
+     */
+    suspend fun getChallengeLastSyncTime(challengeId: Int): Result<ApiResponse<ChallengeLastSyncResponse>>
 }

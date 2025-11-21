@@ -76,7 +76,8 @@ data class ChallengeDetails(
     val challengeType: String? = null,
     val isActive: Boolean,
     val participantCount: Int,
-    val createdAt: String? = null // ISO 8601 format
+    val createdAt: String? = null, // ISO 8601 format
+    val packageNames: String? = null // Comma-separated package names for this challenge
 )
 
 /**
@@ -151,6 +152,15 @@ data class BatchChallengeStatsRequest(
 data class BatchChallengeStatsResponse(
     val submitted: Int,
     val totalDuration: Long // milliseconds
+)
+
+/**
+ * Challenge last sync time response
+ */
+@Serializable
+data class ChallengeLastSyncResponse(
+    val challengeId: Int,
+    val lastSyncTime: String? = null // ISO 8601 format, null if never synced
 )
 
 /**
