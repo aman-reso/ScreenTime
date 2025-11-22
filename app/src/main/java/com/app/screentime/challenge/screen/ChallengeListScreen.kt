@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -52,6 +53,16 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.shadow
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush.Companion.linearGradient
+import androidx.compose.ui.graphics.Brush.Companion.verticalGradient
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -207,9 +218,10 @@ private fun ChallengesTab(
             }
 
             else -> {
-                items(uiState.challenges, key = { it.id }) { challenge ->
+                itemsIndexed(uiState.challenges, key = { _, challenge -> challenge.id }) { index, challenge ->
                     CurrentChallengeCard(
                         challenge = challenge,
+                        index = index,
                         isJoining = uiState.joiningChallengeIds.contains(challenge.id),
                         onViewDetails = {
                             navController?.navigate(
@@ -314,9 +326,10 @@ private fun JoinedChallengesTab(
             }
 
             else -> {
-                items(joinedChallenges, key = { it.id }) { challenge ->
+                itemsIndexed(joinedChallenges, key = { _, challenge -> challenge.id }) { index, challenge ->
                     CurrentChallengeCard(
                         challenge = challenge,
+                        index = index,
                         isJoining = uiState.joiningChallengeIds.contains(challenge.id),
                         onViewDetails = {
                             navController?.navigate(
@@ -491,6 +504,34 @@ private fun ChallengeImage(
 
 @Composable
 private fun CurrentChallengeCard(
+    challenge: Challenge, 
+    index: Int = 0,
+    isJoining: Boolean = false, 
+    onViewDetails: () -> Unit, 
+    onJoin: () -> Unit
+) {
+    // Alternate between two designs based on index to ensure both are visible
+    val useOverlayDesign = remember(index) { index % 2 == 0 }
+    
+    if (useOverlayDesign) {
+        CurrentChallengeCardOverlay(
+            challenge = challenge,
+            isJoining = isJoining,
+            onViewDetails = onViewDetails,
+            onJoin = onJoin
+        )
+    } else {
+        CurrentChallengeCardGradient(
+            challenge = challenge,
+            isJoining = isJoining,
+            onViewDetails = onViewDetails,
+            onJoin = onJoin
+        )
+    }
+}
+
+@Composable
+private fun CurrentChallengeCardOverlay(
     challenge: Challenge, isJoining: Boolean = false, onViewDetails: () -> Unit, onJoin: () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return
@@ -500,173 +541,668 @@ private fun CurrentChallengeCard(
     val startDate = formatDate(challenge.startTime)
     val endDate = formatDate(challenge.endTime)
 
+    // Interactive states
+    val cardInteractionSource = remember { MutableInteractionSource() }
+    val isCardPressed by cardInteractionSource.collectIsPressedAsState()
+    
+    // Animated scale for card hover/press
+    val cardScale by animateFloatAsState(
+        targetValue = if (isCardPressed) 0.98f else 1f,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        label = "cardScale"
+    )
+    
+    // Animated elevation for card press
+    val cardElevation by animateFloatAsState(
+        targetValue = if (isCardPressed) 8f else 4f,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        label = "cardElevation"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(colors.card)
+            .height(400.dp)
+            .scale(cardScale)
+            .shadow(
+                elevation = cardElevation.dp,
+                shape = RoundedCornerShape(16.dp),
+                spotColor = Color.Black.copy(alpha = 0.3f)
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(
+                interactionSource = cardInteractionSource,
+                onClick = onViewDetails
+            )
     ) {
-        ConstraintLayout(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            val (image, title, subtitle, reward, dateRow, joinButton, detailsIcon, handshakeIcon) = createRefs()
-
+        // Background Image
+        Box(modifier = Modifier.fillMaxSize()) {
             if (challenge.thumbnail != null) {
-                ChallengeImage(
-                    imageUrl = challenge.thumbnail,
-                    appName = challenge.title,
-                    modifier = Modifier
-                        .width(60.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .constrainAs(image) {
-                            top.linkTo(parent.top)
-                            start.linkTo(parent.start)
-                            bottom.linkTo(reward.bottom)
-                            height = Dimension.fillToConstraints
-                        })
-            }
-
-            AppText(
-                text = challenge.title,
-                style = AppTextStyle.SubTitle,
-                fontWeight = FontWeight.Bold,
-                color = colors.textPrimary,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                modifier = Modifier.constrainAs(title) {
-                    top.linkTo(image.top)
-                    start.linkTo(
-                        if (challenge.thumbnail != null) image.end else parent.start, margin = 16.dp
-                    )
-                    end.linkTo(
-                        if (hasJoined) handshakeIcon.start else detailsIcon.start, margin = 8.dp
-                    )
-                    width = Dimension.fillToConstraints
-                })
-
-            Row(
-                modifier = Modifier.constrainAs(dateRow) {
-                    top.linkTo(
-                        title.bottom, margin = 6.dp
-                    )
-                    start.linkTo(title.start)
-                    end.linkTo(title.end)
-                    width = Dimension.fillToConstraints
-                },
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CalendarToday,
-                    contentDescription = null,
-                    tint = colors.textMuted,
-                    modifier = Modifier.size(14.dp)
+                AsyncImage(
+                    model = challenge.thumbnail,
+                    contentDescription = challenge.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
-                AppText(
-                    text = startDate, style = AppTextStyle.Caption, color = colors.textMuted
-                )
-                AppText(
-                    text = "•", style = AppTextStyle.Caption, color = colors.textMuted
-                )
-                AppText(
-                    text = endDate, style = AppTextStyle.Caption, color = colors.textMuted
-                )
-            }
-
-            AppText(
-                text = challenge.description,
-                style = AppTextStyle.Label,
-                color = colors.textSecondary,
-                maxLines = 2,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                modifier = Modifier.constrainAs(subtitle) {
-                    top.linkTo(reward.bottom, margin = 4.dp)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    width = Dimension.fillToConstraints
-                })
-
-            if (challenge.reward.isNotEmpty()) {
+            } else {
                 Box(
-                    modifier = Modifier.constrainAs(reward) {
-                        top.linkTo(dateRow.bottom, 6.dp)
-                        start.linkTo(dateRow.start)
-                        end.linkTo(parent.end)
-                        width = Dimension.fillToConstraints
-                    }) {
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(colors.border.copy(alpha = 0.1f))
+                )
+            }
+            
+            // Dark Gradient Overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.2f),
+                                Color.Black.copy(alpha = 0.5f),
+                                Color.Black.copy(alpha = 0.9f)
+                            ),
+                            startY = 0f,
+                            endY = Float.POSITIVE_INFINITY
+                        )
+                    )
+            )
+        }
+        
+        // Content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Top Section - Badge
+            Box {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White.copy(alpha = 0.2f))
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    AppText(
+                        text = if (hasJoined) "Joined" else "Active",
+                        style = AppTextStyle.Caption,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
+            }
+            
+            // Bottom Section - Title, Reward, Dates, Button
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Title
+                AppText(
+                    text = challenge.title,
+                    style = AppTextStyle.SubTitle,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                
+                // Reward
+                if (challenge.reward.isNotEmpty()) {
                     Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(colors.success.copy(alpha = 0.1f))
-                            .border(
-                                width = 1.dp,
-                                color = colors.success.copy(alpha = 0.3f),
-                                shape = RoundedCornerShape(6.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.WorkspacePremium,
                             contentDescription = null,
-                            tint = colors.success,
-                            modifier = Modifier.size(14.dp)
+                            tint = Color(0xFFFFD700), // Amber/Gold
+                            modifier = Modifier.size(16.dp)
                         )
                         AppText(
                             text = challenge.reward,
-                            style = AppTextStyle.Caption,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.success,
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            style = AppTextStyle.Label,
+                            color = Color.White.copy(alpha = 0.9f)
                         )
                     }
                 }
-            }
-
-
-            AppPrimaryButton(text = "Join Challenge", enabled = true, onClick = {
-                onJoin()
-            }, modifier = Modifier.constrainAs(joinButton) {
-                top.linkTo(subtitle.bottom, margin = 6.dp)
-                start.linkTo(parent.start)
-                end.linkTo(detailsIcon.start, margin = 8.dp)
-                width = Dimension.fillToConstraints
-            })
-
-            IconButton(
-                onClick = onViewDetails,
-                modifier = Modifier
-                    .size(24.dp)
-                    .constrainAs(detailsIcon) {
-                        top.linkTo(title.top)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(dateRow.bottom)
-                    }) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(
-                            color = colors.tint.copy(alpha = 0.15f), shape = CircleShape
-                        )
-                        .padding(6.dp), contentAlignment = Alignment.Center
+                
+                // Dates
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = if (false) {
-                            Icons.Default.KeyboardArrowRight
-                        } else {
-                            Icons.Default.Check
-                        },
-                        contentDescription = "Details",
-                        tint = colors.tint,
-                        modifier = Modifier.size(20.dp)
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.8f),
+                        modifier = Modifier.size(16.dp)
                     )
+                    AppText(
+                        text = "$startDate - $endDate",
+                        style = AppTextStyle.Label,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                }
+                
+                // Button
+                if (!hasJoined) {
+                    val buttonInteractionSource = remember { MutableInteractionSource() }
+                    val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
+                    
+                    val buttonScale by animateFloatAsState(
+                        targetValue = if (isButtonPressed) 0.98f else 1f,
+                        animationSpec = tween(durationMillis = 150),
+                        label = "buttonScale"
+                    )
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .scale(buttonScale)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White)
+                            .shadow(4.dp, RoundedCornerShape(12.dp))
+                            .clickable(
+                                interactionSource = buttonInteractionSource,
+                                enabled = !isJoining,
+                                onClick = onJoin
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AppText(
+                            text = "Join Now",
+                            style = AppTextStyle.Label,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
+                } else {
+                    // Joined state - show view details button
+                    val buttonInteractionSource = remember { MutableInteractionSource() }
+                    val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
+                    
+                    val buttonScale by animateFloatAsState(
+                        targetValue = if (isButtonPressed) 0.98f else 1f,
+                        animationSpec = tween(durationMillis = 150),
+                        label = "buttonScale"
+                    )
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .scale(buttonScale)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.success)
+                            .shadow(4.dp, RoundedCornerShape(12.dp))
+                            .clickable(
+                                interactionSource = buttonInteractionSource,
+                                onClick = onViewDetails
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            AppText(
+                                text = "View Details",
+                                style = AppTextStyle.Label,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CurrentChallengeCardGradient(
+    challenge: Challenge, isJoining: Boolean = false, onViewDetails: () -> Unit, onJoin: () -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
+    val hasJoined = challenge.hasJoined
+
+    // Format dates
+    val startDate = formatDate(challenge.startTime)
+    val endDate = formatDate(challenge.endTime)
+
+    // Interactive states
+    val cardInteractionSource = remember { MutableInteractionSource() }
+    val isCardPressed by cardInteractionSource.collectIsPressedAsState()
+    
+    // Animated scale for card hover/press
+    val cardScale by animateFloatAsState(
+        targetValue = if (isCardPressed) 1.02f else 1f,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        label = "cardScale"
+    )
+    
+    // Animated elevation for card press
+    val cardElevation by animateFloatAsState(
+        targetValue = if (isCardPressed) 12f else 8f,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        label = "cardElevation"
+    )
+
+    // Gradient colors
+    val cardGradient = Brush.verticalGradient(
+        colors = listOf(
+            colors.card,
+            colors.card.copy(alpha = 0.95f)
+        )
+    )
+    
+    val rewardGradient = Brush.horizontalGradient(
+        colors = listOf(
+            Color(0xFFFFD700), // Yellow
+            Color(0xFFFF6B35)  // Orange
+        )
+    )
+    
+    val buttonGradient = Brush.horizontalGradient(
+        colors = listOf(
+            colors.tint,
+            colors.accent
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(cardScale)
+            .shadow(
+                elevation = cardElevation.dp,
+                shape = RoundedCornerShape(24.dp),
+                spotColor = colors.tint.copy(alpha = 0.2f)
+            )
+            .clip(RoundedCornerShape(24.dp))
+            .background(cardGradient)
+            .border(1.dp, colors.border.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
+            .clickable(
+                interactionSource = cardInteractionSource,
+                onClick = onViewDetails
+            )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Thumbnail Section with Overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(192.dp) // h-48 equivalent
+            ) {
+                // Image
+                val imageScale by animateFloatAsState(
+                    targetValue = if (isCardPressed) 1.1f else 1f,
+                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+                    label = "imageScale"
+                )
+                
+                if (challenge.thumbnail != null) {
+                    AsyncImage(
+                        model = challenge.thumbnail,
+                        contentDescription = challenge.title,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .scale(imageScale),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(colors.border.copy(alpha = 0.1f))
+                    )
+                }
+                
+                // Gradient Overlay
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.2f),
+                                    Color.Black.copy(alpha = 0.6f)
+                                ),
+                                startY = 0f,
+                                endY = Float.POSITIVE_INFINITY
+                            )
+                        )
+                )
+                
+                // Joined Badge (top-left) - Show when joined
+                if (hasJoined) {
+                    Box(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.TopStart)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        colors = listOf(
+                                            colors.success,
+                                            colors.success.copy(alpha = 0.8f)
+                                        )
+                                    )
+                                )
+                                .shadow(4.dp, RoundedCornerShape(20.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                AppText(
+                                    text = "Joined",
+                                    style = AppTextStyle.Caption,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Difficulty Badge (top-left) - Using Medium as default
+                    Box(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.TopStart)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color(0xFFFFF3CD).copy(alpha = 0.95f))
+                                .border(1.dp, Color(0xFFFFE082), RoundedCornerShape(20.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            AppText(
+                                text = "Medium",
+                                style = AppTextStyle.Caption,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFFB45309)
+                            )
+                        }
+                    }
+                }
+                
+                // Participants Count (top-right) - Optional
+                Box(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.TopEnd)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color.White.copy(alpha = 0.9f))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Group,
+                                contentDescription = null,
+                                tint = colors.tint,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            AppText(
+                                text = "0",
+                                style = AppTextStyle.Caption,
+                                color = colors.textPrimary
+                            )
+                        }
+                    }
+                }
+                
+                // Reward Badge (bottom-left) - Floating
+                if (challenge.reward.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.BottomStart)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(rewardGradient)
+                                .shadow(4.dp, RoundedCornerShape(20.dp))
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.WorkspacePremium,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                AppText(
+                                    text = challenge.reward,
+                                    style = AppTextStyle.Label,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Content Section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                // Title
+                AppText(
+                    text = challenge.title,
+                    style = AppTextStyle.SubTitle,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                
+                // Description
+                AppText(
+                    text = challenge.description,
+                    style = AppTextStyle.Body,
+                    color = colors.textSecondary,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(bottom = 20.dp)
+                )
+                
+                // Date & Duration Info
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(bottom = 20.dp)
+                ) {
+                    // Challenge Period
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(colors.tint.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = null,
+                                tint = colors.tint,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Column {
+                            AppText(
+                                text = "Challenge Period",
+                                style = AppTextStyle.Caption,
+                                color = colors.textMuted
+                            )
+                            AppText(
+                                text = "$startDate - $endDate",
+                                style = AppTextStyle.Label,
+                                color = colors.textPrimary
+                            )
+                        }
+                    }
+                }
+                
+                // Join Button or Joined Status
+                if (hasJoined) {
+                    // Show "View Details" button when joined
+                    val buttonInteractionSource = remember { MutableInteractionSource() }
+                    val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
+                    
+                    val buttonScale by animateFloatAsState(
+                        targetValue = if (isButtonPressed) 0.98f else 1f,
+                        animationSpec = tween(durationMillis = 150),
+                        label = "buttonScale"
+                    )
+                    
+//                    Box(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(48.dp)
+//                            .scale(buttonScale)
+//                            .clip(RoundedCornerShape(12.dp))
+//                            .background(
+//                                Brush.horizontalGradient(
+//                                    colors = listOf(
+//                                        colors.success.copy(alpha = 0.9f),
+//                                        colors.success.copy(alpha = 0.7f)
+//                                    )
+//                                )
+//                            )
+//                            .shadow(4.dp, RoundedCornerShape(12.dp))
+//                            .clickable(
+//                                interactionSource = buttonInteractionSource,
+//                                onClick = onViewDetails
+//                            ),
+//                        contentAlignment = Alignment.Center
+//                    ) {
+//                        Row(
+//                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+//                            verticalAlignment = Alignment.CenterVertically
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.Check,
+//                                contentDescription = null,
+//                                tint = Color.White,
+//                                modifier = Modifier.size(20.dp)
+//                            )
+//                            AppText(
+//                                text = "View Challenge Details",
+//                                style = AppTextStyle.Label,
+//                                fontWeight = FontWeight.Bold,
+//                                color = Color.White
+//                            )
+//                            Icon(
+//                                imageVector = Icons.Default.KeyboardArrowRight,
+//                                contentDescription = null,
+//                                tint = Color.White,
+//                                modifier = Modifier.size(20.dp)
+//                            )
+//                        }
+//                    }
+                } else {
+                    // Join Button
+                    val buttonInteractionSource = remember { MutableInteractionSource() }
+                    val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
+                    
+                    val buttonScale by animateFloatAsState(
+                        targetValue = if (isButtonPressed) 0.98f else 1f,
+                        animationSpec = tween(durationMillis = 150),
+                        label = "buttonScale"
+                    )
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .scale(buttonScale)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(buttonGradient)
+                            .shadow(4.dp, RoundedCornerShape(12.dp))
+                            .clickable(
+                                interactionSource = buttonInteractionSource,
+                                enabled = !isJoining,
+                                onClick = onJoin
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AppText(
+                                text = "Join Challenge Now",
+                                style = AppTextStyle.Label,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Decorative Element (top-right corner)
+        val decorativeScale by animateFloatAsState(
+            targetValue = if (isCardPressed) 1.5f else 1f,
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+            label = "decorativeScale"
+        )
+        
+        Box(
+            modifier = Modifier
+                .size(128.dp)
+                .offset(x = (-64).dp, y = (-64).dp)
+                .align(Alignment.TopEnd)
+                .scale(decorativeScale)
+                .background(
+                    colors.tint.copy(alpha = 0.05f),
+                    shape = CircleShape
+                )
+        )
     }
 }
 
@@ -838,6 +1374,26 @@ private val previewCurrentChallenge = Challenge(
     thumbnail = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=400&fit=crop"
 )
 
+private val previewJoinedChallenges = listOf(
+    Challenge(
+        id = 1,
+        title = "Reduce Screen Time Challenge",
+        description = "Reduce your daily screen time by 30% and earn rewards",
+        reward = "Premium Badge",
+        startTime = "2024-01-15T00:00:00Z",
+        endTime = "2024-01-31T23:59:59Z",
+        thumbnail = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=400&fit=crop",
+        hasJoined = true
+    )
+)
+
+private val previewJoinedChallengesUiState = com.app.screentime.challenge.viewmodel.ChallengesUiState(
+    isLoading = false,
+    error = null,
+    challenges = previewJoinedChallenges,
+    joiningChallengeIds = emptySet()
+)
+
 @Preview(showBackground = true)
 @Composable
 private fun CurrentChallengeCardPreview() {
@@ -869,6 +1425,37 @@ private fun UpcomingChallengeCardPreview() {
                 .padding(16.dp)
         ) {
             UpcomingChallengeCard(challenge = sampleUpcomingChallenges.first())
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun JoinedChallengesTabPreview() {
+    ChallengePreviewTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    LocalAppColors.current?.background ?: androidx.compose.ui.graphics.Color.White
+                )
+        ) {
+            // For preview, we'll show the tab with sample data
+            // Note: This preview shows the UI but won't have full ViewModel functionality
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(previewJoinedChallenges, key = { it.id }) { challenge ->
+                    CurrentChallengeCard(
+                        challenge = challenge,
+                        isJoining = false,
+                        onViewDetails = {},
+                        onJoin = {}
+                    )
+                }
+            }
         }
     }
 }
