@@ -477,8 +477,7 @@ private fun ChallengeImage(
     val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(colors.border.copy(alpha = 0.1f)), contentAlignment = Alignment.Center
+            .clip(RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center
     ) {
         AsyncImage(
             model = imageUrl,
@@ -671,7 +670,7 @@ private fun CurrentChallengeCard(
 }
 
 @Composable
-private fun ParticipantAvatarStack() {
+fun ParticipantAvatarStack() {
     val colors = LocalAppColors.current ?: return
     val avatarSize = 32.dp
     val overlap = 18.dp
