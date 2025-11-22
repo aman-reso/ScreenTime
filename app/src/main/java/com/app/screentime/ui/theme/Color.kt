@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 // ==================== SURFACE / BACKGROUND ====================
 
 val LightBackground = Color(0xFFFFFFFF)
-val DarkBackground = Color(0xFF0E161E)
+val DarkBackground = Color(0xFF000000)
 
 val LightCard = Color(0xFFF5F5F5)
 val DarkCard = Color(0xFF1F242C)

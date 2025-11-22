@@ -26,9 +26,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.MilitaryTech
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Outbound
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
@@ -65,6 +68,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import coil.compose.AsyncImage
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -73,6 +78,7 @@ import com.app.screentime.navigation.Screen
 import com.app.screentime.network.model.Challenge
 import com.app.screentime.record.repository.formatDuration
 import com.app.screentime.ui.atom.AppLoader
+import com.app.screentime.ui.atom.AppPrimaryButton
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
 import com.app.screentime.ui.theme.LocalAppColors
@@ -110,20 +116,16 @@ fun ChallengeListScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             SegmentedControl(
-                items = tabs,
-                selectedIndex = pagerState.currentPage,
-                onItemSelected = { index ->
+                items = tabs, selectedIndex = pagerState.currentPage, onItemSelected = { index ->
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(index)
                     }
-                }
-            )
+                })
         }
 
         // Tab Content with Pager
         HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
+            state = pagerState, modifier = Modifier.fillMaxSize()
         ) { page ->
             when (page) {
                 0 -> {
@@ -139,9 +141,7 @@ fun ChallengeListScreen(
                 1 -> {
                     // Joined Challenges Tab
                     JoinedChallengesTab(
-                        uiState = uiState,
-                        navController = navController,
-                        viewModel = viewModel
+                        uiState = uiState, navController = navController, viewModel = viewModel
                     )
                 }
             }
@@ -160,7 +160,7 @@ private fun ChallengesTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -185,15 +185,11 @@ private fun ChallengesTab(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         AppText(
-                            text = uiState.error,
-                            style = AppTextStyle.Body,
-                            color = colors.error
+                            text = uiState.error, style = AppTextStyle.Body, color = colors.error
                         )
                         TextButton(onClick = viewModel::refresh) {
                             AppText(
-                                text = "Retry",
-                                style = AppTextStyle.Label,
-                                color = colors.success
+                                text = "Retry", style = AppTextStyle.Label, color = colors.success
                             )
                         }
                     }
@@ -221,9 +217,11 @@ private fun ChallengesTab(
                             )
                         },
                         onJoin = {
-                            viewModel.joinChallenge(challenge.id)
-                        }
-                    )
+                            // Navigate to detail screen when join button is clicked
+                            navController?.navigate(
+                                Screen.ChallengeDetail.createRoute(challenge.id.toString())
+                            )
+                        })
                 }
             }
         }
@@ -277,9 +275,7 @@ private fun JoinedChallengesTab(
                         )
                         TextButton(onClick = viewModel::refresh) {
                             AppText(
-                                text = "Retry",
-                                style = AppTextStyle.Label,
-                                color = colors.success
+                                text = "Retry", style = AppTextStyle.Label, color = colors.success
                             )
                         }
                     }
@@ -329,8 +325,7 @@ private fun JoinedChallengesTab(
                         },
                         onJoin = {
                             viewModel.joinChallenge(challenge.id)
-                        }
-                    )
+                        })
                 }
             }
         }
@@ -339,9 +334,7 @@ private fun JoinedChallengesTab(
 
 @Composable
 private fun Header(
-    onRefresh: () -> Unit,
-    useMockData: Boolean,
-    onToggleMockData: () -> Unit
+    onRefresh: () -> Unit, useMockData: Boolean, onToggleMockData: () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return
     Column(
@@ -365,8 +358,7 @@ private fun Header(
                         .background(
                             color = colors.success.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
+                        ), contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.EmojiEvents,
@@ -405,23 +397,17 @@ private fun Header(
             verticalAlignment = Alignment.CenterVertically
         ) {
             AppText(
-                text = "Use Mock Data",
-                style = AppTextStyle.Label,
-                color = colors.textSecondary
+                text = "Use Mock Data", style = AppTextStyle.Label, color = colors.textSecondary
             )
             Switch(
-                checked = useMockData,
-                onCheckedChange = { onToggleMockData() }
-            )
+                checked = useMockData, onCheckedChange = { onToggleMockData() })
         }
     }
 }
 
 @Composable
 private fun SegmentedControl(
-    items: List<String>,
-    selectedIndex: Int,
-    onItemSelected: (Int) -> Unit
+    items: List<String>, selectedIndex: Int, onItemSelected: (Int) -> Unit
 ) {
     val colors = LocalAppColors.current ?: return
 
@@ -443,8 +429,7 @@ private fun SegmentedControl(
             .padding(4.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(0.dp)
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             items.forEachIndexed { index, item ->
                 val isSelected = selectedIndex == index
@@ -461,8 +446,7 @@ private fun SegmentedControl(
                         )
                         .clickable { onItemSelected(index) }
                         .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+                    contentAlignment = Alignment.Center) {
                     AppText(
                         text = item,
                         style = AppTextStyle.Body,
@@ -480,27 +464,21 @@ private fun SegmentedControl(
 }
 
 @Composable
-private fun SectionTitle(title: String, tint: androidx.compose.ui.graphics.Color) {
+private fun SectionTitle(title: String, tint: Color) {
     AppText(
-        text = title,
-        style = AppTextStyle.SubTitle,
-        fontWeight = FontWeight.Bold,
-        color = tint
+        text = title, style = AppTextStyle.SubTitle, fontWeight = FontWeight.Bold, color = tint
     )
 }
 
 @Composable
 private fun ChallengeImage(
-    imageUrl: String,
-    appName: String,
-    modifier: Modifier = Modifier
+    imageUrl: String, appName: String, modifier: Modifier = Modifier
 ) {
     val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(colors.border.copy(alpha = 0.1f)),
-        contentAlignment = Alignment.Center
+            .background(colors.border.copy(alpha = 0.1f)), contentAlignment = Alignment.Center
     ) {
         AsyncImage(
             model = imageUrl,
@@ -513,10 +491,7 @@ private fun ChallengeImage(
 
 @Composable
 private fun CurrentChallengeCard(
-    challenge: Challenge,
-    isJoining: Boolean = false,
-    onViewDetails: () -> Unit,
-    onJoin: () -> Unit
+    challenge: Challenge, isJoining: Boolean = false, onViewDetails: () -> Unit, onJoin: () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return
     val hasJoined = challenge.hasJoined
@@ -528,168 +503,167 @@ private fun CurrentChallengeCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(12.dp),
-                spotColor = colors.success.copy(alpha = 0.2f)
-            ),
+            .clip(RoundedCornerShape(8.dp))
+            .background(colors.card)
     ) {
-        Row(
+        ConstraintLayout(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.Top
+                .padding(16.dp)
         ) {
-            // Image on the left - 60dp height, top-aligned
+            val (image, title, subtitle, reward, dateRow, joinButton, detailsIcon, handshakeIcon) = createRefs()
+
             if (challenge.thumbnail != null) {
                 ChallengeImage(
                     imageUrl = challenge.thumbnail,
                     appName = challenge.title,
                     modifier = Modifier
-                        .size(60.dp)
+                        .width(60.dp)
                         .clip(RoundedCornerShape(8.dp))
+                        .constrainAs(image) {
+                            top.linkTo(parent.top)
+                            start.linkTo(parent.start)
+                            bottom.linkTo(reward.bottom)
+                            height = Dimension.fillToConstraints
+                        })
+            }
+
+            AppText(
+                text = challenge.title,
+                style = AppTextStyle.SubTitle,
+                fontWeight = FontWeight.Bold,
+                color = colors.textPrimary,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.constrainAs(title) {
+                    top.linkTo(image.top)
+                    start.linkTo(
+                        if (challenge.thumbnail != null) image.end else parent.start, margin = 16.dp
+                    )
+                    end.linkTo(
+                        if (hasJoined) handshakeIcon.start else detailsIcon.start, margin = 8.dp
+                    )
+                    width = Dimension.fillToConstraints
+                })
+
+            Row(
+                modifier = Modifier.constrainAs(dateRow) {
+                    top.linkTo(
+                        title.bottom, margin = 6.dp
+                    )
+                    start.linkTo(title.start)
+                    end.linkTo(title.end)
+                    width = Dimension.fillToConstraints
+                },
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    tint = colors.textMuted,
+                    modifier = Modifier.size(14.dp)
+                )
+                AppText(
+                    text = startDate, style = AppTextStyle.Caption, color = colors.textMuted
+                )
+                AppText(
+                    text = "•", style = AppTextStyle.Caption, color = colors.textMuted
+                )
+                AppText(
+                    text = endDate, style = AppTextStyle.Caption, color = colors.textMuted
                 )
             }
 
-            // Content on the right
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-                // Title and Subtitle at top (aligned with image top)
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    // Title
-                    AppText(
-                        text = challenge.title,
-                        style = AppTextStyle.SubTitle,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
+            AppText(
+                text = challenge.description,
+                style = AppTextStyle.Label,
+                color = colors.textSecondary,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.constrainAs(subtitle) {
+                    top.linkTo(reward.bottom, margin = 4.dp)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                    width = Dimension.fillToConstraints
+                })
 
-                    // Subtitle (description)
-                    AppText(
-                        text = challenge.description,
-                        style = AppTextStyle.Label,
-                        color = colors.textSecondary,
-                        maxLines = 2,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                }
-
-                // Spacer to push other content to bottom of image area
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Other content below (positioned at bottom of image)
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    // Reward Badge (if available)
-                    if (challenge.reward.isNotEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(colors.success.copy(alpha = 0.1f))
-                                .border(
-                                    width = 1.dp,
-                                    color = colors.success.copy(alpha = 0.3f),
-                                    shape = RoundedCornerShape(6.dp)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.WorkspacePremium,
-                                    contentDescription = null,
-                                    tint = colors.success,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                AppText(
-                                    text = challenge.reward,
-                                    style = AppTextStyle.Caption,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.success,
-                                    maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
-
-                    // Date Range
+            if (challenge.reward.isNotEmpty()) {
+                Box(
+                    modifier = Modifier.constrainAs(reward) {
+                        top.linkTo(dateRow.bottom, 6.dp)
+                        start.linkTo(dateRow.start)
+                        end.linkTo(parent.end)
+                        width = Dimension.fillToConstraints
+                    }) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(colors.success.copy(alpha = 0.1f))
+                            .border(
+                                width = 1.dp,
+                                color = colors.success.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(6.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.CalendarToday,
+                            imageVector = Icons.Default.WorkspacePremium,
                             contentDescription = null,
-                            tint = colors.textMuted,
+                            tint = colors.success,
                             modifier = Modifier.size(14.dp)
                         )
                         AppText(
-                            text = startDate,
+                            text = challenge.reward,
                             style = AppTextStyle.Caption,
-                            color = colors.textMuted
-                        )
-                        AppText(
-                            text = "•",
-                            style = AppTextStyle.Caption,
-                            color = colors.textMuted
-                        )
-                        AppText(
-                            text = endDate,
-                            style = AppTextStyle.Caption,
-                            color = colors.textMuted
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.success,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     }
+                }
+            }
 
-                    // Action Buttons Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        GradientJoinButton(
-                            modifier = Modifier.weight(1f),
-                            isLoading = isJoining,
-                            enabled = !hasJoined && !isJoining,
-                            label = if (hasJoined) "Already Joined" else "Join Challenge",
-                            onClick = {
-                                if (!hasJoined) {
-                                    onJoin()
-                                }
-                            }
+
+            AppPrimaryButton(text = "Join Challenge", enabled = true, onClick = {
+                onJoin()
+            }, modifier = Modifier.constrainAs(joinButton) {
+                top.linkTo(subtitle.bottom, margin = 6.dp)
+                start.linkTo(parent.start)
+                end.linkTo(detailsIcon.start, margin = 8.dp)
+                width = Dimension.fillToConstraints
+            })
+
+            IconButton(
+                onClick = onViewDetails,
+                modifier = Modifier
+                    .size(24.dp)
+                    .constrainAs(detailsIcon) {
+                        top.linkTo(title.top)
+                        end.linkTo(parent.end)
+                        bottom.linkTo(dateRow.bottom)
+                    }) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(
+                            color = colors.tint.copy(alpha = 0.15f), shape = CircleShape
                         )
-                        OutlinedButton(
-                            onClick = onViewDetails,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Outbound,
-                                contentDescription = null,
-                                tint = colors.tint,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            AppText(
-                                text = "Details",
-                                style = AppTextStyle.Label,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.tint
-                            )
-                        }
-                    }
+                        .padding(6.dp), contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (false) {
+                            Icons.Default.KeyboardArrowRight
+                        } else {
+                            Icons.Default.Check
+                        },
+                        contentDescription = "Details",
+                        tint = colors.tint,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
@@ -702,9 +676,7 @@ private fun ParticipantAvatarStack() {
     val avatarSize = 32.dp
     val overlap = 18.dp
     val sampleParticipants = listOf(
-        Color(0xFFFFC1C1) to "AM",
-        Color(0xFFB3E5FC) to "JK",
-        Color(0xFFFFF59D) to "LS"
+        Color(0xFFFFC1C1) to "AM", Color(0xFFB3E5FC) to "JK", Color(0xFFFFF59D) to "LS"
     )
     val totalWidth = avatarSize + overlap * (sampleParticipants.size - 1)
     Box(
@@ -718,8 +690,7 @@ private fun ParticipantAvatarStack() {
                     .offset(x = overlap * index)
                     .size(avatarSize)
                     .clip(CircleShape)
-                    .background(bgColor),
-                contentAlignment = Alignment.Center
+                    .background(bgColor), contentAlignment = Alignment.Center
             ) {
                 AppText(
                     text = initials,
@@ -732,43 +703,6 @@ private fun ParticipantAvatarStack() {
     }
 }
 
-@Composable
-private fun GradientJoinButton(
-    modifier: Modifier = Modifier,
-    isLoading: Boolean,
-    enabled: Boolean,
-    label: String,
-    onClick: () -> Unit
-) {
-    val colors = LocalAppColors.current ?: return
-    val gradient = Brush.horizontalGradient(listOf(colors.accent, colors.success))
-    val disabledBrush = Brush.horizontalGradient(
-        listOf(colors.border, colors.border)
-    )
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(22.dp))
-            .background(if (enabled) gradient else disabledBrush)
-            .clickable(enabled = enabled && !isLoading) { onClick() }
-            .padding(horizontal = 20.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(18.dp),
-                color = colors.textOnPrimary,
-                strokeWidth = 2.dp
-            )
-        } else {
-            AppText(
-                text = label,
-                style = AppTextStyle.Label,
-                fontWeight = FontWeight.Bold,
-                color = colors.textOnPrimary
-            )
-        }
-    }
-}
 
 private fun formatDate(isoDateString: String): String {
     return try {
@@ -877,10 +811,7 @@ private fun UpcomingChallengeCard(challenge: UpcomingChallenge) {
 }
 
 private data class UpcomingChallenge(
-    val id: String,
-    val title: String,
-    val description: String,
-    val startsOn: String
+    val id: String, val title: String, val description: String, val startsOn: String
 )
 
 private val sampleUpcomingChallenges = listOf(
@@ -889,8 +820,7 @@ private val sampleUpcomingChallenges = listOf(
         title = "Digital Detox Weekend",
         description = "Zero entertainment apps for 48 hours to unlock a focus badge.",
         startsOn = "Dec 12"
-    ),
-    UpcomingChallenge(
+    ), UpcomingChallenge(
         id = "focus-marathon",
         title = "Focus Marathon",
         description = "Log 20 focused hours in 7 days and climb the leaderboard.",
@@ -922,8 +852,7 @@ private fun CurrentChallengeCardPreview() {
             CurrentChallengeCard(
                 challenge = previewCurrentChallenge,
                 onViewDetails = {},
-                onJoin = {}
-            )
+                onJoin = {})
         }
     }
 }
@@ -948,12 +877,10 @@ private fun UpcomingChallengeCardPreview() {
 private fun ChallengePreviewTheme(content: @Composable () -> Unit) {
     val previewColors = remember { getThemeColors(ThemeType.CLASSIC_LIGHT) }
     CompositionLocalProvider(
-        LocalThemeMode provides false,
-        LocalAppColors provides previewColors
+        LocalThemeMode provides false, LocalAppColors provides previewColors
     ) {
         MaterialTheme(
-            typography = Typography,
-            content = content
+            typography = Typography, content = content
         )
     }
 }

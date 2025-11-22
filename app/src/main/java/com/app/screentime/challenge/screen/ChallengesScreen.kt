@@ -144,10 +144,10 @@ fun ChallengeDetailScreen(
                     challengeRankings = uiState.challengeRankings,
                     isJoining = uiState.joiningChallengeIds.contains(selectedChallenge.id),
                     onRefresh = {
-                        challengeIdInt?.let { viewModel.loadChallengeDetails(it) }
+                        challengeIdInt.let { viewModel.loadChallengeDetails(it) }
                     },
                     onJoinChallenge = {
-                        challengeIdInt?.let { viewModel.joinChallenge(it) }
+                        challengeIdInt.let { viewModel.joinChallenge(it) }
                     },
                     navController = navController
                 )

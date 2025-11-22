@@ -25,6 +25,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.ui.NavDisplay
 import com.app.screentime.appdetail.screen.SingleAppUsageDetailScreen
 import com.app.screentime.challenge.screen.ChallengeDetailScreen
 import com.app.screentime.challenge.screen.ChallengeListScreen
@@ -64,13 +65,13 @@ fun ScreenTimeNavigation(
             route = Screen.Statistics.route,
             badge = null
         ),
-//        NavigationItem(
-//            label = "Focus",
-//            icon = Icons.Default.Timer,
-//            selectedIcon = Icons.Default.Timer,
-//            route = Screen.FocusMode.route,
-//            badge = null
-//        ),
+        NavigationItem(
+            label = "Focus",
+            icon = Icons.Default.Timer,
+            selectedIcon = Icons.Default.Timer,
+            route = Screen.FocusMode.route,
+            badge = null
+        ),
         NavigationItem(
             label = "Challenges",
             icon = Icons.Default.Flag,
@@ -278,4 +279,5 @@ fun ScreenTimeNavigation(
             }
         }
     }
+
 }
