@@ -37,6 +37,10 @@ data class Challenge(
     val title: String,
     val description: String,
     val reward: String,
+    val prize: String? = null, // HTML content with prize information
+    val rules: String? = null, // HTML content with rules
+    val tag: String? = null, // Tag like "Wellness"
+    val sponsor: String? = null, // Sponsor name like "AppTime"
     val startTime: String, // ISO 8601 format
     val endTime: String, // ISO 8601 format
     val thumbnail: String? = null,
@@ -70,6 +74,10 @@ data class ChallengeDetails(
     val title: String,
     val description: String,
     val reward: String,
+    val prize: String? = null, // HTML content with prize information
+    val rules: String? = null, // HTML content with rules
+    val tag: String? = null, // Tag like "Wellness"
+    val sponsor: String? = null, // Sponsor name like "AppTime"
     val startTime: String, // ISO 8601 format
     val endTime: String, // ISO 8601 format
     val thumbnail: String? = null,
