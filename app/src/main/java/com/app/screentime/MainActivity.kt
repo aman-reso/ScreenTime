@@ -63,20 +63,15 @@ class MainActivity : ComponentActivity() {
                                 darkScrim = colors.background.toArgb()
                             )
                         },
-                        navigationBarStyle = if (useDarkTheme) {
-                            SystemBarStyle.dark(colors.background.toArgb())
-                        } else {
-                            SystemBarStyle.light(
-                                colors.background.toArgb(),
-                                darkScrim = colors.background.toArgb()
-                            )
-                        }
+                        navigationBarStyle = SystemBarStyle.auto(
+                            android.graphics.Color.TRANSPARENT,
+                            android.graphics.Color.TRANSPARENT
+                        )
                     )
                 }
 
                 Column(
                     modifier = Modifier
-                        .navigationBarsPadding()
                         .fillMaxSize()
                         .background(colors.background)
                 ) {

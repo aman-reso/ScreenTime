@@ -8,6 +8,7 @@ import com.app.screentime.utils.DeviceInfoUtils
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.app.screentime.utils.DateUtils
 
 /**
  * Repository for User related network operations
@@ -45,9 +46,10 @@ class UserRepository @Inject constructor(
         // Parse and save lastSyncTime if present
         deviceRegistrationResponse.lastSyncTime?.let { lastSyncTimeString ->
             try {
-                val instant = java.time.Instant.parse(lastSyncTimeString)
-                val timestampMillis = instant.toEpochMilli()
-                preferencesManager.setLastSyncTime(timestampMillis)
+                val timestampMillis = DateUtils.toMillis(lastSyncTimeString)
+                if (timestampMillis > 0) {
+                    preferencesManager.setLastSyncTime(timestampMillis)
+                }
             } catch (e: Exception) {
                 // Log error but don't fail registration if timestamp parsing fails
                 android.util.Log.e("UserRepository", "Failed to parse lastSyncTime: $lastSyncTimeString", e)

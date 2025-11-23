@@ -44,7 +44,7 @@ fun AppGlassyCard(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(androidx.compose.material3.MaterialTheme.shapes.large)
             .background(colors.card)
             .then(
                 if (showBorder) {
@@ -56,7 +56,7 @@ fun AppGlassyCard(
                                 colors.textPrimary.copy(alpha = 0.05f)
                             )
                         ),
-                        shape = RoundedCornerShape(10.dp)
+                        shape = androidx.compose.material3.MaterialTheme.shapes.large
                     )
                 } else Modifier
             )

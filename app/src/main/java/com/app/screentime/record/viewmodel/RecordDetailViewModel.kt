@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import javax.inject.Inject
+import com.app.screentime.utils.DateUtils
 
 @HiltViewModel
 class RecordDetailViewModel @Inject constructor(
@@ -47,11 +48,7 @@ class RecordDetailViewModel @Inject constructor(
             // Sort by eventTimestamp for timeline (descending - newest first)
             val sortedStats = stats.sortedByDescending { stat ->
                 stat.eventTimestamp?.let {
-                    try {
-                        java.time.Instant.parse(it).toEpochMilli()
-                    } catch (e: Exception) {
-                        0L
-                    }
+                    DateUtils.toMillis(it)
                 } ?: 0L
             }
 

@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -46,7 +47,8 @@ import com.app.screentime.ui.theme.LocalAppColors
 fun UsageDonutComponent(
     report: List<AppUsage>?,
     totalScreenTime: Long,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     val colors = LocalAppColors.current ?: return
     val usageData = report?.toUsageData(colors.chartColors) ?: return
@@ -68,7 +70,9 @@ fun UsageDonutComponent(
             ) {
                 DonutChart(
                     data = usageData,
-                    modifier = Modifier.size(donutSize),
+                    modifier = Modifier
+                        .size(donutSize)
+                        .clickable(onClick = onClick),
                     centerContent = {
                         AppText(text = formatTotalTime(totalScreenTime))
                     }

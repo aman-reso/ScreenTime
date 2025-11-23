@@ -573,8 +573,8 @@ fun DateSpinner(
 ) {
     val colors = LocalAppColors.current ?: return
 
-    val today = org.joda.time.LocalDate.now(org.joda.time.DateTimeZone.UTC)
-    val dates = (0..7).map { today.minusDays(it) }
+    val today = com.app.screentime.utils.DateUtils.today()
+    val dates = (0..3).map { today.minusDays(it) }
 
     val dateDisplayMap = dates.associate {
         it.toString("yyyy-MM-dd") to it.toString("d MMM yyyy")
@@ -592,7 +592,6 @@ fun DateSpinner(
             .padding(horizontal = 16.dp)
     ) {
 
-        // ⭐ BASIC TEXT FIELD WITH CUSTOM BORDER (Spinner)
         Box(
             modifier = Modifier
                 .menuAnchor()

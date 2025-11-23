@@ -18,8 +18,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
 
 data class ChallengesUiState(
     val isLoading: Boolean = true,
@@ -154,7 +152,7 @@ class ChallengeViewModel @Inject constructor(
                     }
                 } else {
                     // New joined challenge - save to DB
-                    val joinedAt = ISODateTimeFormat.dateTime().print(DateTime.now())
+                    val joinedAt = com.app.screentime.utils.DateUtils.formatISO8601(com.app.screentime.utils.DateUtils.now())
                     val entity = JoinedChallengeEntity(
                         challengeId = challenge.id,
                         title = challenge.title,
@@ -423,7 +421,7 @@ class ChallengeViewModel @Inject constructor(
             }
 
             // Create new entity
-            val joinedAt = ISODateTimeFormat.dateTime().print(DateTime.now())
+            val joinedAt = com.app.screentime.utils.DateUtils.formatISO8601(com.app.screentime.utils.DateUtils.now())
             val entity = JoinedChallengeEntity(
                 challengeId = challenge.id,
                 title = challenge.title,

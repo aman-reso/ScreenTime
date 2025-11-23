@@ -41,11 +41,6 @@ fun AppBottomNavigation(
         modifier = modifier,
         containerColor = appColors.background,
         contentColor = appColors.textPrimary,
-        windowInsets = WindowInsets(
-            left = 0.dp,
-            top = 0.dp,
-            right = 0.dp,
-        )
     ) {
         items.forEach { item ->
             val isSelected = selectedRoute == item.route

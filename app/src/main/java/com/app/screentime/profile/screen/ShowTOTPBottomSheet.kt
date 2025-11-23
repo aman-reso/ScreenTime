@@ -23,7 +23,7 @@ import com.app.screentime.ui.atom.glassBottomSheetBackground
 import com.app.screentime.ui.theme.LocalAppColors
 import com.app.screentime.ui.theme.appColor
 import kotlinx.coroutines.delay
-import java.time.Instant
+import com.app.screentime.utils.DateUtils
 
 private const val TIME_STEP_SECONDS = 60L
 
@@ -53,7 +53,8 @@ fun ShowTOTPBottomSheetContent(
 
     LaunchedEffect(Unit) {
         while (true) {
-            val epochSeconds = Instant.now().epochSecond
+            val now = DateUtils.now()
+            val epochSeconds = now.millis / 1000
             val remaining = (60 - (epochSeconds % 60)).toInt()
             remainingSeconds = remaining
             otp = TOTP.generateTOTP(totpSecret)

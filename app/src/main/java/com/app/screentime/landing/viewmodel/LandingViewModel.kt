@@ -96,4 +96,12 @@ class LandingViewModel @Inject constructor(
     fun markConsentShown() {
         preferences.markConsentSheetShown()
     }
+
+    fun shouldAskForUsageStatsPermission(): Boolean {
+        return preferences.shouldAskForUsageStatsPermission()
+    }
+
+    fun markUsageStatsPermissionRequested() {
+        preferences.markUsageStatsPermissionRequested()
+    }
 }

@@ -49,15 +49,15 @@ fun LazyItemScope.AppUsageListUi(
     onClick: (() -> Unit)? = null
 ) {
     val shape = remember(index, totalCount) {
-        when (index) {
-            0 if totalCount == 1 -> RoundedCornerShape(12.dp) // Single item: all corners rounded
-            0 -> RoundedCornerShape(
-                topStart = 12.dp, topEnd = 12.dp
+        when {
+            totalCount == 1 -> androidx.compose.foundation.shape.RoundedCornerShape(24.dp) // Single item: all corners rounded
+            index == 0 -> androidx.compose.foundation.shape.RoundedCornerShape(
+                topStart = 24.dp, topEnd = 24.dp
             ) // First item: top rounded
-            totalCount - 1 -> RoundedCornerShape(
-                bottomStart = 12.dp, bottomEnd = 12.dp
+            index == totalCount - 1 -> androidx.compose.foundation.shape.RoundedCornerShape(
+                bottomStart = 24.dp, bottomEnd = 24.dp
             ) // Last item: bottom rounded
-            else -> RoundedCornerShape(0.dp) // Middle items: no rounded corners
+            else -> androidx.compose.foundation.shape.RoundedCornerShape(0.dp) // Middle items: no rounded corners
         }
     }
 
@@ -77,7 +77,7 @@ fun LazyItemScope.AppUsageListUi(
 fun AppUsageCard(
     appUsage: AppUsage,
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(12.dp),
+    shape: Shape = androidx.compose.material3.MaterialTheme.shapes.large,
     onClick: (() -> Unit)? = null
 ) {
     val colors = LocalAppColors.current ?: return
@@ -167,7 +167,7 @@ fun AppUsageCard(
 @Composable
 private fun AppUsageItemGlassyCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(12.dp),
+    shape: Shape = androidx.compose.material3.MaterialTheme.shapes.large,
     content: @Composable () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return

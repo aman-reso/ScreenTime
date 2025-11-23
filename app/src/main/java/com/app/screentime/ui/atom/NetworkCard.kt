@@ -173,7 +173,7 @@ private fun NetworkUsageSection(
         modifier = Modifier
             .fillMaxWidth()
             .height(8.dp)
-            .clip(RoundedCornerShape(4.dp)),
+            .clip(androidx.compose.material3.MaterialTheme.shapes.extraSmall),
         color = colors.accent,
         trackColor = colors.textPrimary.copy(alpha = 0.3f)
     )

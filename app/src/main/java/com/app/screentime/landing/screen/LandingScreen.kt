@@ -149,6 +149,62 @@ fun LandingScreen(
         }
     }
 
+    // Usage Stats Permission Logic (First Time Only)
+    var showUsageStatsDialog by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        val hasUsageStats = permissionManager.hasUsageStatsPermission()
+        if (!hasUsageStats && viewModel.shouldAskForUsageStatsPermission()) {
+            showUsageStatsDialog = true
+            viewModel.markUsageStatsPermissionRequested()
+        }
+    }
+
+    if (showUsageStatsDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showUsageStatsDialog = false },
+            title = {
+                Text(
+                    text = "Permission Required",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "To track your screen time accurately, this app needs Usage Access permission. Please enable it in Settings.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        showUsageStatsDialog = false
+                        try {
+                            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            // Fallback or log error
+                            e.printStackTrace()
+                        }
+                    }
+                ) {
+                    Text("Open Settings")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { showUsageStatsDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = appColors.card,
+            titleContentColor = appColors.textPrimary,
+            textContentColor = appColors.textSecondary
+        )
+    }
+
     // Consent bottom sheet state
     var showConsentSheet by remember { mutableStateOf(viewModel.shouldShowConsentScreen()) }
     var isRefreshing by remember { mutableStateOf(false) }
@@ -343,7 +399,10 @@ fun LandingScreen(
                         item {
                             UsageDonutComponent(
                                 report = it,
-                                totalScreenTime = uiState.todayTotalScreenTime
+                                totalScreenTime = uiState.todayTotalScreenTime,
+                                onClick = {
+                                    navController?.navigate(Screen.Statistics.route)
+                                }
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
@@ -416,7 +475,7 @@ private fun NotificationPermissionWarningCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onEnableClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = colors.error.copy(alpha = 0.1f)
         )

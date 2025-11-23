@@ -4,26 +4,16 @@ import com.app.screentime.network.model.Challenge
 import com.app.screentime.network.model.ChallengeDetails
 import com.app.screentime.network.model.ChallengeRanking
 import com.app.screentime.network.model.ChallengeRankingsResponse
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import com.app.screentime.utils.DateUtils
 
 object MockChallengeData {
     
-    private val formatter = DateTimeFormatter.ISO_INSTANT
-    
     private fun getFutureDate(daysFromNow: Long): String {
-        return Instant.now()
-            .plusSeconds(daysFromNow * 24 * 60 * 60)
-            .atZone(ZoneId.systemDefault())
-            .format(formatter)
+        return DateUtils.futureDate(daysFromNow.toInt())
     }
     
     private fun getPastDate(daysAgo: Long): String {
-        return Instant.now()
-            .minusSeconds(daysAgo * 24 * 60 * 60)
-            .atZone(ZoneId.systemDefault())
-            .format(formatter)
+        return DateUtils.pastDate(daysAgo.toInt())
     }
 
     fun getMockChallenges(): List<Challenge> {

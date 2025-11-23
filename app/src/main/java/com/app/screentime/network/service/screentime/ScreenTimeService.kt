@@ -15,5 +15,8 @@ interface ScreenTimeService {
         date: String,
         targetUserId: String
     ): Result<ApiResponse<UsageStatsResponse>>
+
+    // Get last sync time for usage stats
+    suspend fun getUsageLastSyncTime(): Result<ApiResponse<UsageLastSyncResponse>>
 }
 

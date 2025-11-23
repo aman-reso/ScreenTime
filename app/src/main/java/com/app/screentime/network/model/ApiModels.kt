@@ -678,3 +678,13 @@ data class BatchUsageEventsRequest(
     val syncTime: String, // ISO 8601 format
     val events: List<UsageEvent>
 )
+
+/**
+ * Usage Last Sync Response
+ */
+@Serializable
+data class UsageLastSyncResponse(
+    val userId: String,
+    val lastSyncTime: String? = null, // ISO 8601 format, null if never synced
+    val hasEvents: Boolean = false
+)

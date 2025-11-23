@@ -17,6 +17,7 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
 import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -30,7 +31,6 @@ class NetworkClient(
 
     val httpClient: HttpClient = HttpClient(Android) {
 
-        // ✅ JSON serialization
         install(ContentNegotiation) {
             json(Json {
                 prettyPrint = true
@@ -54,19 +54,16 @@ class NetworkClient(
             url(ApiEndpoints.getBaseUrl())
             header("Content-Type", "application/json")
             header("ngrok-skip-browser-warning", "true")
+            val token = preferencesManager.getUserId()
+            if (!token.isNullOrBlank()) {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
         }
+
 
         // ✅ Auth plugin: Bearer token + custom userId header
         install(Auth) {
             bearer {
-                // Supply token dynamically from PreferencesManager
-                loadTokens {
-                    val token = preferencesManager.getUserId() ?: "http token"
-                    if (token.isNotBlank()) {
-                        BearerTokens(token, refreshToken = "")
-                    } else null
-                }
-
                 // Optional: handle token refresh automatically
                 sendWithoutRequest { request ->
                     // Decide when to send token — usually all authenticated endpoints
@@ -75,7 +72,6 @@ class NetworkClient(
             }
         }
 
-        // ✅ Timeout configuration
         install(HttpTimeout) {
             requestTimeoutMillis = 30_000
             connectTimeoutMillis = 10_000

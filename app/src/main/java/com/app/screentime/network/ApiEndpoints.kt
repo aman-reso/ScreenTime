@@ -50,6 +50,7 @@ object ApiEndpoints {
         const val BATCH_EVENTS = "/api/usage/events/batch"
         const val SYNC_DATA = "/api/usage/sync"
         const val GET_DAILY_STATS = "/api/usage/stats/daily"
+        const val LAST_SYNC = "/api/usage/stats/last-sync"
     }
 
     // 4. Leaderboard API endpoints

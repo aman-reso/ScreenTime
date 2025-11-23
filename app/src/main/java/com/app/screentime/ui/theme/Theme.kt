@@ -44,6 +44,7 @@ fun ScreenTimeTheme(
     ) {
         MaterialTheme(
             typography = Typography,
+            shapes = Shapes,
             content = content
         )
     }

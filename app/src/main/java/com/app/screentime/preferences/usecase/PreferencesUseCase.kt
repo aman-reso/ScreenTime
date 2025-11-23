@@ -43,5 +43,17 @@ class PreferencesUseCase @Inject constructor(
         preferencesManager.setConsentScreenShown(true)
         preferencesManager.setFirstLaunchCompleted()
     }
+
+    /**
+     * Check if we should ask for usage stats permission (first time only)
+     */
+    fun shouldAskForUsageStatsPermission(): Boolean = !preferencesManager.isUsageStatsPermissionRequested()
+
+    /**
+     * Mark usage stats permission as requested
+     */
+    fun markUsageStatsPermissionRequested() {
+        preferencesManager.setUsageStatsPermissionRequested(true)
+    }
 }
 

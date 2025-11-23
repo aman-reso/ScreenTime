@@ -70,5 +70,26 @@ class ScreenTimeServiceImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun getUsageLastSyncTime(): Result<ApiResponse<UsageLastSyncResponse>> {
+        return try {
+            val response: HttpResponse = httpClient.get(ApiEndpoints.AppUsage.LAST_SYNC)
+
+            if (response.status.isSuccess()) {
+                val apiResponse: ApiResponse<UsageLastSyncResponse> = response.body()
+                Result.success(apiResponse)
+            } else {
+                Result.failure(Exception("Failed to get usage last sync time: ${response.status}"))
+            }
+        } catch (e: ClientRequestException) {
+            val errorBody = e.response.bodyAsText()
+            Result.failure(Exception("Client error: ${e.response.status}, $errorBody", e))
+        } catch (e: ServerResponseException) {
+            val errorBody = e.response.bodyAsText()
+            Result.failure(Exception("Server error: ${e.response.status}, $errorBody", e))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 

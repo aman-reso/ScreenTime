@@ -6,8 +6,7 @@ import com.app.screentime.network.model.BatchUsageRecord
 import com.app.screentime.network.model.UsageRecordResponse
 import com.app.screentime.record.model.TimelineListItem
 import com.app.screentime.record.repository.RecordRepository
-import java.time.Instant
-import java.time.ZoneId
+import com.app.screentime.utils.DateUtils
 import javax.inject.Inject
 
 /**
@@ -42,9 +41,8 @@ class RecordUseCase @Inject constructor(
         val statsByHour = stats.groupBy { stat ->
             stat.eventTimestamp?.let { timestamp ->
                 try {
-                    val instant = Instant.parse(timestamp)
-                    val zonedDateTime = instant.atZone(ZoneId.systemDefault())
-                    zonedDateTime.hour
+                    val dateTime = DateUtils.parseISO8601(timestamp)
+                    dateTime.hourOfDay
                 } catch (e: Exception) {
                     null
                 }
@@ -61,11 +59,7 @@ class RecordUseCase @Inject constructor(
                 // Sort stats for this hour by timestamp (newest first)
                 val sortedStats = hourStats.sortedByDescending { stat ->
                     stat.eventTimestamp?.let {
-                        try {
-                            Instant.parse(it).toEpochMilli()
-                        } catch (e: Exception) {
-                            0L
-                        }
+                        DateUtils.toMillis(it)
                     } ?: 0L
                 }
 

@@ -42,11 +42,11 @@ fun AppSecondaryButton(
             .border(
                 width = 1.dp,
                 color = colors.textPrimary.copy(alpha = if (enabled) 0.5f else 0.2f),
-                shape = RoundedCornerShape(10.dp)
+                shape = androidx.compose.material3.MaterialTheme.shapes.medium
             )
             .background(
                 brush = gradient,
-                shape = RoundedCornerShape(10.dp)
+                shape = androidx.compose.material3.MaterialTheme.shapes.medium
             )
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
@@ -78,7 +78,7 @@ fun AppPrimaryButton(
             )
             .background(
                 color = if (enabled) colors.success else colors.success.copy(alpha = 0.27f),
-                shape = RoundedCornerShape(10.dp)
+                shape = androidx.compose.material3.MaterialTheme.shapes.medium
             )
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),

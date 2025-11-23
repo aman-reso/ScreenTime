@@ -25,7 +25,7 @@ import com.app.screentime.ui.theme.LocalAppColors
 fun AppCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color = LocalAppColors.current?.card ?: Color.Unspecified,
-    shape: Shape = RoundedCornerShape(12.dp),
+    shape: Shape = androidx.compose.material3.MaterialTheme.shapes.large,
     content: @Composable () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return

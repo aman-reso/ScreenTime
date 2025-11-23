@@ -28,6 +28,7 @@ class PreferencesManager @Inject constructor(
         private const val KEY_LAST_SYNC_TIME = "last_sync_time"
         private const val KEY_LAST_FOCUS_SYNC_TIME = "last_focus_sync_time"
         private const val USER_REG_INFO = "user_reg_info"
+        private const val KEY_USAGE_STATS_PERMISSION_REQUESTED = "usage_stats_permission_requested"
     }
 
     private val prefs: SharedPreferences by lazy {
@@ -176,6 +177,14 @@ class PreferencesManager @Inject constructor(
     fun setLastFocusSyncTime(timestamp: Long) {
         prefs.edit {
             putLong(KEY_LAST_FOCUS_SYNC_TIME, timestamp)
+        }
+    }
+    // Usage Stats Permission Tracking
+    fun isUsageStatsPermissionRequested(): Boolean = prefs.getBoolean(KEY_USAGE_STATS_PERMISSION_REQUESTED, false)
+
+    fun setUsageStatsPermissionRequested(requested: Boolean = true) {
+        prefs.edit {
+            putBoolean(KEY_USAGE_STATS_PERMISSION_REQUESTED, requested)
         }
     }
 }

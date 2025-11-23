@@ -88,7 +88,7 @@ fun ScreenTimeNavigation(
         )
     )
 
-    // Get current route
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Landing.route
 

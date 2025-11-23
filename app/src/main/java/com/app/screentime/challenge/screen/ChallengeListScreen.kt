@@ -58,6 +58,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import kotlin.math.min
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
@@ -685,6 +686,21 @@ private fun CurrentChallengeCardOverlay(
                     )
                 }
                 
+                // Participants Stack (only show if joined)
+                if (hasJoined) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ParticipantAvatarStack(participantCount = 5) // Using placeholder count for now
+                        AppText(
+                            text = "5+ participants",
+                            style = AppTextStyle.Label,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+                
                 // Button
                 if (!hasJoined) {
                     val buttonInteractionSource = remember { MutableInteractionSource() }
@@ -949,33 +965,31 @@ private fun CurrentChallengeCardGradient(
                     }
                 }
                 
-                // Participants Count (top-right) - Optional
-                Box(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .align(Alignment.TopEnd)
-                ) {
+                // Participants Stack (top-right) - Show when joined
+                if (hasJoined) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color.White.copy(alpha = 0.9f))
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .padding(16.dp)
+                            .align(Alignment.TopEnd)
                     ) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Group,
-                                contentDescription = null,
-                                tint = colors.tint,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            AppText(
-                                text = "0",
-                                style = AppTextStyle.Caption,
-                                color = colors.textPrimary
-                            )
+                            ParticipantAvatarStack(participantCount = 5) // Using placeholder count for now
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color.White.copy(alpha = 0.9f))
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                AppText(
+                                    text = "5+",
+                                    style = AppTextStyle.Caption,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.textPrimary
+                                )
+                            }
                         }
                     }
                 }
@@ -1076,6 +1090,47 @@ private fun CurrentChallengeCardGradient(
                                 style = AppTextStyle.Label,
                                 color = colors.textPrimary
                             )
+                        }
+                    }
+                    
+                    // Participants Stack (only show if joined)
+                    if (hasJoined) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colors.success.copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Group,
+                                    contentDescription = null,
+                                    tint = colors.success,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                ParticipantAvatarStack(participantCount = 5) // Using placeholder count for now
+                                Column {
+                                    AppText(
+                                        text = "Participants",
+                                        style = AppTextStyle.Caption,
+                                        color = colors.textMuted
+                                    )
+                                    AppText(
+                                        text = "5+ joined",
+                                        style = AppTextStyle.Label,
+                                        color = colors.textPrimary
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -1207,13 +1262,21 @@ private fun CurrentChallengeCardGradient(
 }
 
 @Composable
-private fun ParticipantAvatarStack() {
+private fun ParticipantAvatarStack(participantCount: Int = 0) {
     val colors = LocalAppColors.current ?: return
     val avatarSize = 32.dp
     val overlap = 18.dp
+    
+    // Generate sample avatars based on participant count
+    val avatarCount = min(3, participantCount)
     val sampleParticipants = listOf(
-        Color(0xFFFFC1C1) to "AM", Color(0xFFB3E5FC) to "JK", Color(0xFFFFF59D) to "LS"
-    )
+        Color(0xFFFFC1C1) to "AM",
+        Color(0xFFB3E5FC) to "JK",
+        Color(0xFFFFF59D) to "LS"
+    ).take(avatarCount)
+    
+    if (sampleParticipants.isEmpty()) return
+    
     val totalWidth = avatarSize + overlap * (sampleParticipants.size - 1)
     Box(
         modifier = Modifier
@@ -1226,7 +1289,8 @@ private fun ParticipantAvatarStack() {
                     .offset(x = overlap * index)
                     .size(avatarSize)
                     .clip(CircleShape)
-                    .background(bgColor), contentAlignment = Alignment.Center
+                    .background(bgColor),
+                contentAlignment = Alignment.Center
             ) {
                 AppText(
                     text = initials,
@@ -1241,14 +1305,7 @@ private fun ParticipantAvatarStack() {
 
 
 private fun formatDate(isoDateString: String): String {
-    return try {
-        val instant = java.time.Instant.parse(isoDateString)
-        val dateTime = instant.atZone(java.time.ZoneId.systemDefault())
-        val formatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy")
-        dateTime.format(formatter)
-    } catch (e: Exception) {
-        isoDateString
-    }
+    return com.app.screentime.utils.DateUtils.formatDate(isoDateString)
 }
 
 

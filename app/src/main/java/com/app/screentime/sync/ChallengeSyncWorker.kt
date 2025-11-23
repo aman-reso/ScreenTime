@@ -24,8 +24,7 @@ import com.app.screentime.record.repository.ScreenUsageHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
+import com.app.screentime.utils.DateUtils
 import java.util.concurrent.TimeUnit
 
 /**
@@ -213,8 +212,8 @@ class ChallengeSyncWorker(
                             challengeId = challenge.challengeId,
                             appName = appName,
                             packageName = allPackageNames, // Comma-separated package names in single event
-                            startSyncTime = ISODateTimeFormat.dateTime().print(DateTime(effectiveLastSyncTime)),
-                            endSyncTime = ISODateTimeFormat.dateTime().print(DateTime(syncEndTime)),
+                            startSyncTime = DateUtils.formatISO8601(DateUtils.fromMillis(effectiveLastSyncTime)),
+                            endSyncTime = DateUtils.formatISO8601(DateUtils.fromMillis(syncEndTime)),
                             duration = totalDuration
                         )
                     )
@@ -269,10 +268,10 @@ class ChallengeSyncWorker(
 
     private fun parseISO8601(isoString: String): Long {
         return try {
-            ISODateTimeFormat.dateTimeParser().parseDateTime(isoString).millis
+            DateUtils.toMillis(isoString)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse ISO8601: $isoString", e)
-            System.currentTimeMillis()
+            DateUtils.now().millis
         }
     }
 
@@ -425,7 +424,7 @@ class ChallengeSyncWorker(
                                         }
                                         
                                         // New challenge, save to database
-                                        val joinedAt = userChallenge.joinedAt ?: ISODateTimeFormat.dateTime().print(DateTime.now())
+                                        val joinedAt = userChallenge.joinedAt ?: DateUtils.formatISO8601(DateUtils.now())
                                         val entity = com.app.screentime.database.entity.JoinedChallengeEntity(
                                             challengeId = userChallenge.id,
                                             title = userChallenge.title,
@@ -511,10 +510,10 @@ class ChallengeSyncWorker(
 
         private fun parseISO8601(isoString: String): Long {
             return try {
-                ISODateTimeFormat.dateTimeParser().parseDateTime(isoString).millis
+                DateUtils.toMillis(isoString)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to parse ISO8601: $isoString", e)
-                System.currentTimeMillis()
+                DateUtils.now().millis
             }
         }
 

@@ -23,5 +23,9 @@ class ScreenTimeRepository @Inject constructor(
     ): Result<ApiResponse<UsageStatsResponse>> {
         return screenTimeService.getDailyUsageStats(date, targetUserId)
     }
+
+    suspend fun getUsageLastSyncTime(): Result<ApiResponse<UsageLastSyncResponse>> {
+        return screenTimeService.getUsageLastSyncTime()
+    }
 }
 

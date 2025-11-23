@@ -1,6 +1,6 @@
 package com.app.screentime.utils
 
-import org.joda.time.DateTime
+import com.app.screentime.utils.DateUtils
 
 /**
  * Utility class for formatting hourly usage data
@@ -29,9 +29,9 @@ object HourlyUsageFormatter {
      * @return Formatted time string (e.g., "12:00 AM", "2:00 PM")
      */
     fun formatHour(hour: Int): String {
-        val now = DateTime.now()
+        val now = DateUtils.now()
         val dateTime = now.withTime(hour, 0, 0, 0)
-        return dateTime.toString("h:mm a")
+        return DateUtils.format(dateTime, "h:mm a")
     }
     
     /**
@@ -40,11 +40,11 @@ object HourlyUsageFormatter {
      * @return Hour range string (e.g., "12:00 AM - 1:00 AM")
      */
     fun getHourRange(hour: Int): String {
-        val now = DateTime.now()
+        val now = DateUtils.now()
         val startTime = now.withTime(hour, 0, 0, 0)
         val endTime = startTime.plusHours(1).minusMillis(1)
         
-        return "${startTime.toString("h:mm a")} - ${endTime.toString("h:mm a")}"
+        return "${DateUtils.format(startTime, "h:mm a")} - ${DateUtils.format(endTime, "h:mm a")}"
     }
     
     /**
