@@ -34,28 +34,26 @@ fun StatisticsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp)
-    ) {
-        when {
-            uiState.isLoading -> {
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        AppLoader(
-                            type = AppLoaderType.CIRCULAR,
-                            modifier = Modifier
-                        )
-                    }
-                }
+    when {
+        uiState.isLoading -> {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                AppLoader(
+                    type = AppLoaderType.CIRCULAR
+                )
             }
+        }
 
-            uiState.error != null -> {
+        uiState.error != null -> {
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp)
+            ) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -82,8 +80,14 @@ fun StatisticsScreen(
                     }
                 }
             }
+        }
 
-            uiState.weeklyReports.isEmpty() -> {
+        uiState.weeklyReports.isEmpty() -> {
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp)
+            ) {
                 item {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
@@ -96,8 +100,14 @@ fun StatisticsScreen(
                     }
                 }
             }
+        }
 
-            else -> {
+        else -> {
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp)
+            ) {
                 item {
                     WeeklyUsageChart(
                         weeklyReports = uiState.weeklyReports,

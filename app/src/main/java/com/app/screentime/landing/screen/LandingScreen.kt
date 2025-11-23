@@ -4,6 +4,8 @@ import android.app.AppOpsManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -151,7 +154,7 @@ fun LandingScreen(
             // This will show the system dialog with Allow/Dismiss options
             if (!hasNotificationPermission && !hasRequestedPermission) {
                 notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-            } else if (!hasNotificationPermission && hasRequestedPermission) {
+            } else if (!hasNotificationPermission) {
                 // If we already requested and permission is still not granted, show warning
                 isPermissionDenied = true
             }
@@ -160,6 +163,32 @@ fun LandingScreen(
 
     // Usage Stats Permission Logic (First Time Only)
     var showUsageStatsDialog by remember { mutableStateOf(false) }
+    var isMonitoringPermission by remember { mutableStateOf(false) }
+
+    fun bringAppToFront() {
+        try {
+            val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+            intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    LaunchedEffect(isMonitoringPermission) {
+        if (isMonitoringPermission) {
+            while (isMonitoringPermission) {
+                if (permissionManager.hasUsageStatsPermission()) {
+                    // Permission granted → bring app to front
+                    bringAppToFront()
+                    isMonitoringPermission = false
+                    break
+                } else {
+                    delay(500)
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         val hasUsageStats = permissionManager.hasUsageStatsPermission()
@@ -192,6 +221,8 @@ fun LandingScreen(
                         try {
                             val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
                             context.startActivity(intent)
+                            // Start monitoring permission status
+                            isMonitoringPermission = true
                         } catch (e: Exception) {
                             // Fallback or log error
                             e.printStackTrace()
@@ -253,33 +284,29 @@ fun LandingScreen(
     ) {
         when {
             uiState.isLoading -> {
-                LazyColumn(
+                Column(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    item {
-                        GreetingUi(
-                            username = uiState.username,
-                            onLeaderboardClick = {
-                                navController?.navigate(Screen.Leaderboard.route)
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                    item {
-                        GlassSearchBarPlaceholder(
-                            onClick = {
-                                navController?.navigate(Screen.Search.route)
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                    item {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            AppLoader()
+                    GreetingUi(
+                        username = uiState.username,
+                        onLeaderboardClick = {
+                            navController?.navigate(Screen.Leaderboard.route)
                         }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    GlassSearchBarPlaceholder(
+                        onClick = {
+                            navController?.navigate(Screen.Search.route)
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AppLoader()
                     }
                 }
             }

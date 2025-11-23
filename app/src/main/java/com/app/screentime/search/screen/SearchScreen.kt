@@ -21,7 +21,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +44,7 @@ import com.app.screentime.profile.screen.VerifyTOTPBottomSheetContent
 import com.app.screentime.search.component.GlassSearchBar
 import com.app.screentime.search.component.UserSearchResultItem
 import com.app.screentime.search.viewmodel.SearchViewModel
+import com.app.screentime.ui.atom.AppLoader
 import com.app.screentime.ui.theme.LocalAppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,7 +114,7 @@ fun SearchScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        AppLoader()
                     }
                 }
 

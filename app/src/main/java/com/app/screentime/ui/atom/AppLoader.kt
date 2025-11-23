@@ -1,15 +1,19 @@
 package com.app.screentime.ui.atom
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -53,10 +57,7 @@ fun AppLoader(
 
     when (type) {
         AppLoaderType.CIRCULAR -> {
-            CircularWavyProgressIndicator(
-                modifier = modifier.size(size),
-                color = progressColor
-            )
+            ExpressiveLoadingIndicatorExample("Loading")
         }
 
         AppLoaderType.LINEAR -> {
@@ -66,6 +67,33 @@ fun AppLoader(
                     .height(height),
                 color = progressColor,
                 trackColor = linearTrackColor
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ExpressiveLoadingIndicatorExample(selectedOption: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        if (selectedOption == "Default") { // Still keeping this as per original user code structure
+            // Default LoadingIndicator
+            LoadingIndicator()
+        } else {
+            // ContainedLoadingIndicator with custom color and shapes
+            ContainedLoadingIndicator(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                polygons = listOf(
+                    MaterialShapes.PixelCircle,
+                    MaterialShapes.Circle,
+                    MaterialShapes.Pentagon,
+                    MaterialShapes.SoftBurst
+                ),
+                progress = { 0.5f },
+                modifier = Modifier
             )
         }
     }

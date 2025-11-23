@@ -41,7 +41,6 @@ import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -225,8 +224,8 @@ private fun ChallengeContent(
                         )
                     } else {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
                                 .background(colors.card)
                         )
                     }
@@ -302,8 +301,8 @@ private fun ChallengeContent(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Stats Row (Duration & Participants)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         ChallengeStatCard(
@@ -365,8 +364,8 @@ private fun ChallengeContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(20.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
                         ) {
                             TimelineItem(
                                 label = "Start",
@@ -532,9 +531,9 @@ private fun ChallengeContent(
                         )
                         .size(44.dp)
                 ) {
-                    Icon(
+                        Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Back",
+                            contentDescription = "Back",
                         tint = colors.textPrimary
                     )
                 }
@@ -576,7 +575,7 @@ private fun ChallengeContent(
                         )
                         .size(44.dp)
                 ) {
-                    Icon(
+                Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = "Share",
                         tint = colors.textPrimary
@@ -783,33 +782,33 @@ private fun ChallengeCard(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Thumbnail
-        if (challenge.thumbnail != null) {
-            ChallengeImage(
-                imageUrl = challenge.thumbnail,
-                appName = challenge.title,
-                modifier = Modifier
-                    .fillMaxWidth()
+            if (challenge.thumbnail != null) {
+                ChallengeImage(
+                    imageUrl = challenge.thumbnail,
+                    appName = challenge.title,
+                    modifier = Modifier
+                        .fillMaxWidth()
                     .height(200.dp)
-            )
-        }
-
+                )
+            }
+            
         // Title and Description
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            AppText(
-                text = challenge.title,
-                style = AppTextStyle.SubTitle,
-                fontWeight = FontWeight.Bold,
+                    AppText(
+                    text = challenge.title,
+                        style = AppTextStyle.SubTitle,
+                        fontWeight = FontWeight.Bold,
                 color = colors.textPrimary
-            )
-            AppText(
-                text = challenge.description,
+                    )
+                        AppText(
+                    text = challenge.description,
                 style = AppTextStyle.Body,
                 color = colors.textSecondary
             )
         }
 
         // Reward Badge
-        if (challenge.reward.isNotEmpty()) {
+            if (challenge.reward.isNotEmpty()) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
@@ -831,12 +830,12 @@ private fun ChallengeCard(
                         tint = colors.success,
                         modifier = Modifier.size(20.dp)
                     )
-                    AppText(
+                AppText(
                         text = challenge.reward,
-                        style = AppTextStyle.Label,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.success
-                    )
+                    style = AppTextStyle.Label,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.success
+                )
                 }
             }
         }
@@ -879,7 +878,7 @@ private fun ChallengeCard(
         // Date Range
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -890,7 +889,7 @@ private fun ChallengeCard(
                     modifier = Modifier.size(18.dp)
                 )
                 Column(modifier = Modifier.weight(1f)) {
-                    AppText(
+            AppText(
                         text = "Start Date",
                         style = AppTextStyle.Caption,
                         color = colors.textMuted
@@ -899,8 +898,8 @@ private fun ChallengeCard(
                         text = startDate,
                         style = AppTextStyle.Label,
                         fontWeight = FontWeight.Medium,
-                        color = colors.textPrimary
-                    )
+                color = colors.textPrimary
+            )
                 }
             }
             Row(
@@ -962,10 +961,10 @@ private fun ParticipantAvatarStack(participantCount: Int) {
                     .clip(CircleShape)
                     .background(bgColor),
                 contentAlignment = Alignment.Center
-            ) {
-                AppText(
+                ) {
+                    AppText(
                     text = initials,
-                    style = AppTextStyle.Caption,
+                        style = AppTextStyle.Caption,
                     fontWeight = FontWeight.Bold,
                     color = colors.textPrimary
                 )
@@ -1044,21 +1043,21 @@ private fun ChallengeRankingItem(
                 contentAlignment = Alignment.Center
             ) {
                 if (rankPosition <= 3) {
-                    Icon(
+                            Icon(
                         imageVector = when (rankPosition) {
                             1 -> Icons.Default.EmojiEvents
                             2 -> Icons.Default.MilitaryTech
                             else -> Icons.Default.Star
                         },
-                        contentDescription = null,
+                                contentDescription = null,
                         tint = colors.textOnPrimary,
                         modifier = Modifier.size(if (rankPosition == 1) 24.dp else 20.dp)
-                    )
+                            )
                 } else {
-                    AppText(
+                            AppText(
                         text = "#$rank",
                         style = AppTextStyle.Body,
-                        fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Bold,
                         color = colors.textPrimary
                     )
                 }
@@ -1069,9 +1068,9 @@ private fun ChallengeRankingItem(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AppText(
+                        AppText(
                         text = userId,
-                        style = AppTextStyle.Body,
+                            style = AppTextStyle.Body,
                         fontWeight = if (isCurrentUser || rankPosition <= 3) FontWeight.Bold else FontWeight.Medium,
                         color = colors.textPrimary
                     )

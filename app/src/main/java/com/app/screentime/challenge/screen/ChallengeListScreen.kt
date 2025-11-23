@@ -40,7 +40,6 @@ import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -122,7 +121,7 @@ fun ChallengeListScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 8.dp, vertical = 8.dp)
         ) {
             SegmentedControl(
                 items = tabs,
@@ -170,24 +169,25 @@ private fun ChallengesTab(
 ) {
     val colors = LocalAppColors.current ?: return
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            SectionTitle("Current challenges", colors.tint)
+    when {
+        uiState.isLoading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                AppLoader(color = colors.success)
+            }
         }
 
-        when {
-            uiState.isLoading -> {
+        uiState.error != null -> {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 item {
-                    Spacer(modifier = Modifier.height(80.dp))
-                    AppLoader(color = colors.success)
+                    SectionTitle("Current challenges", colors.tint)
                 }
-            }
-
-            uiState.error != null -> {
                 item {
                     Column(
                         modifier = Modifier
@@ -207,8 +207,17 @@ private fun ChallengesTab(
                     }
                 }
             }
+        }
 
-            uiState.challenges.isEmpty() -> {
+        uiState.challenges.isEmpty() -> {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    SectionTitle("Current challenges", colors.tint)
+                }
                 item {
                     AppText(
                         text = "No current challenges available right now.",
@@ -217,9 +226,20 @@ private fun ChallengesTab(
                     )
                 }
             }
+        }
 
-            else -> {
-                itemsIndexed(uiState.challenges, key = { _, challenge -> challenge.id }) { index, challenge ->
+        else -> {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    SectionTitle("Current challenges", colors.tint)
+                }
+                itemsIndexed(
+                    uiState.challenges,
+                    key = { _, challenge -> challenge.id }) { index, challenge ->
                     CurrentChallengeCard(
                         challenge = challenge,
                         index = index,
@@ -238,15 +258,6 @@ private fun ChallengesTab(
                 }
             }
         }
-
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            SectionTitle("Upcoming challenges", colors.textSecondary)
-        }
-
-        items(upcomingChallenges, key = { it.id }) { challenge ->
-            UpcomingChallengeCard(challenge = challenge)
-        }
     }
 }
 
@@ -259,20 +270,22 @@ private fun JoinedChallengesTab(
     val colors = LocalAppColors.current ?: return
     val joinedChallenges = uiState.challenges.filter { it.hasJoined }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        when {
-            uiState.isLoading -> {
-                item {
-                    Spacer(modifier = Modifier.height(80.dp))
-                    AppLoader(color = colors.success)
-                }
+    when {
+        uiState.isLoading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                AppLoader(color = colors.success)
             }
+        }
 
-            uiState.error != null -> {
+        uiState.error != null -> {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 item {
                     Column(
                         modifier = Modifier
@@ -294,8 +307,14 @@ private fun JoinedChallengesTab(
                     }
                 }
             }
+        }
 
-            joinedChallenges.isEmpty() -> {
+        joinedChallenges.isEmpty() -> {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 item {
                     Column(
                         modifier = Modifier
@@ -325,9 +344,17 @@ private fun JoinedChallengesTab(
                     }
                 }
             }
+        }
 
-            else -> {
-                itemsIndexed(joinedChallenges, key = { _, challenge -> challenge.id }) { index, challenge ->
+        else -> {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                itemsIndexed(
+                    joinedChallenges,
+                    key = { _, challenge -> challenge.id }) { index, challenge ->
                     CurrentChallengeCard(
                         challenge = challenge,
                         index = index,
@@ -447,15 +474,15 @@ private fun ChallengeImage(
 
 @Composable
 private fun CurrentChallengeCard(
-    challenge: Challenge, 
+    challenge: Challenge,
     index: Int = 0,
-    isJoining: Boolean = false, 
-    onViewDetails: () -> Unit, 
+    isJoining: Boolean = false,
+    onViewDetails: () -> Unit,
     onJoin: () -> Unit
 ) {
     // Alternate between two designs based on index to ensure both are visible
     val useOverlayDesign = remember(index) { index % 2 == 0 }
-    
+
     if (useOverlayDesign) {
         CurrentChallengeCardOverlay(
             challenge = challenge,
@@ -487,14 +514,14 @@ private fun CurrentChallengeCardOverlay(
     // Interactive states
     val cardInteractionSource = remember { MutableInteractionSource() }
     val isCardPressed by cardInteractionSource.collectIsPressedAsState()
-    
+
     // Animated scale for card hover/press
     val cardScale by animateFloatAsState(
         targetValue = if (isCardPressed) 0.98f else 1f,
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
         label = "cardScale"
     )
-    
+
     // Animated elevation for card press
     val cardElevation by animateFloatAsState(
         targetValue = if (isCardPressed) 8f else 4f,
@@ -534,7 +561,7 @@ private fun CurrentChallengeCardOverlay(
                         .background(colors.border.copy(alpha = 0.1f))
                 )
             }
-            
+
             // Dark Gradient Overlay
             Box(
                 modifier = Modifier
@@ -576,7 +603,7 @@ private fun CurrentChallengeCardOverlay(
                     )
                 }
             }
-            
+
             // Bottom Section - Title, Reward, Dates, Button
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -588,7 +615,7 @@ private fun CurrentChallengeCardOverlay(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
-                
+
                 // Reward
                 if (challenge.reward.isNotEmpty()) {
                     Row(
@@ -608,7 +635,7 @@ private fun CurrentChallengeCardOverlay(
                         )
                     }
                 }
-                
+
                 // Dates
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -626,7 +653,7 @@ private fun CurrentChallengeCardOverlay(
                         color = Color.White.copy(alpha = 0.8f)
                     )
                 }
-                
+
                 // Participants Stack (only show if joined)
                 if (hasJoined) {
                     Row(
@@ -641,18 +668,18 @@ private fun CurrentChallengeCardOverlay(
                         )
                     }
                 }
-                
+
                 // Button
                 if (!hasJoined) {
                     val buttonInteractionSource = remember { MutableInteractionSource() }
                     val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                    
+
                     val buttonScale by animateFloatAsState(
                         targetValue = if (isButtonPressed) 0.98f else 1f,
                         animationSpec = tween(durationMillis = 150),
                         label = "buttonScale"
                     )
-                    
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -679,13 +706,13 @@ private fun CurrentChallengeCardOverlay(
                     // Joined state - show view details button
                     val buttonInteractionSource = remember { MutableInteractionSource() }
                     val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                    
+
                     val buttonScale by animateFloatAsState(
                         targetValue = if (isButtonPressed) 0.98f else 1f,
                         animationSpec = tween(durationMillis = 150),
                         label = "buttonScale"
                     )
-                    
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -738,14 +765,14 @@ private fun CurrentChallengeCardGradient(
     // Interactive states
     val cardInteractionSource = remember { MutableInteractionSource() }
     val isCardPressed by cardInteractionSource.collectIsPressedAsState()
-    
+
     // Animated scale for card hover/press
     val cardScale by animateFloatAsState(
         targetValue = if (isCardPressed) 1.02f else 1f,
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
         label = "cardScale"
     )
-    
+
     // Animated elevation for card press
     val cardElevation by animateFloatAsState(
         targetValue = if (isCardPressed) 12f else 8f,
@@ -760,14 +787,14 @@ private fun CurrentChallengeCardGradient(
             colors.card.copy(alpha = 0.95f)
         )
     )
-    
+
     val rewardGradient = Brush.horizontalGradient(
         colors = listOf(
             Color(0xFFFFD700), // Yellow
             Color(0xFFFF6B35)  // Orange
         )
     )
-    
+
     val buttonGradient = Brush.horizontalGradient(
         colors = listOf(
             colors.tint,
@@ -807,7 +834,7 @@ private fun CurrentChallengeCardGradient(
                     animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
                     label = "imageScale"
                 )
-                
+
                 if (challenge.thumbnail != null) {
                     AsyncImage(
                         model = challenge.thumbnail,
@@ -824,7 +851,7 @@ private fun CurrentChallengeCardGradient(
                             .background(colors.border.copy(alpha = 0.1f))
                     )
                 }
-                
+
                 // Gradient Overlay
                 Box(
                     modifier = Modifier
@@ -841,7 +868,7 @@ private fun CurrentChallengeCardGradient(
                             )
                         )
                 )
-                
+
                 // Joined Badge (top-left) - Show when joined
                 if (hasJoined) {
                     Box(
@@ -905,7 +932,7 @@ private fun CurrentChallengeCardGradient(
                         }
                     }
                 }
-                
+
                 // Participants Stack (top-right) - Show when joined
                 if (hasJoined) {
                     Box(
@@ -934,7 +961,7 @@ private fun CurrentChallengeCardGradient(
                         }
                     }
                 }
-                
+
                 // Reward Badge (bottom-left) - Floating
                 if (challenge.reward.isNotEmpty()) {
                     Box(
@@ -970,7 +997,7 @@ private fun CurrentChallengeCardGradient(
                     }
                 }
             }
-            
+
             // Content Section
             Column(
                 modifier = Modifier
@@ -985,7 +1012,7 @@ private fun CurrentChallengeCardGradient(
                     color = colors.textPrimary,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
-                
+
                 // Description
                 AppText(
                     text = challenge.description,
@@ -995,7 +1022,7 @@ private fun CurrentChallengeCardGradient(
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.padding(bottom = 20.dp)
                 )
-                
+
                 // Date & Duration Info
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -1033,7 +1060,7 @@ private fun CurrentChallengeCardGradient(
                             )
                         }
                     }
-                    
+
                     // Participants Stack (only show if joined)
                     if (hasJoined) {
                         Row(
@@ -1075,19 +1102,19 @@ private fun CurrentChallengeCardGradient(
                         }
                     }
                 }
-                
+
                 // Join Button or Joined Status
                 if (hasJoined) {
                     // Show "View Details" button when joined
                     val buttonInteractionSource = remember { MutableInteractionSource() }
                     val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                    
+
                     val buttonScale by animateFloatAsState(
                         targetValue = if (isButtonPressed) 0.98f else 1f,
                         animationSpec = tween(durationMillis = 150),
                         label = "buttonScale"
                     )
-                    
+
 //                    Box(
 //                        modifier = Modifier
 //                            .fillMaxWidth()
@@ -1137,13 +1164,13 @@ private fun CurrentChallengeCardGradient(
                     // Join Button
                     val buttonInteractionSource = remember { MutableInteractionSource() }
                     val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                    
+
                     val buttonScale by animateFloatAsState(
                         targetValue = if (isButtonPressed) 0.98f else 1f,
                         animationSpec = tween(durationMillis = 150),
                         label = "buttonScale"
                     )
-                    
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1180,14 +1207,14 @@ private fun CurrentChallengeCardGradient(
                 }
             }
         }
-        
+
         // Decorative Element (top-right corner)
         val decorativeScale by animateFloatAsState(
             targetValue = if (isCardPressed) 1.5f else 1f,
             animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
             label = "decorativeScale"
         )
-        
+
         Box(
             modifier = Modifier
                 .size(128.dp)
@@ -1207,7 +1234,7 @@ private fun ParticipantAvatarStack(participantCount: Int = 0) {
     val colors = LocalAppColors.current ?: return
     val avatarSize = 32.dp
     val overlap = 18.dp
-    
+
     // Generate sample avatars based on participant count
     val avatarCount = min(3, participantCount)
     val sampleParticipants = listOf(
@@ -1215,9 +1242,9 @@ private fun ParticipantAvatarStack(participantCount: Int = 0) {
         Color(0xFFB3E5FC) to "JK",
         Color(0xFFFFF59D) to "LS"
     ).take(avatarCount)
-    
+
     if (sampleParticipants.isEmpty()) return
-    
+
     val totalWidth = avatarSize + overlap * (sampleParticipants.size - 1)
     Box(
         modifier = Modifier
@@ -1385,12 +1412,13 @@ private val previewJoinedChallenges = listOf(
     )
 )
 
-private val previewJoinedChallengesUiState = com.app.screentime.challenge.viewmodel.ChallengesUiState(
-    isLoading = false,
-    error = null,
-    challenges = previewJoinedChallenges,
-    joiningChallengeIds = emptySet()
-)
+private val previewJoinedChallengesUiState =
+    com.app.screentime.challenge.viewmodel.ChallengesUiState(
+        isLoading = false,
+        error = null,
+        challenges = previewJoinedChallenges,
+        joiningChallengeIds = emptySet()
+    )
 
 @Preview(showBackground = true)
 @Composable

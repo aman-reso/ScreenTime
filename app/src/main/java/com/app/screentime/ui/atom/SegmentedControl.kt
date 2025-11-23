@@ -1,28 +1,56 @@
+@file:Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
+
 package com.app.screentime.ui.atom
 
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.MaterialTheme
 import com.app.screentime.ui.theme.LocalAppColors
+import com.app.screentime.ui.theme.LocalThemeMode
+import com.app.screentime.ui.theme.ThemeType
+import com.app.screentime.ui.theme.Typography
+import com.app.screentime.ui.theme.getThemeColors
 
 /**
  * SegmentedControl - A pill-style segmented control component
  * Replaces TabRow with a modern, pill-style design
  */
-@OptIn(ExperimentalMaterial3Api::class)
+
+private val ExpressiveSegmentBackground = Color(0xFFDDE7E2)  // eye-friendly pastel mint
+private val ExpressiveSelectedBackground = Color(0xFF6BC8B5) // soft teal
+private val ExpressiveSelectedText = Color(0xFF0C3F38)       // deep teal
+private val ExpressiveUnselectedText = Color(0xFF5F6F69)     // muted green-gray
+
 @Composable
 fun SegmentedControl(
     items: List<String>,
@@ -30,41 +58,27 @@ fun SegmentedControl(
     onItemSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colors = LocalAppColors.current ?: return
-
-    // Create a gradient-like background color (reddish-purple translucent)
-    val backgroundColor = colors.success.copy(alpha = 0.2f).let { baseColor ->
-        Color(
-            red = (baseColor.red * 255 + 20).coerceAtMost(255f) / 255f,
-            green = (baseColor.green * 255 - 10).coerceAtLeast(0f) / 255f,
-            blue = (baseColor.blue * 255 + 30).coerceAtMost(255f) / 255f,
-            alpha = 0.25f
-        )
-    }
-
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(backgroundColor)
+            .clip(RoundedCornerShape(16.dp))
+            .background(ExpressiveSegmentBackground)
             .padding(4.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(0.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items.forEachIndexed { index, item ->
                 val isSelected = selectedIndex == index
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(
-                            if (isSelected) {
-                                colors.card // White/light background for selected
-                            } else {
-                                Color.Transparent
-                            }
+                            if (isSelected) ExpressiveSelectedBackground
+                            else ExpressiveSegmentBackground
                         )
                         .clickable { onItemSelected(index) }
                         .padding(vertical = 12.dp),
@@ -72,17 +86,64 @@ fun SegmentedControl(
                 ) {
                     AppText(
                         text = item,
-                        style = AppTextStyle.Body,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) {
-                            colors.textPrimary // Dark text for selected (white background)
-                        } else {
-                            colors.textOnPrimary.copy(alpha = 0.95f) // White/light text for unselected
-                        }
+                        color = if (isSelected) ExpressiveSelectedText else ExpressiveUnselectedText
                     )
                 }
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+private fun SegmentedControlPreview() {
+    SegmentedControlPreviewTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Two tabs preview
+            var selectedIndex1 by remember { mutableStateOf(0) }
+            SegmentedControl(
+                items = listOf("Daily", "Weekly"),
+                selectedIndex = selectedIndex1,
+                onItemSelected = { selectedIndex1 = it }
+            )
+
+            // Three tabs preview
+            var selectedIndex2 by remember { mutableStateOf(1) }
+            SegmentedControl(
+                items = listOf("All", "Active", "Completed"),
+                selectedIndex = selectedIndex2,
+                onItemSelected = { selectedIndex2 = it }
+            )
+
+            // Four tabs preview
+            var selectedIndex3 by remember { mutableStateOf(2) }
+            SegmentedControl(
+                items = listOf("Tab 1", "Tab 2", "Tab 3", "Tab 4"),
+                selectedIndex = selectedIndex3,
+                onItemSelected = { selectedIndex3 = it }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SegmentedControlPreviewTheme(content: @Composable () -> Unit) {
+    val previewColors = remember { getThemeColors(ThemeType.CLASSIC_LIGHT) }
+    CompositionLocalProvider(
+        LocalThemeMode provides false,
+        LocalAppColors provides previewColors
+    ) {
+        MaterialTheme(
+            typography = Typography,
+            content = content
+        )
     }
 }
 

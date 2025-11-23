@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.screentime.leaderboard.viewmodel.LeaderboardViewModel
-import com.app.screentime.navigation.Screen
 import com.app.screentime.network.model.LeaderboardEntry
 import com.app.screentime.record.repository.formatDuration
 import com.app.screentime.ui.atom.AppText
@@ -93,28 +92,11 @@ fun LeaderboardScreen(
                         }
                     }
                     Column(modifier = Modifier.weight(1f)) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.EmojiEvents,
-                                contentDescription = null,
-                                tint = colors.success,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            AppText(
-                                text = "Leaderboard",
-                                style = AppTextStyle.Title,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
                         AppText(
-                            text = "Compete with others",
-                            style = AppTextStyle.Label,
-                            color = colors.textSecondary
+                            text = "Leaderboard",
+                            style = AppTextStyle.Title,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary
                         )
                     }
                     IconButton(
@@ -131,34 +113,11 @@ fun LeaderboardScreen(
                 }
             }
 
-            if (navController != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                FilledTonalButton(
-                    onClick = { navController.navigate(Screen.Challenges.route) },
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Flag,
-                        contentDescription = "Challenges",
-                        tint = colors.success
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    AppText(
-                        text = "View Challenges",
-                        style = AppTextStyle.Body,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.success
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
             // Segmented Control
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(vertical = 8.dp)
             ) {
                 SegmentedControl(
                     items = tabs,
@@ -171,7 +130,7 @@ fun LeaderboardScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Content
             HorizontalPager(

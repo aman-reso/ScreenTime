@@ -28,6 +28,7 @@ import com.app.screentime.R
 import com.app.screentime.blocking.viewmodel.BlockedLinksViewModel
 import com.app.screentime.database.entity.BlockedLinkEntity
 import com.app.screentime.service.ScreenTimeVpnService
+import com.app.screentime.ui.atom.AppLoader
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
 import com.app.screentime.ui.theme.LocalAppColors
@@ -166,7 +167,7 @@ fun BlockedLinksScreen(
                             .height(200.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = colors.success)
+                        AppLoader(color = colors.success)
                     }
                 }
             } else if (uiState.blockedLinks.isEmpty()) {
