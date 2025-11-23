@@ -87,6 +87,7 @@ fun LandingScreen(
         mutableStateOf(permissionManager.hasNotificationPermission())
     }
     var isPermissionDenied by remember { mutableStateOf(false) }
+    var hasRequestedPermission by remember { mutableStateOf(false) }
 
     // Check if permission is denied (blocked)
     fun checkIfPermissionDenied(): Boolean {
@@ -97,14 +98,12 @@ fun LandingScreen(
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
             if (!isGranted) {
-                // Check if user has permanently denied (shouldShowRequestPermissionRationale returns false)
-                val activity = context as? androidx.activity.ComponentActivity
+                val activity = context as? androidx.activity.ComponentActivity?
                 if (activity != null) {
                     val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(
                         activity,
                         android.Manifest.permission.POST_NOTIFICATIONS
                     )
-                    // If permission is not granted and we shouldn't show rationale, it's permanently denied
                     return !shouldShowRationale
                 }
             }
@@ -116,11 +115,18 @@ fun LandingScreen(
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        hasNotificationPermission = isGranted
+        hasRequestedPermission = true
         // Re-check permission status after result
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             hasNotificationPermission = permissionManager.hasNotificationPermission()
-            isPermissionDenied = !hasNotificationPermission && checkIfPermissionDenied()
+
+            // If user dismissed (denied), show warning card
+            // isPermissionDenied will be true if user denied (either temporarily or permanently)
+            if (!isGranted) {
+                isPermissionDenied = true
+            } else {
+                isPermissionDenied = false
+            }
         }
     }
 
@@ -140,18 +146,21 @@ fun LandingScreen(
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             hasNotificationPermission = permissionManager.hasNotificationPermission()
-            isPermissionDenied = !hasNotificationPermission && checkIfPermissionDenied()
 
-            // Directly request permission if not granted and not permanently denied
-            if (!hasNotificationPermission && !isPermissionDenied) {
+            // If permission is not granted, request it (show system popup)
+            // This will show the system dialog with Allow/Dismiss options
+            if (!hasNotificationPermission && !hasRequestedPermission) {
                 notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            } else if (!hasNotificationPermission && hasRequestedPermission) {
+                // If we already requested and permission is still not granted, show warning
+                isPermissionDenied = true
             }
         }
     }
 
     // Usage Stats Permission Logic (First Time Only)
     var showUsageStatsDialog by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(Unit) {
         val hasUsageStats = permissionManager.hasUsageStatsPermission()
         if (!hasUsageStats && viewModel.shouldAskForUsageStatsPermission()) {
@@ -342,19 +351,20 @@ fun LandingScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    // Show notification permission warning if denied
-                    if (isPermissionDenied && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    // Show notification permission warning if denied (user dismissed the popup)
+                    if (isPermissionDenied && !hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         item {
                             NotificationPermissionWarningCard(
                                 onEnableClick = {
                                     // First check if we can show the permission dialog
                                     val activity = context as? androidx.activity.ComponentActivity
                                     if (activity != null) {
-                                        val canShowDialog = ActivityCompat.shouldShowRequestPermissionRationale(
-                                            activity,
-                                            android.Manifest.permission.POST_NOTIFICATIONS
-                                        )
-                                        
+                                        val canShowDialog =
+                                            ActivityCompat.shouldShowRequestPermissionRationale(
+                                                activity,
+                                                android.Manifest.permission.POST_NOTIFICATIONS
+                                            )
+
                                         if (canShowDialog) {
                                             // Can show dialog, request permission again
                                             notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -363,7 +373,11 @@ fun LandingScreen(
                                             val intent =
                                                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                                     data =
-                                                        Uri.fromParts("package", context.packageName, null)
+                                                        Uri.fromParts(
+                                                            "package",
+                                                            context.packageName,
+                                                            null
+                                                        )
                                                 }
                                             settingsLauncher.launch(intent)
                                         }
@@ -372,7 +386,11 @@ fun LandingScreen(
                                         val intent =
                                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                                 data =
-                                                    Uri.fromParts("package", context.packageName, null)
+                                                    Uri.fromParts(
+                                                        "package",
+                                                        context.packageName,
+                                                        null
+                                                    )
                                             }
                                         settingsLauncher.launch(intent)
                                     }
