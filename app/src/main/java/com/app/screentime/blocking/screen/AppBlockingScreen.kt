@@ -188,7 +188,7 @@ fun AppBlockingScreen(
 
     // Sync tab selection with pager state
     LaunchedEffect(pagerState.currentPage) {
-        // This will be handled by the TabRow onClick
+        // This will be handled by the SegmentedControl onClick
     }
 
     Box(
@@ -230,33 +230,22 @@ fun AppBlockingScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Tabs
-            TabRow(
-                selectedTabIndex = pagerState.currentPage,
-                containerColor = colors.background,
-                contentColor = colors.textPrimary
+            // Segmented Control
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 12.dp)
             ) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(index)
-                            }
-                        },
-                        text = {
-                            AppText(
-                                text = title,
-                                style = AppTextStyle.Body,
-                                fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Normal,
-                                color = if (pagerState.currentPage == index) colors.success else colors.textMuted
-                            )
+                com.app.screentime.ui.atom.SegmentedControl(
+                    items = tabs,
+                    selectedIndex = pagerState.currentPage,
+                    onItemSelected = { index ->
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
                         }
-                    )
-                }
+                    }
+                )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
 
             // Tab Content with Pager
             HorizontalPager(

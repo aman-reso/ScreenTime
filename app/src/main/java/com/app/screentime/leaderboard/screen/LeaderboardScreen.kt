@@ -17,7 +17,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import com.app.screentime.ui.atom.SegmentedControl
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -154,37 +154,21 @@ fun LeaderboardScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Tabs
-            TabRow(
-                selectedTabIndex = pagerState.currentPage,
-                containerColor = colors.background,
-                contentColor = colors.textPrimary,
-                indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
-                        color = colors.success,
-                        height = 2.dp
-                    )
-                }
+            // Segmented Control
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(index)
-                            }
-                        },
-                        text = {
-                            AppText(
-                                text = title,
-                                style = AppTextStyle.Body,
-                                fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Medium,
-                                color = if (pagerState.currentPage == index) colors.success else colors.textMuted
-                            )
+                SegmentedControl(
+                    items = tabs,
+                    selectedIndex = pagerState.currentPage,
+                    onItemSelected = { index ->
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
                         }
-                    )
-                }
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))

@@ -47,10 +47,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import com.app.screentime.ui.atom.SegmentedControl
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.shadow
 import androidx.compose.animation.core.animateFloatAsState
@@ -121,18 +118,21 @@ fun ChallengeListScreen(
             .fillMaxSize()
             .background(colors.background)
     ) {
-        // Custom Segmented Control
+        // Segmented Control
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             SegmentedControl(
-                items = tabs, selectedIndex = pagerState.currentPage, onItemSelected = { index ->
+                items = tabs,
+                selectedIndex = pagerState.currentPage,
+                onItemSelected = { index ->
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(index)
                     }
-                })
+                }
+            )
         }
 
         // Tab Content with Pager
@@ -420,64 +420,6 @@ private fun Header(
 }
 
 @Composable
-private fun SegmentedControl(
-    items: List<String>, selectedIndex: Int, onItemSelected: (Int) -> Unit
-) {
-    val colors = LocalAppColors.current ?: return
-
-    // Create a gradient-like background color (reddish-purple translucent)
-    val backgroundColor = colors.success.copy(alpha = 0.2f).let { baseColor ->
-        androidx.compose.ui.graphics.Color(
-            red = (baseColor.red * 255 + 20).coerceAtMost(255f) / 255f,
-            green = (baseColor.green * 255 - 10).coerceAtLeast(0f) / 255f,
-            blue = (baseColor.blue * 255 + 30).coerceAtMost(255f) / 255f,
-            alpha = 0.25f
-        )
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(backgroundColor)
-            .padding(4.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(0.dp)
-        ) {
-            items.forEachIndexed { index, item ->
-                val isSelected = selectedIndex == index
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(
-                            if (isSelected) {
-                                colors.card // White/light background for selected
-                            } else {
-                                Color.Transparent
-                            }
-                        )
-                        .clickable { onItemSelected(index) }
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center) {
-                    AppText(
-                        text = item,
-                        style = AppTextStyle.Body,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) {
-                            colors.textPrimary // Dark text for selected (white background)
-                        } else {
-                            colors.textOnPrimary.copy(alpha = 0.95f) // White/light text for unselected
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun SectionTitle(title: String, tint: Color) {
     AppText(
         text = title, style = AppTextStyle.SubTitle, fontWeight = FontWeight.Bold, color = tint
@@ -610,8 +552,7 @@ private fun CurrentChallengeCardOverlay(
                     )
             )
         }
-        
-        // Content
+
         Column(
             modifier = Modifier
                 .fillMaxSize()

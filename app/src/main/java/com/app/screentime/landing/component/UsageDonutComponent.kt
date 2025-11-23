@@ -48,12 +48,16 @@ fun UsageDonutComponent(
     report: List<AppUsage>?,
     totalScreenTime: Long,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    title: String? = null
 ) {
     val colors = LocalAppColors.current ?: return
     val usageData = report?.toUsageData(colors.chartColors) ?: return
     Column(modifier = modifier.fillMaxWidth()) {
-        AppText(text = stringResource(R.string.today_screen_time), style = AppTextStyle.SubTitle)
+        AppText(
+            text = title ?: stringResource(R.string.today_screen_time),
+            style = AppTextStyle.SubTitle
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         BoxWithConstraints(

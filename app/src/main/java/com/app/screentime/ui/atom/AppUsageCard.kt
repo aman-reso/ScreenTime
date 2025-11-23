@@ -46,7 +46,8 @@ fun LazyItemScope.AppUsageListUi(
     appUsage: AppUsage,
     index: Int,
     totalCount: Int,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    showIcon: Boolean = true
 ) {
     val shape = remember(index, totalCount) {
         when {
@@ -65,7 +66,8 @@ fun LazyItemScope.AppUsageListUi(
         appUsage = appUsage,
         modifier = Modifier.fillParentMaxWidth(),
         shape = shape,
-        onClick = onClick
+        onClick = onClick,
+        showIcon = showIcon
     )
 }
 
@@ -78,7 +80,8 @@ fun AppUsageCard(
     appUsage: AppUsage,
     modifier: Modifier = Modifier,
     shape: Shape = androidx.compose.material3.MaterialTheme.shapes.large,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    showIcon: Boolean = true
 ) {
     val colors = LocalAppColors.current ?: return
     AppUsageItemGlassyCard(
@@ -100,19 +103,20 @@ fun AppUsageCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            appUsage.applicationInfo?.let {
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clip(CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    AppIcon(
-                        appInfo = it, size = 28.dp
-                    )
+            if (showIcon) {
+                appUsage.applicationInfo?.let {
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AppIcon(
+                            appInfo = it, size = 28.dp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
                 }
-                Spacer(modifier = Modifier.width(12.dp))
-
             }
             Column(
                 modifier = Modifier.weight(1f)

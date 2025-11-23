@@ -96,7 +96,7 @@ fun SearchScreen(
                     query = searchQuery,
                     onQueryChange = { query ->
                         searchQuery = query
-                        if (query.isNotBlank()) {
+                        if (query.length > 2) {
                             viewModel.searchUsers(query)
                         } else {
                             viewModel.clearSearch()
@@ -140,13 +140,17 @@ fun SearchScreen(
                     }
                 }
 
-                searchQuery.isBlank() -> {
+                searchQuery.length <= 2 -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Enter a username to search",
+                            text = if (searchQuery.isBlank()) {
+                                "Enter a username to search"
+                            } else {
+                                "Type at least 3 characters to search"
+                            },
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
