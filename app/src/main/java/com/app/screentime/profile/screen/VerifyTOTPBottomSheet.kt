@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -80,7 +81,7 @@ fun VerifyTOTPBottomSheetContent(
             otpText = ""
             onDismiss()
         },
-        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
             modifier = Modifier
@@ -136,7 +137,7 @@ fun VerifyTOTPBottomSheetContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-                    .clip(RoundedCornerShape(15.dp))
+                    .clip(MaterialTheme.shapes.medium)
                     .background(colors.card.copy(alpha = 0.0f))
                     .border(
                         width = 1.dp,
@@ -159,7 +160,7 @@ fun VerifyTOTPBottomSheetContent(
                                 }
                             )
                         ),
-                        shape = RoundedCornerShape(15.dp)
+                        shape = MaterialTheme.shapes.medium
                     )
             ) {
                 BasicTextField(

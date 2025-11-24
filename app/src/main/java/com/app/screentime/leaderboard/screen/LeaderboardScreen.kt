@@ -9,6 +9,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -22,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,6 +41,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import com.app.screentime.R
 import com.app.screentime.ui.atom.AppLoader
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -308,6 +312,7 @@ private fun LeaderboardContent(
             LeaderboardItem(
                 rank = entry.rank,
                 username = entry.username,
+                name = entry.name,
                 duration = formatDuration(entry.totalScreenTime),
                 isCurrentUser = entry.username == currentUsername,
                 rankPosition = index + 1
@@ -344,10 +349,72 @@ private fun LeaderboardContent(
     }
 }
 
+/**
+ * Get initials from a name or username
+ */
+private fun getInitials(name: String?, username: String): String {
+    val text = name?.trim() ?: username.trim()
+    if (text.isEmpty()) return "?"
+    
+    val parts = text.split(" ", ".", "_", "-").filter { it.isNotEmpty() }
+    return when {
+        parts.size >= 2 -> "${parts[0].first().uppercaseChar()}${parts[1].first().uppercaseChar()}"
+        text.length >= 2 -> text.take(2).uppercase()
+        else -> text.first().uppercaseChar().toString()
+    }
+}
+
+/**
+ * Get a color for an avatar based on the name/username
+ */
+private fun getAvatarColor(name: String?, username: String): Color {
+    val text = (name ?: username).lowercase()
+    val colors = listOf(
+        Color(0xFFFFC1C1), // Light pink
+        Color(0xFFB3E5FC), // Light blue
+        Color(0xFFFFF59D), // Light yellow
+        Color(0xFFC5E1A5), // Light green
+        Color(0xFFFFCCBC), // Light orange
+        Color(0xFFE1BEE7), // Light purple
+        Color(0xFFB2DFDB), // Light teal
+        Color(0xFFFFE0B2), // Light amber
+    )
+    val index = text.hashCode().absoluteValue % colors.size
+    return colors[index]
+}
+
+@Composable
+private fun AvatarWithInitials(
+    name: String?,
+    username: String,
+    size: androidx.compose.ui.unit.Dp = 44.dp,
+    modifier: Modifier = Modifier
+) {
+    val initials = remember(name, username) { getInitials(name, username) }
+    val backgroundColor = remember(name, username) { getAvatarColor(name, username) }
+    val colors = LocalAppColors.current ?: return
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(backgroundColor),
+        contentAlignment = Alignment.Center
+    ) {
+        AppText(
+            text = initials,
+            style = AppTextStyle.Body,
+            fontWeight = FontWeight.Bold,
+            color = colors.textPrimary
+        )
+    }
+}
+
 @Composable
 private fun LeaderboardItem(
     rank: Int,
     username: String,
+    name: String?,
     duration: String,
     isCurrentUser: Boolean,
     rankPosition: Int
@@ -372,13 +439,13 @@ private fun LeaderboardItem(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(color = cardBackground, shape = RoundedCornerShape(12.dp))
+            .background(color = cardBackground, shape = MaterialTheme.shapes.medium)
             .then(
                 if (isCurrentUser || rankPosition <= 3) {
                     Modifier.border(
                         width = 1.5.dp,
                         color = if (rankPosition <= 3) rankColor else colors.success,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = MaterialTheme.shapes.medium
                     )
                 } else Modifier
             )
@@ -390,44 +457,23 @@ private fun LeaderboardItem(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Rank Badge with enhanced design
-            Box(
-                modifier = Modifier
-                    .size(if (rankPosition <= 3) 52.dp else 44.dp)
-                    .shadow(
-                        elevation = if (rankPosition <= 3) 4.dp else 2.dp,
-                        shape = CircleShape,
-                        spotColor = if (rankPosition <= 3) rankColor.copy(alpha = 0.5f) else colors.textPrimary.copy(
-                            alpha = 0.2f
-                        )
-                    )
-                    .background(
-                        color = if (rankPosition <= 3) rankColor else colors.card,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (rankPosition <= 3) {
-                    Icon(
-                        imageVector = when (rankPosition) {
-                            1 -> Icons.Default.EmojiEvents
-                            2 -> Icons.Default.MilitaryTech
-                            else -> Icons.Default.Star
-                        },
-                        contentDescription = null,
-                        tint = colors.textOnPrimary,
-                        modifier = Modifier.size(if (rankPosition == 1) 28.dp else 24.dp)
-                    )
-                } else {
-                    AppText(
-                        text = "#$rank",
-                        style = AppTextStyle.Body,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
-                    )
-                }
-            }
+            // Rank number
+            AppText(
+                text = "$rank",
+                style = AppTextStyle.Body,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF9CA3AF), // Gray color for rank
+                modifier = Modifier.width(28.dp)
+            )
 
+            // Avatar with initials
+            AvatarWithInitials(
+                name = name,
+                username = username,
+                size = 44.dp
+            )
+
+            // Username and duration
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -444,7 +490,7 @@ private fun LeaderboardItem(
                             modifier = Modifier
                                 .background(
                                     color = colors.success.copy(alpha = 0.2f),
-                                    shape = RoundedCornerShape(4.dp)
+                                    shape = MaterialTheme.shapes.extraSmall
                                 )
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
@@ -457,35 +503,15 @@ private fun LeaderboardItem(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = null,
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    AppText(
-                        text = duration,
-                        style = AppTextStyle.Label,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.textSecondary
-                    )
-                }
             }
 
-            // Trophy icon for top 3
-            if (rankPosition <= 3) {
-                Icon(
-                    imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = null,
-                    tint = rankColor.copy(alpha = 0.6f),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+            // Duration
+            AppText(
+                text = duration,
+                style = AppTextStyle.Label,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF6B7280) // Gray color for time
+            )
         }
     }
 }
@@ -507,7 +533,7 @@ private fun UserProfileCard(
             .fillMaxWidth()
             .shadow(
                 elevation = 12.dp,
-                shape = RoundedCornerShape(20.dp),
+                shape = MaterialTheme.shapes.large,
                 spotColor = primaryBlue.copy(alpha = 0.4f)
             )
     ) {
@@ -517,7 +543,7 @@ private fun UserProfileCard(
                 .fillMaxWidth()
                 .background(
                     color = primaryBlue,
-                    shape = RoundedCornerShape(20.dp)
+                    shape = MaterialTheme.shapes.large
                 )
                 .padding(20.dp)
         ) {

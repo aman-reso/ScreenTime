@@ -6,7 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -49,7 +49,7 @@ fun ThemeSelectionDialog(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .fillMaxHeight(0.8f),
-            shape = RoundedCornerShape(15.dp),
+            shape = MaterialTheme.shapes.large,
             color = colors.card
         ) {
             AlertDialogContent(
@@ -164,7 +164,7 @@ private fun ThemePreviewOption(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(
                 if (selected) currentColors.success.copy(alpha = 0.15f)
                 else currentColors.card
@@ -172,7 +172,7 @@ private fun ThemePreviewOption(
             .border(
                 width = if (selected) 2.dp else 1.dp,
                 color = if (selected) currentColors.success else currentColors.border,
-                shape = RoundedCornerShape(12.dp)
+                shape = MaterialTheme.shapes.medium
             )
             .clickable(onClick = onClick)
             .padding(12.dp),
@@ -188,9 +188,9 @@ private fun ThemePreviewOption(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .background(themeColors.background)
-                    .border(1.dp, themeColors.border, RoundedCornerShape(8.dp))
+                    .border(1.dp, themeColors.border, MaterialTheme.shapes.small)
             ) {
                 // Show a small preview of the theme
                 Box(
@@ -209,7 +209,7 @@ private fun ThemePreviewOption(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(12.dp)
-                            .clip(RoundedCornerShape(2.dp))
+                            .clip(MaterialTheme.shapes.extraSmall)
                             .background(themeColors.card)
                             .align(Alignment.TopCenter)
                     )
@@ -218,7 +218,7 @@ private fun ThemePreviewOption(
                         modifier = Modifier
                             .fillMaxWidth(0.6f)
                             .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp))
+                            .clip(MaterialTheme.shapes.extraSmall)
                             .background(themeColors.success)
                             .align(Alignment.BottomCenter)
                     )

@@ -27,9 +27,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.EmojiEvents
@@ -39,9 +40,16 @@ import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Outbound
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.filled.Nightlight
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -105,6 +113,8 @@ import com.app.screentime.ui.theme.Typography
 import com.app.screentime.ui.theme.getThemeColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 @Composable
 fun ChallengeListScreen(
@@ -125,12 +135,26 @@ fun ChallengeListScreen(
             .fillMaxSize()
             .background(colors.background)
     ) {
+        // Title: Explore Challenges
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            AppText(
+                text = "Explore Challenges",
+                style = AppTextStyle.Title,
+                fontWeight = FontWeight.Bold,
+                color = colors.textPrimary
+            )
+        }
+        
         // Custom Segmented Control
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
             SegmentedControl(
                 items = tabs, selectedIndex = pagerState.currentPage, onItemSelected = { index ->
                     coroutineScope.launch {
@@ -197,113 +221,666 @@ private fun ChallengesTab(
     viewModel: ChallengeViewModel,
 ) {
     val colors = LocalAppColors.current ?: return
+    val mockData = com.app.screentime.challenge.viewmodel.MockChallengeData
 
-    Column(
-        modifier = Modifier.fillMaxSize()
+    // Use mock data for now
+    val featuredChallenge = mockData.getFeaturedChallenge()
+    val trendingChallenges = mockData.getTrendingChallenges()
+    val specialEvents = mockData.getSpecialEvents()
+    val quickJoinChallenges = mockData.getQuickJoinChallenges()
+
+    var selectedFilter by remember { mutableStateOf(0) }
+    val filters = listOf("All", "Fitness", "Mindfulness", "Coding")
+
+        LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        // Header
-        Box(
+        // Filter buttons
+        item {
+            Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 12.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SectionTitle("Current challenges", colors.tint)
-        }
-
-        // Content
-        when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    AppLoader(color = colors.success)
+                filters.forEachIndexed { index, filter ->
+                    FilterChip(
+                        text = filter,
+                        selected = selectedFilter == index,
+                        onClick = { selectedFilter = index }
+                    )
                 }
             }
+        }
 
-            uiState.error != null -> {
+        // Featured Challenge Section
+        if (featuredChallenge != null) {
+            item {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
                     AppText(
-                        text = uiState.error, style = AppTextStyle.Body, color = colors.error
+                        text = "Featured Challenge",
+                        style = AppTextStyle.SubTitle,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        modifier = Modifier.padding(bottom = 12.dp)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = viewModel::refresh) {
+                    FeaturedChallengeCard(
+                        challenge = featuredChallenge,
+                        onJoin = {
+                            navController?.navigate(
+                                Screen.ChallengeDetail.createRoute(featuredChallenge.id.toString())
+                            )
+                        },
+                        onViewDetails = {
+                            navController?.navigate(
+                                Screen.ChallengeDetail.createRoute(featuredChallenge.id.toString())
+                            )
+                        }
+                    )
+                }
+            }
+        }
+
+        // Trending Now Section
+        if (trendingChallenges.isNotEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         AppText(
-                            text = "Retry", style = AppTextStyle.Label, color = colors.success
+                            text = "Trending Now",
+                            style = AppTextStyle.SubTitle,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary
                         )
+                        TextButton(onClick = { /* See all */ }) {
+                            AppText(
+                                text = "See all",
+                                style = AppTextStyle.Label,
+                                color = colors.accent
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        trendingChallenges.forEach { challenge ->
+                            TrendingChallengeCard(
+                                challenge = challenge,
+                                modifier = Modifier.weight(1f),
+                                onJoin = {
+                                    navController?.navigate(
+                                        Screen.ChallengeDetail.createRoute(challenge.id.toString())
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
+        }
 
-            uiState.challenges.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 8.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center
+        // Special Events Section
+        if (specialEvents.isNotEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
                     AppText(
-                        text = "No current challenges available right now.",
-                        style = AppTextStyle.Label,
-                        color = colors.textMuted
+                        text = "Special Events",
+                        style = AppTextStyle.SubTitle,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        modifier = Modifier.padding(bottom = 12.dp)
                     )
-                }
-            }
-
-            else -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    itemsIndexed(
-                        uiState.challenges,
-                        key = { _, challenge -> challenge.id },
-                        span = { index, _ ->
-                            val config = getCardSizeConfig(index)
-                            GridItemSpan(config.span)
-                        }
-                    ) { index, challenge ->
-                        val config = getCardSizeConfig(index)
-                        CurrentChallengeCard(
+                    specialEvents.forEach { challenge ->
+                        SpecialEventCard(
                             challenge = challenge,
-                            index = index,
-                            cardHeight = config.height.dp,
-                            useOverlayDesign = config.pattern == 0,
-                            useHorizontalDesign = config.pattern == 2,
-                            isJoining = uiState.joiningChallengeIds.contains(challenge.id),
-                            onViewDetails = {
-                                navController?.navigate(
-                                    Screen.ChallengeDetail.createRoute(challenge.id.toString())
-                                )
-                            },
-                            onJoin = {
-                                // Navigate to detail screen when join button is clicked
+                            modifier = Modifier.fillMaxWidth(),
+                            onView = {
                                 navController?.navigate(
                                     Screen.ChallengeDetail.createRoute(challenge.id.toString())
                                 )
                             }
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
         }
 
+        // Quick Join Section
+        if (quickJoinChallenges.isNotEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                ) {
+                    AppText(
+                        text = "Quick Join",
+                        style = AppTextStyle.SubTitle,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    quickJoinChallenges.forEach { challenge ->
+                        QuickJoinCard(
+                            challenge = challenge,
+                            modifier = Modifier.fillMaxWidth(),
+                            onJoin = {
+                                navController?.navigate(
+                                    Screen.ChallengeDetail.createRoute(challenge.id.toString())
+                                )
+            }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+            }
+        }
+    }
+}
 
+// Filter Chip Component
+@Composable
+private fun FilterChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                if (selected) colors.accent
+                else colors.card
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        AppText(
+            text = text,
+            style = AppTextStyle.Label,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) colors.textOnPrimary else colors.textPrimary
+        )
+    }
+}
+
+// Featured Challenge Card
+@Composable
+private fun FeaturedChallengeCard(
+    challenge: Challenge,
+    onJoin: () -> Unit,
+    onViewDetails: () -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
+    val startDate = formatDate(challenge.startTime)
+    val endDate = formatDate(challenge.endTime)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .shadow(4.dp, RoundedCornerShape(16.dp))
+    ) {
+        Column {
+            // Image
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+            ) {
+                if (challenge.thumbnail != null) {
+                    AsyncImage(
+                        model = challenge.thumbnail,
+                        contentDescription = challenge.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                // Trophy badge overlay
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.9f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = null,
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        AppText(
+                            text = challenge.reward,
+                            style = AppTextStyle.Label,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary
+                        )
+                    }
+                }
+            }
+
+            // Content
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.card)
+                    .padding(16.dp)
+            ) {
+                // Date and Participants row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        AppText(
+                            text = "$startDate - $endDate",
+                            style = AppTextStyle.Caption,
+                            color = colors.textSecondary
+                        )
+                    }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Group,
+                            contentDescription = null,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        AppText(
+                            text = "1.2k joined",
+                            style = AppTextStyle.Caption,
+                            color = colors.textSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Title
+                AppText(
+                    text = challenge.title,
+                    style = AppTextStyle.SubTitle,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Description
+                AppText(
+                    text = challenge.description,
+                    style = AppTextStyle.Body,
+                    color = colors.textSecondary
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Join Button
+                AppPrimaryButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Join Challenge",
+                    onClick = onJoin
+                )
+            }
+        }
+    }
+}
+
+// Trending Challenge Card
+@Composable
+private fun TrendingChallengeCard(
+    challenge: Challenge,
+    modifier: Modifier = Modifier,
+    onJoin: () -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .shadow(2.dp, RoundedCornerShape(12.dp))
+            .background(colors.card)
+    ) {
+        Column {
+            // Image
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+            ) {
+                if (challenge.thumbnail != null) {
+                    AsyncImage(
+                        model = challenge.thumbnail,
+                        contentDescription = challenge.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                // Tag overlay
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.White)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    AppText(
+                        text = "7 Days Left",
+                        style = AppTextStyle.Caption,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary
+                    )
+                }
+            }
+
+            // Content
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                AppText(
+                    text = challenge.title,
+                    style = AppTextStyle.Body,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                AppText(
+                    text = challenge.description,
+                    style = AppTextStyle.Caption,
+                    color = colors.textSecondary
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Points
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.accent.copy(alpha = 0.2f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = colors.accent,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            AppText(
+                                text = challenge.reward,
+                                style = AppTextStyle.Caption,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.accent
+                            )
+                        }
+                    }
+
+                    // Plus button
+                    IconButton(
+                        onClick = onJoin,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(colors.textPrimary)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Join",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Special Event Card
+@Composable
+private fun SpecialEventCard(
+    challenge: Challenge,
+    modifier: Modifier = Modifier,
+    onView: () -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF424242),
+                        Color(0xFF616161)
+                    )
+                )
+            )
+            .clickable(onClick = onView)
+            .padding(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Limited Time tag
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.White.copy(alpha = 0.2f))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                AppText(
+                    text = "Limited Time",
+                    style = AppTextStyle.Caption,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+
+            Column {
+                // Title
+                AppText(
+                    text = challenge.title,
+                    style = AppTextStyle.SubTitle,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Description
+                AppText(
+                    text = challenge.description,
+                    style = AppTextStyle.Body,
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Points and View button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = null,
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        AppText(
+                            text = challenge.reward,
+                            style = AppTextStyle.Label,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    // View button
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF757575))
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        AppText(
+                            text = "View",
+                            style = AppTextStyle.Label,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Quick Join Card
+@Composable
+private fun QuickJoinCard(
+    challenge: Challenge,
+    modifier: Modifier = Modifier,
+    onJoin: () -> Unit
+) {
+    val colors = LocalAppColors.current ?: return
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(colors.card)
+            .border(1.dp, colors.border.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icon and content
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Icon
+                val iconColor = if (challenge.id == 5) Color(0xFF2196F3) else Color(0xFF9C27B0)
+                val iconBg = if (challenge.id == 5) Color(0xFFE3F2FD) else Color(0xFFF3E5F5)
+                val icon = if (challenge.id == 5) Icons.Default.WaterDrop else Icons.Outlined.DarkMode
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(iconBg),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                // Title and description
+                Column {
+                    AppText(
+                        text = challenge.title,
+                        style = AppTextStyle.Body,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    AppText(
+                        text = challenge.description,
+                        style = AppTextStyle.Caption,
+                        color = colors.textSecondary
+                    )
+                }
+            }
+
+            // Points and Join button
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AppText(
+                    text = "+${challenge.reward}",
+                    style = AppTextStyle.Label,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.accent
+                )
+
+                OutlinedButton(
+                    onClick = onJoin,
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    AppText(
+                        text = "Join",
+                        style = AppTextStyle.Label,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.textPrimary
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -319,40 +896,40 @@ private fun JoinedChallengesTab(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        when {
-            uiState.isLoading -> {
+            when {
+                uiState.isLoading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    AppLoader(color = colors.success)
-                }
-            }
-
-            uiState.error != null -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    AppText(
-                        text = uiState.error ?: "Unable to load challenges.",
-                        style = AppTextStyle.Body,
-                        color = colors.error
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = viewModel::refresh) {
-                        AppText(
-                            text = "Retry", style = AppTextStyle.Label, color = colors.success
-                        )
+                        AppLoader(color = colors.success)
                     }
                 }
-            }
+
+                uiState.error != null -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        .weight(1f)
+                                .padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                        ) {
+                            AppText(
+                                text = uiState.error ?: "Unable to load challenges.",
+                                style = AppTextStyle.Body,
+                                color = colors.error
+                            )
+                    Spacer(modifier = Modifier.height(8.dp))
+                            TextButton(onClick = viewModel::refresh) {
+                                AppText(
+                            text = "Retry", style = AppTextStyle.Label, color = colors.success
+                                )
+                            }
+                        }
+                    }
 
             joinedChallenges.isEmpty() -> {
                 Column(
@@ -370,7 +947,7 @@ private fun JoinedChallengesTab(
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    AppText(
+                        AppText(
                         text = "No joined challenges",
                         style = AppTextStyle.SubTitle,
                         fontWeight = FontWeight.Bold,
@@ -382,11 +959,11 @@ private fun JoinedChallengesTab(
                         style = AppTextStyle.Body,
                         color = colors.textSecondary,
                         textAlign = TextAlign.Center
-                    )
+                        )
+                    }
                 }
-            }
 
-            else -> {
+                else -> {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     modifier = Modifier
@@ -441,9 +1018,9 @@ private fun Header(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -453,7 +1030,7 @@ private fun Header(
                         .size(40.dp)
                         .background(
                             color = colors.success.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = MaterialTheme.shapes.medium
                         ), contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -463,26 +1040,26 @@ private fun Header(
                         modifier = Modifier.size(24.dp)
                     )
                 }
-                Column {
-                    AppText(
-                        text = "Challenges",
-                        style = AppTextStyle.Title,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
-                    )
-                    AppText(
-                        text = "Join a challenge to improve your ranking",
-                        style = AppTextStyle.Label,
-                        color = colors.textSecondary
-                    )
+        Column {
+            AppText(
+                text = "Challenges",
+                style = AppTextStyle.Title,
+                fontWeight = FontWeight.Bold,
+                color = colors.textPrimary
+            )
+            AppText(
+                text = "Join a challenge to improve your ranking",
+                style = AppTextStyle.Label,
+                color = colors.textSecondary
+            )
                 }
-            }
-            IconButton(onClick = onRefresh) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Refresh",
-                    tint = colors.success
-                )
+        }
+        IconButton(onClick = onRefresh) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = "Refresh",
+                tint = colors.success
+            )
             }
         }
 
@@ -520,7 +1097,7 @@ private fun SegmentedControl(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
+            .clip(MaterialTheme.shapes.extraLarge)
             .background(backgroundColor)
             .padding(4.dp)
     ) {
@@ -532,7 +1109,7 @@ private fun SegmentedControl(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(MaterialTheme.shapes.large)
                         .background(
                             if (isSelected) {
                                 colors.card // White/light background for selected
@@ -543,7 +1120,7 @@ private fun SegmentedControl(
                         .clickable { onItemSelected(index) }
                         .padding(vertical = 12.dp),
                     contentAlignment = Alignment.Center) {
-                    AppText(
+    AppText(
                         text = item,
                         style = AppTextStyle.Body,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
@@ -573,7 +1150,7 @@ private fun ChallengeImage(
     val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(colors.border.copy(alpha = 0.1f)), contentAlignment = Alignment.Center
     ) {
         AsyncImage(
@@ -607,6 +1184,7 @@ private fun CurrentChallengeCard(
                 onJoin = onJoin
             )
         }
+
         useOverlayDesign -> {
             CurrentChallengeCardOverlay(
                 challenge = challenge,
@@ -617,6 +1195,7 @@ private fun CurrentChallengeCard(
                 onJoin = onJoin
             )
         }
+
         else -> {
             CurrentChallengeCardGradient(
                 challenge = challenge,
@@ -656,7 +1235,7 @@ private fun CurrentChallengeCardHorizontal(
     // Interactive states
     val cardInteractionSource = remember { MutableInteractionSource() }
     val isCardPressed by cardInteractionSource.collectIsPressedAsState()
-    
+
     val cardScale by animateFloatAsState(
         targetValue = if (isCardPressed) 0.98f else 1f,
         animationSpec = tween(durationMillis = 200),
@@ -664,16 +1243,16 @@ private fun CurrentChallengeCardHorizontal(
     )
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
             .height(cardHeight)
             .scale(cardScale)
             .shadow(
                 elevation = 2.dp,
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 spotColor = Color.Black.copy(alpha = 0.1f)
             )
-            .clip(RoundedCornerShape(16.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(Color(0xFFF5F5F5)) // Light grey background
     ) {
         Row(
@@ -687,10 +1266,10 @@ private fun CurrentChallengeCardHorizontal(
                 modifier = Modifier
                     .width(cardHeight - 24.dp) // Square thumbnail
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(MaterialTheme.shapes.medium)
                     .background(colors.border.copy(alpha = 0.1f))
-            ) {
-                if (challenge.thumbnail != null) {
+        ) {
+            if (challenge.thumbnail != null) {
                     AsyncImage(
                         model = challenge.thumbnail,
                         contentDescription = challenge.title,
@@ -699,7 +1278,7 @@ private fun CurrentChallengeCardHorizontal(
                     )
                 } else {
                     Box(
-                        modifier = Modifier
+                    modifier = Modifier
                             .fillMaxSize()
                             .background(colors.border.copy(alpha = 0.1f))
                     )
@@ -718,18 +1297,18 @@ private fun CurrentChallengeCardHorizontal(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Title
-                    AppText(
-                        text = challenge.title,
-                        style = AppTextStyle.SubTitle,
-                        fontWeight = FontWeight.Bold,
+            AppText(
+                text = challenge.title,
+                style = AppTextStyle.SubTitle,
+                fontWeight = FontWeight.Bold,
                         color = Color.Black,
                         maxLines = 2,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
+            )
 
                     // Description
-                    AppText(
-                        text = challenge.description,
+            AppText(
+                text = challenge.description,
                         style = AppTextStyle.Body,
                         color = Color.Black,
                         maxLines = 2,
@@ -740,7 +1319,7 @@ private fun CurrentChallengeCardHorizontal(
                     if (challenge.reward.isNotEmpty()) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(MaterialTheme.shapes.large)
                                 .background(Color(0xFFE8F5E9)) // Light green background
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
@@ -756,7 +1335,7 @@ private fun CurrentChallengeCardHorizontal(
                                 )
                                 AppText(
                                     text = challenge.reward,
-                                    style = AppTextStyle.Label,
+                style = AppTextStyle.Label,
                                     fontWeight = FontWeight.Medium,
                                     color = Color(0xFF2E7D32) // Dark green text
                                 )
@@ -802,7 +1381,7 @@ private fun CurrentChallengeCardHorizontal(
                     if (!hasJoined) {
                         val buttonInteractionSource = remember { MutableInteractionSource() }
                         val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                        
+
                         val buttonScale by animateFloatAsState(
                             targetValue = if (isButtonPressed) 0.95f else 1f,
                             animationSpec = tween(durationMillis = 150),
@@ -814,7 +1393,7 @@ private fun CurrentChallengeCardHorizontal(
                                 .weight(1f)
                                 .height(40.dp)
                                 .scale(buttonScale)
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(MaterialTheme.shapes.medium)
                                 .background(buttonGradient)
                                 .clickable(
                                     interactionSource = buttonInteractionSource,
@@ -825,16 +1404,16 @@ private fun CurrentChallengeCardHorizontal(
                         ) {
                             AppText(
                                 text = "Join Challenge",
-                                style = AppTextStyle.Label,
+                            style = AppTextStyle.Label,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
-                            )
+                        )
                         }
                     } else {
                         // Joined state - show gradient button
                         val buttonInteractionSource = remember { MutableInteractionSource() }
                         val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                        
+
                         val buttonScale by animateFloatAsState(
                             targetValue = if (isButtonPressed) 0.95f else 1f,
                             animationSpec = tween(durationMillis = 150),
@@ -846,7 +1425,7 @@ private fun CurrentChallengeCardHorizontal(
                                 .weight(1f)
                                 .height(40.dp)
                                 .scale(buttonScale)
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(MaterialTheme.shapes.medium)
                                 .background(buttonGradient)
                                 .clickable(
                                     interactionSource = buttonInteractionSource,
@@ -866,7 +1445,7 @@ private fun CurrentChallengeCardHorizontal(
                     // Details Button (White with border)
                     val detailsButtonInteractionSource = remember { MutableInteractionSource() }
                     val isDetailsButtonPressed by detailsButtonInteractionSource.collectIsPressedAsState()
-                    
+
                     val detailsButtonScale by animateFloatAsState(
                         targetValue = if (isDetailsButtonPressed) 0.95f else 1f,
                         animationSpec = tween(durationMillis = 150),
@@ -878,9 +1457,9 @@ private fun CurrentChallengeCardHorizontal(
                             .width(100.dp)
                             .height(40.dp)
                             .scale(detailsButtonScale)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
                             .background(Color.White)
-                            .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
+                            .border(1.dp, Color(0xFFE0E0E0), MaterialTheme.shapes.medium)
                             .clickable(
                                 interactionSource = detailsButtonInteractionSource,
                                 onClick = onViewDetails
@@ -891,15 +1470,15 @@ private fun CurrentChallengeCardHorizontal(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
+                        Icon(
                                 imageVector = Icons.Default.Visibility,
-                                contentDescription = null,
+                            contentDescription = null,
                                 tint = Color.Black,
                                 modifier = Modifier.size(16.dp)
-                            )
-                            AppText(
+                        )
+                        AppText(
                                 text = "Details",
-                                style = AppTextStyle.Label,
+                            style = AppTextStyle.Label,
                                 fontWeight = FontWeight.Medium,
                                 color = Color.Black
                             )
@@ -913,11 +1492,11 @@ private fun CurrentChallengeCardHorizontal(
 
 @Composable
 private fun CurrentChallengeCardOverlay(
-    challenge: Challenge, 
+    challenge: Challenge,
     participantCount: Int = 0,
     cardHeight: androidx.compose.ui.unit.Dp = 420.dp,
-    isJoining: Boolean = false, 
-    onViewDetails: () -> Unit, 
+    isJoining: Boolean = false,
+    onViewDetails: () -> Unit,
     onJoin: () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return
@@ -938,14 +1517,14 @@ private fun CurrentChallengeCardOverlay(
     // Interactive states
     val cardInteractionSource = remember { MutableInteractionSource() }
     val isCardPressed by cardInteractionSource.collectIsPressedAsState()
-    
+
     // Animated scale for card hover/press
     val cardScale by animateFloatAsState(
         targetValue = if (isCardPressed) 0.98f else 1f,
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
         label = "cardScale"
     )
-    
+
     // Animated elevation for card press
     val cardElevation by animateFloatAsState(
         targetValue = if (isCardPressed) 8f else 4f,
@@ -960,10 +1539,10 @@ private fun CurrentChallengeCardOverlay(
             .scale(cardScale)
             .shadow(
                 elevation = cardElevation.dp,
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 spotColor = Color.Black.copy(alpha = 0.3f)
             )
-            .clip(RoundedCornerShape(16.dp))
+            .clip(MaterialTheme.shapes.medium)
             .clickable(
                 interactionSource = cardInteractionSource,
                 onClick = onViewDetails
@@ -980,15 +1559,15 @@ private fun CurrentChallengeCardOverlay(
                 )
             } else {
                 Box(
-            modifier = Modifier
+                    modifier = Modifier
                         .fillMaxSize()
                         .background(colors.border.copy(alpha = 0.1f))
                 )
             }
-            
+
             // Dark Gradient Overlay
             Box(
-                    modifier = Modifier
+                modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
@@ -1003,7 +1582,7 @@ private fun CurrentChallengeCardOverlay(
                     )
             )
         }
-        
+
         // Content
         Column(
             modifier = Modifier
@@ -1015,20 +1594,20 @@ private fun CurrentChallengeCardOverlay(
             Box {
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(MaterialTheme.shapes.large)
                         .background(Color.White.copy(alpha = 0.2f))
-                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), MaterialTheme.shapes.large)
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     AppText(
                         text = if (hasJoined) "Joined" else "Active",
                         style = AppTextStyle.Caption,
-                        fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.SemiBold,
                         color = Color.White
-                    )
+                        )
+                    }
                 }
-            }
-            
+
             // Bottom Section - Title, Reward, Dates, Button
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -1043,29 +1622,29 @@ private fun CurrentChallengeCardOverlay(
                     maxLines = 2,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
-                
+
                 // Reward
                 if (challenge.reward.isNotEmpty()) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
+                    Icon(
                             imageVector = Icons.Default.WorkspacePremium,
-                            contentDescription = null,
+                        contentDescription = null,
                             tint = Color(0xFFFFD700), // Amber/Gold
                             modifier = Modifier.size(16.dp)
-                        )
-                        AppText(
+                    )
+                    AppText(
                             text = challenge.reward,
-                            style = AppTextStyle.Label,
+                        style = AppTextStyle.Label,
                             color = Color.White.copy(alpha = 0.9f),
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     }
                 }
-                
+
                 // Dates
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1085,26 +1664,26 @@ private fun CurrentChallengeCardOverlay(
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
-                
+
                 // Button
                 if (!hasJoined) {
                     val buttonInteractionSource = remember { MutableInteractionSource() }
                     val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                    
+
                     val buttonScale by animateFloatAsState(
                         targetValue = if (isButtonPressed) 0.98f else 1f,
                         animationSpec = tween(durationMillis = 150),
                         label = "buttonScale"
                     )
-                    
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
                             .scale(buttonScale)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
                             .background(buttonGradient)
-                            //.shadow(4.dp, RoundedCornerShape(12.dp))
+                            //.shadow(4.dp, MaterialTheme.shapes.medium)
                             .clickable(
                                 interactionSource = buttonInteractionSource,
                                 enabled = !isJoining,
@@ -1134,21 +1713,21 @@ private fun CurrentChallengeCardOverlay(
                     // Joined state - show view details button
                     val buttonInteractionSource = remember { MutableInteractionSource() }
                     val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                    
+
                     val buttonScale by animateFloatAsState(
                         targetValue = if (isButtonPressed) 0.98f else 1f,
                         animationSpec = tween(durationMillis = 150),
                         label = "buttonScale"
                     )
-                    
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
                             .scale(buttonScale)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
                             .background(colors.success)
-                            //.shadow(4.dp, RoundedCornerShape(12.dp))
+                            //.shadow(4.dp, MaterialTheme.shapes.medium)
                             .clickable(
                                 interactionSource = buttonInteractionSource,
                                 onClick = onViewDetails
@@ -1165,27 +1744,27 @@ private fun CurrentChallengeCardOverlay(
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
-            AppText(
+                            AppText(
                                 text = "View Details",
-                style = AppTextStyle.Label,
+                                style = AppTextStyle.Label,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
-                            )
-                        }
-                    }
+                    )
                 }
             }
         }
     }
 }
+    }
+}
 
 @Composable
 private fun CurrentChallengeCardGradient(
-    challenge: Challenge, 
+    challenge: Challenge,
     participantCount: Int = 0,
     cardHeight: androidx.compose.ui.unit.Dp = 420.dp,
-    isJoining: Boolean = false, 
-    onViewDetails: () -> Unit, 
+    isJoining: Boolean = false,
+    onViewDetails: () -> Unit,
     onJoin: () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return
@@ -1198,14 +1777,14 @@ private fun CurrentChallengeCardGradient(
     // Interactive states
     val cardInteractionSource = remember { MutableInteractionSource() }
     val isCardPressed by cardInteractionSource.collectIsPressedAsState()
-    
+
     // Animated scale for card hover/press
     val cardScale by animateFloatAsState(
         targetValue = if (isCardPressed) 1.02f else 1f,
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
         label = "cardScale"
     )
-    
+
     // Animated elevation for card press
     val cardElevation by animateFloatAsState(
         targetValue = if (isCardPressed) 12f else 8f,
@@ -1220,14 +1799,14 @@ private fun CurrentChallengeCardGradient(
             colors.card.copy(alpha = 0.95f)
         )
     )
-    
+
     val rewardGradient = Brush.horizontalGradient(
         colors = listOf(
             Color(0xFFFFD700), // Yellow
             Color(0xFFFF6B35)  // Orange
         )
     )
-    
+
     val buttonGradient = Brush.horizontalGradient(
         colors = listOf(
             colors.tint,
@@ -1236,18 +1815,18 @@ private fun CurrentChallengeCardGradient(
     )
 
     Box(
-                        modifier = Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .height(cardHeight)
             .scale(cardScale)
             .shadow(
                 elevation = cardElevation.dp,
-                shape = RoundedCornerShape(24.dp),
+                shape = MaterialTheme.shapes.large,
                 spotColor = colors.tint.copy(alpha = 0.2f)
             )
-            .clip(RoundedCornerShape(24.dp))
+            .clip(MaterialTheme.shapes.large)
             .background(cardGradient)
-            .border(1.dp, colors.border.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
+            .border(1.dp, colors.border.copy(alpha = 0.3f), MaterialTheme.shapes.large)
             .clickable(
                 interactionSource = cardInteractionSource,
                 onClick = onViewDetails
@@ -1270,7 +1849,7 @@ private fun CurrentChallengeCardGradient(
                     animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
                     label = "imageScale"
                 )
-                
+
                 if (challenge.thumbnail != null) {
                     AsyncImage(
                         model = challenge.thumbnail,
@@ -1287,7 +1866,7 @@ private fun CurrentChallengeCardGradient(
                             .background(colors.border.copy(alpha = 0.1f))
                     )
                 }
-                
+
                 // Gradient Overlay
                 Box(
                     modifier = Modifier
@@ -1304,7 +1883,7 @@ private fun CurrentChallengeCardGradient(
                             )
                         )
                 )
-                
+
                 // Joined Badge (top-left) - Show when joined
                 if (hasJoined) {
                     Box(
@@ -1314,7 +1893,7 @@ private fun CurrentChallengeCardGradient(
                     ) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(MaterialTheme.shapes.large)
                                 .background(
                                     Brush.horizontalGradient(
                                         colors = listOf(
@@ -1323,20 +1902,20 @@ private fun CurrentChallengeCardGradient(
                                         )
                                     )
                                 )
-                                .shadow(4.dp, RoundedCornerShape(20.dp))
+                                .shadow(4.dp, MaterialTheme.shapes.large)
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
                             Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
                                     imageVector = Icons.Default.Check,
-                            contentDescription = null,
+                                    contentDescription = null,
                                     tint = Color.White,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        AppText(
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                AppText(
                                     text = "Joined",
                                     style = AppTextStyle.Caption,
                                     fontWeight = FontWeight.Bold,
@@ -1354,21 +1933,21 @@ private fun CurrentChallengeCardGradient(
                     ) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(MaterialTheme.shapes.large)
                                 .background(Color(0xFFFFF3CD).copy(alpha = 0.95f))
-                                .border(1.dp, Color(0xFFFFE082), RoundedCornerShape(20.dp))
+                                .border(1.dp, Color(0xFFFFE082), MaterialTheme.shapes.large)
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
+        ) {
                             AppText(
                                 text = "Medium",
-                            style = AppTextStyle.Caption,
-                            fontWeight = FontWeight.SemiBold,
+                                style = AppTextStyle.Caption,
+                                fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFFB45309)
                             )
                         }
                     }
                 }
-                
+
                 // Participants Count (top-right) - Show when count > 0
                 if (participantCount > 0) {
                     Box(
@@ -1378,7 +1957,7 @@ private fun CurrentChallengeCardGradient(
                     ) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(MaterialTheme.shapes.large)
                                 .background(Color.White.copy(alpha = 0.9f))
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
@@ -1401,19 +1980,19 @@ private fun CurrentChallengeCardGradient(
                         }
                     }
                 }
-                
+
                 // Reward Badge (bottom-left) - Floating
                 if (challenge.reward.isNotEmpty()) {
                     Box(
-                modifier = Modifier
+                        modifier = Modifier
                             .padding(16.dp)
                             .align(Alignment.BottomStart)
                     ) {
-                Box(
-                    modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(MaterialTheme.shapes.large)
                                 .background(rewardGradient)
-                                .shadow(4.dp, RoundedCornerShape(20.dp))
+                                .shadow(4.dp, MaterialTheme.shapes.large)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Row(
@@ -1437,7 +2016,7 @@ private fun CurrentChallengeCardGradient(
                     }
                 }
             }
-            
+
             // Content Section - Use weight to take remaining space
             Column(
                 modifier = Modifier
@@ -1450,50 +2029,50 @@ private fun CurrentChallengeCardGradient(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Title
-                    AppText(
-                        text = challenge.title,
-                        style = AppTextStyle.SubTitle,
-                        fontWeight = FontWeight.Bold,
+            AppText(
+                text = challenge.title,
+                style = AppTextStyle.SubTitle,
+                fontWeight = FontWeight.Bold,
                         color = colors.textPrimary,
                         maxLines = 2,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                    
+            )
+
                     // Description
-                    AppText(
-                        text = challenge.description,
+            AppText(
+                text = challenge.description,
                         style = AppTextStyle.Body,
                         color = colors.textSecondary,
                         maxLines = 2,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
-                    
+
                     // Date & Duration Info
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(top = 4.dp)
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(MaterialTheme.shapes.small)
                                 .background(colors.tint.copy(alpha = 0.1f)),
                             contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
+            ) {
+                Icon(
                                 imageVector = Icons.Default.CalendarToday,
-                                contentDescription = null,
+                    contentDescription = null,
                                 tint = colors.tint,
                                 modifier = Modifier.size(16.dp)
-                            )
+                )
                         }
                         Column {
-                            AppText(
+                AppText(
                                 text = "Challenge Period",
-                                style = AppTextStyle.Caption,
-                                color = colors.textMuted
-                            )
+                    style = AppTextStyle.Caption,
+                    color = colors.textMuted
+                )
                             AppText(
                                 text = "$startDate - $endDate",
                                 style = AppTextStyle.Label,
@@ -1504,19 +2083,19 @@ private fun CurrentChallengeCardGradient(
                         }
                     }
                 }
-                
+
                 // Join Button or Joined Status
                 if (hasJoined) {
                     // Show "View Details" button when joined
                     val buttonInteractionSource = remember { MutableInteractionSource() }
                     val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                    
+
                     val buttonScale by animateFloatAsState(
                         targetValue = if (isButtonPressed) 0.98f else 1f,
                         animationSpec = tween(durationMillis = 150),
                         label = "buttonScale"
                     )
-                    
+
 //                    Box(
 //                        modifier = Modifier
 //                            .fillMaxWidth()
@@ -1566,21 +2145,21 @@ private fun CurrentChallengeCardGradient(
                     // Join Button
                     val buttonInteractionSource = remember { MutableInteractionSource() }
                     val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
-                    
+
                     val buttonScale by animateFloatAsState(
                         targetValue = if (isButtonPressed) 0.98f else 1f,
                         animationSpec = tween(durationMillis = 150),
                         label = "buttonScale"
                     )
-                    
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
                             .scale(buttonScale)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
                             .background(buttonGradient)
-                            //.shadow(4.dp, RoundedCornerShape(12.dp))
+                            //.shadow(4.dp, MaterialTheme.shapes.medium)
                             .clickable(
                                 interactionSource = buttonInteractionSource,
                                 enabled = !isJoining,
@@ -1591,10 +2170,10 @@ private fun CurrentChallengeCardGradient(
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            AppText(
+            ) {
+                AppText(
                                 text = "Join Challenge Now",
-                                style = AppTextStyle.Label,
+                    style = AppTextStyle.Label,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
@@ -1602,21 +2181,21 @@ private fun CurrentChallengeCardGradient(
                                 imageVector = Icons.Default.KeyboardArrowRight,
                                 contentDescription = null,
                                 tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                                modifier = Modifier.size(20.dp)
+                )
             }
         }
-            }
+    }
+}
         }
-        
+
         // Decorative Element (top-right corner)
         val decorativeScale by animateFloatAsState(
             targetValue = if (isCardPressed) 1.5f else 1f,
             animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
             label = "decorativeScale"
         )
-        
+
         Box(
             modifier = Modifier
                 .size(128.dp)
@@ -1677,7 +2256,6 @@ private fun formatDate(isoDateString: String): String {
 }
 
 
-
 private val previewCurrentChallenge = Challenge(
     id = 1,
     title = "Reduce Screen Time Challenge",
@@ -1701,11 +2279,12 @@ private val previewJoinedChallenges = listOf(
     )
 )
 
-private val previewJoinedChallengesUiState = com.app.screentime.challenge.viewmodel.ChallengesUiState(
-    isLoading = false,
-    error = null,
-    challenges = previewJoinedChallenges,
-    joiningChallengeIds = emptySet()
+private val previewJoinedChallengesUiState =
+    com.app.screentime.challenge.viewmodel.ChallengesUiState(
+        isLoading = false,
+        error = null,
+        challenges = previewJoinedChallenges,
+        joiningChallengeIds = emptySet()
 )
 
 @Preview(showBackground = true)

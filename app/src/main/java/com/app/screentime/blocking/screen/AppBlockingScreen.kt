@@ -14,6 +14,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -406,7 +407,7 @@ private fun BlockingRuleCard(
         colors = CardDefaults.cardColors(
             containerColor = colors.card
         ),
-        shape = RoundedCornerShape(8.dp)
+        shape = MaterialTheme.shapes.small
     ) {
         Row(
             modifier = Modifier
@@ -485,7 +486,7 @@ private fun AddBlockingRuleBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = colors.background,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
             modifier = Modifier
@@ -555,7 +556,7 @@ private fun AddBlockingRuleBottomSheet(
                         alpha = 0.2f
                     ) else colors.card
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = MaterialTheme.shapes.small
             ) {
                 Row(
                     modifier = Modifier
@@ -600,7 +601,7 @@ private fun AddBlockingRuleBottomSheet(
                         alpha = 0.2f
                     ) else colors.card
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = MaterialTheme.shapes.small
             ) {
                 Column(
                     modifier = Modifier
@@ -693,7 +694,7 @@ private fun AddBlockingRuleBottomSheet(
                         alpha = 0.2f
                     ) else colors.card
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = MaterialTheme.shapes.small
             ) {
                 Column(
                     modifier = Modifier
@@ -793,7 +794,7 @@ private fun AddBlockingRuleBottomSheet(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colors.success
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = MaterialTheme.shapes.small
             ) {
                 AppText(
                     text = "Add Blocking Rule",
@@ -875,7 +876,7 @@ private fun AllAppsTab(
                         colors = CardDefaults.cardColors(
                             containerColor = colors.card
                         ),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Row(
                             modifier = Modifier
@@ -996,7 +997,7 @@ private fun PermissionCard(
         colors = CardDefaults.cardColors(
             containerColor = if (isGranted) colors.success.copy(alpha = 0.1f) else colors.card
         ),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         onClick = onClick
     ) {
         Row(

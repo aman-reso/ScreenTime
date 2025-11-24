@@ -23,8 +23,8 @@ class LocalAppUsageRepository(
     private val networkUsageHelper: NetworkUsageHelper
 ) {
     companion object {
-        private const val REMOVED_PACKAGE: String = "com.android.removed"
-        private const val TETHERING_PACKAGE: String = "com.android.tethering"
+        const val REMOVED_PACKAGE: String = "com.android.removed"
+        const val TETHERING_PACKAGE: String = "com.android.tethering"
     }
 
     private val packageManager = context.packageManager

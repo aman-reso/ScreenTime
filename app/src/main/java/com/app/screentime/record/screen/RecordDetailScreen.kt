@@ -98,9 +98,10 @@ fun RecordDetailScreen(
             Box(modifier = Modifier.width(200.dp)) {
                 DateSpinner(
                     onDateSelected = { selectedDate ->
-                        // Format date for display (e.g., "23 Jan 2025")
-                        // selectedDate is in "yyyy-MM-dd" format
-                        val localDate = org.joda.time.LocalDate.parse(selectedDate, org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd"))
+                        val localDate = org.joda.time.LocalDate.parse(
+                            selectedDate,
+                            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd")
+                        )
                         selectedDateDisplay = localDate.toString("d MMM yyyy")
                         viewModel.getDailyUsageStats(targetUserId = username, date = selectedDate)
                     }

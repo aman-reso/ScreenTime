@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,10 +46,17 @@ import com.app.screentime.ui.theme.getThemeColors
  * Replaces TabRow with a modern, pill-style design
  */
 
-private val ExpressiveSegmentBackground = Color(0xFFDDE7E2)  // eye-friendly pastel mint
-private val ExpressiveSelectedBackground = Color(0xFF6BC8B5) // soft teal
-private val ExpressiveSelectedText = Color(0xFF0C3F38)       // deep teal
-private val ExpressiveUnselectedText = Color(0xFF5F6F69)     // muted green-gray
+// Light Mode colors
+private val LightModeBackground = Color(0xFFE0E7FF)  // Soft Indigo
+private val LightModeSelectedBackground = Color(0xFF4338CA) // Medium Indigo
+private val LightModeSelectedText = Color.White
+private val LightModeUnselectedText = Color(0xFF4338CA) // Medium Indigo
+
+// Dark Mode colors
+private val DarkModeBackground = Color(0xFF4338CA)  // Medium Indigo
+private val DarkModeSelectedBackground = Color(0xFF6366F1) // Lighter Indigo for selected
+private val DarkModeSelectedText = Color.White
+private val DarkModeUnselectedText = Color(0xFFC7D2FE) // Light Indigo for unselected
 
 @Composable
 fun SegmentedControl(
@@ -58,11 +65,19 @@ fun SegmentedControl(
     onItemSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDarkMode = LocalThemeMode.current
+    
+    // Select colors based on theme mode
+    val segmentBackground = if (isDarkMode) DarkModeBackground else LightModeBackground
+    val selectedBackground = if (isDarkMode) DarkModeSelectedBackground else LightModeSelectedBackground
+    val selectedTextColor = if (isDarkMode) DarkModeSelectedText else LightModeSelectedText
+    val unselectedTextColor = if (isDarkMode) DarkModeUnselectedText else LightModeUnselectedText
+    
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(ExpressiveSegmentBackground)
+            .clip(MaterialTheme.shapes.medium)
+            .background(segmentBackground)
             .padding(4.dp)
     ) {
         Row(
@@ -75,10 +90,10 @@ fun SegmentedControl(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(
-                            if (isSelected) ExpressiveSelectedBackground
-                            else ExpressiveSegmentBackground
+                            if (isSelected) selectedBackground
+                            else Color.Transparent
                         )
                         .clickable { onItemSelected(index) }
                         .padding(vertical = 12.dp),
@@ -87,7 +102,7 @@ fun SegmentedControl(
                     AppText(
                         text = item,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) ExpressiveSelectedText else ExpressiveUnselectedText
+                        color = if (isSelected) selectedTextColor else unselectedTextColor
                     )
                 }
             }

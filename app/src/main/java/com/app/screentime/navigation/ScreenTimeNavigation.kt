@@ -2,42 +2,40 @@ package com.app.screentime.navigation
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation3.ui.NavDisplay
 import com.app.screentime.appdetail.screen.SingleAppUsageDetailScreen
-import com.app.screentime.challenge.screen.ChallengeDetailScreen
-import com.app.screentime.challenge.screen.ChallengeListScreen
-import com.app.screentime.landing.screen.LandingScreen
-import com.app.screentime.record.screen.RecordDetailScreen
-import com.app.screentime.search.screen.SearchScreen
-import com.app.screentime.profile.screen.ProfileScreen
-import com.app.screentime.statistics.screen.StatisticsScreen
-import com.app.screentime.focus.screen.FocusModeScreen
 import com.app.screentime.blocking.screen.AppBlockingScreen
 import com.app.screentime.blocking.screen.BlockedLinksScreen
+import com.app.screentime.challenge.screen.ChallengeDetailScreen
+import com.app.screentime.challenge.screen.ChallengeListScreen
+import com.app.screentime.focus.screen.FocusModeScreen
+import com.app.screentime.landing.screen.LandingScreen
 import com.app.screentime.leaderboard.screen.LeaderboardScreen
+import com.app.screentime.profile.screen.ProfileScreen
+import com.app.screentime.record.screen.RecordDetailScreen
+import com.app.screentime.search.screen.SearchScreen
+import com.app.screentime.statistics.screen.StatisticsScreen
 import com.app.screentime.ui.atom.AppPermissionCard
 import com.app.screentime.ui.bottomnavigation.AppBottomNavigation
 import com.app.screentime.ui.bottomnavigation.NavigationItem
@@ -91,14 +89,12 @@ fun ScreenTimeNavigation(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Landing.route
-
     val navigateToItem: (String) -> Unit = { route ->
-        navController.navigate(route) {
-            popUpTo(navController.graph.startDestinationId) {
-                saveState = true
+        if (route != currentRoute) {
+            navController.navigate(route) {
+                popUpTo(navController.graph.findStartDestination().id)
+                launchSingleTop = true
             }
-            launchSingleTop = true
-            restoreState = true
         }
     }
     Scaffold(
@@ -162,7 +158,6 @@ fun ScreenTimeNavigation(
                     modifier = Modifier
                         .background(appColors.background)
                         .padding(bottom = paddingValues.calculateBottomPadding()),
-                    navController = navController
                 )
             }
 
@@ -206,7 +201,8 @@ fun ScreenTimeNavigation(
             }
 
             composable(Screen.ChallengeDetail.route) { backStackEntry ->
-                val challengeId = backStackEntry.arguments?.getString("challengeId") ?: return@composable
+                val challengeId =
+                    backStackEntry.arguments?.getString("challengeId") ?: return@composable
                 ChallengeDetailScreen(
                     challengeId = challengeId,
                     modifier = Modifier

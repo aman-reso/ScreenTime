@@ -13,7 +13,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
@@ -127,7 +126,7 @@ fun FocusModeScreen(
                                         colors.success.copy(alpha = 0.2f) // Light success
                                     )
                                 ),
-                                shape = RoundedCornerShape(24.dp)
+                                shape = MaterialTheme.shapes.large
                             )
                     ) {
                         Column(
@@ -184,7 +183,7 @@ fun FocusModeScreen(
                                         .size(56.dp)
                                         .background(
                                             color = colors.card,
-                                            shape = RoundedCornerShape(12.dp)
+                                            shape = MaterialTheme.shapes.medium
                                         )
                                 ) {
                                     Icon(
@@ -226,7 +225,7 @@ fun FocusModeScreen(
                                         .size(64.dp)
                                         .background(
                                             color = if (uiState.isRunning) colors.error else colors.success,
-                                            shape = RoundedCornerShape(16.dp)
+                                            shape = MaterialTheme.shapes.medium
                                         )
                                 ) {
                                     Icon(
@@ -252,7 +251,7 @@ fun FocusModeScreen(
                                         .size(56.dp)
                                         .background(
                                             color = colors.card,
-                                            shape = RoundedCornerShape(12.dp)
+                                            shape = MaterialTheme.shapes.medium
                                         )
                                 ) {
                                     Icon(
@@ -287,7 +286,7 @@ fun FocusModeScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
                             containerColor = colors.card.copy(alpha = 0.5f)
                         )
@@ -395,7 +394,7 @@ fun FocusModeScreen(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colors.success
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = MaterialTheme.shapes.medium
                     ) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
@@ -421,7 +420,7 @@ fun FocusModeScreen(
                 // Info Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(
                         containerColor = colors.card.copy(alpha = 0.5f)
                     )
@@ -472,7 +471,7 @@ fun FocusModeScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
                             containerColor = colors.card.copy(alpha = 0.5f)
                         )
@@ -508,7 +507,7 @@ private fun FocusHistoryItem(session: com.app.screentime.focus.viewmodel.FocusSe
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = colors.card
         )

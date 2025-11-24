@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,8 +24,10 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -59,9 +61,10 @@ fun GlassSearchBar(
     modifier: Modifier = Modifier,
     query: String = "",
     onQueryChange: (String) -> Unit = {},
-    placeholder: String = "Search Username",
+    placeholder: String = "Search by username...",
     enabled: Boolean = true,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    autoFocus: Boolean = false
 ) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -69,26 +72,27 @@ fun GlassSearchBar(
 
     // Track focused state for UI / debug if needed
     var isFocused by remember { mutableStateOf(false) }
+    
+    // Auto focus when autoFocus is true
+    androidx.compose.runtime.LaunchedEffect(autoFocus) {
+        if (autoFocus) {
+            focusRequester.requestFocus()
+        }
+    }
 
     val colors = LocalAppColors.current ?: return
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(52.dp)
-            .clip(RoundedCornerShape(15.dp))
-            .background(colors.card.copy(alpha = 0.0f))
+            .clip(MaterialTheme.shapes.extraLarge) // More rounded, pill-like shape
+            .background(colors.card)
             .border(
                 width = 1.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        colors.textPrimary,
-                        colors.textPrimary,
-                        colors.textPrimary.copy(alpha = 0.42f)
-                    )
-                ),
-                shape = RoundedCornerShape(15.dp)
+                color = colors.border.copy(alpha = 0.3f),
+                shape = MaterialTheme.shapes.extraLarge
             )
-            .padding(horizontal = 0.dp) // padding moved inside BasicTextField
+            .padding(horizontal = 0.dp)
     ) {
         BasicTextField(
             value = query,
@@ -106,13 +110,14 @@ fun GlassSearchBar(
                     keyboardController?.hide()
                 }
             ),
+            cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.success),
             modifier = Modifier
                 .matchParentSize()
                 .focusRequester(focusRequester)
                 .onFocusChanged { state ->
                     isFocused = state.isFocused
                 }
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 20.dp),
             textStyle = TextStyle(
                 color = colors.textPrimary,
                 fontSize = 16.sp
@@ -121,8 +126,17 @@ fun GlassSearchBar(
                 Row(
                     modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // @ symbol on the left
+                    AppText(
+                        text = "@",
+                        color = colors.textSecondary,
+                        style = AppTextStyle.Body,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                    
+                    // Text field in the middle
                     Box(
                         modifier = Modifier.weight(1f),
                         contentAlignment = Alignment.CenterStart
@@ -137,11 +151,12 @@ fun GlassSearchBar(
                         innerTextField()
                     }
 
+                    // Microphone icon on the right
                     Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = colors.textLight,
-                        modifier = Modifier.size(16.dp)
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "Voice search",
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -153,7 +168,7 @@ fun GlassSearchBar(
 @Composable
 fun GlassSearchBarPlaceholder(
     modifier: Modifier = Modifier,
-    placeholder: String = "Search Username",
+    placeholder: String = "Search by username...",
     onClick: () -> Unit = {}
 ) {
     val colors = LocalAppColors.current ?: return
@@ -161,32 +176,35 @@ fun GlassSearchBarPlaceholder(
         modifier = modifier
             .fillMaxWidth()
             .height(52.dp)
-            .clip(RoundedCornerShape(15.dp))
-            .background(colors.card.copy(alpha = 0.0f))
+            .clip(MaterialTheme.shapes.extraLarge)
+            .background(colors.card)
             .border(
                 width = 1.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        colors.textPrimary,
-                        colors.textPrimary,
-                        colors.textPrimary.copy(alpha = 0.42f)
-                    )
-                ),
-                shape = RoundedCornerShape(15.dp)
+                color = colors.border.copy(alpha = 0.3f),
+                shape = MaterialTheme.shapes.extraLarge
             )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
             ) {
                 onClick()
             }
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 20.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // @ symbol on the left
+            AppText(
+                text = "@",
+                color = colors.textSecondary,
+                style = AppTextStyle.Body,
+                modifier = Modifier.padding(start = 4.dp)
+            )
+
+            // Placeholder text
             AppText(
                 text = placeholder,
                 color = colors.textHint,
@@ -194,11 +212,12 @@ fun GlassSearchBarPlaceholder(
                 modifier = Modifier.weight(1f)
             )
 
+            // Microphone icon on the right
             Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search",
-                tint = colors.textLight,
-                modifier = Modifier.size(16.dp)
+                imageVector = Icons.Default.Mic,
+                contentDescription = "Voice search",
+                tint = colors.textSecondary,
+                modifier = Modifier.size(20.dp)
             )
         }
     }

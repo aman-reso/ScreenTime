@@ -4,8 +4,6 @@ import android.app.AppOpsManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,7 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -50,7 +48,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.screentime.permission.PermissionManager
@@ -60,10 +57,8 @@ import com.app.screentime.landing.component.GreetingUi
 import com.app.screentime.landing.component.UsageDonutComponent
 import com.app.screentime.landing.viewmodel.LandingViewModel
 import com.app.screentime.navigation.Screen
-import com.app.screentime.search.component.GlassSearchBar
 import com.app.screentime.search.component.GlassSearchBarPlaceholder
 import com.app.screentime.ui.atom.AppLoader
-import com.app.screentime.ui.atom.AppPermissionCard
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
 import com.app.screentime.ui.atom.AppUsageListUi
@@ -259,7 +254,6 @@ fun LandingScreen(
     // Show consent bottom sheet if not already displayed
     if (showConsentSheet) {
         ConsentBottomSheetContent(
-            username = uiState.username ?: "",
             onDismiss = {
                 // Mark as displayed even if dismissed (no matter success or failure)
                 viewModel.markConsentShown()

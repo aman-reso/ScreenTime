@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 
 // Light Theme 1: Classic Light (Soft white with gentle grays)
 object ClassicLightTheme {
-    val Background = Color(0xFFFAFAFA) // Soft off-white, easier on eyes
+    val Background = Color(0xFFFFFFFF) // Soft off-white, easier on eyes
     val Card = Color(0xFFFFFFFF) // Pure white for cards
     val TextPrimary = Color(0xFF1A1A1A) // Soft black, not pure black
     val TextSecondary = Color(0xFF4A4A4A) // Medium gray
@@ -26,7 +26,7 @@ object ClassicLightTheme {
 
 // Light Theme 2: Warm Light (Warm beige tones)
 object WarmLightTheme {
-    val Background = Color(0xFFF5F3F0) // Warm beige background
+    val Background = Color(0xFFFFFFFF) // Warm beige background
     val Card = Color(0xFFFFFBF7) // Warm white
     val TextPrimary = Color(0xFF2C2418) // Warm dark brown
     val TextSecondary = Color(0xFF4A3E2E) // Warm brown-gray
@@ -41,7 +41,7 @@ object WarmLightTheme {
 
 // Light Theme 3: Cool Light (Cool blue-gray tones)
 object CoolLightTheme {
-    val Background = Color(0xFFF0F2F5) // Cool light blue-gray
+    val Background = Color(0xFFFFFFFF) // Cool light blue-gray
     val Card = Color(0xFFFFFFFF) // White
     val TextPrimary = Color(0xFF1A1F2E) // Cool dark blue-gray
     val TextSecondary = Color(0xFF3A4150) // Cool gray
@@ -56,7 +56,7 @@ object CoolLightTheme {
 
 // Light Theme 4: Soft Light (Very soft pastel tones)
 object SoftLightTheme {
-    val Background = Color(0xFFF8F9FA) // Very soft gray
+    val Background = Color(0xFFFFFFFF) // Very soft gray
     val Card = Color(0xFFFFFFFF) // White
     val TextPrimary = Color(0xFF2D3436) // Soft charcoal
     val TextSecondary = Color(0xFF636E72) // Soft gray
@@ -139,13 +139,13 @@ enum class ThemeType(val displayName: String, val isDark: Boolean) {
     WARM_LIGHT("Warm Light", false),
     COOL_LIGHT("Cool Light", false),
     SOFT_LIGHT("Soft Light", false),
-    
+
     // Dark themes
     CLASSIC_DARK("Classic Dark", true),
     WARM_DARK("Warm Dark", true),
     COOL_DARK("Cool Dark", true),
     SOFT_DARK("Soft Dark", true);
-    
+
     companion object {
         fun fromString(value: String): ThemeType {
             return entries.find { it.name == value } ?: CLASSIC_LIGHT
@@ -180,9 +180,16 @@ fun getThemeColors(themeType: ThemeType): AppColors {
                 rankSilver = textMuted,
                 rankBronze = error.copy(alpha = 0.7f),
                 textOnPrimary = ClassicLightTheme.Card, // White/light text on primary background
-                chartColors = listOf(primary, accent, error.copy(alpha = 0.8f), textSecondary.copy(alpha = 0.6f), textMuted.copy(alpha = 0.8f))
+                chartColors = listOf(
+                    primary,
+                    accent,
+                    error.copy(alpha = 0.8f),
+                    textSecondary.copy(alpha = 0.6f),
+                    textMuted.copy(alpha = 0.8f)
+                )
             )
         }
+
         ThemeType.WARM_LIGHT -> {
             val primary = WarmLightTheme.Primary
             val error = WarmLightTheme.Error
@@ -206,9 +213,16 @@ fun getThemeColors(themeType: ThemeType): AppColors {
                 rankSilver = textMuted,
                 rankBronze = error.copy(alpha = 0.7f),
                 textOnPrimary = WarmLightTheme.Card, // White/light text on primary background
-                chartColors = listOf(primary, accent, error.copy(alpha = 0.8f), textSecondary.copy(alpha = 0.6f), textMuted.copy(alpha = 0.8f))
+                chartColors = listOf(
+                    primary,
+                    accent,
+                    error.copy(alpha = 0.8f),
+                    textSecondary.copy(alpha = 0.6f),
+                    textMuted.copy(alpha = 0.8f)
+                )
             )
         }
+
         ThemeType.COOL_LIGHT -> {
             val primary = CoolLightTheme.Primary
             val error = CoolLightTheme.Error
@@ -232,9 +246,16 @@ fun getThemeColors(themeType: ThemeType): AppColors {
                 rankSilver = textMuted,
                 rankBronze = error.copy(alpha = 0.7f),
                 textOnPrimary = CoolLightTheme.Card, // White/light text on primary background
-                chartColors = listOf(primary, accent, error.copy(alpha = 0.8f), textSecondary.copy(alpha = 0.6f), textMuted.copy(alpha = 0.8f))
+                chartColors = listOf(
+                    primary,
+                    accent,
+                    error.copy(alpha = 0.8f),
+                    textSecondary.copy(alpha = 0.6f),
+                    textMuted.copy(alpha = 0.8f)
+                )
             )
         }
+
         ThemeType.SOFT_LIGHT -> {
             val primary = SoftLightTheme.Primary
             val error = SoftLightTheme.Error
@@ -258,9 +279,16 @@ fun getThemeColors(themeType: ThemeType): AppColors {
                 rankSilver = textMuted,
                 rankBronze = error.copy(alpha = 0.7f),
                 textOnPrimary = SoftLightTheme.Card, // White/light text on primary background
-                chartColors = listOf(primary, accent, error.copy(alpha = 0.8f), textSecondary.copy(alpha = 0.6f), textMuted.copy(alpha = 0.8f))
+                chartColors = listOf(
+                    primary,
+                    accent,
+                    error.copy(alpha = 0.8f),
+                    textSecondary.copy(alpha = 0.6f),
+                    textMuted.copy(alpha = 0.8f)
+                )
             )
         }
+
         ThemeType.CLASSIC_DARK -> {
             val primary = ClassicDarkTheme.Primary
             val error = ClassicDarkTheme.Error
@@ -284,9 +312,16 @@ fun getThemeColors(themeType: ThemeType): AppColors {
                 rankSilver = textMuted,
                 rankBronze = error.copy(alpha = 0.7f),
                 textOnPrimary = ClassicDarkTheme.TextPrimary, // Already light text for dark theme
-                chartColors = listOf(primary, accent, error.copy(alpha = 0.8f), textSecondary.copy(alpha = 0.6f), textMuted.copy(alpha = 0.8f))
+                chartColors = listOf(
+                    primary,
+                    accent,
+                    error.copy(alpha = 0.8f),
+                    textSecondary.copy(alpha = 0.6f),
+                    textMuted.copy(alpha = 0.8f)
+                )
             )
         }
+
         ThemeType.WARM_DARK -> {
             val primary = WarmDarkTheme.Primary
             val error = WarmDarkTheme.Error
@@ -310,9 +345,16 @@ fun getThemeColors(themeType: ThemeType): AppColors {
                 rankSilver = textMuted,
                 rankBronze = error.copy(alpha = 0.7f),
                 textOnPrimary = WarmDarkTheme.TextPrimary, // Already light text for dark theme
-                chartColors = listOf(primary, accent, error.copy(alpha = 0.8f), textSecondary.copy(alpha = 0.6f), textMuted.copy(alpha = 0.8f))
+                chartColors = listOf(
+                    primary,
+                    accent,
+                    error.copy(alpha = 0.8f),
+                    textSecondary.copy(alpha = 0.6f),
+                    textMuted.copy(alpha = 0.8f)
+                )
             )
         }
+
         ThemeType.COOL_DARK -> {
             val primary = CoolDarkTheme.Primary
             val error = CoolDarkTheme.Error
@@ -336,9 +378,16 @@ fun getThemeColors(themeType: ThemeType): AppColors {
                 rankSilver = textMuted,
                 rankBronze = error.copy(alpha = 0.7f),
                 textOnPrimary = CoolDarkTheme.TextPrimary, // Already light text for dark theme
-                chartColors = listOf(primary, accent, error.copy(alpha = 0.8f), textSecondary.copy(alpha = 0.6f), textMuted.copy(alpha = 0.8f))
+                chartColors = listOf(
+                    primary,
+                    accent,
+                    error.copy(alpha = 0.8f),
+                    textSecondary.copy(alpha = 0.6f),
+                    textMuted.copy(alpha = 0.8f)
+                )
             )
         }
+
         ThemeType.SOFT_DARK -> {
             val primary = SoftDarkTheme.Primary
             val error = SoftDarkTheme.Error
@@ -362,7 +411,13 @@ fun getThemeColors(themeType: ThemeType): AppColors {
                 rankSilver = textMuted,
                 rankBronze = error.copy(alpha = 0.7f),
                 textOnPrimary = SoftDarkTheme.TextPrimary, // Already light text for dark theme
-                chartColors = listOf(primary, accent, error.copy(alpha = 0.8f), textSecondary.copy(alpha = 0.6f), textMuted.copy(alpha = 0.8f))
+                chartColors = listOf(
+                    primary,
+                    accent,
+                    error.copy(alpha = 0.8f),
+                    textSecondary.copy(alpha = 0.6f),
+                    textMuted.copy(alpha = 0.8f)
+                )
             )
         }
     }

@@ -1,5 +1,6 @@
 package com.app.screentime.record.component
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +27,15 @@ import com.app.screentime.ui.atom.AppTextStyle
 import com.app.screentime.ui.theme.AppColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 
 @Composable
 fun TimelineTab(
@@ -84,36 +94,88 @@ fun TimelineTab(
         }
 
         else -> {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-                itemsIndexed(
-                    items = uiState.timeLines,
-                    key = { index, item ->
-                        when (item) {
-                            is TimelineListItem.HourHeaderItem -> "header-${item.hour}"
-                            is TimelineListItem.TimelineEventItem -> "item-${item.stat.packageName}-${item.stat.eventTimestamp}-$index"
+            val listState = rememberLazyListState()
+            val coroutineScope = rememberCoroutineScope()
+            var selectedHour by remember { mutableStateOf<Int?>(null) }
+            
+            // Extract unique hours from timeline items
+            val availableHours = remember(uiState.timeLines) {
+                uiState.timeLines
+                    .filterIsInstance<TimelineListItem.HourHeaderItem>()
+                    .map { it.hour }
+                    .sortedDescending()
+            }
+            
+            // Create a map of hour to item index for scrolling
+            val hourToIndexMap = remember(uiState.timeLines) {
+                uiState.timeLines.mapIndexedNotNull { index, item ->
+                    if (item is TimelineListItem.HourHeaderItem) {
+                        item.hour to index
+                    } else null
+                }.toMap()
+            }
+            
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Hour range chips
+                if (availableHours.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        availableHours.forEach { hour ->
+                            HourRangeChip(
+                                hour = hour,
+                                colors = colors,
+                                selected = selectedHour == hour,
+                                onClick = {
+                                    selectedHour = hour
+                                    hourToIndexMap[hour]?.let { index ->
+                                        coroutineScope.launch {
+                                            listState.animateScrollToItem(index)
+                                        }
+                                    }
+                                }
+                            )
                         }
                     }
-                ) { listIndex, item ->
-                    when (item) {
-                        is TimelineListItem.HourHeaderItem -> {
-                            if (listIndex > 0) {
-                                Spacer(modifier = Modifier.height(24.dp))
+                }
+                
+                // Timeline list
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(
+                        items = uiState.timeLines,
+                        key = { index, item ->
+                            when (item) {
+                                is TimelineListItem.HourHeaderItem -> "header-${item.hour}"
+                                is TimelineListItem.TimelineEventItem -> "item-${item.stat.packageName}-${item.stat.eventTimestamp}-$index"
                             }
-                            HourRangeHeader(hour = item.hour, colors = colors)
-                            Spacer(modifier = Modifier.height(12.dp))
                         }
+                    ) { listIndex, item ->
+                        when (item) {
+                            is TimelineListItem.HourHeaderItem -> {
+                                if (listIndex > 0) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                                HourRangeHeader(hour = item.hour, colors = colors)
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
 
-                        is TimelineListItem.TimelineEventItem -> {
-                            TimelineItem(
-                                stat = item.stat,
-                                isFirst = item.isFirst,
-                                isLast = item.isLast,
-                                colors = colors
-                            )
+                            is TimelineListItem.TimelineEventItem -> {
+                                TimelineItem(
+                                    stat = item.stat,
+                                    isFirst = item.isFirst,
+                                    isLast = item.isLast,
+                                    colors = colors
+                                )
+                            }
                         }
                     }
                 }

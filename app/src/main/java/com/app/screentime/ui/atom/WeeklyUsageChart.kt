@@ -15,9 +15,20 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.toShape
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -31,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.app.screentime.landing.screen.DailyUsageEntry
 import androidx.compose.ui.res.stringResource
+import androidx.graphics.shapes.RoundedPolygon
 import com.app.screentime.R
 import com.app.screentime.record.repository.formatDuration
 import com.app.screentime.ui.theme.LocalAppColors
@@ -80,6 +92,7 @@ fun WeeklyUsageChart(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun WeeklyUsageBarChart(
     usageEntries: List<DailyUsageEntry>,
@@ -91,16 +104,6 @@ fun WeeklyUsageBarChart(
     val maxMinutes = usageEntries.maxOfOrNull { it.usageMinutes } ?: 0
     val yStepValue = (maxMinutes / numberOfYSteps).coerceAtLeast(1)
     val scaleSteps = (0..numberOfYSteps).map { it * yStepValue }
-    val animationProgress = remember { Animatable(0f) }
-    LaunchedEffect(Unit) {
-        animationProgress.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(
-                durationMillis = 1000,
-                easing = FastOutSlowInEasing
-            )
-        )
-    }
 
     val dashedEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 10f), 0f)
 
@@ -142,13 +145,11 @@ fun WeeklyUsageBarChart(
                 usageEntries.forEachIndexed { index, entry ->
                     val barHeightRatio =
                         if (maxMinutes > 0) entry.usageMinutes.toFloat() / maxMinutes else 0f
-                    val animatedHeight = (200 * barHeightRatio * animationProgress.value).dp
+                    val animatedHeight = (200 * barHeightRatio * 1).dp
 
                     val isSelected = selectedDayIndex == index
                     val barColor = if (isSelected) {
                         colors.success.copy(alpha = 0.9f)
-                    } else if (entry.usageMinutes >= (maxMinutes * 0.7)) {
-                        colors.success
                     } else {
                         colors.accent
                     }
@@ -166,13 +167,33 @@ fun WeeklyUsageBarChart(
                         verticalArrangement = Arrangement.Bottom,
                         modifier = barModifier
                     ) {
-                        Box(
+                        Column(
                             modifier = Modifier
                                 .height(animatedHeight)
                                 .width(32.dp)
-                                .clip(RoundedCornerShape(15.dp))
-                                .background(barColor)
-                        )
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(barColor),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            if (isSelected) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = MaterialShapes.Sunny.toShape()
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Completed",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
                         Spacer(Modifier.height(8.dp))
                         AppText(
                             text = entry.dayLabel,

@@ -1,5 +1,6 @@
 package com.app.screentime.consent.screen
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,7 +9,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,32 +16,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.consent.component.ConsentingSection
 import com.app.screentime.consent.viewmodel.ConsentViewModel
 import com.app.screentime.ui.atom.AppLoader
-import com.app.screentime.ui.atom.AppPrimaryButton
-import com.app.screentime.ui.atom.AppSecondaryButton
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
-import androidx.compose.ui.res.stringResource
-import com.app.screentime.R
-import com.app.screentime.ui.atom.glassBottomSheetBackground
-import com.app.screentime.ui.theme.LocalAppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConsentBottomSheetContent(
-    username: String,
     onDismiss: () -> Unit,
     onAccept: () -> Unit,
     viewModel: ConsentViewModel = hiltViewModel()
 ) {
-    val colors = LocalAppColors.current ?: return
-
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
+        skipPartiallyExpanded = true
     )
-
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -49,7 +38,6 @@ fun ConsentBottomSheetContent(
     val consentItems = uiState.consentItems
 
     // Call onAccept when submission completes (success or failure)
-    // This ensures the sheet is marked as displayed even if submission fails
     LaunchedEffect(uiState.isSubmitted) {
         if (uiState.isSubmitted) {
             onAccept()
@@ -57,59 +45,71 @@ fun ConsentBottomSheetContent(
     }
 
     // Track consent values - use individual state for each item
-    // Recreate states when consentItems change
     val consentValueStates = remember(consentItems) {
         consentItems.mapIndexed { index, item ->
             index to mutableStateOf(item.isMandatory) // Mandatory items default to true
         }.toMap()
     }
+
     ModalBottomSheet(
         modifier = Modifier,
         sheetGesturesEnabled = true,
         sheetState = sheetState,
         properties = ModalBottomSheetProperties(
-            shouldDismissOnClickOutside = true
+            shouldDismissOnClickOutside = false
         ),
-        onDismissRequest = {
-            onDismiss()
-        },
-        containerColor = colors.background,
-        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFFFFFFFF),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(colors.background)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .padding(24.dp)
         ) {
+            // Header with close button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                AppText(
-                    text = "Privacy & Consent",
-                    style = AppTextStyle.SubTitle,
-                )
-                IconButton(onClick = onDismiss) {
+                Spacer(modifier = Modifier.width(40.dp)) // Balance for close button
+
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    AppText(
+                        text = "Privacy & Consent",
+                        style = AppTextStyle.Title,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1C1B1F) // Dark grey/black
+                    )
+                }
+
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = colors.tint
+                        tint = Color(0xFF49454F), // Dark grey
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Introductory text
             AppText(
                 text = "We value your privacy and want to be transparent about how we use your data. Please review and accept the following:",
-                style = AppTextStyle.Label
+                style = AppTextStyle.Body,
+                color = Color(0xFF1C1B1F) // Dark grey/black
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(Modifier, DividerDefaults.Thickness, color = colors.textHint)
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
-
+            // Loading state
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier
@@ -120,29 +120,38 @@ fun ConsentBottomSheetContent(
                     AppLoader()
                 }
             } else if (uiState.error != null && consentItems.isEmpty()) {
-                // Show error state when loading fails
-                AppText(
-                    text = uiState.error ?: "Failed to load consents",
-                    style = AppTextStyle.Label,
-                    color = colors.error
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                // Error state
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AppText(
+                        text = uiState.error ?: "Failed to load consents",
+                        style = AppTextStyle.Body,
+                        color = Color(0xFFBA1A1A) // Red for error
+                    )
+                }
             } else if (consentItems.isEmpty()) {
-                // Show empty state
-                AppText(
-                    text = stringResource(R.string.no_consents_available),
-                    style = AppTextStyle.Label
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                // Empty state
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AppText(
+                        text = "No consents available",
+                        style = AppTextStyle.Body,
+                        color = Color(0xFF49454F) // Medium grey
+                    )
+                }
             } else {
                 // Display submission error if any
                 if (uiState.error != null && !uiState.isLoading) {
                     AppText(
                         text = uiState.error ?: "Failed to submit consents",
                         style = AppTextStyle.Label,
-                        color = colors.error
+                        color = Color(0xFFBA1A1A) // Red for error
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 // Display consent items from API
@@ -150,7 +159,7 @@ fun ConsentBottomSheetContent(
                     val state = consentValueStates[index]
                     if (state != null) {
                         val currentValue by state
-                        ConsentingSection(
+                        ConsentSectionCard(
                             title = consentItem.name,
                             description = consentItem.description,
                             checked = currentValue,
@@ -159,22 +168,18 @@ fun ConsentBottomSheetContent(
                                 state.value = newValue
                             }
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        if (index < consentItems.size - 1) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                AppPrimaryButton(
-                    modifier = Modifier.weight(1f),
-                    text = if (uiState.isSubmitting) "Submitting..." else "Accept",
-                    enabled = !uiState.isLoading && !uiState.isSubmitting && consentItems.isNotEmpty()
-                ) {
+            // Accept button
+            Button(
+                onClick = {
                     // Get final consent values (mandatory items will always be true)
                     val finalValues = consentItems.mapIndexed { index, item ->
                         index to if (item.isMandatory) {
@@ -184,10 +189,132 @@ fun ConsentBottomSheetContent(
                         }
                     }.toMap()
                     viewModel.submitConsents(finalValues)
-                    // onAccept will be called after successful submission
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                enabled = !uiState.isLoading && !uiState.isSubmitting && consentItems.isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6750A4), // Solid purple
+                    contentColor = Color.White,
+                    disabledContainerColor = Color(0xFFE0E0E0),
+                    disabledContentColor = Color(0xFF9E9E9E)
+                ),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                if (uiState.isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
+                AppText(
+                    text = if (uiState.isSubmitting) "Submitting..." else "Accept",
+                    style = AppTextStyle.Body,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
+
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
+}
+
+@Composable
+private fun ConsentSectionCard(
+    title: String,
+    description: String,
+    checked: Boolean,
+    isMandatory: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    // Light lavender background for mandatory items when checked
+    val lightLavender = Color(0xFFEADDFF) // Light lavender/purple tint
+    // Light purple-grey background for regular cards
+    val lightPurpleGrey = Color(0xFFF3EDF7) // Light purple-grey
+    val cardBackground = if (isMandatory && checked) {
+        lightLavender
+    } else {
+        lightPurpleGrey // Light purple-grey background for each card
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = cardBackground
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                AppText(
+                    text = title,
+                    style = AppTextStyle.Body,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1C1B1F) // Dark grey/black
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                AppText(
+                    text = description,
+                    style = AppTextStyle.Label,
+                    color = Color(0xFF49454F) // Medium grey
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Custom Switch
+            ConsentSwitch(
+                checked = if (isMandatory) true else checked,
+                onCheckedChange = onCheckedChange,
+                enabled = !isMandatory
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConsentSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean
+) {
+    val primaryPurple = Color(0xFF6750A4) // Solid purple
+    val grayTrack = Color(0xFFE0E0E0) // Light grey
+    val darkGrayHandle = Color(0xFF79747E) // Dark grey
+
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        enabled = enabled,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = Color.White,
+            checkedTrackColor = primaryPurple,
+            uncheckedThumbColor = darkGrayHandle,
+            uncheckedTrackColor = grayTrack
+        ),
+        thumbContent = {
+            if (!checked) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = Color.White
+                )
+            }
+            // When checked, no icon (empty thumbContent)
+        }
+    )
 }

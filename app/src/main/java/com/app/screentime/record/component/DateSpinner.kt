@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -17,6 +17,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
+import com.app.screentime.ui.theme.InterFontFamily
 import com.app.screentime.ui.theme.LocalAppColors
 import com.app.screentime.utils.DateUtils
 
@@ -56,19 +58,18 @@ fun DateSpinner(
         onExpandedChange = { expanded = !expanded },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 12.dp)
     ) {
-
         Box(
             modifier = Modifier
                 .menuAnchor()
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .border(
-                    width = 1.dp, color = colors.border, shape = RoundedCornerShape(12.dp)
+                    width = 1.dp, color = colors.border, shape = MaterialTheme.shapes.medium
                 )
                 .background(colors.card)
-                .padding(horizontal = 14.dp, vertical = 8.dp)
+                .padding(horizontal = 12.dp, vertical = 4.dp)
                 .clickable { expanded = true }   // opens dropdown
         ) {
             Row(
@@ -77,10 +78,9 @@ fun DateSpinner(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                // ⭐ Actual Text Field Content
                 BasicTextField(
                     value = displayDate, readOnly = true, onValueChange = {}, textStyle = TextStyle(
-                        fontSize = 16.sp, color = colors.textPrimary
+                        fontSize = 16.sp, color = colors.textPrimary, fontFamily = InterFontFamily
                     ), modifier = Modifier.weight(1f)
                 )
 
@@ -97,7 +97,7 @@ fun DateSpinner(
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(colors.card, RoundedCornerShape(12.dp))
+            modifier = Modifier.background(colors.card, MaterialTheme.shapes.medium)
         ) {
             dates.forEach { date ->
 
