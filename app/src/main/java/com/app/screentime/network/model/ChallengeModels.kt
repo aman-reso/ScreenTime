@@ -39,11 +39,15 @@ data class Challenge(
     val reward: String,
     val prize: String? = null, // HTML content with prize information
     val rules: String? = null, // HTML content with rules
-    val tag: String? = null, // Tag like "Wellness"
+    val displayType: String? = null, // SPECIAL, TRENDING, QUICK_JOIN, FEATURE
+    val tags: List<String>? = null, // List of tags like ["social media", "wellness"]
+    val tag: String? = null, // Legacy single tag field
     val sponsor: String? = null, // Sponsor name like "AppTime"
     val startTime: String, // ISO 8601 format
     val endTime: String, // ISO 8601 format
     val thumbnail: String? = null,
+    val packageNames: String? = null, // Comma-separated package names
+    val participantCount: Int = 0,
     val hasJoined: Boolean = false
 )
 

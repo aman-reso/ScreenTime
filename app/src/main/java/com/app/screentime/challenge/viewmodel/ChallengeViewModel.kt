@@ -28,8 +28,7 @@ data class ChallengesUiState(
     val challengeDetails: ChallengeDetails? = null,
     val challengeRankings: ChallengeRankingsResponse? = null,
     val isLoadingDetails: Boolean = false,
-    val detailsError: String? = null,
-    val useMockData: Boolean = false
+    val detailsError: String? = null
 )
 
 @HiltViewModel
@@ -46,57 +45,40 @@ class ChallengeViewModel @Inject constructor(
         refresh()
     }
 
-    fun toggleMockData() {
-        val newUseMockData = !_uiState.value.useMockData
-        _uiState.value = _uiState.value.copy(useMockData = newUseMockData)
-        refresh()
-    }
-
     fun refresh() {
         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
         viewModelScope.launch {
-            if (_uiState.value.useMockData) {
-                // Use mock data
-                kotlinx.coroutines.delay(500) // Simulate network delay
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    challenges = MockChallengeData.getMockChallenges(),
-                    lastUpdated = "Just now",
-                    error = null
-                )
-            } else {
-                // Use server data
-                challengeRepository.getActiveChallenges().fold(
-                    onSuccess = { response ->
-                        if (response.success == true && response.data != null) {
-                            val challenges = response.data.challenges
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                challenges = challenges,
-                                lastUpdated = "Just now",
-                                error = null
-                            )
-                            
-                            // Update local DB for joined challenges based on hasJoined flag
-                            updateJoinedChallengesFromActiveList(challenges)
-                        } else {
-                            val errorMsg = response.message ?: "Failed to load challenges"
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                error = errorMsg,
-                                challenges = emptyList()
-                            )
-                        }
-                    },
-                    onFailure = { throwable ->
+            // Use server data
+            challengeRepository.getActiveChallenges().fold(
+                onSuccess = { response ->
+                    if (response.success == true && response.data != null) {
+                        val challenges = response.data.challenges
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = throwable.message ?: "Failed to load challenges",
+                            challenges = challenges,
+                            lastUpdated = "Just now",
+                            error = null
+                        )
+
+                        // Update local DB for joined challenges based on hasJoined flag
+                        updateJoinedChallengesFromActiveList(challenges)
+                    } else {
+                        val errorMsg = response.message ?: "Failed to load challenges"
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = errorMsg,
                             challenges = emptyList()
                         )
                     }
-                )
-            }
+                },
+                onFailure = { throwable ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = throwable.message ?: "Failed to load challenges",
+                        challenges = emptyList()
+                    )
+                }
+            )
         }
     }
 
@@ -105,10 +87,6 @@ class ChallengeViewModel @Inject constructor(
      * Only fetches challenge details for challenges missing package names
      */
     private suspend fun updateJoinedChallengesFromActiveList(activeChallenges: List<Challenge>) {
-        if (_uiState.value.useMockData) {
-            return // Skip sync for mock data
-        }
-
         try {
             // Get all joined challenges from local DB
             val localJoinedChallenges = joinedChallengeRepository.getAllJoinedChallengesSync()
@@ -118,12 +96,15 @@ class ChallengeViewModel @Inject constructor(
             val joinedFromActive = activeChallenges.filter { it.hasJoined }
             val joinedIdsFromActive = joinedFromActive.map { it.id }.toSet()
 
-            Log.d("ChallengeViewModel", "Updating joined challenges: ${joinedFromActive.size} from active list, ${localJoinedChallenges.size} in local DB")
+            Log.d(
+                "ChallengeViewModel",
+                "Updating joined challenges: ${joinedFromActive.size} from active list, ${localJoinedChallenges.size} in local DB"
+            )
 
             // Update or insert joined challenges from active list
             for (challenge in joinedFromActive) {
                 val existing = localJoinedChallenges.find { it.challengeId == challenge.id }
-                
+
                 if (existing != null) {
                     // Update existing challenge with data from active list
                     val needsUpdate = existing.title != challenge.title ||
@@ -143,7 +124,10 @@ class ChallengeViewModel @Inject constructor(
                             thumbnail = challenge.thumbnail
                         )
                         joinedChallengeRepository.updateJoinedChallenge(updated)
-                        Log.d("ChallengeViewModel", "Updated challenge ${challenge.id} from active list")
+                        Log.d(
+                            "ChallengeViewModel",
+                            "Updated challenge ${challenge.id} from active list"
+                        )
                     }
 
                     // Only fetch details if package names are missing
@@ -152,7 +136,8 @@ class ChallengeViewModel @Inject constructor(
                     }
                 } else {
                     // New joined challenge - save to DB
-                    val joinedAt = com.app.screentime.utils.DateUtils.formatISO8601(com.app.screentime.utils.DateUtils.now())
+                    val joinedAt =
+                        com.app.screentime.utils.DateUtils.formatISO8601(com.app.screentime.utils.DateUtils.now())
                     val entity = JoinedChallengeEntity(
                         challengeId = challenge.id,
                         title = challenge.title,
@@ -167,7 +152,7 @@ class ChallengeViewModel @Inject constructor(
                         packageNames = null // Will be fetched below
                     )
                     joinedChallengeRepository.insertJoinedChallenge(entity)
-                    
+
                     // Schedule sync worker
                     ChallengeSyncWorker.scheduleChallengeSync(
                         context = context,
@@ -175,10 +160,13 @@ class ChallengeViewModel @Inject constructor(
                         startTime = challenge.startTime,
                         endTime = challenge.endTime
                     )
-                    
+
                     // Fetch package names
                     fetchAndUpdatePackageNames(challenge.id)
-                    Log.d("ChallengeViewModel", "Saved new joined challenge ${challenge.id} from active list")
+                    Log.d(
+                        "ChallengeViewModel",
+                        "Saved new joined challenge ${challenge.id} from active list"
+                    )
                 }
             }
 
@@ -211,16 +199,27 @@ class ChallengeViewModel @Inject constructor(
                         val packageNames = response.data.packageNames
                         if (!packageNames.isNullOrBlank()) {
                             joinedChallengeRepository.updatePackageNames(challengeId, packageNames)
-                            Log.d("ChallengeViewModel", "Updated package names for challenge $challengeId: '$packageNames'")
+                            Log.d(
+                                "ChallengeViewModel",
+                                "Updated package names for challenge $challengeId: '$packageNames'"
+                            )
                         }
                     }
                 },
                 onFailure = { throwable ->
-                    Log.w("ChallengeViewModel", "Failed to fetch package names for challenge $challengeId", throwable)
+                    Log.w(
+                        "ChallengeViewModel",
+                        "Failed to fetch package names for challenge $challengeId",
+                        throwable
+                    )
                 }
             )
         } catch (e: Exception) {
-            Log.e("ChallengeViewModel", "Error fetching package names for challenge $challengeId", e)
+            Log.e(
+                "ChallengeViewModel",
+                "Error fetching package names for challenge $challengeId",
+                e
+            )
         }
     }
 
@@ -237,58 +236,50 @@ class ChallengeViewModel @Inject constructor(
                 challengeRankings = null
             )
 
-            if (_uiState.value.useMockData) {
-                // Use mock data
-                kotlinx.coroutines.delay(500) // Simulate network delay
-                val mockDetails = MockChallengeData.getMockChallengeDetails(challengeId)
-                val mockRankings = MockChallengeData.getMockChallengeRankings(challengeId)
-                _uiState.value = _uiState.value.copy(
-                    challengeDetails = mockDetails,
-                    challengeRankings = mockRankings,
-                    isLoadingDetails = false
-                )
-            } else {
-                // Load challenge details
-                challengeRepository.getChallengeDetails(challengeId).fold(
-                    onSuccess = { response ->
-                        if (response.success == true && response.data != null) {
-                            _uiState.value = _uiState.value.copy(
-                                challengeDetails = response.data,
-                                isLoadingDetails = false
-                            )
-                        } else {
-                            _uiState.value = _uiState.value.copy(
-                                isLoadingDetails = false,
-                                detailsError = response.message ?: "Failed to load challenge details"
-                            )
-                        }
-                    },
-                    onFailure = { throwable ->
+            // Load challenge details
+            challengeRepository.getChallengeDetails(challengeId).fold(
+                onSuccess = { response ->
+                    if (response.success == true && response.data != null) {
+                        _uiState.value = _uiState.value.copy(
+                            challengeDetails = response.data,
+                            isLoadingDetails = false
+                        )
+                    } else {
                         _uiState.value = _uiState.value.copy(
                             isLoadingDetails = false,
-                            detailsError = throwable.message ?: "Failed to load challenge details"
+                            detailsError = response.message ?: "Failed to load challenge details"
                         )
                     }
-                )
+                },
+                onFailure = { throwable ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingDetails = false,
+                        detailsError = throwable.message ?: "Failed to load challenge details"
+                    )
+                }
+            )
 
-                // Load challenge rankings
-                challengeRepository.getChallengeRankings(challengeId).fold(
-                    onSuccess = { response ->
-                        if (response.success == true && response.data != null) {
-                            _uiState.value = _uiState.value.copy(
-                                challengeRankings = response.data
-                            )
-                        }
-                    },
-                    onFailure = {
-                        // Rankings failure is not critical, just log it
+            // Load challenge rankings
+            challengeRepository.getChallengeRankings(challengeId).fold(
+                onSuccess = { response ->
+                    if (response.success == true && response.data != null) {
+                        _uiState.value = _uiState.value.copy(
+                            challengeRankings = response.data
+                        )
                     }
-                )
-            }
+                },
+                onFailure = {
+                    // Rankings failure is not critical, just log it
+                }
+            )
         }
     }
 
-    fun joinChallenge(challengeId: Int, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+    fun joinChallenge(
+        challengeId: Int,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         // Prevent duplicate join requests
         if (_uiState.value.joiningChallengeIds.contains(challengeId)) {
             return
@@ -312,63 +303,43 @@ class ChallengeViewModel @Inject constructor(
                 return@launch
             }
 
-            if (_uiState.value.useMockData) {
-                // Simulate mock join
-                kotlinx.coroutines.delay(800) // Simulate network delay
-                val updatedChallenges = _uiState.value.challenges.map { c ->
-                    if (c.id == challengeId) {
-                        c.copy(hasJoined = true)
-                    } else {
-                        c
-                    }
-                }
-                _uiState.value = _uiState.value.copy(
-                    joiningChallengeIds = _uiState.value.joiningChallengeIds - challengeId,
-                    challenges = updatedChallenges
-                )
-                
-                // Save to database and schedule sync for mock data too
-                saveChallengeAndScheduleSync(challenge)
-                onSuccess()
-            } else {
-                challengeRepository.joinChallenge(challengeId).fold(
-                    onSuccess = { response ->
-                        if (response.success == true) {
-                            // Update local state to mark challenge as joined
-                            val updatedChallenges = _uiState.value.challenges.map { c ->
-                                if (c.id == challengeId) {
-                                    c.copy(hasJoined = true)
-                                } else {
-                                    c
-                                }
+            challengeRepository.joinChallenge(challengeId).fold(
+                onSuccess = { response ->
+                    if (response.success == true) {
+                        // Update local state to mark challenge as joined
+                        val updatedChallenges = _uiState.value.challenges.map { c ->
+                            if (c.id == challengeId) {
+                                c.copy(hasJoined = true)
+                            } else {
+                                c
                             }
-                            _uiState.value = _uiState.value.copy(
-                                joiningChallengeIds = _uiState.value.joiningChallengeIds - challengeId,
-                                challenges = updatedChallenges
-                            )
-                            
-                            // Save to database and schedule sync
-                            saveChallengeAndScheduleSync(challenge)
-                            onSuccess()
-                        } else {
-                            val errorMsg = response.message ?: "Failed to join challenge"
-                            _uiState.value = _uiState.value.copy(
-                                error = errorMsg,
-                                joiningChallengeIds = _uiState.value.joiningChallengeIds - challengeId
-                            )
-                            onError(errorMsg)
                         }
-                    },
-                    onFailure = { throwable ->
-                        val errorMsg = throwable.message ?: "Failed to join challenge"
+                        _uiState.value = _uiState.value.copy(
+                            joiningChallengeIds = _uiState.value.joiningChallengeIds - challengeId,
+                            challenges = updatedChallenges
+                        )
+
+                        // Save to database and schedule sync
+                        saveChallengeAndScheduleSync(challenge)
+                        onSuccess()
+                    } else {
+                        val errorMsg = response.message ?: "Failed to join challenge"
                         _uiState.value = _uiState.value.copy(
                             error = errorMsg,
                             joiningChallengeIds = _uiState.value.joiningChallengeIds - challengeId
                         )
                         onError(errorMsg)
                     }
-                )
-            }
+                },
+                onFailure = { throwable ->
+                    val errorMsg = throwable.message ?: "Failed to join challenge"
+                    _uiState.value = _uiState.value.copy(
+                        error = errorMsg,
+                        joiningChallengeIds = _uiState.value.joiningChallengeIds - challengeId
+                    )
+                    onError(errorMsg)
+                }
+            )
         }
     }
 
@@ -376,32 +347,16 @@ class ChallengeViewModel @Inject constructor(
         try {
             // Check if already saved
             val existing = joinedChallengeRepository.getJoinedChallengeById(challenge.id)
-            
-            // Fetch challenge details to get package names
-            var packageNames: String? = null
-            if (!_uiState.value.useMockData) {
-                challengeRepository.getChallengeDetails(challenge.id).fold(
-                    onSuccess = { response ->
-                        if (response.success == true && response.data != null) {
-                            packageNames = response.data.packageNames
-                        }
-                    },
-                    onFailure = {
-                        Log.w("ChallengeViewModel", "Failed to fetch challenge details for package names, continuing without filter")
-                    }
-                )
-            }
 
             if (existing != null) {
                 // Update existing challenge with package names if missing or different
-                val needsUpdate = existing.packageNames != packageNames
-                Log.d("ChallengeViewModel", "Existing challenge ${challenge.id}: current packageNames='${existing.packageNames}', new packageNames='$packageNames', needsUpdate=$needsUpdate")
-                
+                val needsUpdate = existing.packageNames != null
+
                 if (needsUpdate) {
                     // Use direct UPDATE query for package names to ensure it works
                     // Also update other fields if needed
                     val updated = existing.copy(
-                        packageNames = packageNames,
+                        packageNames = challenge.packageNames,
                         title = challenge.title,
                         description = challenge.description,
                         reward = challenge.reward,
@@ -410,18 +365,25 @@ class ChallengeViewModel @Inject constructor(
                         thumbnail = challenge.thumbnail
                     )
                     joinedChallengeRepository.updateJoinedChallenge(updated)
-                    
+
                     // Verify the update
                     val verify = joinedChallengeRepository.getJoinedChallengeById(challenge.id)
-                    Log.d("ChallengeViewModel", "After update, challenge ${challenge.id} packageNames='${verify?.packageNames}'")
+                    Log.d(
+                        "ChallengeViewModel",
+                        "After update, challenge ${challenge.id} packageNames='${verify?.packageNames}'"
+                    )
                 } else {
-                    Log.d("ChallengeViewModel", "Challenge ${challenge.id} already has correct package names")
+                    Log.d(
+                        "ChallengeViewModel",
+                        "Challenge ${challenge.id} already has correct package names"
+                    )
                 }
                 return
             }
 
             // Create new entity
-            val joinedAt = com.app.screentime.utils.DateUtils.formatISO8601(com.app.screentime.utils.DateUtils.now())
+            val joinedAt =
+                com.app.screentime.utils.DateUtils.formatISO8601(com.app.screentime.utils.DateUtils.now())
             val entity = JoinedChallengeEntity(
                 challengeId = challenge.id,
                 title = challenge.title,
@@ -433,7 +395,7 @@ class ChallengeViewModel @Inject constructor(
                 joinedAt = joinedAt,
                 lastSyncTime = 0L,
                 syncScheduled = true,
-                packageNames = packageNames
+                packageNames = challenge.packageNames
             )
 
             // Save to database
@@ -446,11 +408,8 @@ class ChallengeViewModel @Inject constructor(
                 startTime = challenge.startTime,
                 endTime = challenge.endTime
             )
-
-            Log.d("ChallengeViewModel", "Saved challenge ${challenge.id} and scheduled sync with package names: $packageNames")
         } catch (e: Exception) {
             Log.e("ChallengeViewModel", "Failed to save challenge or schedule sync", e)
-            // Don't fail the join operation if save/schedule fails
         }
     }
 }

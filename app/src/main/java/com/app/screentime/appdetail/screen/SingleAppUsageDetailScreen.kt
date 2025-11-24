@@ -28,15 +28,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.screentime.appdetail.viewmodel.SingleAppUsageDetailViewModel
 import com.app.screentime.blocking.manager.AppBlockManager
+import com.app.screentime.blocking.screen.AddBlockingRuleBottomSheet
+import com.app.screentime.data.entity.AppUsage
+import com.app.screentime.data.uiModel.WeeklyDataReport
+import com.app.screentime.ui.atom.AppPrimaryButton
 import com.app.screentime.record.repository.formatDuration
 import com.app.screentime.record.repository.toReadableDataSize
 import com.app.screentime.ui.atom.AppIcon
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
+import com.app.screentime.ui.atom.WeeklyUsageChart
 import com.app.screentime.ui.theme.LocalAppColors
 import kotlinx.coroutines.launch
 
@@ -100,22 +107,36 @@ fun SingleAppUsageDetailScreen(
         }
     }
 
-    // Convert weekly data to chart format
-    val weeklyData = remember(uiState.weeklyUsageData) {
-        if (uiState.weeklyUsageData.isEmpty()) {
-            emptyList()
-        } else {
-            val maxUsage = uiState.weeklyUsageData.maxOfOrNull { it.screenTime } ?: 1L
-            uiState.weeklyUsageData.map { day ->
-                val percentage = ((day.screenTime.toDouble() / maxUsage) * 100).toInt()
-                DayUsage(
-                    label = day.dayName.take(3), // "Mon", "Tue", etc.
-                    percentage = percentage.coerceIn(0, 100),
-                    value = day.displayScreenTime
-                )
-            }
+    // Convert weekly data to WeeklyDataReport format for chart
+    val weeklyReports = remember(uiState.weeklyUsageData, packageName) {
+        uiState.weeklyUsageData.map { dayData ->
+            WeeklyDataReport(
+                dayName = dayData.dayName,
+                date = dayData.date,
+                appUsage = listOf(
+                    AppUsage(
+                        id = 0L,
+                        packageName = packageName,
+                        appName = uiState.appName,
+                        appScreenTime = dayData.screenTime,
+                        wifiDataUsage = dayData.wifiDataUsage,
+                        mobileDataUsage = dayData.mobileDataUsage
+                    ).apply {
+                        applicationInfo = appInfo
+                    }
+                ),
+                totalScreenTime = dayData.screenTime,
+                displayScreenTime = dayData.displayScreenTime,
+                totalWifiDataUsage = dayData.wifiDataUsage,
+                totalMobileDataUsage = dayData.mobileDataUsage,
+                displayWifiDataUsage = dayData.displayWifiDataUsage,
+                displayMobileDataUsage = dayData.displayMobileDataUsage,
+                displayTotalDataUsage = dayData.displayTotalDataUsage
+            )
         }
     }
+    
+    var selectedDayIndex by remember { mutableStateOf<Int?>(null) }
 
     // Calculate network usage
     val totalWifiData = uiState.weeklyUsageData.sumOf { it.wifiDataUsage }
@@ -124,6 +145,10 @@ fun SingleAppUsageDetailScreen(
     val wifiDataGB = totalWifiData / (1024.0 * 1024.0 * 1024.0)
     val cellularDataGB = totalCellularData / (1024.0 * 1024.0 * 1024.0)
     val totalDataGB = totalData / (1024.0 * 1024.0 * 1024.0)
+    
+    // Bottom sheet states
+    var showBlockBottomSheet by remember { mutableStateOf(false) }
+    var showTimerBottomSheet by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -195,9 +220,25 @@ fun SingleAppUsageDetailScreen(
                     }
 
                     // Weekly Chart
-                    if (weeklyData.isNotEmpty()) {
+                    if (weeklyReports.isNotEmpty()) {
                         item {
-                            WeeklyChartCard(weeklyData = weeklyData)
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(24.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = colors.card
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                            ) {
+                                WeeklyUsageChart(
+                                    weeklyReports = weeklyReports,
+                                    selectedDayIndex = selectedDayIndex,
+                                    onBarClick = { index ->
+                                        selectedDayIndex = if (selectedDayIndex == index) null else index
+                                    },
+                                    modifier = Modifier.padding(20.dp)
+                                )
+                            }
                         }
                     }
 
@@ -205,12 +246,8 @@ fun SingleAppUsageDetailScreen(
                     item {
                         QuickActionsCard(
                             onLaunchClick = { launchApp(context, packageName) },
-                            onSetTimerClick = { openAppTimerSettings(context, packageName) },
-                            onBlockClick = {
-                                coroutineScope.launch {
-                                    AppBlockManager.blockApp(packageName, 5 * 60 * 1000L)
-                                }
-                            },
+                            onSetTimerClick = { showTimerBottomSheet = true },
+                            onBlockClick = { showBlockBottomSheet = true },
                             onSettingsClick = { openAppSettings(context, packageName) }
                         )
                     }
@@ -227,6 +264,46 @@ fun SingleAppUsageDetailScreen(
                     }
                 }
             }
+        }
+        
+        // Block App Bottom Sheet
+        if (showBlockBottomSheet) {
+            AddBlockingRuleBottomSheet(
+                selectedAppName = uiState.appName.ifEmpty { packageName },
+                selectedPackageName = packageName,
+                onDismiss = { showBlockBottomSheet = false },
+                onBlockInstantly = { pkgName, appName ->
+                    coroutineScope.launch {
+                        try {
+                            AppBlockManager.blockApp(pkgName, 0L) // 0L means instant block
+                            showBlockBottomSheet = false
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                },
+                onBlockAfterLaunches = { pkgName, appName, maxLaunches ->
+                    // This will be handled by the blocking system
+                    showBlockBottomSheet = false
+                },
+                onBlockAfterDuration = { pkgName, appName, maxDurationMinutes ->
+                    // This will be handled by the blocking system
+                    showBlockBottomSheet = false
+                }
+            )
+        }
+        
+        // Timer Bottom Sheet
+        if (showTimerBottomSheet) {
+            TimerBottomSheet(
+                appName = uiState.appName.ifEmpty { packageName },
+                packageName = packageName,
+                onDismiss = { showTimerBottomSheet = false },
+                onSetTimer = { minutes ->
+                    // Set timer logic here
+                    showTimerBottomSheet = false
+                }
+            )
         }
     }
 }
@@ -361,117 +438,6 @@ private fun HeroCard(
     }
 }
 
-@Composable
-private fun WeeklyChartCard(weeklyData: List<DayUsage>) {
-    val colors = LocalAppColors.current ?: return
-    val primaryColor = colors.accent
-    val lightColor = colors.success
-    val tertiaryColor = colors.error
-    val lightTertiary = colors.error.copy(alpha = 0.7f)
-    var selectedIndex by remember { mutableStateOf(weeklyData.size - 1) } // Last day selected by default
-    val maxHeight = weeklyData.maxOfOrNull { it.percentage } ?: 100
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = colors.card
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AppText(
-                    text = "Weekly activity",
-                    style = AppTextStyle.SubTitle,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.textPrimary
-                )
-                TextButton(onClick = { /* TODO */ }) {
-                    AppText(
-                        text = "Details",
-                        style = AppTextStyle.Label,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.accent
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Chart
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                weeklyData.forEachIndexed { index, day ->
-                    val isSelected = selectedIndex == index
-                    val barHeight by animateFloatAsState(
-                        targetValue = (day.percentage / maxHeight.toFloat()).coerceIn(0.1f, 1f),
-                        animationSpec = tween(300 + index * 80, delayMillis = 300),
-                        label = "barHeight"
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { selectedIndex = index },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Bottom
-                    ) {
-                        // Bar
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.7f)
-                                .height((140.dp * barHeight).coerceAtLeast(8.dp))
-                                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                                .background(
-                                    brush = if (isSelected) {
-                                        Brush.verticalGradient(
-                                            colors = listOf(lightTertiary, tertiaryColor)
-                                        )
-                                    } else {
-                                        Brush.verticalGradient(
-                                            colors = listOf(lightColor, primaryColor)
-                                        )
-                                    }
-                                )
-                                .shadow(
-                                    elevation = if (isSelected) 4.dp else 2.dp,
-                                    shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-                                    spotColor = if (isSelected) 
-                                        tertiaryColor.copy(alpha = 0.35f) 
-                                    else 
-                                        primaryColor.copy(alpha = 0.25f)
-                                )
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Day label
-                        AppText(
-                            text = day.label,
-                            style = AppTextStyle.Caption,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                            color = if (isSelected) tertiaryColor else colors.textSecondary
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun QuickActionsCard(
@@ -509,12 +475,11 @@ private fun QuickActionsCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Launch (Primary)
+                // Launch
                 ActionCard(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.ArrowForward,
                     text = "Launch",
-                    isPrimary = true,
                     onClick = onLaunchClick
                 )
 
@@ -523,7 +488,6 @@ private fun QuickActionsCard(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.Timer,
                     text = "Set timer",
-                    isPrimary = false,
                     onClick = onSetTimerClick
                 )
             }
@@ -539,7 +503,6 @@ private fun QuickActionsCard(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.Block,
                     text = "Block",
-                    isPrimary = false,
                     onClick = onBlockClick
                 )
 
@@ -548,7 +511,6 @@ private fun QuickActionsCard(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.Settings,
                     text = "Settings",
-                    isPrimary = false,
                     onClick = onSettingsClick
                 )
             }
@@ -561,7 +523,6 @@ private fun ActionCard(
     modifier: Modifier = Modifier,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     text: String,
-    isPrimary: Boolean,
     onClick: () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return
@@ -572,39 +533,30 @@ private fun ActionCard(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isPrimary) {
-                colors.accent
-            } else {
-                colors.card
-            }
+            containerColor = colors.card
         ),
-        border = if (!isPrimary) {
-            androidx.compose.foundation.BorderStroke(2.dp, colors.border)
-        } else null,
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isPrimary) 2.dp else 0.dp)
+        border = androidx.compose.foundation.BorderStroke(2.dp, colors.border),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        if (isPrimary) Color.White.copy(alpha = 0.2f)
-                        else colors.accent.copy(alpha = 0.1f)
-                    ),
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.accent.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = text,
-                    tint = if (isPrimary) Color.White else colors.accent,
-                    modifier = Modifier.size(24.dp)
+                    tint = colors.accent,
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
@@ -612,7 +564,7 @@ private fun ActionCard(
                 text = text,
                 style = AppTextStyle.Label,
                 fontWeight = FontWeight.Medium,
-                color = if (isPrimary) Color.White else colors.textPrimary
+                color = colors.textPrimary
             )
         }
     }
@@ -784,11 +736,6 @@ private fun NetworkItem(
     }
 }
 
-private data class DayUsage(
-    val label: String,
-    val percentage: Int,
-    val value: String
-)
 
 private fun launchApp(context: Context, packageName: String) {
     try {
@@ -822,5 +769,175 @@ private fun openAppTimerSettings(context: Context, packageName: String) {
         context.startActivity(intent)
     } catch (e: Exception) {
         openAppSettings(context, packageName)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TimerBottomSheet(
+    appName: String,
+    packageName: String,
+    onDismiss: () -> Unit,
+    onSetTimer: (Int) -> Unit
+) {
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    
+    var selectedMinutes by remember { mutableIntStateOf(30) }
+    
+    val appInfo = remember(packageName) {
+        try {
+            context.packageManager.getApplicationInfo(packageName, 0)
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    val timeOptions = listOf(15, 30, 45, 60, 90, 120) // minutes
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color(0xFFFFFFFF),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 24.dp, vertical = 8.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AppIcon(
+                        appInfo = appInfo,
+                        size = 64.dp,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Column {
+                        AppText(
+                            text = "Set Timer",
+                            style = AppTextStyle.Body,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF1C1B1F)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AppText(
+                            text = appName,
+                            style = AppTextStyle.Label,
+                            color = Color(0xFF49454F)
+                        )
+                    }
+                }
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = Color(0xFF1C1B1F),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(28.dp))
+            
+            // Section Label
+            AppText(
+                text = "TIME OPTIONS",
+                style = AppTextStyle.Label,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF49454F),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            
+            // Time Options Chips
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                timeOptions.forEach { minutes ->
+                    FilterChip(
+                        selected = selectedMinutes == minutes,
+                        onClick = { selectedMinutes = minutes },
+                        label = {
+                            AppText(
+                                text = "${minutes}m",
+                                style = AppTextStyle.Label,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (selectedMinutes == minutes) Color.White else Color(0xFF1C1B1F)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFF6750A4),
+                            containerColor = Color(0xFFFFFFFF),
+                            selectedLabelColor = Color.White,
+                            labelColor = Color(0xFF1C1B1F)
+                        ),
+                        shape = RoundedCornerShape(9999.dp)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Custom Time Input (Optional)
+            AppText(
+                text = "Custom Time (minutes)",
+                style = AppTextStyle.Body,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF1C1B1F),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            // Slider for custom time
+            Column {
+                AppText(
+                    text = "$selectedMinutes minutes",
+                    style = AppTextStyle.Body,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF6750A4),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                Slider(
+                    value = selectedMinutes.toFloat(),
+                    onValueChange = { selectedMinutes = it.toInt() },
+                    valueRange = 5f..180f,
+                    steps = 34, // 5-minute steps from 5 to 180
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color(0xFF6750A4),
+                        activeTrackColor = Color(0xFF6750A4),
+                        inactiveTrackColor = Color(0xFFF5F5F5)
+                    ),
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Set Timer Button
+            AppPrimaryButton(
+                modifier = Modifier.fillMaxWidth(),
+                text = "Set Timer",
+                onClick = {
+                    onSetTimer(selectedMinutes)
+                }
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
+        }
     }
 }

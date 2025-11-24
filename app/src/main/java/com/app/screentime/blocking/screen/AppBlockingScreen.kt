@@ -29,11 +29,16 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.border
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -44,6 +49,7 @@ import com.app.screentime.blocking.model.BlockingRule
 import com.app.screentime.blocking.viewmodel.AppBlockingViewModel
 import com.app.screentime.search.component.GlassSearchBar
 import com.app.screentime.ui.atom.AppIcon
+import com.app.screentime.ui.atom.AppPrimaryButton
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
 import com.app.screentime.ui.atom.glassBottomSheetBackground
@@ -104,6 +110,9 @@ fun AppBlockingScreen(
             modifier = modifier,
             hasAccessibilityPermission = hasAccessibilityPermission,
             hasOverlayPermission = hasOverlayPermission,
+            onContinue = {
+                // This will be handled by the permission check
+            },
             onAccessibilityPermissionClick = {
                 try {
                     val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
@@ -195,57 +204,87 @@ fun AppBlockingScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(colors.background)
+            .background(Color(0xFFFFFFFF)) // White background
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 12.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
+            // Top Bar
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFFFFFFF))
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (navController != null) {
                     IconButton(
                         onClick = { navController.popBackStack() },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = colors.tint,
+                            tint = Color(0xFF1C1B1F),
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
                 AppText(
-                    text = stringResource(R.string.app_blocking),
+                    text = "App blocking",
                     style = AppTextStyle.SubTitle,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.textPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1C1B1F),
                     modifier = Modifier.weight(1f)
                 )
+                Spacer(modifier = Modifier.width(40.dp)) // Balance for back button
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Segmented Control
+            // Segmented Tabs
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 12.dp)
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
-                com.app.screentime.ui.atom.SegmentedControl(
-                    items = tabs,
-                    selectedIndex = pagerState.currentPage,
-                    onItemSelected = { index ->
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(index)
+                // Custom segmented control matching design
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(
+                            Color(0xFFFAFAFA), // Surface container
+                            shape = RoundedCornerShape(9999.dp)
+                        )
+                        .padding(4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        tabs.forEachIndexed { index, tab ->
+                            val isSelected = pagerState.currentPage == index
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .clickable {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                AppText(
+                                    text = tab,
+                                    style = AppTextStyle.Body,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isSelected) Color.White else Color(0xFF49454F)
+                                )
+                            }
                         }
                     }
-                )
+                }
             }
 
             // Tab Content with Pager
@@ -456,7 +495,7 @@ private fun BlockingRuleCard(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddBlockingRuleBottomSheet(
+fun AddBlockingRuleBottomSheet(
     selectedAppName: String,
     selectedPackageName: String,
     onDismiss: () -> Unit,
@@ -464,16 +503,15 @@ private fun AddBlockingRuleBottomSheet(
     onBlockAfterLaunches: (String, String, Int) -> Unit,
     onBlockAfterDuration: (String, String, Int) -> Unit
 ) {
-    val colors = LocalAppColors.current ?: return
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    
-    var blockType by remember { mutableStateOf<BlockType?>(null) }
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var blockType by remember { mutableStateOf<BlockType?>(BlockType.INSTANT) }
     var launchCount by remember { mutableIntStateOf(3) }
     var durationMinutes by remember { mutableIntStateOf(10) }
-    
+
     val appInfo = remember(selectedPackageName) {
         try {
             context.packageManager.getApplicationInfo(selectedPackageName, 0)
@@ -485,326 +523,285 @@ private fun AddBlockingRuleBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = colors.background,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        containerColor = Color(0xFFFFFFFF),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .glassBottomSheetBackground()
                 .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 24.dp, vertical = 8.dp)
         ) {
-            // Header with app info
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-            )
-            {
-                AppIcon(
-                    appInfo = appInfo,
-                    size = 40.dp,
-                    modifier = Modifier.size(40.dp)
-                )
-                Column(modifier = Modifier.weight(1f)) {
-                    AppText(
-                        text = "Block App",
-                        style = AppTextStyle.Body,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AppIcon(
+                        appInfo = appInfo,
+                        size = 64.dp,
+                        modifier = Modifier.size(64.dp)
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    AppText(
-                        text = selectedAppName,
-                        style = AppTextStyle.Label,
-                        color = colors.textSecondary
-                    )
+                    Column {
+                        AppText(
+                            text = "Block App",
+                            style = AppTextStyle.Body,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF1C1B1F)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AppText(
+                            text = selectedAppName,
+                            style = AppTextStyle.Label,
+                            color = Color(0xFF49454F)
+                        )
+                    }
                 }
                 IconButton(
                     onClick = onDismiss,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = colors.tint,
-                        modifier = Modifier.size(20.dp)
+                        tint = Color(0xFF1C1B1F),
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Block Type Selection
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // Section Label
             AppText(
-                text = "Blocking Type:",
-                style = AppTextStyle.Body,
+                text = "BLOCKING TYPE",
+                style = AppTextStyle.Label,
                 fontWeight = FontWeight.Bold,
-                color = colors.textPrimary
+                color = Color(0xFF49454F),
+                modifier = Modifier.padding(bottom = 16.dp)
             )
-            
-            Spacer(modifier = Modifier.height(12.dp))
 
-            // Instant Block
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { blockType = BlockType.INSTANT },
-                colors = CardDefaults.cardColors(
-                    containerColor = if (blockType == BlockType.INSTANT) colors.success.copy(
-                        alpha = 0.2f
-                    ) else colors.card
-                ),
-                shape = MaterialTheme.shapes.small
+            // Radio Group
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // Block Instantly
+                RadioCard(
+                    title = "Block Instantly",
+                    icon = Icons.Default.Block,
+                    isSelected = blockType == BlockType.INSTANT,
+                    onClick = { blockType = BlockType.INSTANT }
+                )
+
+                // Block After Launches
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Block,
-                            contentDescription = null,
-                            tint = colors.error,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        AppText(
-                            text = "Block Instantly",
-                            style = AppTextStyle.Body,
-                            color = colors.textPrimary
-                        )
-                    }
-                    RadioButton(
-                        selected = blockType == BlockType.INSTANT,
-                        onClick = { blockType = BlockType.INSTANT },
-                        modifier = Modifier.size(20.dp)
+                    RadioCard(
+                        title = "Block After Launches",
+                        icon = Icons.Default.Refresh,
+                        isSelected = blockType == BlockType.LAUNCH,
+                        onClick = { blockType = BlockType.LAUNCH }
                     )
-                }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Launch Based Block
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { blockType = BlockType.LAUNCH },
-                colors = CardDefaults.cardColors(
-                    containerColor = if (blockType == BlockType.LAUNCH) colors.success.copy(
-                        alpha = 0.2f
-                    ) else colors.card
-                ),
-                shape = MaterialTheme.shapes.small
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = null,
-                                tint = colors.success,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            AppText(
-                                text = "Block After Launches",
-                                style = AppTextStyle.Body,
-                                color = colors.textPrimary
-                            )
-                        }
-                        RadioButton(
-                            selected = blockType == BlockType.LAUNCH,
-                            onClick = { blockType = BlockType.LAUNCH },
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    // Config Section for Launches
                     if (blockType == BlockType.LAUNCH) {
-                        AppText(
-                            text = "$launchCount ${if (launchCount == 1) "launch" else "launches"}",
-                            style = AppTextStyle.Body,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.textPrimary
-                        )
-                        Slider(
-                            value = launchCount.toFloat(),
-                            onValueChange = { newValue ->
-                                launchCount = newValue.toInt()
-                            },
-                            valueRange = 1f..20f,
-                            steps = 18,
-                            colors = SliderDefaults.colors(
-                                thumbColor = colors.success,
-                                activeTrackColor = colors.success,
-                                inactiveTrackColor = colors.textSecondary.copy(alpha = 0.3f)
-                            )
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            listOf(1, 3, 5, 10, 15, 20).forEach { count ->
-                                FilterChip(
-                                    selected = launchCount == count,
-                                    onClick = { launchCount = count },
-                                    label = {
-                                        AppText(
-                                            text = "$count",
-                                            style = AppTextStyle.Label,
-                                            color = if (launchCount == count) colors.textPrimary else colors.textSecondary
-                                        )
-                                    },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = colors.success.copy(alpha = 0.2f),
-                                        containerColor = colors.card
-                                    )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    Color(0x0F6750A4), // rgba(103, 80, 164, 0.06)
+                                    shape = RoundedCornerShape(16.dp)
                                 )
+                                .padding(20.dp)
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                AppText(
+                                    text = "$launchCount launches",
+                                    style = AppTextStyle.Body,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF6750A4)
+                                )
+
+                                // Slider
+                                Slider(
+                                    value = launchCount.toFloat(),
+                                    onValueChange = { launchCount = it.toInt() },
+                                    valueRange = 1f..20f,
+                                    steps = 18,
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = Color(0xFF6750A4),
+                                        activeTrackColor = Color(0xFF6750A4),
+                                        inactiveTrackColor = Color(0xFFF5F5F5)
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+
+                                // Chips
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    listOf(1, 3, 5, 10, 15, 20).forEach { count ->
+                                        FilterChip(
+                                            selected = launchCount == count,
+                                            onClick = { launchCount = count },
+                                            label = {
+                                                AppText(
+                                                    text = "$count",
+                                                    style = AppTextStyle.Label,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = if (launchCount == count) Color.White else Color(
+                                                        0xFF1C1B1F
+                                                    )
+                                                )
+                                            },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = Color(0xFF6750A4),
+                                                containerColor = Color(0xFFFFFFFF),
+                                                selectedLabelColor = Color.White,
+                                                labelColor = Color(0xFF1C1B1F)
+                                            ),
+                                            shape = RoundedCornerShape(9999.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
+
+                // Block After Duration
+                RadioCard(
+                    title = "Block After Duration",
+                    icon = Icons.Default.Timer,
+                    isSelected = blockType == BlockType.DURATION,
+                    onClick = { blockType = BlockType.DURATION }
+                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // Duration Based Block
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { blockType = BlockType.DURATION },
-                colors = CardDefaults.cardColors(
-                    containerColor = if (blockType == BlockType.DURATION) colors.success.copy(
-                        alpha = 0.2f
-                    ) else colors.card
-                ),
-                shape = MaterialTheme.shapes.small
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Timer,
-                                contentDescription = null,
-                                tint = colors.success,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            AppText(
-                                text = "Block After Duration",
-                                style = AppTextStyle.Body,
-                                color = colors.textPrimary
-                            )
-                        }
-                        RadioButton(
-                            selected = blockType == BlockType.DURATION,
-                            onClick = { blockType = BlockType.DURATION },
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    if (blockType == BlockType.DURATION) {
-                        AppText(
-                            text = "$durationMinutes ${if (durationMinutes == 1) "minute" else "minutes"}",
-                            style = AppTextStyle.Body,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.textPrimary
-                        )
-                        Slider(
-                            value = durationMinutes.toFloat(),
-                            onValueChange = { newValue ->
-                                durationMinutes = newValue.toInt()
-                            },
-                            valueRange = 5f..60f,
-                            steps = 10,
-                            colors = SliderDefaults.colors(
-                                thumbColor = colors.success,
-                                activeTrackColor = colors.success,
-                                inactiveTrackColor = colors.textSecondary.copy(alpha = 0.3f)
-                            )
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            listOf(5, 10, 15, 30, 45, 60).forEach { minutes ->
-                                FilterChip(
-                                    selected = durationMinutes == minutes,
-                                    onClick = { durationMinutes = minutes },
-                                    label = {
-                                        AppText(
-                                            text = "${minutes}m",
-                                            style = AppTextStyle.Label,
-                                            color = if (durationMinutes == minutes) colors.textPrimary else colors.textSecondary
-                                        )
-                                    },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = colors.success.copy(alpha = 0.2f),
-                                        containerColor = colors.card
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Confirm Button
-            Button(
+            // Add Blocking Rule Button
+            AppPrimaryButton(
+                modifier = Modifier.fillMaxWidth(),
+                text = "Add Blocking Rule",
+                enabled = blockType != null,
                 onClick = {
                     when (blockType) {
                         BlockType.INSTANT -> onBlockInstantly(selectedPackageName, selectedAppName)
-                        BlockType.LAUNCH -> onBlockAfterLaunches(selectedPackageName, selectedAppName, launchCount)
-                        BlockType.DURATION -> onBlockAfterDuration(selectedPackageName, selectedAppName, durationMinutes)
+                        BlockType.LAUNCH -> onBlockAfterLaunches(
+                            selectedPackageName,
+                            selectedAppName,
+                            launchCount
+                        )
+
+                        BlockType.DURATION -> onBlockAfterDuration(
+                            selectedPackageName,
+                            selectedAppName,
+                            durationMinutes
+                        )
+
                         null -> {}
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                enabled = blockType != null,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.success
-                ),
-                shape = MaterialTheme.shapes.small
+                }
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+private fun RadioCard(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
+                Color(0xFFEADDFF) // Primary container
+            } else {
+                Color(0xFFFFFFFF) // White
+            }
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 2.dp,
+            color = if (isSelected) {
+                Color(0xFF6750A4) // Primary
+            } else {
+                Color(0xFFE0E0E0) // Outline variant
+            }
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 2.dp else 0.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp, 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = if (isSelected) Color(0xFF6750A4) else Color(0xFF1C1B1F)
+                )
                 AppText(
-                    text = "Add Blocking Rule",
+                    text = title,
                     style = AppTextStyle.Body,
-                    fontWeight = FontWeight.Medium,
-                    color = colors.textPrimary
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isSelected) Color(0xFF21005D) else Color(0xFF1C1B1F)
                 )
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
+
+            // Radio Indicator
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(
+                        if (isSelected) Color(0xFF6750A4) else Color.Transparent,
+                        shape = androidx.compose.foundation.shape.CircleShape
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = if (isSelected) Color(0xFF6750A4) else Color(0xFF79747E),
+                        shape = androidx.compose.foundation.shape.CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(
+                                Color(0xFFEADDFF),
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            )
+                    )
+                }
+            }
         }
     }
 }
@@ -813,7 +810,6 @@ private fun AddBlockingRuleBottomSheet(
 private fun AllAppsTab(
     onAppSelected: (String, String) -> Unit
 ) {
-    val colors = LocalAppColors.current ?: return
     val context = LocalContext.current
 
     val installedApps = remember { com.app.screentime.blocking.component.getInstalledApps(context) }
@@ -834,14 +830,56 @@ private fun AllAppsTab(
         modifier = Modifier.fillMaxSize()
     ) {
         // Search bar
-        GlassSearchBar(
-            query = searchQuery,
-            onQueryChange = { searchQuery = it },
-            placeholder = "Search apps...",
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .background(
+                        Color(0xFFF8F9FA),
+                        shape = RoundedCornerShape(9999.dp)
+                    )
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = Color(0xFF49454F)
+                )
+                BasicTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.weight(1f),
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        fontSize = 16.sp,
+                        color = Color(0xFF1C1B1F)
+                    ),
+                    decorationBox = { innerTextField ->
+                        if (searchQuery.isEmpty()) {
+                            AppText(
+                                text = "Search apps...",
+                                style = AppTextStyle.Body,
+                                color = Color(0xFF49454F)
+                            )
+                        }
+                        innerTextField()
+                    }
+                )
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = Color(0xFF49454F)
+                )
+            }
+        }
 
         // Apps list
         if (filteredApps.isEmpty()) {
@@ -854,56 +892,49 @@ private fun AllAppsTab(
                 AppText(
                     text = "No apps found",
                     style = AppTextStyle.Body,
-                    color = colors.textMuted,
+                    color = Color(0xFF49454F),
                     textAlign = TextAlign.Center
                 )
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(
                     items = filteredApps,
                     key = { it.packageName }
                 ) { app ->
-                    Card(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(66.dp)
                             .clickable {
                                 onAppSelected(app.packageName, app.appName)
-                            },
-                        colors = CardDefaults.cardColors(
-                            containerColor = colors.card
-                        ),
-                        shape = MaterialTheme.shapes.small
+                            }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            AppIcon(
-                                appInfo = app.applicationInfo,
-                                size = 40.dp,
-                                modifier = Modifier.size(40.dp)
-                            )
-                            AppText(
-                                text = app.appName,
-                                style = AppTextStyle.Body,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.textPrimary,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Icon(
-                                imageVector = Icons.Default.ArrowForward,
-                                contentDescription = null,
-                                tint = colors.textMuted,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        AppIcon(
+                            appInfo = app.applicationInfo,
+                            size = 48.dp,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        AppText(
+                            text = app.appName,
+                            style = AppTextStyle.Body,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF1C1B1F),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = null,
+                            tint = Color(0xFF79747E),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
@@ -917,67 +948,122 @@ private fun PermissionScreenContent(
     hasAccessibilityPermission: Boolean,
     hasOverlayPermission: Boolean,
     onAccessibilityPermissionClick: () -> Unit,
-    onOverlayPermissionClick: () -> Unit
+    onOverlayPermissionClick: () -> Unit,
+    onContinue: () -> Unit = {}
 ) {
     val colors = LocalAppColors.current ?: return
+    val allPermissionsGranted = hasAccessibilityPermission && hasOverlayPermission
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(colors.background)
+            .background(Color(0xFFFFFFFF)) // White background
             .padding(24.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Icon
-            Icon(
-                imageVector = Icons.Default.Security,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = colors.success
-            )
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Hero Icon with gradient background
+            Box(
+                modifier = Modifier
+                    .size(96.dp)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF6750A4), // Primary purple
+                                Color(0xFF8B7AC7)  // Lighter purple
+                            )
+                        ),
+                        shape = RoundedCornerShape(28.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Security,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Title
             AppText(
                 text = "App Blocking Permissions",
                 style = AppTextStyle.Title,
                 fontWeight = FontWeight.Bold,
-                color = colors.textPrimary,
+                color = Color(0xFF1C1B1F),
                 textAlign = TextAlign.Center
             )
 
-            // Description
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Subtitle
             AppText(
-                text = "To enable app blocking, we need the following permissions:",
+                text = "To enable app blocking, we need the following permissions to ensure your focus is protected.",
                 style = AppTextStyle.Body,
-                color = colors.textSecondary,
+                color = Color(0xFF49454F),
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
-            // Accessibility Permission Card
-            PermissionCard(
-                title = "Accessibility Service",
-                description = "Required to detect app launches and usage",
-                isGranted = hasAccessibilityPermission,
-                icon = Icons.Default.Accessibility,
-                onClick = onAccessibilityPermissionClick
-            )
+            // Permission Cards
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Accessibility Permission Card (Purple gradient)
+                PermissionCard(
+                    title = "Accessibility Service",
+                    description = "Required to detect app launches and usage.",
+                    isGranted = hasAccessibilityPermission,
+                    icon = Icons.Default.Accessibility,
+                    onClick = onAccessibilityPermissionClick,
+                    gradientColors = listOf(
+                        Color(0x147F378B), // rgba(103, 80, 164, 0.08)
+                        Color(0x1E8B7AC7)  // rgba(139, 122, 199, 0.12)
+                    ),
+                    borderColor = Color(0x337F378B), // rgba(103, 80, 164, 0.2)
+                    iconGradient = Brush.linearGradient(
+                        colors = listOf(Color(0xFF6750A4), Color(0xFF8B7AC7))
+                    )
+                )
 
-            // Overlay Permission Card
-            PermissionCard(
-                title = "Display Over Other Apps",
-                description = "Required to show blocking overlay when limits are exceeded",
-                isGranted = hasOverlayPermission,
-                icon = Icons.Default.Layers,
-                onClick = onOverlayPermissionClick
-            )
+                // Overlay Permission Card (Blue gradient)
+                PermissionCard(
+                    title = "Display Over Other Apps",
+                    description = "Required to show blocking overlay when limits are exceeded.",
+                    isGranted = hasOverlayPermission,
+                    icon = Icons.Default.Layers,
+                    onClick = onOverlayPermissionClick,
+                    gradientColors = listOf(
+                        Color(0x140EA5E9), // rgba(14, 165, 233, 0.08)
+                        Color(0x1E3B82F6)  // rgba(59, 130, 246, 0.12)
+                    ),
+                    borderColor = Color(0x330EA5E9), // rgba(14, 165, 233, 0.2)
+                    iconGradient = Brush.linearGradient(
+                        colors = listOf(Color(0xFF0EA5E9), Color(0xFF3B82F6))
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Continue Button
+            if (allPermissionsGranted) {
+                com.app.screentime.ui.atom.AppPrimaryButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Continue",
+                    onClick = onContinue
+                )
+            }
         }
     }
 }
@@ -988,62 +1074,74 @@ private fun PermissionCard(
     description: String,
     isGranted: Boolean,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    gradientColors: List<Color>,
+    borderColor: Color,
+    iconGradient: Brush
 ) {
-    val colors = LocalAppColors.current ?: return
-
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isGranted) colors.success.copy(alpha = 0.1f) else colors.card
+            containerColor = Color.Transparent
         ),
-        shape = MaterialTheme.shapes.medium,
-        onClick = onClick
+        border = androidx.compose.foundation.BorderStroke(2.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(20.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = if (isGranted) colors.success else colors.textMuted
-            )
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                AppText(
-                    text = title,
-                    style = AppTextStyle.Body,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.textPrimary
-                )
-                AppText(
-                    text = description,
-                    style = AppTextStyle.Label,
-                    color = colors.textMuted
-                )
-            }
+                // Icon with gradient background
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(
+                            iconGradient,
+                            shape = RoundedCornerShape(16.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                        tint = Color.White
+                    )
+                }
 
-            if (isGranted) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Granted",
-                    modifier = Modifier.size(24.dp),
-                    tint = colors.success
-                )
-            } else {
+                // Content
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    AppText(
+                        text = title,
+                        style = AppTextStyle.Body,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1C1B1F)
+                    )
+                    AppText(
+                        text = description,
+                        style = AppTextStyle.Label,
+                        color = Color(0xFF49454F)
+                    )
+                }
+
+                // Arrow forward icon
                 Icon(
                     imageVector = Icons.Default.ArrowForward,
-                    contentDescription = "Not granted",
+                    contentDescription = "Action",
                     modifier = Modifier.size(24.dp),
-                    tint = colors.textMuted
+                    tint = Color(0xFF49454F)
                 )
             }
         }

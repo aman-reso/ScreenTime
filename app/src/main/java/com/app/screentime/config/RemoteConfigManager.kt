@@ -16,7 +16,7 @@ class RemoteConfigManager @Inject constructor() {
     companion object {
         private const val TAG = "RemoteConfigManager"
         private const val KEY_BASE_URL = "api_base_url"
-        private const val DEFAULT_BASE_URL = "https://fc7088368e89.ngrok-free.app"
+        private const val DEFAULT_BASE_URL = "https://3c5bcc423d9e.ngrok-free.app"
 
         // Cache expiration time (in seconds)
         private const val CACHE_EXPIRATION_SECONDS = 3600L // 1 hour

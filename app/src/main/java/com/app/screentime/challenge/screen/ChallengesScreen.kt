@@ -108,19 +108,47 @@ fun ChallengeDetailScreen(
     viewModel: ChallengeViewModel = hiltViewModel()
 ) {
     val colors = LocalAppColors.current ?: return
+    val uiState by viewModel.uiState.collectAsState()
     val challengeIdInt = challengeId.toIntOrNull()
 
-    // Use mock data directly
-    val mockData = com.app.screentime.challenge.viewmodel.MockChallengeData
-    val selectedChallenge = challengeIdInt?.let { id ->
-        mockData.getMockChallenges().find { it.id == id }
+    // Load challenge details when screen opens
+    LaunchedEffect(challengeIdInt) {
+        challengeIdInt?.let { id ->
+            viewModel.loadChallengeDetails(id)
+        }
     }
-    val challengeDetails = challengeIdInt?.let { id ->
-        mockData.getMockChallengeDetails(id)
+
+    // Find challenge from the list or use details
+    val selectedChallenge = remember(uiState.challenges, uiState.challengeDetails, challengeIdInt) {
+        challengeIdInt?.let { id ->
+            uiState.challenges.find { it.id == id }
+                ?: uiState.challengeDetails?.let { details ->
+                    // Convert ChallengeDetails to Challenge if not in list
+                    Challenge(
+                        id = details.id,
+                        title = details.title,
+                        description = details.description,
+                        reward = details.reward,
+                        prize = details.prize,
+                        rules = details.rules,
+                        displayType = null,
+                        tags = null,
+                        tag = details.tag,
+                        sponsor = details.sponsor,
+                        startTime = details.startTime,
+                        endTime = details.endTime,
+                        thumbnail = details.thumbnail,
+                        packageNames = details.packageNames,
+                        participantCount = details.participantCount,
+                        hasJoined = false // Will be determined from active challenges
+                    )
+                }
+        }
     }
-    val challengeRankings = challengeIdInt?.let { id ->
-        mockData.getMockChallengeRankings(id)
-    }
+
+    val challengeDetails = uiState.challengeDetails
+    val challengeRankings = uiState.challengeRankings
+    val isJoining = challengeIdInt?.let { uiState.joiningChallengeIds.contains(it) } ?: false
 
     Box(
         modifier = modifier
@@ -132,6 +160,24 @@ fun ChallengeDetailScreen(
                 ChallengeErrorState(
                     message = "Invalid challenge ID.",
                     onRetry = { navController?.popBackStack() }
+                )
+            }
+
+            uiState.isLoadingDetails -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AppLoader()
+                }
+            }
+
+            uiState.detailsError != null && selectedChallenge == null -> {
+                ChallengeErrorState(
+                    message = uiState.detailsError ?: "Failed to load challenge details.",
+                    onRetry = {
+                        challengeIdInt.let { viewModel.loadChallengeDetails(it) }
+                    }
                 )
             }
 
@@ -147,10 +193,20 @@ fun ChallengeDetailScreen(
                     challenge = selectedChallenge,
                     challengeDetails = challengeDetails,
                     challengeRankings = challengeRankings,
-                    isJoining = false,
-                    onRefresh = { /* No-op for mock data */ },
+                    isJoining = isJoining,
+                    onRefresh = {
+                        challengeIdInt.let { viewModel.loadChallengeDetails(it) }
+                    },
                     onJoinChallenge = {
-                        challengeIdInt.let { viewModel.joinChallenge(it) }
+                        challengeIdInt.let { id ->
+                            viewModel.joinChallenge(
+                                id,
+                                onSuccess = {
+                                    // Refresh details after joining
+                                    viewModel.loadChallengeDetails(id)
+                                }
+                            )
+                        }
                     },
                     navController = navController
                 )
@@ -208,19 +264,23 @@ private fun ChallengeContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
                         .height(320.dp)
                 ) {
                     if (challenge.thumbnail != null) {
                         AsyncImage(
                             model = challenge.thumbnail,
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(16.dp)),
                             contentScale = ContentScale.Crop
                         )
                     } else {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .clip(RoundedCornerShape(16.dp))
                                 .background(colors.card)
                         )
                     }
@@ -623,36 +683,19 @@ private fun ChallengeContent(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Share and More options buttons
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                // Share button
+                IconButton(
+                    onClick = { /* Share */ },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color(0xFFF3F4F6))
+                        .size(40.dp)
                 ) {
-                    IconButton(
-                        onClick = { /* Share */ },
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(Color(0xFFF3F4F6))
-                            .size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Share",
-                            tint = Color(0xFF1F2937)
-                        )
-                    }
-                    IconButton(
-                        onClick = { /* More options */ },
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(Color(0xFFF3F4F6))
-                            .size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More options",
-                            tint = Color(0xFF1F2937)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share",
+                        tint = Color(0xFF1F2937)
+                    )
                 }
             }
         }

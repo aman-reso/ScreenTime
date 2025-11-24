@@ -48,7 +48,7 @@ class ScreenTimeApplication : Application(), Configuration.Provider {
                 FirebaseCrashlytics.getInstance().log("Firebase initialized in background")
                 
                 // Fetch remote config
-                remoteConfigManager.fetch()
+               // remoteConfigManager.fetch()
                 
                 loginUseCase.registerDevice()
             } catch (e: Exception) {

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -221,13 +222,16 @@ private fun ChallengesTab(
     viewModel: ChallengeViewModel,
 ) {
     val colors = LocalAppColors.current ?: return
-    val mockData = com.app.screentime.challenge.viewmodel.MockChallengeData
 
-    // Use mock data for now
-    val featuredChallenge = mockData.getFeaturedChallenge()
-    val trendingChallenges = mockData.getTrendingChallenges()
-    val specialEvents = mockData.getSpecialEvents()
-    val quickJoinChallenges = mockData.getQuickJoinChallenges()
+    // Group challenges by displayType from API
+    val challengesByType = remember(uiState.challenges) {
+        uiState.challenges.groupBy { it.displayType ?: "FEATURE" }
+    }
+    
+    val featuredChallenge = challengesByType["FEATURE"]?.firstOrNull()
+    val trendingChallenges = challengesByType["TRENDING"] ?: emptyList()
+    val specialEvents = challengesByType["SPECIAL"] ?: emptyList()
+    val quickJoinChallenges = challengesByType["QUICK_JOIN"] ?: emptyList()
 
     var selectedFilter by remember { mutableStateOf(0) }
     val filters = listOf("All", "Fitness", "Mindfulness", "Coding")
@@ -289,10 +293,12 @@ private fun ChallengesTab(
         if (trendingChallenges.isNotEmpty()) {
             item {
                 Column(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                    modifier = Modifier.padding(vertical = 16.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -311,14 +317,19 @@ private fun ChallengesTab(
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
-                    Row(
+                    LazyRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(horizontal = 20.dp)
                     ) {
-                        trendingChallenges.forEach { challenge ->
+                        items(
+                            items = trendingChallenges,
+                            key = { it.id }
+                        ) { challenge ->
                             TrendingChallengeCard(
                                 challenge = challenge,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier
+                                    .fillParentMaxWidth(0.75f), // 75% of screen width
                                 onJoin = {
                                     navController?.navigate(
                                         Screen.ChallengeDetail.createRoute(challenge.id.toString())
@@ -534,7 +545,9 @@ private fun FeaturedChallengeCard(
                     text = challenge.title,
                     style = AppTextStyle.SubTitle,
                     fontWeight = FontWeight.Bold,
-                    color = colors.textPrimary
+                    color = colors.textPrimary,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -543,7 +556,9 @@ private fun FeaturedChallengeCard(
                 AppText(
                     text = challenge.description,
                     style = AppTextStyle.Body,
-                    color = colors.textSecondary
+                    color = colors.textSecondary,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -590,22 +605,6 @@ private fun TrendingChallengeCard(
                     )
                 }
 
-                // Tag overlay
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(8.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White)
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    AppText(
-                        text = "7 Days Left",
-                        style = AppTextStyle.Caption,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
-                    )
-                }
             }
 
             // Content
@@ -618,7 +617,9 @@ private fun TrendingChallengeCard(
                     text = challenge.title,
                     style = AppTextStyle.Body,
                     fontWeight = FontWeight.Bold,
-                    color = colors.textPrimary
+                    color = colors.textPrimary,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -626,7 +627,9 @@ private fun TrendingChallengeCard(
                 AppText(
                     text = challenge.description,
                     style = AppTextStyle.Caption,
-                    color = colors.textSecondary
+                    color = colors.textSecondary,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -663,12 +666,13 @@ private fun TrendingChallengeCard(
                     }
 
                     // Plus button
-                    IconButton(
-                        onClick = onJoin,
+                    Box(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
                             .background(colors.textPrimary)
+                            .clickable(onClick = onJoin),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -733,7 +737,9 @@ private fun SpecialEventCard(
                     text = challenge.title,
                     style = AppTextStyle.SubTitle,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -742,7 +748,9 @@ private fun SpecialEventCard(
                 AppText(
                     text = challenge.description,
                     style = AppTextStyle.Body,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = Color.White.copy(alpha = 0.9f),
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -845,13 +853,17 @@ private fun QuickJoinCard(
                         text = challenge.title,
                         style = AppTextStyle.Body,
                         fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     AppText(
                         text = challenge.description,
                         style = AppTextStyle.Caption,
-                        color = colors.textSecondary
+                        color = colors.textSecondary,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
             }
@@ -1007,52 +1019,48 @@ private fun JoinedChallengesTab(
 
 @Composable
 private fun Header(
-    onRefresh: () -> Unit, useMockData: Boolean, onToggleMockData: () -> Unit
+    onRefresh: () -> Unit
 ) {
     val colors = LocalAppColors.current ?: return
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        color = colors.success.copy(alpha = 0.15f),
+                        shape = MaterialTheme.shapes.medium
+                    ), contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(
-                            color = colors.success.copy(alpha = 0.15f),
-                            shape = MaterialTheme.shapes.medium
-                        ), contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.EmojiEvents,
-                        contentDescription = null,
-                        tint = colors.success,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-        Column {
-            AppText(
-                text = "Challenges",
-                style = AppTextStyle.Title,
-                fontWeight = FontWeight.Bold,
-                color = colors.textPrimary
-            )
-            AppText(
-                text = "Join a challenge to improve your ranking",
-                style = AppTextStyle.Label,
-                color = colors.textSecondary
-            )
-                }
+                Icon(
+                    imageVector = Icons.Default.EmojiEvents,
+                    contentDescription = null,
+                    tint = colors.success,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Column {
+                AppText(
+                    text = "Challenges",
+                    style = AppTextStyle.Title,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
+                )
+                AppText(
+                    text = "Join a challenge to improve your ranking",
+                    style = AppTextStyle.Label,
+                    color = colors.textSecondary
+                )
+            }
         }
         IconButton(onClick = onRefresh) {
             Icon(
@@ -1060,20 +1068,6 @@ private fun Header(
                 contentDescription = "Refresh",
                 tint = colors.success
             )
-            }
-        }
-
-        // Mock Data Toggle
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AppText(
-                text = "Use Mock Data", style = AppTextStyle.Label, color = colors.textSecondary
-            )
-            Switch(
-                checked = useMockData, onCheckedChange = { onToggleMockData() })
         }
     }
 }
@@ -1302,7 +1296,7 @@ private fun CurrentChallengeCardHorizontal(
                 style = AppTextStyle.SubTitle,
                 fontWeight = FontWeight.Bold,
                         color = Color.Black,
-                        maxLines = 2,
+                        maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
 
@@ -1619,7 +1613,7 @@ private fun CurrentChallengeCardOverlay(
                     style = AppTextStyle.SubTitle,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
 
@@ -2034,7 +2028,7 @@ private fun CurrentChallengeCardGradient(
                 style = AppTextStyle.SubTitle,
                 fontWeight = FontWeight.Bold,
                         color = colors.textPrimary,
-                        maxLines = 2,
+                        maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
 

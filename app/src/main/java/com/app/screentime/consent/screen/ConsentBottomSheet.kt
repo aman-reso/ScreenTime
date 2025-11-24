@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.consent.viewmodel.ConsentViewModel
 import com.app.screentime.ui.atom.AppLoader
+import com.app.screentime.ui.atom.AppPrimaryButton
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
 
@@ -178,7 +179,7 @@ fun ConsentBottomSheetContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Accept button
-            Button(
+            AppPrimaryButton(
                 onClick = {
                     // Get final consent values (mandatory items will always be true)
                     val finalValues = consentItems.mapIndexed { index, item ->
@@ -190,33 +191,12 @@ fun ConsentBottomSheetContent(
                     }.toMap()
                     viewModel.submitConsents(finalValues)
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth(),
+                text = "Accept",
                 enabled = !uiState.isLoading && !uiState.isSubmitting && consentItems.isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF6750A4), // Solid purple
-                    contentColor = Color.White,
-                    disabledContainerColor = Color(0xFFE0E0E0),
-                    disabledContentColor = Color(0xFF9E9E9E)
-                ),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                if (uiState.isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                AppText(
-                    text = if (uiState.isSubmitting) "Submitting..." else "Accept",
-                    style = AppTextStyle.Body,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
+                isLoading = uiState.isSubmitting,
+                loadingText = "Submitting..."
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
         }

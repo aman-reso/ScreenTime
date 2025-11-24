@@ -158,6 +158,7 @@ fun ScreenTimeNavigation(
                     modifier = Modifier
                         .background(appColors.background)
                         .padding(bottom = paddingValues.calculateBottomPadding()),
+                    navController = navController
                 )
             }
 

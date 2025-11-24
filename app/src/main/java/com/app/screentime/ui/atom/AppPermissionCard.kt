@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.app.screentime.R
+import com.app.screentime.ui.atom.AppPrimaryButton
 import com.app.screentime.ui.atom.AppText
 import com.app.screentime.ui.atom.AppTextStyle
 import com.app.screentime.ui.theme.LocalAppColors
@@ -357,24 +358,11 @@ private fun BottomBar(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Allow Access Button
-            Button(
+            AppPrimaryButton(
                 onClick = onAllowClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = primaryColor,
-                    contentColor = onPrimaryColor
-                ),
-                shape = RoundedCornerShape(9999.dp) // Full rounded
-            ) {
-                AppText(
-                    text = "Allow Access",
-                    style = AppTextStyle.Body,
-                    fontWeight = FontWeight.Medium,
-                    color = onPrimaryColor
-                )
-            }
+                modifier = Modifier.fillMaxWidth(),
+                text = "Allow Access"
+            )
 
             // Legal Links
             Row(

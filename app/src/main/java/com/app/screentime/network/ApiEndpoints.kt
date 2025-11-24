@@ -10,7 +10,7 @@ object ApiEndpoints {
 
     // Base URL will be fetched from Firebase Remote Config
     // This is a fallback value
-    private const val DEFAULT_BASE_URL = "https://7d76ddc7b74f.ngrok-free.app"
+    private const val DEFAULT_BASE_URL = "https://344cdbb499c9.ngrok-free.app"
 
     // Lazy initialization of RemoteConfigManager
     private var remoteConfigManager: RemoteConfigManager? = null
