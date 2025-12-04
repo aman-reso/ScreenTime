@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -11,20 +12,20 @@ import javax.inject.Singleton
  * Network utility functions
  */
 @Singleton
-class NetworkUtils @Inject constructor(
-    private val context: Context
-) {
-    
+class NetworkUtils @Inject constructor(@ApplicationContext private val context: Context) {
+
     /**
      * Check if device is connected to internet
      */
     fun isNetworkAvailable(): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val network = connectivityManager.activeNetwork ?: return false
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-            
+            val networkCapabilities =
+                connectivityManager.getNetworkCapabilities(network) ?: return false
+
             when {
                 networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
                 networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
@@ -37,16 +38,18 @@ class NetworkUtils @Inject constructor(
             networkInfo?.isConnected == true
         }
     }
-    
+
     /**
      * Check if device is connected to WiFi
      */
     fun isWifiConnected(): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val network = connectivityManager.activeNetwork ?: return false
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+            val networkCapabilities =
+                connectivityManager.getNetworkCapabilities(network) ?: return false
             networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
         } else {
             @Suppress("DEPRECATION")
@@ -54,16 +57,18 @@ class NetworkUtils @Inject constructor(
             networkInfo?.type == ConnectivityManager.TYPE_WIFI && networkInfo.isConnected
         }
     }
-    
+
     /**
      * Check if device is connected to mobile data
      */
     fun isMobileDataConnected(): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val network = connectivityManager.activeNetwork ?: return false
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+            val networkCapabilities =
+                connectivityManager.getNetworkCapabilities(network) ?: return false
             networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
         } else {
             @Suppress("DEPRECATION")
@@ -71,7 +76,7 @@ class NetworkUtils @Inject constructor(
             networkInfo?.type == ConnectivityManager.TYPE_MOBILE && networkInfo.isConnected
         }
     }
-    
+
     /**
      * Get network type as string
      */

@@ -27,17 +27,17 @@ interface ChallengeService {
     /**
      * Get challenge details by ID (auth required)
      */
-    suspend fun getChallengeDetails(challengeId: Int): Result<ApiResponse<ChallengeDetails>>
+    suspend fun getChallengeDetails(challengeId: String): Result<ApiResponse<ChallengeDetails>>
     
     /**
      * Join a challenge (auth required)
      */
-    suspend fun joinChallenge(challengeId: Int): Result<ApiResponse<JoinChallengeResponse>>
+    suspend fun joinChallenge(challengeId: String): Result<ApiResponse<JoinChallengeResponse>>
     
     /**
      * Get challenge rankings (auth required)
      */
-    suspend fun getChallengeRankings(challengeId: Int): Result<ApiResponse<ChallengeRankingsResponse>>
+    suspend fun getChallengeRankings(challengeId: String): Result<ApiResponse<ChallengeRankingsResponse>>
     
     /**
      * Submit challenge stats (auth required)
@@ -52,5 +52,5 @@ interface ChallengeService {
     /**
      * Get last sync time for a challenge (auth required)
      */
-    suspend fun getChallengeLastSyncTime(challengeId: Int): Result<ApiResponse<ChallengeLastSyncResponse>>
+    suspend fun getChallengeLastSyncTime(challengeId: String): Result<ApiResponse<ChallengeLastSyncResponse>>
 }

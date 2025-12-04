@@ -2,49 +2,84 @@ package com.app.screentime.appdetail.screen
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.screentime.R
 import com.app.screentime.appdetail.viewmodel.SingleAppUsageDetailViewModel
+import com.app.screentime.blocking.component.AddBlockingRuleBottomSheet
 import com.app.screentime.blocking.manager.AppBlockManager
-import com.app.screentime.blocking.screen.AddBlockingRuleBottomSheet
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.data.uiModel.WeeklyDataReport
-import com.app.screentime.ui.atom.AppPrimaryButton
-import com.app.screentime.record.repository.formatDuration
+import com.app.screentime.landing.component.NetworkCard
 import com.app.screentime.record.repository.toReadableDataSize
-import com.app.screentime.ui.atom.AppIcon
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.atom.WeeklyUsageChart
-import com.app.screentime.ui.theme.LocalAppColors
+
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSLazyColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.cardquickaction.ODSCardQuickAction
+import com.telekom.odsystem.organisms.cardquickaction.ODSCardQuickActionProps
+import com.telekom.odsystem.organisms.cardquickaction.ODSCardQuickActionSize
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
+import com.telekom.odsystem.tokens.tokens.ODSTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,9 +87,9 @@ import kotlinx.coroutines.launch
 fun SingleAppUsageDetailScreen(
     packageName: String,
     navController: NavController,
-    viewModel: SingleAppUsageDetailViewModel = hiltViewModel()
+    viewModel: SingleAppUsageDetailViewModel = hiltViewModel(),
+    scheme: ODSTheme = neutralScheme
 ) {
-    val colors = LocalAppColors.current ?: return
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
@@ -135,38 +170,37 @@ fun SingleAppUsageDetailScreen(
             )
         }
     }
-    
+
     var selectedDayIndex by remember { mutableStateOf<Int?>(null) }
 
     // Calculate network usage
     val totalWifiData = uiState.weeklyUsageData.sumOf { it.wifiDataUsage }
     val totalCellularData = uiState.weeklyUsageData.sumOf { it.mobileDataUsage }
     val totalData = totalWifiData + totalCellularData
-    val wifiDataGB = totalWifiData / (1024.0 * 1024.0 * 1024.0)
-    val cellularDataGB = totalCellularData / (1024.0 * 1024.0 * 1024.0)
-    val totalDataGB = totalData / (1024.0 * 1024.0 * 1024.0)
-    
+    val wifiDataGB = totalWifiData / (1024L * 1024L * 1024L)
+    val cellularDataGB = totalCellularData / (1024L * 1024L * 1024L)
+    val totalDataGB = totalData / (1024L * 1024L * 1024L)
+
     // Bottom sheet states
     var showBlockBottomSheet by remember { mutableStateOf(false) }
     var showTimerBottomSheet by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.background)
+    ODSBox(
+        modifier = Modifier.fillMaxSize(),
+        background = listOf(ODSColorModel(scheme.basicBackground))
     ) {
         when {
             uiState.isLoading -> {
-                Box(
+                ODSBox(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = colors.success)
+                    CircularProgressIndicator(color = scheme.functionalSuccessStandard.getColor())
                 }
             }
 
             uiState.error != null -> {
-                LazyColumn(
+                ODSLazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(24.dp),
@@ -174,20 +208,22 @@ fun SingleAppUsageDetailScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     item {
-                        Column(
+                        ODSColumn(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Error,
-                                contentDescription = null,
-                                tint = colors.error,
-                                modifier = Modifier.size(48.dp)
+                            ODSIcon(
+                                iconModel = ODSIconModel(
+                                    imageVector = Icons.Default.Error,
+                                    tint = scheme.functionalDestructiveStandard
+                                ),
+                                width = 48.dp,
+                                height = 48.dp
                             )
-                            AppText(
+                            ODSText(
                                 text = uiState.error ?: "Error loading data",
-                                style = AppTextStyle.Body,
-                                color = colors.error
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.functionalDestructiveStandard
                             )
                         }
                     }
@@ -195,77 +231,213 @@ fun SingleAppUsageDetailScreen(
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    // Header
-                    item {
-                        HeaderSection(
-                            appName = uiState.appName.ifEmpty { packageName },
-                            onBackClick = { navController.popBackStack() },
-                            onMoreClick = { /* TODO */ }
-                        )
-                    }
+                val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+                val isExpandedScreen = windowSizeClass.isWidthAtLeastBreakpoint(840)
 
-                    // Hero Card
-                    item {
-                        HeroCard(
-                            todayUsage = todayUsageMinutes,
-                            weeklyChange = weeklyChangePercent
-                        )
-                    }
-
-                    // Weekly Chart
-                    if (weeklyReports.isNotEmpty()) {
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(24.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = colors.card
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                            ) {
-                                WeeklyUsageChart(
-                                    weeklyReports = weeklyReports,
-                                    selectedDayIndex = selectedDayIndex,
-                                    onBarClick = { index ->
-                                        selectedDayIndex = if (selectedDayIndex == index) null else index
-                                    },
-                                    modifier = Modifier.padding(20.dp)
+                if (isExpandedScreen) {
+                    // Two-pane layout: Info on left, Graph on right
+                    ODSRow(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp),
+                        background = listOf(ODSColorModel(scheme.basicBackground))
+                    ) {
+                        // Left pane: All information (50% width)
+                        ODSLazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            padding = ODSPadding(horizontal = 8.dp)
+                        ) {
+                            // Header
+                            item {
+                                HeaderSection(
+                                    appName = uiState.appName.ifEmpty { packageName },
+                                    onBackClick = { navController.popBackStack() },
+                                    onMoreClick = { /* TODO */ },
+                                    scheme = scheme
                                 )
+                            }
+
+                            // Notification Card
+                            item {
+                                ODSInlineNotification(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    scheme = scheme,
+                                    props = ODSInlineNotificationProps(
+                                        mode = ODSInlineNotificationMode.INFORMATIVE,
+                                        title = stringResource(R.string.usage_insight),
+                                        text = stringResource(R.string.usage_insight_description),
+                                        showCloseButton = true
+                                    ),
+                                    onDismiss = {
+                                        // Handle dismiss if needed
+                                    }
+                                )
+                            }
+
+                            item {
+                                QuickActionsCard(
+                                    onLaunchClick = { launchApp(context, packageName) },
+                                    onSetTimerClick = { showTimerBottomSheet = true },
+                                    onBlockClick = { showBlockBottomSheet = true },
+                                    onSettingsClick = { openAppSettings(context, packageName) },
+                                    scheme = scheme
+                                )
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3 * 3))
+                            }
+                        }
+
+                        // Divider
+                        ODSBox(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .fillMaxHeight(),
+                            background = listOf(ODSColorModel(scheme.basicStrokeSubtle))
+                        ) {}
+
+                        // Right pane: Graph and Network Card (50% width)
+                        ODSLazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            padding = ODSPadding(horizontal = 8.dp)
+                        ) {
+                            item {
+                                ODSText(
+                                    text = stringResource(R.string.activity),
+                                    style = DSTextStyles.titleS,
+                                    color = scheme.basicText
+                                )
+                            }
+                            if (weeklyReports.isNotEmpty()) {
+//                                item {
+//                                    WeeklyUsageChart(
+//                                        weeklyReports = weeklyReports,
+//                                        selectedDayIndex = selectedDayIndex,
+//                                        onBarClick = { index ->
+//                                            selectedDayIndex =
+//                                                if (selectedDayIndex == index) null else index
+//                                        },
+//                                        scheme = scheme
+//                                    )
+//                                }
+                            } else {
+                                item {
+                                    ODSBox(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        ODSText(
+                                            text = stringResource(R.string.no_data_available),
+                                            style = DSTextStyles.bodyMRegular,
+                                            color = scheme.basicTextRecessive
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (totalData > 0) {
+                                item {
+                                    NetworkCard(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        wifiDataUsage = wifiDataGB,
+                                        wifiDataUsageDisplay = wifiDataGB.toReadableDataSize(),
+                                        cellularDataUsage = cellularDataGB,
+                                        cellularDataUsageDisplay = cellularDataGB.toReadableDataSize(),
+                                        totalDataDisplayName = totalDataGB.toReadableDataSize()
+                                    )
+                                }
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3 * 3))
                             }
                         }
                     }
-
-                    // Quick Actions
-                    item {
-                        QuickActionsCard(
-                            onLaunchClick = { launchApp(context, packageName) },
-                            onSetTimerClick = { showTimerBottomSheet = true },
-                            onBlockClick = { showBlockBottomSheet = true },
-                            onSettingsClick = { openAppSettings(context, packageName) }
-                        )
-                    }
-
-                    // Network Usage
-                    if (totalData > 0) {
+                } else {
+                    // Single pane: All content in one column
+                    ODSLazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        padding = ODSPadding(horizontal = 8.dp)
+                    ) {
+                        // Header
                         item {
-                            NetworkUsageCard(
-                                wifiDataGB = wifiDataGB,
-                                cellularDataGB = cellularDataGB,
-                                totalDataGB = totalDataGB
+                            HeaderSection(
+                                appName = uiState.appName.ifEmpty { packageName },
+                                onBackClick = { navController.popBackStack() },
+                                onMoreClick = { /* TODO */ },
+                                scheme = scheme
                             )
+                        }
+
+                        // Notification Card
+                        item {
+                            ODSInlineNotification(
+                                modifier = Modifier.fillMaxWidth(),
+                                scheme = scheme,
+                                props = ODSInlineNotificationProps(
+                                    mode = ODSInlineNotificationMode.INFORMATIVE,
+                                    title = stringResource(R.string.usage_insight),
+                                    text = stringResource(R.string.usage_insight_description),
+                                    showCloseButton = true
+                                ),
+                                onDismiss = {
+                                    // Handle dismiss if needed
+                                }
+                            )
+                        }
+
+                        if (weeklyReports.isNotEmpty()) {
+//                            item {
+//                                WeeklyUsageChart(
+//                                    weeklyReports = weeklyReports,
+//                                    selectedDayIndex = selectedDayIndex,
+//                                    onBarClick = { index ->
+//                                        selectedDayIndex =
+//                                            if (selectedDayIndex == index) null else index
+//                                    },
+//                                    scheme = scheme
+//                                )
+//                            }
+                        }
+
+                        item {
+                            QuickActionsCard(
+                                onLaunchClick = { launchApp(context, packageName) },
+                                onSetTimerClick = { showTimerBottomSheet = true },
+                                onBlockClick = { showBlockBottomSheet = true },
+                                onSettingsClick = { openAppSettings(context, packageName) },
+                                scheme = scheme
+                            )
+                        }
+
+                        if (totalData > 0) {
+                            item {
+                                NetworkCard(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    wifiDataUsage = wifiDataGB,
+                                    wifiDataUsageDisplay = wifiDataGB.toReadableDataSize(),
+                                    cellularDataUsage = cellularDataGB,
+                                    cellularDataUsageDisplay = cellularDataGB.toReadableDataSize(),
+                                    totalDataDisplayName = totalDataGB.toReadableDataSize()
+                                )
+                            }
+                        }
+                        item {
+                            Spacer(modifier = Modifier.height(DSVariables.spacingComponent3 * 3))
                         }
                     }
                 }
             }
         }
-        
+
         // Block App Bottom Sheet
         if (showBlockBottomSheet) {
             AddBlockingRuleBottomSheet(
@@ -289,10 +461,10 @@ fun SingleAppUsageDetailScreen(
                 onBlockAfterDuration = { pkgName, appName, maxDurationMinutes ->
                     // This will be handled by the blocking system
                     showBlockBottomSheet = false
-                }
+                }, scheme = neutralScheme
             )
         }
-        
+
         // Timer Bottom Sheet
         if (showTimerBottomSheet) {
             TimerBottomSheet(
@@ -312,14 +484,13 @@ fun SingleAppUsageDetailScreen(
 private fun HeaderSection(
     appName: String,
     onBackClick: () -> Unit,
-    onMoreClick: () -> Unit
+    onMoreClick: () -> Unit,
+    scheme: ODSTheme
 ) {
-    val colors = LocalAppColors.current ?: return
 
-    Row(
+    ODSRow(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -327,194 +498,92 @@ private fun HeaderSection(
             onClick = onBackClick,
             modifier = Modifier.size(44.dp)
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = "Back",
-                tint = colors.textSecondary,
-                modifier = Modifier.size(24.dp)
+            ODSIcon(
+                iconModel = ODSIconModel(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    tint = scheme.basicTextRecessive,
+                    contentDescription = "Back"
+                ),
+                width = 24.dp,
+                height = 24.dp
             )
         }
 
-        AppText(
+        ODSText(
             text = appName,
-            style = AppTextStyle.Title,
-            fontWeight = FontWeight.SemiBold,
-            color = colors.textPrimary
+            style = DSTextStyles.titleS,
+            color = scheme.basicText
         )
 
         IconButton(
             onClick = onMoreClick,
             modifier = Modifier.size(44.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.MoreVert,
-                contentDescription = "More",
-                tint = colors.textSecondary,
-                modifier = Modifier.size(24.dp)
+            ODSIcon(
+                iconModel = ODSIconModel(
+                    imageVector = Icons.Default.MoreVert,
+                    tint = scheme.basicTextRecessive,
+                    contentDescription = "More"
+                ),
+                width = 24.dp,
+                height = 24.dp
             )
         }
     }
 }
-
-@Composable
-private fun HeroCard(
-    todayUsage: Int,
-    weeklyChange: Int
-) {
-    val colors = LocalAppColors.current ?: return
-    // Use accent color for primary, create gradient with success color
-    val primaryColor = colors.accent
-    val lightColor = colors.success
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(primaryColor, lightColor)
-                )
-            )
-            .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(28.dp),
-                spotColor = primaryColor.copy(alpha = 0.3f)
-            )
-            .padding(24.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                AppText(
-                    text = "Today's usage",
-                    style = AppTextStyle.Label,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White.copy(alpha = 0.9f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                AppText(
-                    text = "$todayUsage min",
-                    style = AppTextStyle.Title,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier
-                        .background(
-                            color = Color(0x40FFFFFF),
-                            shape = RoundedCornerShape(24.dp)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.TrendingUp,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    AppText(
-                        text = "+$weeklyChange% this week",
-                        style = AppTextStyle.Label,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                }
-            }
-
-            // Decorative icon
-            Icon(
-                imageVector = Icons.Default.AccessTime,
-                contentDescription = null,
-                tint = Color.White.copy(alpha = 0.3f),
-                modifier = Modifier.size(48.dp)
-            )
-        }
-    }
-}
-
 
 @Composable
 private fun QuickActionsCard(
     onLaunchClick: () -> Unit,
     onSetTimerClick: () -> Unit,
     onBlockClick: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    scheme: ODSTheme
 ) {
-    val colors = LocalAppColors.current ?: return
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = colors.card
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ODSColumn(
+        modifier = Modifier
+            .fillMaxWidth(),
+        gap = DSVariables.spacingComponent3
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            AppText(
-                text = "Quick actions",
-                style = AppTextStyle.SubTitle,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.textPrimary
-            )
+        ODSText(
+            text = "Quick actions",
+            style = DSTextStyles.subtitle,
+            color = scheme.basicText
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        ActionCard(
+            modifier = Modifier.weight(1f),
+            icon = Icons.AutoMirrored.Filled.ArrowForward,
+            text = "Launch",
+            onClick = onLaunchClick,
+            scheme = scheme
+        )
 
-            // Action Grid
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Launch
-                ActionCard(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.ArrowForward,
-                    text = "Launch",
-                    onClick = onLaunchClick
-                )
+        ActionCard(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Default.Timer,
+            text = "Set timer",
+            onClick = onSetTimerClick,
+            scheme = scheme
+        )
 
-                // Set timer
-                ActionCard(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Timer,
-                    text = "Set timer",
-                    onClick = onSetTimerClick
-                )
-            }
+        // Block
+        ActionCard(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Default.Block,
+            text = "Block",
+            onClick = onBlockClick,
+            scheme = scheme
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Block
-                ActionCard(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Block,
-                    text = "Block",
-                    onClick = onBlockClick
-                )
-
-                // Settings
-                ActionCard(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Settings,
-                    text = "Settings",
-                    onClick = onSettingsClick
-                )
-            }
-        }
+        ActionCard(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Default.Settings,
+            text = "Settings",
+            onClick = onSettingsClick,
+            scheme = scheme
+        )
     }
 }
 
@@ -523,217 +592,48 @@ private fun ActionCard(
     modifier: Modifier = Modifier,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     text: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    scheme: ODSTheme
 ) {
-    val colors = LocalAppColors.current ?: return
-
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = colors.card
+    ODSCardQuickAction(
+        modifier = modifier,
+        scheme = scheme,
+        props = ODSCardQuickActionProps(
+            size = ODSCardQuickActionSize.SMALL,
+            filled = false
         ),
-        border = androidx.compose.foundation.BorderStroke(2.dp, colors.border),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.accent.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = text,
-                    tint = colors.accent,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            AppText(
-                text = text,
-                style = AppTextStyle.Label,
-                fontWeight = FontWeight.Medium,
-                color = colors.textPrimary
-            )
-        }
-    }
-}
-
-@Composable
-private fun NetworkUsageCard(
-    wifiDataGB: Double,
-    cellularDataGB: Double,
-    totalDataGB: Double
-) {
-    val colors = LocalAppColors.current ?: return
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = colors.card
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            Row(
+        onClick = onClick,
+        contentSlot = {
+            ODSRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                gap = DSVariables.spacingComponent3,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                AppText(
-                    text = "Network usage",
-                    style = AppTextStyle.SubTitle,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.textPrimary
-                )
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = colors.card,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    AppText(
-                        text = "${String.format("%.3f", totalDataGB)} GB",
-                        style = AppTextStyle.Label,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // WiFi
-            NetworkItem(
-                name = "Wi-Fi",
-                dataSize = "${String.format("%.3f", wifiDataGB)} GB",
-                percentage = if (totalDataGB > 0) ((wifiDataGB / totalDataGB) * 100).toInt() else 0,
-                icon = Icons.Default.Wifi,
-                iconColor = colors.accent,
-                progressColor = colors.accent,
-                isWifi = true
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Cellular
-            NetworkItem(
-                name = "Cellular",
-                dataSize = "${String.format("%.3f", cellularDataGB)} GB",
-                percentage = if (totalDataGB > 0) ((cellularDataGB / totalDataGB) * 100).toInt() else 0,
-                icon = Icons.Default.SignalCellular4Bar,
-                iconColor = colors.error,
-                progressColor = colors.error,
-                isWifi = false
-            )
-        }
-    }
-}
-
-@Composable
-private fun NetworkItem(
-    name: String,
-    dataSize: String,
-    percentage: Int,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    iconColor: Color,
-    progressColor: Color,
-    isWifi: Boolean
-) {
-    val colors = LocalAppColors.current ?: return
-    val progressWidth by animateFloatAsState(
-        targetValue = (percentage / 100f).coerceIn(0f, 1f),
-        animationSpec = tween(1000),
-        label = "progress"
-    )
-
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            iconColor.copy(alpha = 0.1f)
-                        ),
+                ODSBox(
+                    modifier = Modifier.size(DSVariables.sizingComponent10),
+                    background = listOf(ODSColorModel(scheme.basicAccent)),
+                    cornerRadius = ODSCorners(all = DSVariables.radiusSmall),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = name,
-                        tint = iconColor,
-                        modifier = Modifier.size(20.dp)
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            imageVector = icon,
+                            tint = scheme.basicTextOnAccent,
+                            contentDescription = text
+                        ),
+                        width = DSVariables.sizingComponent7,
+                        height = DSVariables.sizingComponent7
                     )
                 }
 
-                Column {
-                    AppText(
-                        text = name,
-                        style = AppTextStyle.Body,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary
-                    )
-                    AppText(
-                        text = dataSize,
-                        style = AppTextStyle.Label,
-                        color = colors.textSecondary
-                    )
-                }
+                ODSText(
+                    text = text,
+                    style = DSTextStyles.bodyMBold,
+                    color = scheme.basicText
+                )
             }
-
-            AppText(
-                text = "$percentage%",
-                style = AppTextStyle.Body,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.textSecondary
-            )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Progress bar
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(colors.border.copy(alpha = 0.3f))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(progressWidth)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(progressColor)
-            )
-        }
-    }
+    )
 }
 
 
@@ -783,9 +683,10 @@ private fun TimerBottomSheet(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
+    val scheme = neutralScheme
+
     var selectedMinutes by remember { mutableIntStateOf(30) }
-    
+
     val appInfo = remember(packageName) {
         try {
             context.packageManager.getApplicationInfo(packageName, 0)
@@ -793,48 +694,47 @@ private fun TimerBottomSheet(
             null
         }
     }
-    
+
     val timeOptions = listOf(15, 30, 45, 60, 90, 120) // minutes
-    
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFFFFFFFF),
+        containerColor = scheme.basicBackgroundCard.getColor(),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
-        Column(
+        ODSColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp, vertical = 8.dp)
+                .padding(horizontal = 8.dp, vertical = 8.dp)
         ) {
             // Header
-            Row(
+            ODSRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
+                ODSRow(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AppIcon(
-                        appInfo = appInfo,
-                        size = 64.dp,
-                        modifier = Modifier.size(64.dp)
-                    )
-                    Column {
-                        AppText(
+//                    AppIcon(
+//                        appInfo = appInfo,
+//                        size = 64.dp,
+//                        modifier = Modifier.size(64.dp)
+//                    )
+                    ODSColumn {
+                        ODSText(
                             text = "Set Timer",
-                            style = AppTextStyle.Body,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF1C1B1F)
+                            style = DSTextStyles.bodyMRegular,
+                            color = scheme.basicText
                         )
                         Spacer(modifier = Modifier.height(4.dp))
-                        AppText(
+                        ODSText(
                             text = appName,
-                            style = AppTextStyle.Label,
-                            color = Color(0xFF49454F)
+                            style = DSTextStyles.bodyMBold,
+                            color = scheme.basicTextRecessive
                         )
                     }
                 }
@@ -842,28 +742,30 @@ private fun TimerBottomSheet(
                     onClick = onDismiss,
                     modifier = Modifier.size(40.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = Color(0xFF1C1B1F),
-                        modifier = Modifier.size(24.dp)
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            imageVector = Icons.Default.Close,
+                            tint = scheme.basicText,
+                            contentDescription = "Close"
+                        ),
+                        width = 24.dp,
+                        height = 24.dp
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(28.dp))
-            
+
             // Section Label
-            AppText(
+            ODSText(
                 text = "TIME OPTIONS",
-                style = AppTextStyle.Label,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF49454F),
+                style = DSTextStyles.bodyMBold,
+                color = scheme.basicTextRecessive,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
-            
+
             // Time Options Chips
-            Row(
+            ODSRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -873,70 +775,67 @@ private fun TimerBottomSheet(
                         selected = selectedMinutes == minutes,
                         onClick = { selectedMinutes = minutes },
                         label = {
-                            AppText(
+                            ODSText(
                                 text = "${minutes}m",
-                                style = AppTextStyle.Label,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (selectedMinutes == minutes) Color.White else Color(0xFF1C1B1F)
+                                style = DSTextStyles.bodyMBold,
+                                color = if (selectedMinutes == minutes) scheme.basicTextOnAccent else scheme.basicText
                             )
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF6750A4),
-                            containerColor = Color(0xFFFFFFFF),
-                            selectedLabelColor = Color.White,
-                            labelColor = Color(0xFF1C1B1F)
+                            selectedContainerColor = scheme.basicAccent.getColor(),
+                            containerColor = scheme.basicBackgroundCard.getColor(),
+                            selectedLabelColor = scheme.basicTextOnAccent.getColor(),
+                            labelColor = scheme.basicText.getColor()
                         ),
                         shape = RoundedCornerShape(9999.dp)
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Custom Time Input (Optional)
-            AppText(
+            ODSText(
                 text = "Custom Time (minutes)",
-                style = AppTextStyle.Body,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1C1B1F),
+                style = DSTextStyles.bodyMRegular,
+                color = scheme.basicText,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            
+
             // Slider for custom time
-            Column {
-                AppText(
+            ODSColumn {
+                ODSText(
                     text = "$selectedMinutes minutes",
-                    style = AppTextStyle.Body,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF6750A4),
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicAccent,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                
+
                 Slider(
                     value = selectedMinutes.toFloat(),
                     onValueChange = { selectedMinutes = it.toInt() },
                     valueRange = 5f..180f,
                     steps = 34, // 5-minute steps from 5 to 180
                     colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFF6750A4),
-                        activeTrackColor = Color(0xFF6750A4),
-                        inactiveTrackColor = Color(0xFFF5F5F5)
+                        thumbColor = scheme.basicAccent.getColor(),
+                        activeTrackColor = scheme.basicAccent.getColor(),
+                        inactiveTrackColor = scheme.basicStroke.getColor()
                     ),
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // Set Timer Button
-            AppPrimaryButton(
-                modifier = Modifier.fillMaxWidth(),
-                text = "Set Timer",
-                onClick = {
-                    onSetTimer(selectedMinutes)
-                }
-            )
-            
+//            AppPrimaryButton(
+//                modifier = Modifier.fillMaxWidth(),
+//                text = "Set Timer",
+//                onClick = {
+//                    onSetTimer(selectedMinutes)
+//                }
+//            )
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }

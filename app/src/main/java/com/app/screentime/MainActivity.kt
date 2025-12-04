@@ -1,8 +1,8 @@
 package com.app.screentime
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
@@ -11,29 +11,51 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
+import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.app.screentime.navigation.ScreenTimeNavigation
 import com.app.screentime.ui.language.LanguageViewModel
-import com.app.screentime.ui.theme.LocalAppColors
+
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ui.theme.ScreenTimeTheme
 import com.app.screentime.ui.theme.ThemeViewModel
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.tokens.tokens.magentaScheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
-import androidx.core.net.toUri
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -45,10 +67,15 @@ class MainActivity : ComponentActivity() {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val languageViewModel: LanguageViewModel = hiltViewModel()
             val language by languageViewModel.language.collectAsState()
+            val navController = rememberNavController()
             SetLocale(language)
             ScreenTimeTheme(themeViewModel) {
-                val colors = LocalAppColors.current ?: return@ScreenTimeTheme
                 val useDarkTheme = LocalThemeMode.current
+                val scheme = neutralScheme
+                // Handle deeplink from intent
+                LaunchedEffect(intent) {
+                    handleDeeplink(intent, navController)
+                }
 
                 SideEffect {
                     // Set status bar and navigation bar icons based on theme
@@ -56,124 +83,188 @@ class MainActivity : ComponentActivity() {
                     // Light theme: dark icons (SystemBarStyle.light)
                     enableEdgeToEdge(
                         statusBarStyle = if (useDarkTheme) {
-                            SystemBarStyle.dark(colors.background.toArgb())
+                            SystemBarStyle.dark(scheme.basicBackground.getIntColor())
                         } else {
                             SystemBarStyle.light(
-                                colors.background.toArgb(),
-                                darkScrim = colors.background.toArgb()
+                                scheme.basicBackground.getIntColor(),
+                                darkScrim = scheme.basicBackground.getIntColor()
                             )
                         },
                         navigationBarStyle = SystemBarStyle.auto(
-                            android.graphics.Color.TRANSPARENT,
-                            android.graphics.Color.TRANSPARENT
+                            Color.TRANSPARENT,
+                            Color.TRANSPARENT
                         )
                     )
                 }
 
-                Column(
+                ODSColumn(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(colors.background)
+                        .fillMaxSize(),
+                    background = listOf(ODSColorModel(scheme.basicBackground)),
+                    verticalArrangement = Arrangement.Top
                 ) {
-                    Box(
+                    ODSBox(
                         modifier = Modifier
                             .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
                             .fillMaxWidth()
-                            .background(colors.background)
-                    )
-                    ScreenTimeNavigation()
+                    ) {}
+                    ScreenTimeNavigation(navController = navController, scheme = scheme)
                 }
+            }
+        }
+        // ATTENTION: This was auto-generated to handle app links.
+        val appLinkIntent: Intent = intent
+        val appLinkAction: String? = appLinkIntent.action
+        val appLinkData: Uri? = appLinkIntent.data
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // Handle deeplink when app is already running
+        intent.let {
+            // This will be handled by LaunchedEffect in the composable
+        }
+    }
+
+    private fun handleDeeplink(intent: Intent?, navController: NavHostController) {
+        val uri = intent?.data
+        val deeplinkRoute = intent?.getStringExtra("route")
+        val deeplinkParam = intent?.getStringExtra("deeplink")
+
+        when {
+            uri != null -> {
+                // Handle URI-based deeplink (apptime://screen/route or https://apptime.in/route)
+                val route = uri.host ?: uri.pathSegments.firstOrNull() ?: return
+                navigateFromDeeplink(navController, route, uri)
+            }
+
+            !deeplinkRoute.isNullOrEmpty() -> {
+                // Handle route from notification or other source
+                val challengeId = intent.getStringExtra("challengeId")
+                val packageName = intent.getStringExtra("packageName")
+                val username = intent.getStringExtra("username")
+                navigateFromDeeplink(
+                    navController,
+                    deeplinkRoute,
+                    null,
+                    challengeId,
+                    packageName,
+                    username
+                )
+            }
+
+            !deeplinkParam.isNullOrEmpty() -> {
+                // Parse deeplink string
+                parseAndNavigateDeeplink(navController, deeplinkParam)
+            }
+        }
+    }
+
+    private fun navigateFromDeeplink(
+        navController: NavHostController,
+        route: String,
+        uri: Uri?,
+        challengeId: String? = null,
+        packageName: String? = null,
+        username: String? = null
+    ) {
+        when (route) {
+            "landing", "home" -> {
+                navController.navigate("landing") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                }
+            }
+
+            "statistics" -> {
+                navController.navigate("statistics") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = false
+                    }
+                    launchSingleTop = true
+                }
+            }
+
+            "challenges", "challenge_list" -> {
+                navController.navigate("challenges") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = false
+                    }
+                    launchSingleTop = true
+                }
+            }
+
+            "challenge_detail" -> {
+                val id = challengeId ?: uri?.getQueryParameter("challengeId")
+                ?: uri?.pathSegments?.getOrNull(1)
+                if (id != null) {
+                    navController.navigate("challenge_detail/$id") {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            }
+
+            "search" -> {
+                navController.navigate("search") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = false
+                    }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
+
+    private fun parseAndNavigateDeeplink(
+        navController: NavHostController,
+        deeplink: String
+    ) {
+        when {
+            deeplink.startsWith("apptime://") -> {
+                val uri = deeplink.toUri()
+                val route = uri.host ?: uri.pathSegments.firstOrNull() ?: return
+                navigateFromDeeplink(navController, route, uri)
+            }
+
+            deeplink.contains("/") -> {
+                val parts = deeplink.split("/")
+                val route = parts[0]
+                val param = if (parts.size > 1) parts[1] else null
+                when (route) {
+                    "challenge_detail" -> {
+                        if (param != null) {
+                            navController.navigate("challenge_detail/$param") {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    inclusive = false
+                                }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+
+                    else -> navigateFromDeeplink(navController, route, null)
+                }
+            }
+
+            else -> {
+                navigateFromDeeplink(navController, deeplink, null)
             }
         }
     }
 
 
     @Composable
-    fun SetLocale(language: String) {
+    private fun SetLocale(language: String) {
         val locale = Locale(language)
         Locale.setDefault(locale)
         val configuration = LocalConfiguration.current
         configuration.setLocale(locale)
         LocalConfiguration.current.updateFrom(configuration)
-    }
-
-    @Preview(showBackground = true)
-    @Composable
-    fun GreetingPreview() {
-        ScreenTimeTheme {
-            Text("Hello Android!")
-        }
-    }
-
-    @Composable
-    fun XYZ() {
-        TrackerSettingsScreen(
-            defaultPkg = "youtube",
-            defaultThreshold = 1,
-            onSave = { pkg, threshold ->
-                Toast.makeText(
-                    this,
-                    "Saved for $pkg (limit $threshold)",
-                    Toast.LENGTH_SHORT
-                ).show()
-            },
-            onRequestAccessibility = {
-                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-            },
-            onRequestOverlay = {
-                if (!Settings.canDrawOverlays(this)) {
-                    val intent = Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        "package:$packageName".toUri()
-                    )
-                    startActivity(intent)
-                } else {
-                    Toast.makeText(
-                        this,
-                        "Overlay permission already granted",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        )
-    }
-}
-
-
-@Composable
-fun TrackerSettingsScreen(
-    defaultPkg: String,
-    defaultThreshold: Int,
-    onSave: (String, Int) -> Unit,
-    onRequestAccessibility: () -> Unit,
-    onRequestOverlay: () -> Unit
-) {
-    var pkg by remember { mutableStateOf(defaultPkg) }
-    var thresholdText by remember { mutableStateOf(defaultThreshold.toString()) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Accessibility Tracker", style = MaterialTheme.typography.headlineSmall)
-
-        Button(onClick = onRequestAccessibility, modifier = Modifier.fillMaxWidth()) {
-            Text("Open Accessibility Settings")
-        }
-        Button(onClick = onRequestOverlay, modifier = Modifier.fillMaxWidth()) {
-            Text("Request Overlay Permission")
-        }
-        Button(
-            onClick = {
-                val n = thresholdText.toIntOrNull() ?: 0
-                if (pkg.isNotBlank() && n > 0) onSave(pkg, n)
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Save")
-        }
     }
 }

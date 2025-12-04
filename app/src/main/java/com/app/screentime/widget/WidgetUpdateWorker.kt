@@ -6,18 +6,21 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.app.screentime.landing.mapper.LandingUiMapper
 import com.app.screentime.landing.usecase.LandingUsecase
+import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.record.repository.NetworkUsageHelper
 import com.app.screentime.record.repository.ScreenUsageHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 /**
  * Background worker that periodically updates the widget with latest screen time data.
@@ -26,53 +29,65 @@ import javax.inject.Inject
 @HiltWorker
 class WidgetUpdateWorker @AssistedInject constructor(
     @Assisted appContext: Context,
-    @Assisted workerParams: WorkerParameters,
+    @Assisted workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
-    private val landingUsecase by lazy {
-        LandingUsecase(
-            LocalAppUsageRepository(
-                applicationContext,
-                ScreenUsageHelper(appContext), NetworkUsageHelper(appContext)
-            )
-        )
-    }
+
+//    private val landingUsecase by lazy {
+//        val localAppUsageRepository = LocalAppUsageRepository(
+//            applicationContext,
+//            ScreenUsageHelper(applicationContext),
+//            NetworkUsageHelper(applicationContext)
+//        )
+//        val preferencesManager = PreferencesManager(applicationContext)
+//        val preferencesUseCase = PreferencesUseCase(preferencesManager)
+//
+//        LandingUsecase(
+//            localAppUsageRepository = localAppUsageRepository,
+//            landingUiMapper = LandingUiMapper(),
+//            preferencesUseCase = preferencesUseCase,
+//            context = applicationContext,
+//            preferencesManager = preferencesManager,
+//            dataSyncService = null
+//        )
+//    }
 
     override suspend fun doWork(): Result {
         return try {
             Log.d(TAG, "WidgetUpdateWorker: Starting widget update")
 
-            // Fetch today's usage data
-            val todayUsageData = landingUsecase.getTodayUsageData()
-
-            todayUsageData.fold(
-                onSuccess = { usageData ->
-                    // Update widget with latest data
-                    val dailyLimit = 3 * 60 * 60 * 1000L // Default 3 hours in milliseconds
-                    ScreenTimeWidgetHelper.updateWidgetFromAppUsages(
-                        context = applicationContext,
-                        appUsages = usageData.topUsedApps,
-                        dailyLimit = dailyLimit
-                    )
-                    Log.d(
-                        TAG,
-                        "WidgetUpdateWorker: Widget updated successfully. Total usage: ${usageData.todayTotalScreenTime}ms"
-                    )
-                    Result.success()
-                },
-                onFailure = { exception ->
-                    Log.e(
-                        TAG,
-                        "WidgetUpdateWorker: Failed to fetch usage data: ${exception.message}",
-                        exception
-                    )
-                    // Don't retry on permission errors or other persistent failures
-                    if (exception is SecurityException) {
-                        Result.success() // Don't retry permission errors
-                    } else {
-                        Result.retry() // Retry on other errors
-                    }
-                }
-            )
+//            // Fetch today's usage data
+//            val todayUsageData = landingUsecase.getTodayUsageData()
+//
+//            todayUsageData.fold(
+//                onSuccess = { usageData ->
+//                    // Update widget with latest data
+//                    val dailyLimit = 3 * 60 * 60 * 1000L // Default 3 hours in milliseconds
+//                    ScreenTimeWidgetHelper.updateWidgetFromAppUsages(
+//                        context = applicationContext,
+//                        appUsages = usageData.topUsedApps,
+//                        dailyLimit = dailyLimit
+//                    )
+//                    Log.d(
+//                        TAG,
+//                        "WidgetUpdateWorker: Widget updated successfully. Total usage: ${usageData.todayTotalScreenTime}ms"
+//                    )
+//                    Result.success()
+//                },
+//                onFailure = { exception ->
+//                    Log.e(
+//                        TAG,
+//                        "WidgetUpdateWorker: Failed to fetch usage data: ${exception.message}",
+//                        exception
+//                    )
+//                    // Don't retry on permission errors or other persistent failures
+//                    if (exception is SecurityException) {
+//                        Result.success() // Don't retry permission errors
+//                    } else {
+//                        Result.retry() // Retry on other errors
+//                    }
+//                }
+//            )
+            Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "WidgetUpdateWorker: Unexpected error: ${e.message}", e)
             Result.retry()
@@ -125,7 +140,7 @@ class WidgetUpdateWorker @AssistedInject constructor(
          * Trigger immediate widget update (one-time work)
          */
         fun triggerImmediateUpdate(context: Context) {
-            val workRequest = androidx.work.OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
+            val workRequest = OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
                 .addTag(WORK_NAME)
                 .build()
             WorkManager.getInstance(context).enqueue(workRequest)

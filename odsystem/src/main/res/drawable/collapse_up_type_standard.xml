@@ -1,0 +1,10 @@
+<!-- Auto-generated full copy from collapse_up_type_standard_size_standard. Do not edit manually. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M18.7 15.7c-0.38 0.4-1.02 0.4-1.4 0L12 10.42l-5.3 5.3c-0.38 0.39-1.02 0.39-1.4 0-0.4-0.4-0.4-1.03 0-1.42l6-6c0.38-0.39 1.02-0.39 1.4 0l6 6c0.4 0.4 0.4 1.03 0 1.42Z"/>
+</vector>

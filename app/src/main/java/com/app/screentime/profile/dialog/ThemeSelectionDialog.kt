@@ -1,253 +1,92 @@
 package com.app.screentime.profile.dialog
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-
-import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.res.stringResource
 import com.app.screentime.R
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.LocalAppColors
-import com.app.screentime.ui.theme.ThemeType
-import com.app.screentime.ui.theme.getThemeColors
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.controls.ODSControlsType
+import com.telekom.odsystem.molecules.dialog.ODSDialog
+import com.telekom.odsystem.molecules.dialog.ODSDialogProps
+import com.telekom.odsystem.molecules.listrowcontrols.ODSListRowControls
+import com.telekom.odsystem.molecules.listrowcontrols.ODSListRowControlsProps
+import com.telekom.odsystem.molecules.listrowcontrols.ODSListRowControlsVariant
+import com.telekom.odsystem.neutralScheme
+
+import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
- * Theme selection dialog with all theme variations
+ * Theme selection dialog with only 3 options: Light, Dark, and System
  */
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeSelectionDialog(
     currentTheme: String,
     onDismiss: () -> Unit,
-    onThemeSelected: (String) -> Unit
-) {
-    val colors = LocalAppColors.current ?: return
-
-    val lightThemes = ThemeType.values().filter { !it.isDark }
-    val darkThemes = ThemeType.values().filter { it.isDark }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.8f),
-            shape = MaterialTheme.shapes.large,
-            color = colors.card
-        ) {
-            AlertDialogContent(
-                lightThemes = lightThemes,
-                darkThemes = darkThemes,
-                currentTheme = currentTheme,
-                onThemeSelected = onThemeSelected,
-                onDismiss = onDismiss
-            )
-        }
-    }
-}
-
-@Composable
-private fun AlertDialogContent(
-    lightThemes: List<ThemeType>,
-    darkThemes: List<ThemeType>,
-    currentTheme: String,
     onThemeSelected: (String) -> Unit,
-    onDismiss: () -> Unit
+    scheme: ODSTheme = neutralScheme
 ) {
-    val colors = LocalAppColors.current ?: return
-    
-    Column(
+    val themes = listOf(
+        "Light" to R.string.theme_light,
+        "Dark" to R.string.theme_dark,
+        "System" to R.string.theme_system
+    )
+
+    ODSDialog(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Title
-        AppText(
-            text = stringResource(R.string.select_theme),
-            style = AppTextStyle.SubTitle,
-            fontWeight = FontWeight.Bold,
-            color = colors.textPrimary,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        // Scrollable theme list
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            // Light Themes Section
-            item {
-                AppText(
-                    text = "Light Themes",
-                    style = AppTextStyle.Body,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.textSecondary,
-                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
-                )
-            }
-            items(lightThemes) { themeType ->
-                ThemePreviewOption(
-                    themeType = themeType,
-                    selected = currentTheme == themeType.name,
-                    onClick = { onThemeSelected(themeType.name) }
-                )
-            }
-
-            // Dark Themes Section
-            item {
-                AppText(
-                    text = "Dark Themes",
-                    style = AppTextStyle.Body,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.textSecondary,
-                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
-                )
-            }
-            items(darkThemes) { themeType ->
-                ThemePreviewOption(
-                    themeType = themeType,
-                    selected = currentTheme == themeType.name,
-                    onClick = { onThemeSelected(themeType.name) }
-                )
-            }
-        }
-
-        // Close button
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = colors.success
-                )
+            .fillMaxWidth(0.9f)
+            .wrapContentHeight(),
+        scheme = scheme,
+        onDismissRequest = onDismiss,
+        props = ODSDialogProps(
+            showCloseButton = true,
+            showScrollbar = false,
+            title = stringResource(R.string.select_theme),
+            bodyText = null
+        ),
+        contentSlot = {
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth(),
+                gap = DSVariables.spacingComponent3
             ) {
-                AppText(
-                    text = stringResource(R.string.close),
-                    style = AppTextStyle.Body,
-                    color = colors.success
-                )
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun ThemePreviewOption(
-    themeType: ThemeType,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val currentColors = LocalAppColors.current ?: return
-    val themeColors = getThemeColors(themeType)
-    
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(
-                if (selected) currentColors.success.copy(alpha = 0.15f)
-                else currentColors.card
-            )
-            .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = if (selected) currentColors.success else currentColors.border,
-                shape = MaterialTheme.shapes.medium
-            )
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Color preview box
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(themeColors.background)
-                    .border(1.dp, themeColors.border, MaterialTheme.shapes.small)
-            ) {
-                // Show a small preview of the theme
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    // Background color
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(themeColors.background)
-                    )
-                    // Card color preview
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(12.dp)
-                            .clip(MaterialTheme.shapes.extraSmall)
-                            .background(themeColors.card)
-                            .align(Alignment.TopCenter)
-                    )
-                    // Primary color accent
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.6f)
-                            .height(4.dp)
-                            .clip(MaterialTheme.shapes.extraSmall)
-                            .background(themeColors.success)
-                            .align(Alignment.BottomCenter)
+                themes.forEach { (themeValue, themeStringRes) ->
+                    ODSListRowControls(
+                        modifier = Modifier.fillMaxWidth(),
+                        scheme = scheme,
+                        props = ODSListRowControlsProps(
+                            variant = ODSListRowControlsVariant.STANDARD,
+                            type = ODSControlsType.RADIO_ICON,
+                            labelText = stringResource(themeStringRes),
+                            selected = currentTheme.equals(themeValue, ignoreCase = true),
+                        ),
+                        onRadioClick = {
+                            onThemeSelected(themeValue)
+                        }
                     )
                 }
             }
-            
-            Column(modifier = Modifier.weight(1f)) {
-                AppText(
-                    text = themeType.displayName,
-                    style = AppTextStyle.Body,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (selected) currentColors.success else currentColors.textPrimary
-                )
-                AppText(
-                    text = if (themeType.isDark) "Dark Mode" else "Light Mode",
-                    style = AppTextStyle.Label,
-                    color = currentColors.textMuted
+        },
+        actionSlot = {
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                ODSButton(
+                    scheme = scheme,
+                    props = ODSButtonProps(
+                        label = stringResource(R.string.close),
+                        variant = ODSButtonVariant.PRIMARY,
+                        size = ODSButtonSize.SMALL
+                    ),
+                    onClick = onDismiss
                 )
             }
         }
-
-        RadioButton(
-            selected = selected,
-            onClick = onClick,
-            colors = RadioButtonDefaults.colors(
-                selectedColor = currentColors.success,
-                unselectedColor = currentColors.textMuted
-            )
-        )
-    }
+    )
 }
-

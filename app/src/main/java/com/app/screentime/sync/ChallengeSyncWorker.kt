@@ -60,8 +60,18 @@ class ChallengeSyncWorker(
         )
     }
 
+    private val preferencesManager by lazy {
+        com.app.screentime.preferences.PreferencesManager(applicationContext)
+    }
+
     override suspend fun doWork(): Result {
         return try {
+            // Google Play Compliance: Only send data if user has accepted consent
+            if (!preferencesManager.isConsentScreenShown()) {
+                Log.d(TAG, "ChallengeSyncWorker: Consent not given, skipping challenge stats sync")
+                return Result.success() // Don't retry, just skip
+            }
+            
             Log.d(TAG, "ChallengeSyncWorker: Starting sync")
 
             // Get all active challenges
@@ -286,9 +296,9 @@ class ChallengeSyncWorker(
          */
         fun scheduleChallengeSync(
             context: Context,
-            challengeId: Int,
+            challengeId: String,
             startTime: String, // ISO 8601 format
-            endTime: String // ISO 8601 format
+            endTime: String
         ) {
             try {
                 val startTimeMs = parseISO8601(startTime)
@@ -333,7 +343,7 @@ class ChallengeSyncWorker(
         /**
          * Cancel sync for a specific challenge
          */
-        fun cancelChallengeSync(context: Context, challengeId: Int) {
+        fun cancelChallengeSync(context: Context, challengeId: String) {
             val workName = "$WORK_NAME_PREFIX$challengeId"
             WorkManager.getInstance(context).cancelUniqueWork(workName)
             Log.d(TAG, "Cancelled sync for challenge $challengeId")
@@ -517,7 +527,7 @@ class ChallengeSyncWorker(
             }
         }
 
-        private fun cancelChallengeWork(context: Context, challengeId: Int) {
+        private fun cancelChallengeWork(context: Context, challengeId: String) {
             cancelChallengeSync(context, challengeId)
         }
     }

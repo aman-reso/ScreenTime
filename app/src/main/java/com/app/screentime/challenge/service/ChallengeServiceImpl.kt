@@ -87,9 +87,9 @@ class ChallengeServiceImpl @Inject constructor(
         }
     }
 
-    override suspend fun getChallengeDetails(challengeId: Int): Result<ApiResponse<ChallengeDetails>> {
+    override suspend fun getChallengeDetails(challengeId: String): Result<ApiResponse<ChallengeDetails>> {
         return try {
-            val endpoint = ApiEndpoints.Challenges.DETAILS.replace("{challengeId}", challengeId.toString())
+            val endpoint = ApiEndpoints.Challenges.DETAILS.replace("{challengeId}", challengeId)
             val response = httpClient.get(endpoint)
             if (response.status.isSuccess()) {
                 Result.success(response.body())
@@ -115,7 +115,7 @@ class ChallengeServiceImpl @Inject constructor(
         }
     }
 
-    override suspend fun joinChallenge(challengeId: Int): Result<ApiResponse<JoinChallengeResponse>> {
+    override suspend fun joinChallenge(challengeId: String): Result<ApiResponse<JoinChallengeResponse>> {
         return try {
             val request = JoinChallengeRequest(challengeId = challengeId)
             val response = httpClient.post(ApiEndpoints.Challenges.JOIN) {
@@ -146,9 +146,9 @@ class ChallengeServiceImpl @Inject constructor(
         }
     }
 
-    override suspend fun getChallengeRankings(challengeId: Int): Result<ApiResponse<ChallengeRankingsResponse>> {
+    override suspend fun getChallengeRankings(challengeId: String): Result<ApiResponse<ChallengeRankingsResponse>> {
         return try {
-            val endpoint = ApiEndpoints.Challenges.RANKINGS.replace("{challengeId}", challengeId.toString())
+            val endpoint = ApiEndpoints.Challenges.RANKINGS.replace("{challengeId}", challengeId)
             val response = httpClient.get(endpoint)
             if (response.status.isSuccess()) {
                 Result.success(response.body())
@@ -234,9 +234,9 @@ class ChallengeServiceImpl @Inject constructor(
         }
     }
 
-    override suspend fun getChallengeLastSyncTime(challengeId: Int): Result<ApiResponse<ChallengeLastSyncResponse>> {
+    override suspend fun getChallengeLastSyncTime(challengeId: String): Result<ApiResponse<ChallengeLastSyncResponse>> {
         return try {
-            val endpoint = ApiEndpoints.Challenges.LAST_SYNC.replace("{challengeId}", challengeId.toString())
+            val endpoint = ApiEndpoints.Challenges.LAST_SYNC.replace("{challengeId}", challengeId)
             val response = httpClient.get(endpoint)
             if (response.status.isSuccess()) {
                 Result.success(response.body())

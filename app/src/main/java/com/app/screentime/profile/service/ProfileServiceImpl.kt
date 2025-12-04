@@ -4,6 +4,7 @@ import com.app.screentime.network.ApiEndpoints
 import com.app.screentime.network.NetworkClient
 import com.app.screentime.network.model.ApiResponse
 import com.app.screentime.network.model.DeviceRegistrationResponse
+import com.app.screentime.network.model.ProfileUpdateRequest
 import com.app.screentime.network.model.UserProfile
 import com.app.screentime.network.model.UserPreferences
 import com.app.screentime.network.model.UsernameUpdateRequest
@@ -58,6 +59,29 @@ class ProfileServiceImpl @Inject constructor(
                 Result.success(apiResponse)
             } else {
                 Result.failure(Exception("Failed to update user profile: ${response.status}"))
+            }
+        } catch (e: ClientRequestException) {
+            val errorBody = e.response.bodyAsText()
+            Result.failure(Exception("Client error: ${e.response.status}, $errorBody", e))
+        } catch (e: ServerResponseException) {
+            val errorBody = e.response.bodyAsText()
+            Result.failure(Exception("Server error: ${e.response.status}, $errorBody", e))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateProfile(request: ProfileUpdateRequest): Result<ApiResponse<DeviceRegistrationResponse>> {
+        return try {
+            val response: HttpResponse = httpClient.put(ApiEndpoints.Profile.UPDATE_PROFILE) {
+                setBody(request)
+            }
+
+            if (response.status.isSuccess()) {
+                val apiResponse: ApiResponse<DeviceRegistrationResponse> = response.body()
+                Result.success(apiResponse)
+            } else {
+                Result.failure(Exception("Failed to update profile: ${response.status}"))
             }
         } catch (e: ClientRequestException) {
             val errorBody = e.response.bodyAsText()

@@ -1,0 +1,146 @@
+package com.telekom.odsystem.componenttokens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.foundations.ODSTextStyle
+import com.telekom.odsystem.foundations.SCALE_FACTOR
+
+data class ODSFloatingActionButtonTokens(
+    var borderRadius: ODSCorners,
+    var minHeightSizeLarge: Dp,
+    var minHeightSizeSmall: Dp,
+    var minWidthTypeExtended: Dp,
+    var minWidthTypeStandardSizeLarge: Dp,
+    var minWidthTypeStandardSizeSmall: Dp,
+    var verticalAlignment: Alignment.Vertical,
+    var horizontalAlignment: Alignment.Horizontal,
+    var horizontalArrangement: Arrangement.Horizontal,
+    var maxHeightTypeStandardSizeLarge: Dp,
+    var maxHeightTypeStandardSizeSmall: Dp,
+    var maxWidthTypeStandardSizeLarge: Dp,
+    var maxWidthTypeStandardSizeSmall: Dp,
+    var contentGapTypeExtendedSizeLarge: Dp,
+    var contentGapTypeExtendedSizeSmall: Dp,
+    var contentPaddingTypeExtendedSizeLarge: ODSPadding,
+    var contentPaddingTypeExtendedSizeSmall: ODSPadding,
+    var contentVerticalAlignment: Alignment.Vertical,
+    var contentHorizontalAlignment: Alignment.Horizontal,
+    var contentHorizontalArrangement: Arrangement.Horizontal,
+    var buttonBgBorderRadius: ODSCorners,
+    var buttonBgWidthTypeExtendedSizeLarge: Dp,
+    var buttonBgWidthTypeExtendedSizeLargeStatePressed: Dp,
+    var buttonBgWidthTypeStandardSizeLarge: Dp,
+    var buttonBgWidthTypeStandardSizeLargeStatePressed: Dp,
+    var buttonBgWidthTypeStandardSizeLargeStateHovered: Dp,
+    var buttonBgWidthTypeExtendedSizeLargeStateHovered: Dp,
+    var buttonBgWidthTypeExtendedSizeSmall: Dp,
+    var buttonBgWidthTypeExtendedSizeSmallStatePressed: Dp,
+    var buttonBgWidthTypeStandardSizeSmall: Dp,
+    var buttonBgWidthTypeStandardSizeSmallStatePressed: Dp,
+    var buttonBgWidthTypeExtendedSizeSmallStateHovered: Dp,
+    var buttonBgWidthTypeStandardSizeSmallStateHovered: Dp,
+    var buttonBgHeightSizeLarge: Dp,
+    var buttonBgHeightSizeLargeStatePressed: Dp,
+    var buttonBgHeightSizeLargeStateHovered: Dp,
+    var buttonBgHeightSizeSmall: Dp,
+    var buttonBgHeightSizeSmallStatePressed: Dp,
+    var buttonBgHeightSizeSmallStateHovered: Dp,
+    var buttonBgVerticalAlignment: Alignment.Vertical,
+    var buttonBgHorizontalAlignment: Alignment.Horizontal,
+    var buttonBgHorizontalArrangement: Arrangement.Horizontal,
+    var buttonBgBorderVariantOutline: Dp,
+    var buttonBgBorderVariantOutlineStatePressed: Dp,
+    var buttonBgBorderVariantOutlineStateHovered: Dp,
+    var leftIconVerticalAlignmentTypeExtended: Alignment.Vertical,
+    var leftIconHorizontalAlignmentTypeExtended: Alignment.Horizontal,
+    var leftIconHorizontalArrangementTypeExtended: Arrangement.Horizontal,
+    var rightIconVerticalAlignmentTypeExtended: Alignment.Vertical,
+    var rightIconHorizontalAlignmentTypeExtended: Alignment.Horizontal,
+    var rightIconHorizontalArrangementTypeExtended: Arrangement.Horizontal,
+    var buttonIconWidthSizeLarge: Dp,
+    var buttonIconWidthSizeSmall: Dp,
+    var buttonIconHeightSizeLarge: Dp,
+    var buttonIconHeightSizeSmall: Dp,
+    var labelTextStyleTypeExtendedSizeLarge: ODSTextStyle,
+    var labelTextStyleTypeExtendedSizeSmall: ODSTextStyle,
+    var labelTextAlignTypeExtended: TextAlign,
+    var scaleFactor: Float
+)
+
+var defaultODSFloatingActionButtonTokens = ODSFloatingActionButtonTokens(
+    borderRadius = ODSCorners(all = DSVariables.radiusFull),
+    minHeightSizeLarge = DSVariables.sizingComponent15,
+    minHeightSizeSmall = DSVariables.sizingComponent14,
+    minWidthTypeExtended = DSVariables.sizingComponent15,
+    minWidthTypeStandardSizeLarge = DSVariables.sizingComponent15,
+    minWidthTypeStandardSizeSmall = DSVariables.sizingComponent14,
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalAlignment = Alignment.CenterHorizontally,
+    horizontalArrangement = Arrangement.Center,
+    maxHeightTypeStandardSizeLarge = DSVariables.sizingComponent15,
+    maxHeightTypeStandardSizeSmall = DSVariables.sizingComponent14,
+    maxWidthTypeStandardSizeLarge = DSVariables.sizingComponent15,
+    maxWidthTypeStandardSizeSmall = DSVariables.sizingComponent14,
+    contentGapTypeExtendedSizeLarge = DSVariables.spacingComponent5,
+    contentGapTypeExtendedSizeSmall = DSVariables.spacingComponent3,
+    contentPaddingTypeExtendedSizeLarge = ODSPadding(
+        left = DSVariables.spacingComponent8,
+        right = DSVariables.spacingComponent8
+    ),
+    contentPaddingTypeExtendedSizeSmall = ODSPadding(
+        left = DSVariables.spacingComponent6,
+        right = DSVariables.spacingComponent6
+    ),
+    contentVerticalAlignment = Alignment.CenterVertically,
+    contentHorizontalAlignment = Alignment.CenterHorizontally,
+    contentHorizontalArrangement = Arrangement.Center,
+    buttonBgBorderRadius = ODSCorners(all = DSVariables.radiusFull),
+    buttonBgWidthTypeExtendedSizeLarge = 163.dp,
+    buttonBgWidthTypeExtendedSizeLargeStatePressed = 163.dp,
+    buttonBgWidthTypeStandardSizeLarge = 64.dp,
+    buttonBgWidthTypeStandardSizeLargeStatePressed = 64.dp,
+    buttonBgWidthTypeStandardSizeLargeStateHovered = 68.dp,
+    buttonBgWidthTypeExtendedSizeLargeStateHovered = 167.dp,
+    buttonBgWidthTypeExtendedSizeSmall = 119.dp,
+    buttonBgWidthTypeExtendedSizeSmallStatePressed = 119.dp,
+    buttonBgWidthTypeStandardSizeSmall = 40.dp,
+    buttonBgWidthTypeStandardSizeSmallStatePressed = 40.dp,
+    buttonBgWidthTypeExtendedSizeSmallStateHovered = 123.dp,
+    buttonBgWidthTypeStandardSizeSmallStateHovered = 44.dp,
+    buttonBgHeightSizeLarge = 64.dp,
+    buttonBgHeightSizeLargeStatePressed = 64.dp,
+    buttonBgHeightSizeLargeStateHovered = 68.dp,
+    buttonBgHeightSizeSmall = 40.dp,
+    buttonBgHeightSizeSmallStatePressed = 40.dp,
+    buttonBgHeightSizeSmallStateHovered = 44.dp,
+    buttonBgVerticalAlignment = Alignment.CenterVertically,
+    buttonBgHorizontalAlignment = Alignment.CenterHorizontally,
+    buttonBgHorizontalArrangement = Arrangement.Center,
+    buttonBgBorderVariantOutline = DSVariables.strokes1,
+    buttonBgBorderVariantOutlineStatePressed = DSVariables.strokes2,
+    buttonBgBorderVariantOutlineStateHovered = DSVariables.strokes2,
+    leftIconVerticalAlignmentTypeExtended = Alignment.CenterVertically,
+    leftIconHorizontalAlignmentTypeExtended = Alignment.CenterHorizontally,
+    leftIconHorizontalArrangementTypeExtended = Arrangement.Center,
+    rightIconVerticalAlignmentTypeExtended = Alignment.CenterVertically,
+    rightIconHorizontalAlignmentTypeExtended = Alignment.CenterHorizontally,
+    rightIconHorizontalArrangementTypeExtended = Arrangement.Center,
+    buttonIconWidthSizeLarge = DSVariables.sizingComponent10,
+    buttonIconWidthSizeSmall = DSVariables.sizingComponent7,
+    buttonIconHeightSizeLarge = DSVariables.sizingComponent10,
+    buttonIconHeightSizeSmall = DSVariables.sizingComponent7,
+    labelTextStyleTypeExtendedSizeLarge = DSTextStyles.bodyL,
+    labelTextStyleTypeExtendedSizeSmall = DSTextStyles.bodyMBold,
+    labelTextAlignTypeExtended = TextAlign.Center,
+    scaleFactor = SCALE_FACTOR
+)
+
+var DSFloatingActionButtonTokens: ODSFloatingActionButtonTokens =
+    defaultODSFloatingActionButtonTokens

@@ -123,107 +123,199 @@ class ScreenUsageHelper constructor(private val context: Context) {
      * @return The total screen usage time of the specified application in seconds.
      */
 
+//    fun collectEvents(start: Long, end: Long): List<AppEvent> {
+//        val events = usageStatsManager.queryEvents(start, end)
+//
+//        val finalizedEvents = mutableListOf<AppEvent>()
+//
+//        data class Session(
+//            val packageName: String,
+//            val appName: String,
+//            val startTime: Long,
+//            var accumulatedDuration: Long = 0,
+//            var lastResumeTime: Long = 0,
+//            var lastEventTime: Long = 0,
+//            var isOpen: Boolean = true
+//        )
+//
+//        var currentSession: Session? = null
+//        val event = UsageEvents.Event()
+//
+//        while (events.hasNextEvent()) {
+//            events.getNextEvent(event)
+//            val pkg = event.packageName ?: continue
+//
+//            // Filter out launcher and non-launchable apps
+//            if (isLauncherApp(pkg) || !hasLaunchableActivity(pkg)) {
+//                continue
+//            }
+//
+//            when (event.eventType) {
+//                UsageEvents.Event.ACTIVITY_RESUMED -> {
+//                    if (currentSession == null) {
+//                        currentSession = Session(
+//                            packageName = pkg,
+//                            appName = getAppName(pkg),
+//                            startTime = event.timeStamp,
+//                            lastResumeTime = event.timeStamp,
+//                            lastEventTime = event.timeStamp
+//                        )
+//                    } else if (currentSession.packageName == pkg) {
+//                        currentSession.lastResumeTime = event.timeStamp
+//                        currentSession.isOpen = true
+//                        currentSession.lastEventTime = event.timeStamp
+//                    } else {
+//                        currentSession.let { session ->
+//                            if (session.lastEventTime > start) {
+//                                finalizedEvents.add(
+//                                    AppEvent(
+//                                        event = "MOVE_TO_FOREGROUND",
+//                                        appName = session.appName,
+//                                        packageName = session.packageName,
+//                                        timestamp = session.startTime,
+//                                        duration = session.accumulatedDuration
+//                                    )
+//                                )
+//                            }
+//                        }
+//                        currentSession = Session(
+//                            packageName = pkg,
+//                            appName = getAppName(pkg),
+//                            startTime = event.timeStamp,
+//                            lastResumeTime = event.timeStamp,
+//                            lastEventTime = event.timeStamp
+//                        )
+//                    }
+//                }
+//
+//                UsageEvents.Event.ACTIVITY_PAUSED, UsageEvents.Event.ACTIVITY_STOPPED -> {
+//                    if (currentSession?.packageName == pkg && currentSession.isOpen) {
+//                        val duration = event.timeStamp - currentSession.lastResumeTime
+//                        currentSession.accumulatedDuration =
+//                            currentSession.accumulatedDuration + duration
+//                        currentSession.isOpen = false
+//                        currentSession.lastEventTime = event.timeStamp
+//                    }
+//                }
+//            }
+//        }
+//
+//        currentSession?.let { session ->
+//            if (!session.isOpen && session.lastEventTime > start) {
+//                finalizedEvents.add(
+//                    AppEvent(
+//                        event = "APP_USAGE",
+//                        appName = session.appName,
+//                        packageName = session.packageName,
+//                        timestamp = session.startTime,
+//                        duration = session.accumulatedDuration
+//                    )
+//                )
+//            }
+//        }
+//
+//        return finalizedEvents
+//    }
+
+    data class Session(
+        val packageName: String,
+        var startTime: Long,
+        var lastResume: Long,
+        var duration: Long = 0L,
+        var isOpen: Boolean = true
+    )
+
     fun collectEvents(start: Long, end: Long): List<AppEvent> {
-        // Lookback 24 hours to find the start of any ongoing sessions
-        val lookbackTime = start - (24 * 60 * 60 * 1000)
-        val events = usageStatsManager.queryEvents(lookbackTime, end)
+        val events = usageStatsManager.queryEvents(start, end)
 
-        val finalizedEvents = mutableListOf<AppEvent>()
+        val sessions = mutableMapOf<String, Session>()
+        val sessionList = mutableListOf<AppEvent>()
 
-        // Track the current active session
-        data class Session(
-            val packageName: String,
-            val appName: String,
-            val startTime: Long,
-            var accumulatedDuration: Long = 0,
-            var lastResumeTime: Long = 0,
-            var lastEventTime: Long = 0,
-            var isOpen: Boolean = true
-        )
 
-        var currentSession: Session? = null
         val event = UsageEvents.Event()
 
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
+
             val pkg = event.packageName ?: continue
 
-            // Filter out launcher and non-launchable apps
-            if (isLauncherApp(pkg) || !hasLaunchableActivity(pkg)) {
+            // Ignore launchers or apps without activities
+            if (isLauncherApp(pkg) || !hasLaunchableActivity(pkg))
                 continue
-            }
 
             when (event.eventType) {
-                UsageEvents.Event.ACTIVITY_RESUMED -> {
-                    if (currentSession == null) {
-                        currentSession = Session(
-                            packageName = pkg,
-                            appName = getAppName(pkg),
-                            startTime = event.timeStamp,
-                            lastResumeTime = event.timeStamp,
-                            lastEventTime = event.timeStamp
-                        )
-                    } else if (currentSession.packageName == pkg) {
-                        // Continuation of same app (App A -> Background -> App A)
-                        currentSession.lastResumeTime = event.timeStamp
-                        currentSession.isOpen = true
-                        currentSession.lastEventTime = event.timeStamp
-                    } else {
-                        currentSession.let { session ->
-                            // Only add if the session ended AFTER the requested start time
-                            // This prevents sending duplicates from previous syncs
-                            if (session.lastEventTime > start) {
-                                finalizedEvents.add(
-                                    AppEvent(
-                                        event = "MOVE_TO_FOREGROUND",
-                                        appName = session.appName,
-                                        packageName = session.packageName,
-                                        timestamp = session.startTime,
-                                        duration = session.accumulatedDuration
-                                    )
-                                )
-                            }
-                        }
 
-                        // Start new session for App B
-                        currentSession = Session(
+                UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    // If this app has no active session → new session
+                    if (!sessions.containsKey(pkg) || !sessions[pkg]!!.isOpen) {
+                        sessions[pkg] = Session(
                             packageName = pkg,
-                            appName = getAppName(pkg),
                             startTime = event.timeStamp,
-                            lastResumeTime = event.timeStamp,
-                            lastEventTime = event.timeStamp
+                            lastResume = event.timeStamp
                         )
+
+                        // Log OPEN event
+                        sessionList.add(
+                            AppEvent(
+                                event = "MOVE_TO_FOREGROUND",
+                                appName = getAppName(pkg),
+                                packageName = pkg,
+                                timestamp = event.timeStamp,
+                                duration = 0
+                            )
+                        )
+                    } else {
+                        // App reopened after pause
+                        sessions[pkg]!!.lastResume = event.timeStamp
+                        sessions[pkg]!!.isOpen = true
                     }
                 }
 
-                UsageEvents.Event.ACTIVITY_PAUSED, UsageEvents.Event.ACTIVITY_STOPPED -> {
-                    if (currentSession?.packageName == pkg && currentSession.isOpen) {
-                        val duration = event.timeStamp - currentSession.lastResumeTime
-                        currentSession.accumulatedDuration =
-                            currentSession.accumulatedDuration + duration
-                        currentSession.isOpen = false
-                        currentSession.lastEventTime = event.timeStamp
+                UsageEvents.Event.ACTIVITY_PAUSED,
+                UsageEvents.Event.ACTIVITY_STOPPED -> {
+
+                    val session = sessions[pkg] ?: continue
+                    if (session.isOpen) {
+
+                        val duration = event.timeStamp - session.lastResume
+                        session.duration += duration
+                        session.isOpen = false
+
+                        // Log CLOSE event
+                        sessionList.add(
+                            AppEvent(
+                                event = "APP_CLOSED",
+                                appName = getAppName(pkg),
+                                packageName = pkg,
+                                timestamp = event.timeStamp,
+                                duration = session.duration
+                            )
+                        )
                     }
                 }
             }
         }
 
-        currentSession?.let { session ->
-            if (!session.isOpen && session.lastEventTime > start) {
-                finalizedEvents.add(
+        // Handle apps still open at the end time
+        for ((pkg, session) in sessions) {
+            if (session.isOpen) {
+                session.duration += (end - session.lastResume)
+
+                sessionList.add(
                     AppEvent(
-                        event = "APP_USAGE",
-                        appName = session.appName,
-                        packageName = session.packageName,
-                        timestamp = session.startTime,
-                        duration = session.accumulatedDuration
+                        event = "APP_CLOSED",
+                        appName = getAppName(pkg),
+                        packageName = pkg,
+                        timestamp = end,
+                        duration = session.duration
                     )
                 )
             }
         }
 
-        return finalizedEvents
+        return sessionList.sortedBy { it.timestamp }
     }
+
 
     private fun isLauncherApp(packageName: String): Boolean {
         val intent = Intent(Intent.ACTION_MAIN).apply {

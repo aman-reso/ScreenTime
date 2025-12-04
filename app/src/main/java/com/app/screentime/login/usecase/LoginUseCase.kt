@@ -3,6 +3,7 @@ package com.app.screentime.login.usecase
 import android.content.Context
 import android.provider.Settings
 import com.app.screentime.login.repository.LoginRepository
+import com.app.screentime.messaging.FCMTokenManager
 import com.app.screentime.network.model.DeviceRegistrationResponse
 import com.app.screentime.utils.Logger
 import kotlinx.coroutines.Dispatchers
@@ -19,10 +20,14 @@ import kotlinx.serialization.json.Json
 class LoginUseCase @Inject constructor(
     private val loginRepository: LoginRepository,
     private val preferencesManager: PreferencesManager,
+    private val fcmTokenManager: FCMTokenManager
 ) {
 
     suspend fun registerDevice() {
-        loginRepository.registerDevice().onFailure {
+        // Get current FCM token if available
+        val firebaseToken = fcmTokenManager.getCurrentToken()
+        
+        loginRepository.registerDevice(firebaseToken).onFailure {
 
         }.onSuccess {
             preferencesManager.saveUserInformation(it)

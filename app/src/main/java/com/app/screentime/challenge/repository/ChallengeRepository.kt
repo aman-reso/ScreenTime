@@ -26,15 +26,15 @@ class ChallengeRepository @Inject constructor(
         return challengeService.getUserChallenges()
     }
 
-    suspend fun getChallengeDetails(challengeId: Int): Result<ApiResponse<ChallengeDetails>> {
+    suspend fun getChallengeDetails(challengeId: String): Result<ApiResponse<ChallengeDetails>> {
         return challengeService.getChallengeDetails(challengeId)
     }
 
-    suspend fun joinChallenge(challengeId: Int): Result<ApiResponse<JoinChallengeResponse>> {
+    suspend fun joinChallenge(challengeId: String): Result<ApiResponse<JoinChallengeResponse>> {
         return challengeService.joinChallenge(challengeId)
     }
 
-    suspend fun getChallengeRankings(challengeId: Int): Result<ApiResponse<ChallengeRankingsResponse>> {
+    suspend fun getChallengeRankings(challengeId: String): Result<ApiResponse<ChallengeRankingsResponse>> {
         return challengeService.getChallengeRankings(challengeId)
     }
 
@@ -46,7 +46,7 @@ class ChallengeRepository @Inject constructor(
         return challengeService.submitBatchChallengeStats(request)
     }
 
-    suspend fun getChallengeLastSyncTime(challengeId: Int): Result<ApiResponse<ChallengeLastSyncResponse>> {
+    suspend fun getChallengeLastSyncTime(challengeId: String): Result<ApiResponse<ChallengeLastSyncResponse>> {
         return challengeService.getChallengeLastSyncTime(challengeId)
     }
 }

@@ -1,147 +1,142 @@
 package com.app.screentime.profile.screen
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.R
-import com.app.screentime.database.ScreenTimeDatabase
-import com.app.screentime.database.repository.BlockedLinkRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.atom.glassBottomSheetBackground
-import com.app.screentime.ui.theme.LocalAppColors
+import com.app.screentime.profile.viewmodel.BlockedSitesViewModel
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BlockedSitesBottomSheetContent(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    viewModel: BlockedSitesViewModel = hiltViewModel(),
+    scheme: ODSTheme = neutralScheme
+
 ) {
-    val colors = LocalAppColors.current ?: return
-    val context = LocalContext.current
+    val uiProps by viewModel.uiProps.collectAsState()
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    var blockedSites by remember { mutableStateOf<List<String>>(emptyList()) }
-    
-    LaunchedEffect(Unit) {
-        val repository = BlockedLinkRepository(
-            ScreenTimeDatabase.getDatabase(context).blockedLinkDao()
-        )
-        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            blockedSites = repository.getAllBlockedLinkStrings().sorted()
-        }
-    }
-
-    ModalBottomSheet(
-        containerColor = colors.background,
-        sheetState = sheetState,
+    ODSBottomSheet(
+        showBottomSheet = true,
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .glassBottomSheetBackground()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            // Header
-            Row(
+        titleSlot = {
+            ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                gap = DSVariables.spacingComponent2
             ) {
-                AppText(
+                ODSText(
                     text = stringResource(R.string.blocked_sites),
-                    style = AppTextStyle.SubTitle,
-                    fontWeight = FontWeight.Bold
+                    style = DSTextStyles.titleM,
+                    color = scheme.basicText
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = colors.tint
+                if (uiProps != null && !uiProps!!.isLoading && uiProps!!.error == null) {
+                    val blockedSites = uiProps!!.blockedSites
+                    if (blockedSites.isNotEmpty()) {
+                        ODSText(
+                            text = stringResource(R.string.blocked_sites_count, blockedSites.size),
+                            style = DSTextStyles.bodyMRegular,
+                            color = scheme.basicTextRecessive
+                        )
+                    }
+                }
+                if (uiProps?.isLoading == true) {
+                    ODSText(
+                        text = stringResource(R.string.loading),
+                        style = DSTextStyles.bodyMRegular,
+                        color = scheme.basicTextRecessive
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (blockedSites.isEmpty()) {
-                // No blocked sites
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    AppText(
-                        text = stringResource(R.string.no_blocked_sites),
-                        style = AppTextStyle.Body,
-                        color = colors.textSecondary
-                    )
-                }
-            } else {
-                // List of blocked sites
-                AppText(
-                    text = stringResource(R.string.blocked_sites_count, blockedSites.size),
-                    style = AppTextStyle.Body,
-                    color = colors.textSecondary
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                blockedSites.forEach { site ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = colors.card
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+        },
+        contentSlot = {
+            ODSColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                gap = DSVariables.spacingComponent3
+            ) {
+                when {
+                    uiProps == null || uiProps!!.isLoading -> {
+                        ODSBox(
+                            modifier = Modifier.fillMaxWidth(),
+                            padding = ODSPadding(vertical = DSVariables.spacingComponent8),
+                            contentAlignment = Alignment.Center
                         ) {
-                            AppText(
-                                text = site,
-                                style = AppTextStyle.Body,
-                                color = colors.textPrimary,
-                                modifier = Modifier.weight(1f)
+                            ODSText(
+                                text = stringResource(R.string.loading),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.basicTextRecessive
                             )
+                        }
+                    }
+
+                    uiProps!!.error != null -> {
+                        ODSInlineNotification(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme,
+                            props = ODSInlineNotificationProps(
+                                mode = ODSInlineNotificationMode.ERROR,
+                                text = uiProps!!.error,
+                                showCloseButton = false
+                            ),
+                            onDismiss = { viewModel.clearError() }
+                        )
+                    }
+
+                    uiProps!!.blockedSites.isEmpty() -> {
+                        ODSBox(
+                            modifier = Modifier.fillMaxWidth(),
+                            padding = ODSPadding(vertical = DSVariables.spacingComponent8),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.no_blocked_sites),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.basicTextRecessive
+                            )
+                        }
+                    }
+
+                    else -> {
+                        uiProps!!.blockedSites.forEach { site ->
+                            ODSBox(
+                                modifier = Modifier.fillMaxWidth(),
+                                background = listOf(ODSColorModel(scheme.basicBackgroundCard)),
+                                cornerRadius = ODSCorners(all = DSVariables.radiusMedium),
+                                padding = ODSPadding(all = DSVariables.spacingComponent5)
+                            ) {
+                                ODSText(
+                                    text = site,
+                                    style = DSTextStyles.bodyMRegular,
+                                    color = scheme.basicText
+                                )
+                            }
                         }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
+        },
+        onCloseClicked = onDismiss
+    )
 }
-

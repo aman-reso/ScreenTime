@@ -8,6 +8,6 @@ import com.app.screentime.utils.DeviceInfoUtils
  * API Service interface for Login and Device Registration operations
  */
 interface LoginService {
-    suspend fun registerDevice(deviceInfo: DeviceInfoUtils.DeviceInfo): Result<ApiResponse<DeviceRegistrationResponse>>
+    suspend fun registerDevice(deviceInfo: DeviceInfoUtils.DeviceInfo, firebaseToken: String? = null): Result<ApiResponse<DeviceRegistrationResponse>>
 }
 

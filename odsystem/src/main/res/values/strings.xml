@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Preference Keys -->
+    <string name="preference_file_key">odsystem_preferences</string>
+    <string name="preference_theme_key">odsystem_theme</string>
+
+    <!-- Format Strings -->
+    <string name="percent_progress">%1$s%% progress</string>
+
+    <!-- Semantic/Accessibility Strings -->
+    <string name="semantic_button">Button</string>
+    <string name="semantic_checkmark_icon">Checkmark icon</string>
+    <string name="semantic_close_button">Close button</string>
+    <string name="semantic_close_dialog">Close dialog</string>
+    <string name="semantic_collapsed_state">Collapsed</string>
+    <string name="semantic_decrease_icon">Decrease</string>
+    <string name="semantic_delete_icon">Delete</string>
+    <string name="semantic_dialog">Dialog</string>
+    <string name="semantic_dismissed_action">dismissed</string>
+    <string name="semantic_dismissible_chip_action">Dismiss</string>
+    <string name="semantic_double_tap_to_dismiss">Double tap to dismiss</string>
+    <string name="semantic_double_tap_to_select">Double tap to select</string>
+    <string name="semantic_element">Element</string>
+    <string name="semantic_error">Error</string>
+    <string name="semantic_error_alert">Error alert</string>
+    <string name="semantic_error_sentence">Error:</string>
+    <string name="semantic_expanded_state">Expanded</string>
+    <string name="semantic_hide_password_icon">Hide password</string>
+    <string name="semantic_icon">Icon</string>
+    <string name="semantic_increase_icon">Increase</string>
+    <string name="semantic_info_sentence">Information:</string>
+    <string name="semantic_informative_alert">Informative alert</string>
+    <string name="semantic_input_required">Input required</string>
+    <string name="semantic_link">Link</string>
+    <string name="semantic_list_item">List item</string>
+    <string name="semantic_list_item_level">List item level</string>
+    <string name="semantic_max_character_reached">Maximum character limit reached</string>
+    <string name="semantic_navigation_back_icon">Navigate back</string>
+    <string name="semantic_next">Next</string>
+    <string name="semantic_notification_message">Notification: %1$s</string>
+    <string name="semantic_notifications">Notifications</string>
+    <string name="semantic_number">Number</string>
+    <string name="semantic_out_of_five_stars">out of five stars</string>
+    <string name="semantic_previous">Previous</string>
+    <string name="semantic_profile_name_initials">Profile name initials: %1$s</string>
+    <string name="semantic_range">Range</string>
+    <string name="semantic_rating_disabled">Rating disabled</string>
+    <string name="semantic_read_only">Read only</string>
+    <string name="semantic_remove_icon">Remove</string>
+    <string name="semantic_selected">Selected</string>
+    <string name="semantic_selected_tab_index_message">Tab %1$s of %2$s</string>
+    <string name="semantic_show_password_icon">Show password</string>
+    <string name="semantic_slider">Slider</string>
+    <string name="semantic_star_icon">Star icon</string>
+    <string name="semantic_success">Success</string>
+    <string name="semantic_success_alert">Success alert</string>
+    <string name="semantic_success_icon">Success icon</string>
+    <string name="semantic_success_sentence">Success:</string>
+    <string name="semantic_to">to</string>
+    <string name="semantic_view_all">View all</string>
+    <string name="semantic_warning">Warning</string>
+    <string name="semantic_warning_alert">Warning alert</string>
+    <string name="semantic_warning_icon">Warning icon</string>
+    <string name="semantic_with">with</string>
+
+    <!-- Semantics (Alternative naming convention) -->
+    <string name="semantics_cancel">Cancel</string>
+    <string name="semantics_choose_date">Choose date</string>
+    <string name="semantics_clock_icon">Clock icon</string>
+    <string name="semantics_close">Close</string>
+    <string name="semantics_incoming">Incoming</string>
+    <string name="semantics_level_1">Level 1</string>
+    <string name="semantics_level_2">Level 2</string>
+    <string name="semantics_more">More</string>
+    <string name="semantics_next">Next</string>
+    <string name="semantics_not_all_options_selected">Not all options selected</string>
+    <string name="semantics_ok">OK</string>
+    <string name="semantics_outgoing">Outgoing</string>
+    <string name="semantics_pause">Pause</string>
+    <string name="semantics_play">Play</string>
+    <string name="semantics_previous">Previous</string>
+    <string name="semantics_skeleton">Loading skeleton</string>
+    <string name="semantics_step">Step</string>
+    <string name="semantics_typing">Typing</string>
+</resources>
+

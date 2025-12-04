@@ -1,14 +1,11 @@
 package com.app.screentime.statistics.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.screentime.R
-import com.app.screentime.statistics.model.StatisticsUiState
-import com.app.screentime.record.repository.LocalAppUsageRepository
+import com.app.screentime.statistics.model.StatisticsUiProps
+import com.app.screentime.statistics.usecase.StatisticsUseCase
+import com.telekom.odsystem.organisms.barchart.ODSBarItemDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,71 +14,95 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
-    private val localAppUsageRepository: LocalAppUsageRepository,
-    @ApplicationContext private val context: Context
+    private val statisticsUseCase: StatisticsUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(StatisticsUiState())
-    val uiState: StateFlow<StatisticsUiState> = _uiState.asStateFlow()
+    private val _uiProps = MutableStateFlow<StatisticsUiProps?>(null)
+    val uiProps: StateFlow<StatisticsUiProps?> = _uiProps.asStateFlow()
 
     init {
         loadWeeklyData()
     }
 
     fun loadWeeklyData() {
-        viewModelScope.launch(Dispatchers.Default) {
-            try {
-                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                
-                val weeklyReports = localAppUsageRepository.getOneWeekReport()
-                
-                // Default to latest day (today) - last index in the list
-                val defaultDayIndex = if (weeklyReports.isNotEmpty()) {
-                    weeklyReports.size - 1  // Last day (today/latest)
-                } else {
-                    null
-                }
-                
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    weeklyReports = weeklyReports,
-                    error = null,
-                    selectedDayIndex = defaultDayIndex  // Default to latest day
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = context.getString(R.string.failed_to_load_weekly_data, e.message ?: ""),
-                    weeklyReports = emptyList()
-                )
-            }
+        viewModelScope.launch {
+            val currentOrientation = _uiProps.value?.chartOrientation ?: ODSBarItemDirection.VERTICAL
+            _uiProps.value = statisticsUseCase.getStatisticsUiProps(
+                isLoading = true,
+                chartOrientation = currentOrientation
+            )
+            val props = statisticsUseCase.getStatisticsUiProps(
+                isLoading = false,
+                chartOrientation = currentOrientation
+            )
+            _uiProps.value = props
         }
     }
 
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        val currentProps = _uiProps.value
+        if (currentProps != null) {
+            _uiProps.value = currentProps.copy(error = null)
+        }
     }
 
     fun selectDay(dayIndex: Int) {
-        _uiState.value = _uiState.value.copy(
-            selectedDayIndex = dayIndex
-        )
+        viewModelScope.launch {
+            val currentOrientation = _uiProps.value?.chartOrientation ?: ODSBarItemDirection.VERTICAL
+            val props = statisticsUseCase.getStatisticsUiProps(
+                selectedDayIndex = dayIndex,
+                chartOrientation = currentOrientation
+            )
+            _uiProps.value = props
+        }
     }
 
     fun toggleExpandedState() {
-        // If collapsed, expand to latest day; if expanded, collapse
-        val currentIndex = _uiState.value.selectedDayIndex
-        _uiState.value = _uiState.value.copy(
-            selectedDayIndex = if (currentIndex == null) {
-                // Expand to latest day if collapsed
-                if (_uiState.value.weeklyReports.isNotEmpty()) {
-                    _uiState.value.weeklyReports.size - 1
-                } else null
-            } else {
-                // Collapse if expanded
-                null
-            }
-        )
+        val currentIndex = _uiProps.value?.selectedDayIndex
+        val currentWeeklyReports = _uiProps.value?.weeklyReports
+        val currentOrientation = _uiProps.value?.chartOrientation ?: ODSBarItemDirection.VERTICAL
+        viewModelScope.launch {
+            val props = statisticsUseCase.getStatisticsUiProps(
+                selectedDayIndex = if (currentIndex == null) {
+                    // Expand to latest day if collapsed
+                    if (currentWeeklyReports != null && currentWeeklyReports.isNotEmpty()) {
+                        currentWeeklyReports.size - 1
+                    } else {
+                        // Need to load data first to get the last index
+                        val tempProps = statisticsUseCase.getStatisticsUiProps(
+                            chartOrientation = currentOrientation
+                        )
+                        if (tempProps.barChartData.isNotEmpty()) {
+                            tempProps.barChartData.size - 1
+                        } else null
+                    }
+                } else {
+                    // Collapse if expanded
+                    null
+                },
+                chartOrientation = currentOrientation
+            )
+            _uiProps.value = props
+        }
     }
+
+    fun toggleChartOrientation() {
+        val currentProps = _uiProps.value
+        if (currentProps != null) {
+            val newOrientation = when (currentProps.chartOrientation) {
+                ODSBarItemDirection.VERTICAL -> ODSBarItemDirection.HORIZONTAL
+                ODSBarItemDirection.HORIZONTAL -> ODSBarItemDirection.VERTICAL
+            }
+            viewModelScope.launch {
+                val props = statisticsUseCase.getStatisticsUiProps(
+                    selectedDayIndex = currentProps.selectedDayIndex,
+                    chartOrientation = newOrientation
+                )
+                _uiProps.value = props
+            }
+        }
+    }
+
+    fun getChartFormatterProps() = statisticsUseCase.getChartFormatterProps()
 }
 

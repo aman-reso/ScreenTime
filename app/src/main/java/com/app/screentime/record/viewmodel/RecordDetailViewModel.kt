@@ -6,6 +6,7 @@ import com.app.screentime.network.model.ApiResponse
 import com.app.screentime.network.model.AppUsageStatsData
 import com.app.screentime.network.model.DailyUsage
 import com.app.screentime.network.model.UsageRecordResponse
+import com.app.screentime.record.model.SummaryTabUiProps
 import com.app.screentime.record.model.TimelineListItem
 import com.app.screentime.record.usecase.RecordUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +28,9 @@ class RecordDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RecordDetailUiState())
     val uiState: StateFlow<RecordDetailUiState> = _uiState.asStateFlow()
 
+    private val _summaryTabUiProps = MutableStateFlow<SummaryTabUiProps?>(null)
+    val summaryTabUiProps: StateFlow<SummaryTabUiProps?> = _summaryTabUiProps.asStateFlow()
+
     /**
      * Get daily usage stats for a target user
      * This is called after TOTP verification to view another user's usage
@@ -45,6 +49,13 @@ class RecordDetailViewModel @Inject constructor(
             val rawStatsResult = recordUseCase.getRawDailyStats(selectedDate, targetUserId)
             val stats = rawStatsResult.getOrNull() ?: emptyList()
 
+            // Initialize summary tab UI Props with loading state
+            _summaryTabUiProps.value = recordUseCase.getSummaryTabUiProps(
+                stats = emptyList(),
+                isLoading = true,
+                error = null
+            )
+
             // Sort by eventTimestamp for timeline (descending - newest first)
             val sortedStats = stats.sortedByDescending { stat ->
                 stat.eventTimestamp?.let {
@@ -54,6 +65,13 @@ class RecordDetailViewModel @Inject constructor(
 
             // Process timeline data
             val timelineItems = recordUseCase.processTimelineData(sortedStats)
+
+            // Update summary tab UI Props
+            _summaryTabUiProps.value = recordUseCase.getSummaryTabUiProps(
+                stats = sortedStats,
+                isLoading = false,
+                error = null
+            )
 
             recordUseCase.getDailyUsageStats(selectedDate, targetUserId)
                 .fold(
@@ -66,14 +84,27 @@ class RecordDetailViewModel @Inject constructor(
                             selectedDate = selectedDate,
                             error = null
                         )
+                        // Update summary tab UI Props after successful load
+                        _summaryTabUiProps.value = recordUseCase.getSummaryTabUiProps(
+                            stats = sortedStats,
+                            isLoading = false,
+                            error = null
+                        )
                     },
                     onFailure = { exception ->
+                        val errorMessage = "Failed to load daily usage stats: ${exception.message}"
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = "Failed to load daily usage stats: ${exception.message}",
+                            error = errorMessage,
                             records = emptyList(),
                             stats = sortedStats, // Still show stats even if dailyUsage fails
                             timeLines = timelineItems
+                        )
+                        // Update summary tab UI Props with error
+                        _summaryTabUiProps.value = recordUseCase.getSummaryTabUiProps(
+                            stats = sortedStats,
+                            isLoading = false,
+                            error = errorMessage
                         )
                     }
                 )

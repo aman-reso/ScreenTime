@@ -4,27 +4,24 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.LocalAppColors
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.switch.ODSSwitch
+import com.telekom.odsystem.atoms.switch.ODSSwitchProps
+
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 @Preview(showBackground = true)
 @Composable
@@ -33,55 +30,35 @@ fun ConsentingSection(
     description: String = "Description",
     checked: Boolean = false,
     isMandatory: Boolean = false,
-    onCheckedChange: (Boolean) -> Unit = {}
+    onCheckedChange: (Boolean) -> Unit = {},
+    scheme: ODSTheme = neutralScheme
 ) {
-    val colors = LocalAppColors.current ?: return
-    val animatedChecked by animateFloatAsState(
-        targetValue = if (checked) 1f else 0f,
-        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)
-    )
-
-    Row(
+    ODSRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-
-        Column(modifier = Modifier.weight(1f)) {
-            AppText(text = title, style = AppTextStyle.Body)
-            AppText(text = description, style = AppTextStyle.Label, color = colors.textLight)
+        ODSColumn(modifier = Modifier.weight(1f)) {
+            ODSText(
+                text = title,
+                style = DSTextStyles.bodyMRegular,
+                color = scheme.basicText
+            )
+            ODSText(
+                text = description,
+                style = DSTextStyles.bodyMBold,
+                color = scheme.basicTextRecessive
+            )
         }
 
-        Switch(
-            thumbContent = {
-                // Fade + scale animation for icon
-                val scale by animateFloatAsState(
-                    targetValue = if (checked) 1f else 0.9f,
-                    animationSpec = tween(200)
-                )
-                Icon(
-                    imageVector = if (checked) Icons.Rounded.Check else Icons.Rounded.Close,
-                    contentDescription = "Checked",
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .scale(scale),
-                    tint = if (checked) colors.textPrimary else colors.textLight.copy(alpha = 1 - animatedChecked)
-                )
-            },
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = colors.textMuted,
-                checkedTrackColor = colors.accent,
-                checkedBorderColor = Color.Transparent,
-                uncheckedThumbColor = colors.textPrimary,
-                uncheckedTrackColor = colors.textMuted,
-                uncheckedBorderColor = Color.Transparent
+        ODSSwitch(
+            scheme = scheme,
+            props = ODSSwitchProps(
+                selected = if (isMandatory) true else checked,
+                disabled = isMandatory,
+                readOnly = isMandatory
             ),
-            checked = if (isMandatory) true else checked,
-            onCheckedChange = if (isMandatory) {
-                onCheckedChange
-            } else onCheckedChange,
-            enabled = !isMandatory,
-            modifier = Modifier
+            onCheckedChange = onCheckedChange
         )
     }
 }

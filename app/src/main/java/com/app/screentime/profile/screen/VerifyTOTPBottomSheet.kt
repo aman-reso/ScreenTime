@@ -1,40 +1,32 @@
 package com.app.screentime.profile.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.profile.viewmodel.VerifyTOTPViewModel
-import com.app.screentime.ui.atom.AppPrimaryButton
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.atom.glassBottomSheetBackground
-import com.app.screentime.ui.theme.LocalAppColors
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.R
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
+import com.telekom.odsystem.molecules.codeinput.ODSCodeInput
+import com.telekom.odsystem.molecules.codeinput.ODSCodeInputProps
+import com.telekom.odsystem.molecules.codeinput.ODSInputItemModel
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,14 +34,13 @@ import kotlinx.coroutines.delay
 fun VerifyTOTPBottomSheetContent(
     onDismiss: () -> Unit,
     onVerifySuccess: () -> Unit = {},
-    username: String? = null, // Username for username-based verification
+    username: String? = null,
     viewModel: VerifyTOTPViewModel = hiltViewModel()
 ) {
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
-    )
-
+    val scheme = neutralScheme
     val uiState by viewModel.uiState.collectAsState()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     var otpText by remember { mutableStateOf("") }
 
@@ -62,118 +53,70 @@ fun VerifyTOTPBottomSheetContent(
     // Handle verification success
     LaunchedEffect(uiState.isValid) {
         if (uiState.isValid && uiState.isVerified) {
-            // Small delay to show success state
             delay(500)
             onVerifySuccess()
         }
     }
 
-    val colors = LocalAppColors.current ?: return
-    ModalBottomSheet(
-        containerColor = colors.background,
-        sheetGesturesEnabled = false,
-        sheetState = sheetState,
-        properties = ModalBottomSheetProperties(
-            shouldDismissOnClickOutside = true
-        ),
+    // Create input items based on current OTP text
+    val inputItems = remember(otpText) {
+        List(6) { index ->
+            ODSInputItemModel(
+                inputText = if (index < otpText.length) otpText[index].toString() else null,
+                placeHolder = "-"
+            )
+        }
+    }
+
+    ODSBottomSheet(
+        showBottomSheet = true,
         onDismissRequest = {
             viewModel.resetVerification()
             otpText = ""
             onDismiss()
         },
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .glassBottomSheetBackground()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-        ) {
-            Row(
+        titleSlot = {
+            ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                gap = DSVariables.spacingComponent2
             ) {
-                AppText(
-                    text = "Verify TOTP",
-                    style = AppTextStyle.SubTitle,
+                ODSText(
+                    text = stringResource(R.string.verify_totp),
+                    style = DSTextStyles.titleM,
+                    color = scheme.basicText
                 )
-                IconButton(onClick = {
-                    viewModel.resetVerification()
-                    otpText = ""
-                    onDismiss()
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = colors.tint
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            AppText(
-                text = if (username != null) {
-                    "Enter the OTP code for $username to verify"
-                } else {
-                    "Enter the OTP code to verify"
-                },
-                style = AppTextStyle.Label
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(Modifier, DividerDefaults.Thickness, color = colors.textHint)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Glassy OTP Input Field
-            val focusRequester = remember { FocusRequester() }
-            val focusManager = LocalFocusManager.current
-            val keyboardController = LocalSoftwareKeyboardController.current
-            var isFocused by remember { mutableStateOf(false) }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(colors.card.copy(alpha = 0.0f))
-                    .border(
-                        width = 1.dp,
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                if (uiState.error != null && uiState.isVerified) {
-                                    MaterialTheme.colorScheme.error
-                                } else {
-                                    colors.textPrimary
-                                },
-                                if (uiState.error != null && uiState.isVerified) {
-                                    MaterialTheme.colorScheme.error
-                                } else {
-                                    colors.textPrimary
-                                },
-                                if (uiState.error != null && uiState.isVerified) {
-                                    MaterialTheme.colorScheme.error.copy(alpha = 0.42f)
-                                } else {
-                                    colors.textPrimary.copy(alpha = 0.42f)
-                                }
-                            )
-                        ),
-                        shape = MaterialTheme.shapes.medium
-                    )
-            ) {
-                BasicTextField(
-                    value = otpText,
-                    onValueChange = {
-                        // Only allow digits and limit to 6 characters
-                        otpText = it.filter { it.isDigit() }.take(6)
+                ODSText(
+                    text = if (username != null) {
+                        stringResource(R.string.enter_otp_for_user, username)
+                    } else {
+                        stringResource(R.string.enter_otp_to_verify)
                     },
-                    enabled = !uiState.isVerifying,
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done,
-                        keyboardType = KeyboardType.Number
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicTextRecessive
+                )
+            }
+        },
+        contentSlot = {
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth(),
+                gap = DSVariables.spacingComponent4
+            ) {
+                ODSCodeInput(
+                    scheme = scheme,
+                    props = ODSCodeInputProps(
+                        inputItems = inputItems,
+                        disabled = uiState.isVerifying,
+                        readOnly = false,
+                        mode = if (uiState.error != null && uiState.isVerified) {
+                            com.telekom.odsystem.molecules.codeinput.ODSCodeInputMode.ERROR
+                        } else {
+                            com.telekom.odsystem.molecules.codeinput.ODSCodeInputMode.STANDARD
+                        },
+                        errorMessage = uiState.error ?: ""
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
@@ -184,67 +127,41 @@ fun VerifyTOTPBottomSheetContent(
                             }
                         }
                     ),
-                    modifier = Modifier
-                        .matchParentSize()
-                        .focusRequester(focusRequester)
-                        .onFocusChanged { state ->
-                            isFocused = state.isFocused
+                    onValueChange = { newValue ->
+                        // Only allow digits and limit to 6 characters
+                        otpText = newValue.filter { it.isDigit() }.take(6)
+                    },
+                    onCodeFilled = { code ->
+                        if (username != null) {
+                            viewModel.verifyTOTPByUsername(username, code)
                         }
-                        .padding(horizontal = 16.dp),
-                    textStyle = TextStyle(
-                        color = colors.textPrimary,
-                        fontSize = 18.sp,
-                        letterSpacing = 4.sp
+                    }
+                )
+            }
+        },
+        actionSlot = {
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                ODSButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    scheme = scheme,
+                    props = ODSButtonProps(
+                        label = if (uiState.isVerifying) stringResource(R.string.verifying) else stringResource(R.string.verify),
+                        disabled = uiState.isVerifying || otpText.length != 6 || username == null
                     ),
-                    decorationBox = { innerTextField ->
-                        Row(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier.weight(1f),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                if (otpText.isEmpty() && !isFocused) {
-                                    AppText(
-                                        text = "Enter OTP",
-                                        color = colors.textHint,
-                                        style = AppTextStyle.Label
-                                    )
-                                }
-                                innerTextField()
-                            }
+                    onClick = {
+                        username?.let {
+                            viewModel.verifyTOTPByUsername(it, otpText)
                         }
                     }
                 )
             }
-
-            // Error message
-            if (uiState.error != null && uiState.isVerified) {
-                Spacer(modifier = Modifier.height(8.dp))
-                AppText(
-                    text = uiState.error ?: "",
-                    style = AppTextStyle.Label,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Primary Button
-            AppPrimaryButton(
-                modifier = Modifier.fillMaxWidth(),
-                text = if (uiState.isVerifying) "Verifying..." else "Verify",
-                enabled = !uiState.isVerifying && otpText.length == 6 && username != null,
-                onClick = {
-                    username?.let {
-                        viewModel.verifyTOTPByUsername(it, otpText)
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
+        },
+        onCloseClicked = {
+            viewModel.resetVerification()
+            otpText = ""
+            onDismiss()
         }
-    }
+    )
 }
-

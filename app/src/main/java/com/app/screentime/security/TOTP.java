@@ -1,5 +1,8 @@
 package com.app.screentime.security;
 
+import com.app.screentime.BuildConfig;
+import com.app.screentime.config.AppSecrets;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -12,7 +15,8 @@ public class TOTP {
     private static final String HMAC_ALGO = "HmacSHA1"; // RFC default
     private static final int DIGITS = 6;                // 6-digit code
     private static final long TIME_STEP_SECONDS = 60L;  // 60 seconds = 1 minute
-    static String base32Secret = "O5YRY4I2737IGHVYOHXM6T7RWWNAW3X7"; // example only (fallback)
+
+    static String base32Secret = BuildConfig.TOTP_FALLBACK_SECRET;
 
     /**
      * Generate a TOTP code for the supplied Base32-encoded secret.

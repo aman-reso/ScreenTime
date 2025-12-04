@@ -100,7 +100,7 @@ class ConsentViewModel @Inject constructor(
 
             consentUseCase.submitConsents(request).fold(
                 onSuccess = { apiResponse ->
-                    // Mark as displayed regardless of success or failure
+                    // Mark consent as given (allows data sync to proceed)
                     preferencesUseCase.markConsentSheetShown()
                     if (apiResponse.success == true) {
                         _uiState.value = _uiState.value.copy(
@@ -117,7 +117,7 @@ class ConsentViewModel @Inject constructor(
                     }
                 },
                 onFailure = { exception ->
-                    // Mark as displayed even on failure
+                    // Mark consent as given even on failure (allows data sync to proceed)
                     preferencesUseCase.markConsentSheetShown()
                     _uiState.value = _uiState.value.copy(
                         isSubmitting = false,
@@ -158,6 +158,73 @@ class ConsentViewModel @Inject constructor(
      */
     fun resetSubmission() {
         _uiState.value = _uiState.value.copy(isSubmitted = false)
+    }
+    
+    /**
+     * Submit hardcoded consents to API
+     * @param consentItems List of hardcoded consent items with their values
+     */
+    fun submitHardcodedConsents(consentItems: List<Pair<String, Boolean>>) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmitting = true, error = null)
+
+            val deviceId = preferencesManager.getUserId()
+            if (deviceId.isNullOrEmpty()) {
+                _uiState.value = _uiState.value.copy(
+                    isSubmitting = false,
+                    error = "Device not registered"
+                )
+                return@launch
+            }
+
+            // Map hardcoded consent items to API format
+            // Using integer IDs that map to consent names
+            val idMapping = mapOf(
+                "data_collection" to 1,
+                "data_sharing" to 2,
+                "analytics" to 3
+            )
+            
+            val submissionItems = consentItems.map { (id, value) ->
+                ConsentSubmissionItem(
+                    id = idMapping[id] ?: 0,
+                    value = if (value) "accepted" else "rejected"
+                )
+            }
+
+            val request = ConsentSubmissionRequest(
+                consents = submissionItems
+            )
+
+            consentUseCase.submitConsents(request).fold(
+                onSuccess = { apiResponse ->
+                    // Mark consent as given (allows usage stats and challenge data sync to proceed)
+                    preferencesUseCase.markConsentSheetShown()
+                    if (apiResponse.success == true) {
+                        _uiState.value = _uiState.value.copy(
+                            isSubmitting = false,
+                            isSubmitted = true,
+                            error = null
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isSubmitting = false,
+                            isSubmitted = true, // Still mark as submitted even if API failed
+                            error = apiResponse.message ?: "Failed to submit consents"
+                        )
+                    }
+                },
+                onFailure = { exception ->
+                    // Mark consent as given even on failure (allows data sync to proceed)
+                    preferencesUseCase.markConsentSheetShown()
+                    _uiState.value = _uiState.value.copy(
+                        isSubmitting = false,
+                        isSubmitted = true, // Mark as submitted even on failure
+                        error = exception.message ?: "Failed to submit consents"
+                    )
+                }
+            )
+        }
     }
 }
 

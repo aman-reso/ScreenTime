@@ -18,7 +18,7 @@ class JoinedChallengeRepository @Inject constructor(
         return joinedChallengeDao.getAllJoinedChallenges()
     }
     
-    suspend fun getJoinedChallengeById(challengeId: Int): JoinedChallengeEntity? {
+    suspend fun getJoinedChallengeById(challengeId: String): JoinedChallengeEntity? {
         return joinedChallengeDao.getJoinedChallengeById(challengeId)
     }
     
@@ -38,19 +38,19 @@ class JoinedChallengeRepository @Inject constructor(
         joinedChallengeDao.updateJoinedChallenge(challenge)
     }
     
-    suspend fun deleteJoinedChallenge(challengeId: Int) {
+    suspend fun deleteJoinedChallenge(challengeId: String) {
         joinedChallengeDao.deleteJoinedChallengeById(challengeId)
     }
     
-    suspend fun updateLastSyncTime(challengeId: Int, syncTime: Long) {
+    suspend fun updateLastSyncTime(challengeId: String, syncTime: Long) {
         joinedChallengeDao.updateLastSyncTime(challengeId, syncTime)
     }
     
-    suspend fun updateSyncScheduled(challengeId: Int, scheduled: Boolean) {
+    suspend fun updateSyncScheduled(challengeId: String, scheduled: Boolean) {
         joinedChallengeDao.updateSyncScheduled(challengeId, scheduled)
     }
     
-    suspend fun updatePackageNames(challengeId: Int, packageNames: String?) {
+    suspend fun updatePackageNames(challengeId: String, packageNames: String?) {
         joinedChallengeDao.updatePackageNames(challengeId, packageNames)
     }
 }

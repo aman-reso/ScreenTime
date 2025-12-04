@@ -1,32 +1,25 @@
 package com.app.screentime.record.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -34,12 +27,30 @@ import com.app.screentime.record.component.DateSpinner
 import com.app.screentime.record.component.SummaryTab
 import com.app.screentime.record.component.TimelineTab
 import com.app.screentime.record.viewmodel.RecordDetailViewModel
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.atom.SegmentedControl
-import com.app.screentime.ui.theme.LocalAppColors
+
 import com.app.screentime.utils.DateUtils
 import kotlinx.coroutines.launch
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonButtonType
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.molecules.tabs.ODSTabs
+import com.telekom.odsystem.molecules.tabs.ODSTabsProps
+import com.telekom.odsystem.molecules.tabs.ODSTabsSize
+import com.telekom.odsystem.molecules.tabs.ODSTabsVariant
+import com.telekom.odsystem.molecules.tabs.ODSTabItemModel
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+import org.joda.time.LocalDate
+import org.joda.time.format.DateTimeFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,18 +58,40 @@ fun RecordDetailScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     username: String,
+    scheme: ODSTheme = neutralScheme,
     viewModel: RecordDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val colors = LocalAppColors.current ?: return
     val coroutineScope = rememberCoroutineScope()
 
     val tabs = listOf("Summary", "Timeline")
     val pagerState = rememberPagerState(pageCount = { tabs.size }, initialPage = 0)
 
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+
     // Track selected date for display
     val today = com.app.screentime.utils.DateUtils.today()
     var selectedDateDisplay by remember { mutableStateOf(today.toString("d MMM yyyy")) }
+
+    // Sync tab selection with pager state
+    LaunchedEffect(pagerState.currentPage) {
+        selectedTabIndex = pagerState.currentPage
+    }
+
+    // Sync pager with tab selection
+    LaunchedEffect(selectedTabIndex) {
+        if (pagerState.currentPage != selectedTabIndex) {
+            coroutineScope.launch {
+                pagerState.animateScrollToPage(selectedTabIndex)
+            }
+        }
+    }
+
+    // Tab elements
+    val tabElements = listOf(
+        ODSTabItemModel(label = "Summary"),
+        ODSTabItemModel(label = "Timeline")
+    )
 
     LaunchedEffect(Unit) {
         // After TOTP verification, use the new daily stats API
@@ -66,41 +99,44 @@ fun RecordDetailScreen(
         viewModel.getDailyUsageStats(targetUserId = username)
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.background)
+    ODSColumn(
+        modifier = modifier.fillMaxSize(),
+        background = listOf(ODSColorModel(scheme.basicBackground))
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+        ODSRow(
+            modifier = Modifier.fillMaxWidth(),
+            padding = ODSPadding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Back arrow - Left side
-            IconButton(
-                onClick = { navController.popBackStack() }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = "Back",
-                    tint = colors.tint
-                )
-            }
-            AppText(
+            ODSButton(
+                scheme = scheme,
+                props = ODSButtonProps(
+                    buttonIcon = ODSIconModel(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        tint = scheme.basicText,
+                        contentDescription = "Back"
+                    ),
+                    buttonType = ODSButtonButtonType.ICON_ONLY,
+                    variant = ODSButtonVariant.GHOST,
+                    size = com.telekom.odsystem.atoms.button.ODSButtonSize.SMALL
+                ),
+                onClick = { navController.popBackStack() }
+            )
+
+            ODSText(
                 text = username,
-                style = AppTextStyle.Title,
-                fontWeight = FontWeight.Bold,
-                color = colors.textPrimary,
+                style = DSTextStyles.titleS,
+                color = scheme.basicText,
                 modifier = Modifier.weight(1f)
             )
 
-            Box(modifier = Modifier.width(200.dp)) {
+            ODSBox(modifier = Modifier.width(160.dp)) {
                 DateSpinner(
                     onDateSelected = { selectedDate ->
-                        val localDate = org.joda.time.LocalDate.parse(
+                        val localDate = LocalDate.parse(
                             selectedDate,
-                            org.joda.time.format.DateTimeFormat.forPattern("yyyy-MM-dd")
+                            DateTimeFormat.forPattern("yyyy-MM-dd")
                         )
                         selectedDateDisplay = localDate.toString("d MMM yyyy")
                         viewModel.getDailyUsageStats(targetUserId = username, date = selectedDate)
@@ -109,22 +145,23 @@ fun RecordDetailScreen(
             }
         }
 
-        // Segmented Control
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            SegmentedControl(
-                items = tabs,
-                selectedIndex = pagerState.currentPage,
-                onItemSelected = { index ->
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(index)
-                    }
+        ODSTabs(
+            modifier = Modifier.fillMaxWidth(),
+            scheme = scheme,
+            props = ODSTabsProps(
+                tabElements = tabElements,
+                size = ODSTabsSize.SMALL,
+                variant = ODSTabsVariant.FILL,
+                showDividerFrame = true
+            ),
+            selectedTabIndex = selectedTabIndex,
+            onSelectedTabChange = { index ->
+                selectedTabIndex = index
+                coroutineScope.launch {
+                    pagerState.animateScrollToPage(index)
                 }
-            )
-        }
+            }
+        )
 
         // Tab Content with Pager
         HorizontalPager(
@@ -138,16 +175,15 @@ fun RecordDetailScreen(
                     SummaryTab(
                         viewModel = viewModel,
                         uiState = uiState,
-                        colors = colors,
                         navController = navController,
-                        selectedDateDisplay = selectedDateDisplay
+                        selectedDateDisplay = selectedDateDisplay, scheme = scheme
                     )
                 }
 
                 1 -> {
                     // Timeline Tab
                     TimelineTab(
-                        uiState = uiState, viewModel = viewModel, colors = colors
+                        uiState = uiState, viewModel = viewModel, scheme = scheme
                     )
                 }
             }

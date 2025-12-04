@@ -2,41 +2,40 @@ package com.app.screentime.profile.screen
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.app.screentime.preferences.PreferencesManager
 import com.app.screentime.security.TOTP
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.atom.glassBottomSheetBackground
-import com.app.screentime.ui.theme.LocalAppColors
-import com.app.screentime.ui.theme.appColor
-import kotlinx.coroutines.delay
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.R
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
+
 import com.app.screentime.utils.DateUtils
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+import kotlinx.coroutines.delay
 
 private const val TIME_STEP_SECONDS = 60L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShowTOTPBottomSheetContent(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    scheme: ODSTheme = neutralScheme
 ) {
-    val colors = LocalAppColors.current ?: return
     val context = LocalContext.current
-
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
     var otp by remember { mutableStateOf("------") }
     var remainingSeconds by remember { mutableIntStateOf(60) }
@@ -68,89 +67,71 @@ fun ShowTOTPBottomSheetContent(
         }
     }
 
-    ModalBottomSheet(
-        containerColor = colors.background,
-        sheetState = sheetState,
+    ODSBottomSheet(
+        showBottomSheet = true,
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .glassBottomSheetBackground()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            Row(
+        titleSlot = {
+            ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                gap = DSVariables.spacingComponent2
             ) {
-                AppText(
-                    text = "One-Time Password",
-                    style = AppTextStyle.SubTitle,
-                    fontWeight = FontWeight.Bold
+                ODSText(
+                    text = stringResource(R.string.one_time_password),
+                    style = DSTextStyles.titleM,
+                    color = scheme.basicText
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = colors.tint
-                    )
-                }
+                ODSText(
+                    text = stringResource(R.string.otp_code_description),
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicTextRecessive
+                )
             }
-            AppText(
-                text = "This code allows you to securely share your app usage with someone you trust. It regenerates every 60 seconds and can only be used for this purpose.",
-                style = AppTextStyle.Label,
-                color = colors.textMuted
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(
+        },
+        contentSlot = {
+            ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                gap = DSVariables.spacingComponent5
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
+                ODSRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(DSVariables.spacingComponent4)
                 ) {
-                    // Circular progress
-                    CircularProgressIndicator(
-                        progress = animatedProgress,
-                        modifier = Modifier
-                            .matchParentSize(),
-                        color = colors.success,
-                        strokeWidth = 3.dp,
-                        trackColor = colors.textMuted.copy(alpha = 0.3f)
-                    )
+                    ODSBox(
+                        modifier = Modifier.size(DSVariables.sizingComponent13), // 40.dp
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Circular progress
+                        CircularProgressIndicator(
+                            progress = animatedProgress,
+                            modifier = Modifier.matchParentSize(),
+                            color = scheme.functionalSuccessStandard.getColor(),
+                            strokeWidth = 3.dp,
+                            trackColor = scheme.basicTextRecessive.getColor().copy(alpha = 0.3f)
+                        )
 
-                    AppText(
-                        text = "$remainingSeconds s",
-                        style = AppTextStyle.Label,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    AppText(
-                        text = otp,
-                        style = AppTextStyle.Title,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.success,
-                        fontSize = 28.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    AppText(
-                        text = "This code regenerates every 60 seconds",
-                        style = AppTextStyle.Label,
-                        color = colors.textMuted
-                    )
+                        ODSText(
+                            text = stringResource(R.string.remaining_seconds, remainingSeconds),
+                            style = DSTextStyles.bodyMBold,
+                            color = scheme.basicText
+                        )
+                    }
+                    ODSColumn {
+                        ODSText(
+                            text = otp,
+                            style = DSTextStyles.titleS,
+                            color = scheme.functionalSuccessStandard
+                        )
+                        ODSBox(height = DSVariables.spacingComponent1) {}
+                        ODSText(
+                            text = stringResource(R.string.otp_regenerate_message),
+                            style = DSTextStyles.bodyMRegular,
+                            color = scheme.basicTextRecessive
+                        )
+                    }
                 }
             }
-        }
-    }
+        },
+        onCloseClicked = onDismiss
+    )
 }
-
-

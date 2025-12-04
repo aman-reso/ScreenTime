@@ -1,163 +1,92 @@
 package com.app.screentime.profile.dialog
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-
-import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.res.stringResource
 import com.app.screentime.R
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.LocalAppColors
+import com.app.screentime.profile.utils.LanguageUtils
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.controls.ODSControlsType
+import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.molecules.dialog.ODSDialog
+import com.telekom.odsystem.molecules.dialog.ODSDialogProps
+import com.telekom.odsystem.molecules.listrowcontrols.ODSListRowControls
+import com.telekom.odsystem.molecules.listrowcontrols.ODSListRowControlsProps
+import com.telekom.odsystem.molecules.listrowcontrols.ODSListRowControlsVariant
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.cardchoicesimple.ODSCardChoiceSimple
+import com.telekom.odsystem.organisms.cardchoicesimple.ODSCardChoiceSimpleProps
+import com.telekom.odsystem.organisms.cardchoicesimple.ODSCardChoiceSimpleType
+import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
  * Language selection dialog with radio buttons
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LanguageSelectionDialog(
     currentLanguage: String,
-    onDismiss: () -> Unit,
-    onLanguageSelected: (String) -> Unit
+    onDismiss: () -> Unit = {},
+    onLanguageSelected: (String) -> Unit = {},
+    scheme: ODSTheme = neutralScheme
 ) {
-    val colors = LocalAppColors.current ?: return
-
-    val languages = listOf(
-        LanguageOption(stringResource(R.string.language_english), "en", "🇬🇧"),
-        LanguageOption(stringResource(R.string.language_hindi), "hi", "🇮🇳"),
-        LanguageOption(stringResource(R.string.language_bengali), "bn", "🇮🇳")
-    )
-
-
-    Dialog(
+    ODSDialog(
+        modifier = Modifier
+            .fillMaxWidth(0.9f)
+            .wrapContentHeight(),
+        scheme = scheme,
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .wrapContentHeight(),
-            shape = MaterialTheme.shapes.large,
-            color = colors.card
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+        props = ODSDialogProps(
+            showCloseButton = true,
+            showScrollbar = false,
+            title = stringResource(R.string.select_language),
+            bodyText = null
+        ),
+        contentSlot = {
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth(),
+                gap = DSVariables.spacingComponent3
             ) {
-                AppText(
-                    text = stringResource(R.string.select_language),
-                    style = AppTextStyle.SubTitle,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.textPrimary
-                )
-
-                languages.forEach { language ->
-                    LanguageRadioOption(
-                        text = language.displayName,
-                        emoji = language.emoji,
-                        selected = currentLanguage == language.value,
-                        onClick = { onLanguageSelected(language.value) }
+                LanguageUtils.languages.forEach { language ->
+                    ODSListRowControls(
+                        modifier = Modifier.fillMaxWidth(),
+                        scheme = scheme,
+                        props = ODSListRowControlsProps(
+                            variant = ODSListRowControlsVariant.STANDARD,
+                            type = ODSControlsType.RADIO_ICON,
+                            labelText = stringResource(language.displayName),
+                            selected = currentLanguage == language.value,
+                        ),
+                        onRadioClick = {
+                            onLanguageSelected(language.value)
+                        }
                     )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(
-                        onClick = onDismiss,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = colors.success
-                        )
-                    ) {
-                        AppText(
-                            text = stringResource(R.string.close),
-                            style = AppTextStyle.Body,
-                            color = colors.success
-                        )
-                    }
                 }
             }
+        },
+        actionSlot = {
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                ODSButton(
+                    scheme = scheme,
+                    props = ODSButtonProps(
+                        label = stringResource(R.string.close),
+                        variant = ODSButtonVariant.PRIMARY,
+                        size = ODSButtonSize.SMALL
+                    ),
+                    onClick = onDismiss
+                )
+            }
         }
-    }
+    )
 }
-
-
-@Composable
-private fun LanguageRadioOption(
-    text: String,
-    emoji: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val colors = LocalAppColors.current ?: return
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(
-                if (selected) colors.success.copy(alpha = 0.15f)
-                else colors.card
-            )
-            .border(
-                width = if (selected) 1.dp else 0.dp,
-                brush = Brush.linearGradient(
-                    listOf(
-                        colors.success.copy(alpha = 0.6f),
-                        colors.success.copy(alpha = 0.3f)
-                    )
-                ),
-                shape = MaterialTheme.shapes.medium
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            AppText(
-                text = emoji,
-                style = AppTextStyle.Title,
-                modifier = Modifier.padding(start = 4.dp)
-            )
-            AppText(
-                text = text,
-                style = AppTextStyle.Body,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                color = if (selected) colors.success else colors.textSecondary
-            )
-        }
-
-        RadioButton(
-            selected = selected,
-            onClick = onClick,
-            colors = RadioButtonDefaults.colors(
-                selectedColor = colors.success,
-                unselectedColor = colors.textMuted
-            )
-        )
-    }
-}
-
-private data class LanguageOption(
-    val displayName: String,
-    val value: String,
-    val emoji: String
-)
-

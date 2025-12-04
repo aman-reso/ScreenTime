@@ -24,6 +24,7 @@ import com.app.screentime.preferences.PreferencesManager
 import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.record.repository.NetworkUsageHelper
 import com.app.screentime.record.repository.ScreenUsageHelper
+import com.app.screentime.utils.DateUtils
 import org.joda.time.Minutes
 import java.util.concurrent.TimeUnit
 
@@ -66,6 +67,12 @@ class DataSyncWorker(
 
     override suspend fun doWork(): Result {
         return try {
+            // Google Play Compliance: Only send data if user has accepted consent
+            if (!preferencesManager.isConsentScreenShown()) {
+                Log.d(TAG, "DataSyncWorker: Consent not given, skipping data sync")
+                return Result.success() // Don't retry, just skip
+            }
+
             val serverLastSyncTime = fetchServerLastSyncTime()
 
             if (serverLastSyncTime == null) {
@@ -73,18 +80,17 @@ class DataSyncWorker(
                 return Result.retry()
             }
 
-            val nowIst = com.app.screentime.utils.DateUtils.now()
-            
+            val nowIst = DateUtils.now()
+
             if (serverLastSyncTime == 0L) {
                 Log.d(TAG, "First-time sync → syncing today only (midnight IST to now)")
-                val midnightIst = com.app.screentime.utils.DateUtils.startOfToday().millis
-
+                val midnightIst = DateUtils.startOfToday().millis
                 return incrementalSync(midnightIst, nowIst.millis)
             }
 
-            val lastSyncIst = com.app.screentime.utils.DateUtils.fromMillis(serverLastSyncTime)
+            val lastSyncIst = DateUtils.fromMillis(serverLastSyncTime)
 
-            val minutesGap = org.joda.time.Minutes.minutesBetween(lastSyncIst, nowIst).minutes
+            val minutesGap = Minutes.minutesBetween(lastSyncIst, nowIst).minutes
             Log.d(TAG, "Gap since last sync: $minutesGap minutes (IST)")
 
             if (minutesGap < 15) {
@@ -125,9 +131,12 @@ class DataSyncWorker(
 
             // Parse ISO 8601 → millis using DateUtils
             return try {
-                val timeMs = com.app.screentime.utils.DateUtils.toMillis(lastSyncString)
+                val timeMs = DateUtils.toMillis(lastSyncString)
                 if (timeMs > 0) {
-                    Log.d(TAG, "Parsed last sync time: $lastSyncString ($timeMs ms) using DateUtils")
+                    Log.d(
+                        TAG,
+                        "Parsed last sync time: $lastSyncString ($timeMs ms) using DateUtils"
+                    )
                     timeMs
                 } else {
                     null
@@ -153,20 +162,20 @@ class DataSyncWorker(
         if (events.isEmpty()) return Result.success()
 
         val usageEvents = events.map {
-            val eventDateTime = com.app.screentime.utils.DateUtils.fromMillis(it.timestamp)
+            val eventDateTime = DateUtils.fromMillis(it.timestamp)
             UsageEvent(
                 packageName = it.packageName,
                 appName = it.appName,
                 isSystemApp = false,
                 eventType = it.event,
-                eventTimestamp = com.app.screentime.utils.DateUtils.formatISO8601(eventDateTime),
+                eventTimestamp = DateUtils.formatISO8601(eventDateTime),
                 duration = it.duration
             )
         }
 
-        val currentDateTime = com.app.screentime.utils.DateUtils.fromMillis(currentTime)
+        val currentDateTime = DateUtils.fromMillis(currentTime)
         val request = BatchUsageEventsRequest(
-            syncTime = com.app.screentime.utils.DateUtils.formatISO8601(currentDateTime),
+            syncTime = DateUtils.formatISO8601(currentDateTime),
             events = usageEvents
         )
 
@@ -177,7 +186,7 @@ class DataSyncWorker(
             }
 
             else -> {
-                Result.retry()
+                Result.success()
             }
         }
     }

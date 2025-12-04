@@ -39,6 +39,15 @@
     <string name="appearance">Appearance</string>
     <string name="restriction">Restriction</string>
     <string name="app_blocking">App blocking</string>
+    <string name="app_blocking_permissions_title">App Blocking Permissions</string>
+    <string name="app_blocking_permissions_description">To enable app blocking, we need the following permissions to ensure your focus is protected.</string>
+    <string name="accessibility_service_title">Accessibility Service</string>
+    <string name="accessibility_service_description">Required to detect app launches and usage.</string>
+    <string name="display_overlay_title">Display Over Other Apps</string>
+    <string name="display_overlay_description">Required to show blocking overlay when limits are exceeded.</string>
+    <string name="permission_granted">Granted</string>
+    <string name="permission_action_required">Action Required</string>
+    <string name="continue_label">Continue</string>
     <string name="shorts_blocking">Shorts blocking</string>
     <string name="website_blocking">Website blocking</string>
     <string name="ad_blocking">Ad Blocking</string>
@@ -158,9 +167,14 @@
     <string name="enter_otp">Enter OTP</string>
     <string name="verify">Verify</string>
     <string name="verifying">Verifying…</string>
+    <string name="enter_otp_for_user">Enter the OTP code for %1$s to verify</string>
+    <string name="enter_otp_to_verify">Enter the OTP code to verify</string>
+    <string name="otp_code_description">This code allows you to securely share your app usage with someone you trust. It regenerates every 60 seconds and can only be used for this purpose.</string>
+    <string name="remaining_seconds">%1$d s</string>
     
     <!-- Widget -->
     <string name="screen_time">Screen Time</string>
+    <string name="network_usage">Network Usage</string>
     <string name="refresh">Refresh</string>
     <string name="no_app_data_available">No app data available</string>
     
@@ -183,6 +197,47 @@
     <string name="username">Username</string>
     <string name="enter_username">Enter username</string>
     <string name="save">Save</string>
+    <string name="username_change_description">Change new user name it will be visible to everyone</string>
     <string name="failed_to_update_username">Failed to update username: %1$s</string>
     <string name="username_already_taken">Username already taken. Please choose a different username.</string>
+    
+    <!-- Permission Dialog -->
+    <string name="permission_required">Permission Required</string>
+    <string name="usage_access_permission_message">To track your screen time accurately, this app needs Usage Access permission. Please enable it in Settings.</string>
+    <string name="open_settings">Open Settings</string>
+    
+    <!-- Statistics Screen -->
+    <string name="activity">Activity</string>
+    
+    <!-- Help & Support -->
+    <string name="help_support_description">We\'re here to help! If you have any questions, issues, or feedback, please reach out to us using the email below.</string>
+    <string name="email_support">Email Support</string>
+    <string name="send_your_query">Send your query</string>
+    <string name="send_query_description">Click on the email card above to open your email client and send us your query. We typically respond within 24-48 hours.</string>
+    
+    <!-- Consent -->
+    <string name="privacy_consent_description">We value your privacy and want to be transparent about how we use your data. Please review and accept the following:</string>
+    <string name="allow_screentime_access">Allow ScreenTime to access your app usage</string>
+    <string name="screentime_data_collection">ScreenTime collects and uses your app usage data and your list of installed apps to show your daily usage, app activity history, and screen time insights.</string>
+    <string name="data_usage_disclosure">This data is used only for displaying your usage information and is not shared with third parties.</string>
+    <string name="deny">Deny</string>
+    <string name="submitting">Submitting…</string>
+    
+    <!-- Consent Items -->
+    <string name="consent_data_collection">Data Collection</string>
+    <string name="consent_data_collection_description">We collect your app usage data to provide screen time insights and statistics.</string>
+    <string name="consent_data_sharing">Data Sharing</string>
+    <string name="consent_data_sharing_description">Your data may be shared with third-party services for analytics and improvement purposes.</string>
+    <string name="consent_analytics">Analytics</string>
+    <string name="consent_analytics_description">We use analytics to understand how you use the app and improve our services.</string>
+    
+    <!-- Common UI States -->
+    <string name="loading">Loading…</string>
+    <string name="failed_to_load_consents">Failed to load consents</string>
+    <string name="failed_to_submit_consents">Failed to submit consents</string>
+    <string name="accept">Accept</string>
+    
+    <!-- App Usage Detail -->
+    <string name="usage_insight">Usage Insight</string>
+    <string name="usage_insight_description">Track your app usage patterns and set limits to maintain a healthy digital balance.</string>
 </resources>

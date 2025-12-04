@@ -1,0 +1,26 @@
+package com.app.screentime.landing.model
+
+import com.app.screentime.data.entity.AppUsage
+
+/**
+ * UI Props for Landing Screen
+ * Contains all the data needed to render the landing screen
+ * This is the only data structure the UI layer should use
+ */
+data class LandingUiProps(
+    val username: String?,
+    val isLoading: Boolean = false,
+    val todayTotalScreenTime: Long = 0L,
+    val todayTotalWifiDataUsage: Long = 0L,
+    val todayTotalMobileDataUsage: Long = 0L,
+    val topUsedApps: List<AppUsage>,
+    val displayWifiDataUsage: String?,
+    val displayMobileDataUsage: String?,
+    val displayTotalDataUsage: String?,
+    val usageDonutData: UsageDonutData?,
+    val error: String? = null,
+    val shouldShowConsent: Boolean = false,
+    val percentageChangeFromYesterday: Float? = null, // Percentage change from yesterday (null if no data)
+    val categoryUsage: List<CategoryUsage> = emptyList() // Category-wise usage data
+)
+

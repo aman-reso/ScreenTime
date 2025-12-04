@@ -1,15 +1,16 @@
 package com.app.screentime.profile.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.screentime.R
-import com.app.screentime.profile.model.ProfileSettingUiData
-import com.app.screentime.profile.model.ProfileSettingsUi
-import com.app.screentime.profile.model.ProfileUiModel
+import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.profile.model.ProfileUiProps
+import com.app.screentime.profile.model.SettingsItemClickResult
 import com.app.screentime.profile.usecase.ProfileUseCase
+import com.app.screentime.security.TOTP
+import com.app.screentime.utils.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,240 +20,132 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val profileUseCase: ProfileUseCase,
-    @ApplicationContext private val context: Context
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ProfileSettingUiData())
-    val uiState: StateFlow<ProfileSettingUiData> = _uiState.asStateFlow()
+    private val _uiProps = MutableStateFlow<ProfileUiProps?>(null)
+    val uiProps: StateFlow<ProfileUiProps?> = _uiProps.asStateFlow()
 
-    private val _internalState = MutableStateFlow(ProfileInternalState())
+    private val _totpState = MutableStateFlow(TOTPState())
+    val totpState: StateFlow<TOTPState> = _totpState.asStateFlow()
 
     init {
         loadProfile()
+        startTOTPGeneration()
+        startPeriodicUpdate()
     }
 
     /**
-     * Load profile data and create ProfileSettingUiData
+     * Load profile data and get UI Props from use case
      */
     fun loadProfile() {
-        viewModelScope.launch {
-            _internalState.value = _internalState.value.copy(isLoading = true, error = null)
-
+        viewModelScope.launch(Dispatchers.Default) {
             try {
-                val profile = profileUseCase.getProfile()
-                val profileSettingsList = createProfileSettingsList(profile)
+                val props = profileUseCase.getProfileUiProps(isLoading = true)
+                _uiProps.value = props
 
-                _uiState.value = ProfileSettingUiData(data = profileSettingsList)
-                _internalState.value = _internalState.value.copy(
+                // Update again without loading state
+                val updatedProps = profileUseCase.getProfileUiProps(isLoading = false)
+                _uiProps.value = updatedProps
+            } catch (e: Exception) {
+                _uiProps.value = profileUseCase.getProfileUiProps(
                     isLoading = false,
-                    profile = profile,
-                    error = null
-                )
-            } catch (e: Exception) {
-                _uiState.value = ProfileSettingUiData(data = null)
-                _internalState.value = _internalState.value.copy(
-                    isLoading = false,
-                    error = context.getString(R.string.failed_to_load_profile, e.message ?: ""),
-                    profile = null
+                    error = e.message ?: "Failed to load profile"
                 )
             }
         }
     }
 
     /**
-     * Create list of ProfileSettingsUi items based on profile data
+     * Periodically update VPN status and blocked sites count
      */
-    private fun createProfileSettingsList(profile: ProfileUiModel): List<ProfileSettingsUi> {
-        return buildList {
-            // Profile Section
-            add(ProfileSettingsUi.ProfileData(context.getString(R.string.profile)))
-
-            // App Restrictions Section (Productivity) - First with icon
-            add(ProfileSettingsUi.SectionTitle(context.getString(R.string.app_restrictions)))
-            add(
-                ProfileSettingsUi.Other(
-                    context.getString(R.string.block_app),
-                    url = "",
-                    key = "block_app"
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    context.getString(R.string.set_app_limit),
-                    url = "",
-                    key = "set_app_limit"
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    context.getString(R.string.set_app_launch_limit),
-                    url = "",
-                    key = "set_app_launch_limit"
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    context.getString(R.string.enable_vpn),
-                    url = "",
-                    key = "vpn_service"
-                )
-            )
-
-            // Appearance Section - Second
-            add(ProfileSettingsUi.SectionTitle(context.getString(R.string.appearance)))
-            add(ProfileSettingsUi.Other(context.getString(R.string.theme), url = "", key = "theme"))
-            add(ProfileSettingsUi.Other(context.getString(R.string.language), "", key = "language"))
-            add(
-                ProfileSettingsUi.Other(
-                    context.getString(R.string.set_widget),
-                    url = "",
-                    key = "widget"
-                )
-            )
-
-            // Other items
-            add(
-                ProfileSettingsUi.AccountDetails(
-                    text = context.getString(R.string.one_time_password),
-                    key = "totp"
-                )
-            )
-
-            // About App Section
-            add(ProfileSettingsUi.SectionTitle(context.getString(R.string.about_app)))
-            add(
-                ProfileSettingsUi.Other(
-                    context.getString(R.string.privacy_policy),
-                    "https://aman-reso.github.io/AppTime-HTML/privacy-policy.html",
-                    key = "privacy_policy"
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    context.getString(R.string.terms_of_service),
-                    "https://aman-reso.github.io/AppTime-HTML/terms-and-conditions.html",
-                    key = "terms_of_service"
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    context.getString(R.string.help_support),
-                    "",
-                    key = "help_support"
-                )
-            )
+    private fun startPeriodicUpdate() {
+        viewModelScope.launch(Dispatchers.Default){
+            while (true) {
+                delay(2000) // Check every 2 seconds
+                val currentProps = _uiProps.value
+                if (currentProps != null) {
+                    try {
+                        val updatedProps = profileUseCase.getProfileUiProps(
+                            isLoading = currentProps.isLoading,
+                            isUpdating = currentProps.isUpdating,
+                            error = currentProps.error
+                        )
+                        _uiProps.value = updatedProps
+                    } catch (e: Exception) {
+                        // Silently fail on periodic updates
+                    }
+                }
+            }
         }
     }
 
     /**
-     * Update profile
+     * Handle settings item click
      */
-    fun updateProfile(profile: ProfileUiModel) {
+    fun handleSettingsItemClick(
+        key: com.app.screentime.profile.model.ProfileSettingsKey,
+        url: String
+    ): SettingsItemClickResult {
+        val currentProps = _uiProps.value
+        val isVpnRunning = currentProps?.isVpnRunning ?: false
+        return profileUseCase.handleSettingsItemClick(key, url, isVpnRunning)
+    }
+
+    /**
+     * Request widget setup
+     */
+    fun requestWidgetSetup() {
         viewModelScope.launch {
-            _internalState.value = _internalState.value.copy(isUpdating = true, error = null)
-
-            try {
-                profileUseCase.updateProfile(profile)
-                val profileSettingsList = createProfileSettingsList(profile)
-
-                _uiState.value = ProfileSettingUiData(data = profileSettingsList)
-                _internalState.value = _internalState.value.copy(
-                    isUpdating = false,
-                    profile = profile,
-                    error = null,
-                    isUpdated = true
-                )
-            } catch (e: Exception) {
-                _internalState.value = _internalState.value.copy(
-                    isUpdating = false,
-                    error = context.getString(R.string.failed_to_update_profile, e.message ?: "")
-                )
-            }
+            profileUseCase.requestWidgetSetup()
         }
     }
-
-    /**
-     * Update consent preferences
-     */
-    fun updateConsent(
-        hasConsent: Boolean,
-        dataSharing: Boolean,
-        analytics: Boolean,
-        marketing: Boolean
-    ) {
-        viewModelScope.launch {
-            _internalState.value = _internalState.value.copy(isUpdating = true, error = null)
-
-            try {
-                profileUseCase.updateConsent(
-                    hasConsent = hasConsent,
-                    dataSharing = dataSharing,
-                    analytics = analytics,
-                    marketing = marketing
-                )
-
-                // Reload profile to reflect changes
-                val updatedProfile = profileUseCase.getProfile()
-                val profileSettingsList = createProfileSettingsList(updatedProfile)
-
-                _uiState.value = ProfileSettingUiData(data = profileSettingsList)
-                _internalState.value = _internalState.value.copy(
-                    isUpdating = false,
-                    profile = updatedProfile,
-                    error = null,
-                    isUpdated = true
-                )
-            } catch (e: Exception) {
-                _internalState.value = _internalState.value.copy(
-                    isUpdating = false,
-                    error = context.getString(R.string.failed_to_update_consent, e.message ?: "")
-                )
-            }
-        }
-    }
-
-    /**
-     * Clear profile data
-     */
-    fun clearProfile() {
-        viewModelScope.launch {
-            _internalState.value = _internalState.value.copy(isUpdating = true, error = null)
-
-            try {
-                profileUseCase.clearProfile()
-                _uiState.value = ProfileSettingUiData(data = emptyList())
-                _internalState.value = _internalState.value.copy(
-                    isUpdating = false,
-                    profile = null,
-                    error = null,
-                    isUpdated = true
-                )
-            } catch (e: Exception) {
-                _internalState.value = _internalState.value.copy(
-                    isUpdating = false,
-                    error = context.getString(R.string.failed_to_clear_profile, e.message ?: "")
-                )
-            }
-        }
-    }
-
-    /**
-     * Get internal state (for loading/error states)
-     */
-    fun getInternalState(): ProfileInternalState = _internalState.value
 
     /**
      * Clear error
      */
     fun clearError() {
-        _internalState.value = _internalState.value.copy(error = null)
+        val currentProps = _uiProps.value
+        if (currentProps != null) {
+            _uiProps.value = currentProps.copy(error = null)
+        }
     }
 
+
     /**
-     * Reset update status
+     * Start TOTP generation and countdown
      */
-    fun resetUpdateStatus() {
-        _internalState.value = _internalState.value.copy(isUpdated = false)
+    private fun startTOTPGeneration() {
+        viewModelScope.launch(Dispatchers.Default) {
+            val totpSecret = preferencesManager.getTOTPSecret()
+
+            while (true) {
+                val now = DateUtils.now()
+                val epochSeconds = now.millis / 1000
+                val remaining = (60 - (epochSeconds % 60)).toInt()
+
+                val otp = if (totpSecret != null) {
+                    TOTP.generateTOTP(totpSecret)
+                } else {
+                    "******"
+                }
+
+                _totpState.value = TOTPState(
+                    otp = otp,
+                    remainingSeconds = remaining,
+                    isRunning = true
+                )
+
+                // Wait for the current period to complete
+                for (i in remaining downTo 1) {
+                    _totpState.value = _totpState.value.copy(remainingSeconds = i)
+                    delay(1000)
+                }
+
+                // When period completes, regenerate OTP
+                _totpState.value = _totpState.value.copy(remainingSeconds = 60)
+            }
+        }
     }
 
     /**
@@ -261,38 +154,30 @@ class ProfileViewModel @Inject constructor(
      */
     fun updateUsername(newUsername: String, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            _internalState.value = _internalState.value.copy(isUpdating = true, error = null)
+            val currentProps = _uiProps.value
+            _uiProps.value = currentProps?.copy(isUpdating = true, error = null)
 
             try {
                 val result = profileUseCase.updateUsername(newUsername)
                 if (result) {
                     // Reload profile to reflect changes
-                    val updatedProfile = profileUseCase.getProfile()
-                    val profileSettingsList = createProfileSettingsList(updatedProfile)
-
-                    _uiState.value = ProfileSettingUiData(data = profileSettingsList)
-                    _internalState.value = _internalState.value.copy(
+                    val updatedProps = profileUseCase.getProfileUiProps(
+                        isLoading = currentProps?.isLoading ?: false,
                         isUpdating = false,
-                        profile = updatedProfile,
-                        error = null,
-                        isUpdated = true
+                        error = null
                     )
+                    _uiProps.value = updatedProps
                     onSuccess() // Call success callback to dismiss bottom sheet
                 } else {
-                    _internalState.value = _internalState.value.copy(
+                    _uiProps.value = currentProps?.copy(
                         isUpdating = false,
-                        error = context.getString(R.string.failed_to_update_username, "Unknown error")
+                        error = "Failed to update username"
                     )
                 }
             } catch (e: Exception) {
-                val errorMessage = if (e.message?.contains("already taken", ignoreCase = true) == true) {
-                    context.getString(R.string.username_already_taken)
-                } else {
-                    context.getString(R.string.failed_to_update_username, e.message ?: "")
-                }
-                _internalState.value = _internalState.value.copy(
+                _uiProps.value = currentProps?.copy(
                     isUpdating = false,
-                    error = errorMessage
+                    error = e.message ?: "Failed to update username"
                 )
             }
         }
@@ -300,13 +185,11 @@ class ProfileViewModel @Inject constructor(
 }
 
 /**
- * Internal UI State for Profile Screen (for loading/error handling)
+ * TOTP State for displaying TOTP code and countdown
  */
-data class ProfileInternalState(
-    val isLoading: Boolean = false,
-    val isUpdating: Boolean = false,
-    val isUpdated: Boolean = false,
-    val profile: ProfileUiModel? = null,
-    val error: String? = null
+data class TOTPState(
+    val otp: String = "******",
+    val remainingSeconds: Int = 60,
+    val isRunning: Boolean = true
 )
 

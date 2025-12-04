@@ -14,7 +14,7 @@ interface JoinedChallengeDao {
     fun getAllJoinedChallenges(): Flow<List<JoinedChallengeEntity>>
     
     @Query("SELECT * FROM joined_challenges WHERE challengeId = :challengeId")
-    suspend fun getJoinedChallengeById(challengeId: Int): JoinedChallengeEntity?
+    suspend fun getJoinedChallengeById(challengeId: String): JoinedChallengeEntity?
     
     @Query("SELECT * FROM joined_challenges WHERE syncScheduled = 1")
     suspend fun getActiveChallenges(): List<JoinedChallengeEntity>
@@ -32,15 +32,15 @@ interface JoinedChallengeDao {
     suspend fun deleteJoinedChallenge(challenge: JoinedChallengeEntity)
     
     @Query("DELETE FROM joined_challenges WHERE challengeId = :challengeId")
-    suspend fun deleteJoinedChallengeById(challengeId: Int)
+    suspend fun deleteJoinedChallengeById(challengeId: String)
     
     @Query("UPDATE joined_challenges SET lastSyncTime = :syncTime WHERE challengeId = :challengeId")
-    suspend fun updateLastSyncTime(challengeId: Int, syncTime: Long)
+    suspend fun updateLastSyncTime(challengeId: String, syncTime: Long)
     
     @Query("UPDATE joined_challenges SET syncScheduled = :scheduled WHERE challengeId = :challengeId")
-    suspend fun updateSyncScheduled(challengeId: Int, scheduled: Boolean)
+    suspend fun updateSyncScheduled(challengeId: String, scheduled: Boolean)
     
     @Query("UPDATE joined_challenges SET packageNames = :packageNames WHERE challengeId = :challengeId")
-    suspend fun updatePackageNames(challengeId: Int, packageNames: String?)
+    suspend fun updatePackageNames(challengeId: String, packageNames: String?)
 }
 

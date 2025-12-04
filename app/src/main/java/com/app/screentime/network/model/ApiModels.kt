@@ -189,7 +189,8 @@ data class QuietHours(
  */
 @Serializable
 data class DeviceRegistrationRequest(
-    val deviceInfo: DeviceInfoUtils.DeviceInfo
+    val deviceInfo: DeviceInfoUtils.DeviceInfo,
+    val firebaseToken: String? = null
 )
 
 /**
@@ -218,6 +219,15 @@ data class DeviceRegistrationResponse(
 @Serializable
 data class UsernameUpdateRequest(
     val username: String
+)
+
+/**
+ * Profile update request
+ */
+@Serializable
+data class ProfileUpdateRequest(
+    val username: String? = null,
+    val firebaseToken: String? = null
 )
 
 /**

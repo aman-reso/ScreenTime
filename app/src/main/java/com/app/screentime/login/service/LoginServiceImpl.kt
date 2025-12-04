@@ -25,9 +25,12 @@ class LoginServiceImpl @Inject constructor(
 
     private val httpClient = networkClient.httpClient
 
-    override suspend fun registerDevice(deviceInfo: DeviceInfoUtils.DeviceInfo): Result<ApiResponse<DeviceRegistrationResponse>> {
+    override suspend fun registerDevice(deviceInfo: DeviceInfoUtils.DeviceInfo, firebaseToken: String?): Result<ApiResponse<DeviceRegistrationResponse>> {
         return try {
-            val request = DeviceRegistrationRequest(deviceInfo = deviceInfo)
+            val request = DeviceRegistrationRequest(
+                deviceInfo = deviceInfo,
+                firebaseToken = firebaseToken
+            )
 
             val apiResponse: ApiResponse<DeviceRegistrationResponse> =
                 httpClient.post(ApiEndpoints.Registration.REGISTER_DEVICE) {

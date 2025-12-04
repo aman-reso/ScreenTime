@@ -1,155 +1,120 @@
 package com.app.screentime.profile.screen
 
 import android.content.Intent
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-
-import androidx.compose.foundation.verticalScroll
+import android.widget.Space
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.atom.glassBottomSheetBackground
-import com.app.screentime.ui.theme.LocalAppColors
+import com.app.screentime.R
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
+import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HelpSupportBottomSheetContent(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit = {},
+    scheme: ODSTheme = neutralScheme
 ) {
-    val colors = LocalAppColors.current ?: return
     val context = LocalContext.current
-
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
     val supportEmail = "help.testmate@gmail.com"
 
-    ModalBottomSheet(
-        containerColor = colors.background,
-        sheetState = sheetState,
+    ODSBottomSheet(
+        showBottomSheet = true,
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .glassBottomSheetBackground()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            // Header
-            Row(
+        titleSlot = {
+            ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                gap = DSVariables.spacingComponent2
             ) {
-                AppText(
-                    text = "Help & Support",
-                    style = AppTextStyle.SubTitle,
-                    fontWeight = FontWeight.Bold
+                ODSText(
+                    text = stringResource(R.string.help_support),
+                    style = DSTextStyles.titleM,
+                    color = scheme.basicText
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = colors.tint
-                    )
-                }
+                ODSText(
+                    text = stringResource(R.string.help_support_description),
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicTextRecessive
+                )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Information text
-            AppText(
-                text = "We're here to help! If you have any questions, issues, or feedback, please reach out to us using the email below.",
-                style = AppTextStyle.Body,
-                color = colors.textSecondary
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Email section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = colors.card
-                ),
-                onClick = {
-                    // Open email client
+        },
+        contentSlot = {
+            ODSColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                ODSCardBasic(contentSlot = {
+                    ODSRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent4)
+                    ) {
+                        ODSIcon(
+                            iconModel = ODSIconModel(
+                                imageVector = Icons.Default.Email,
+                                tint = scheme.functionalSuccessStandard,
+                                contentDescription = "Email"
+                            ),
+                            width = DSVariables.sizingComponent10,
+                            height = DSVariables.sizingComponent10
+                        )
+                        ODSColumn(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.email_support),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.basicText
+                            )
+                            ODSBox(height = DSVariables.spacingComponent1) {}
+                            ODSText(
+                                text = supportEmail,
+                                style = DSTextStyles.bodyMBold,
+                                color = scheme.functionalSuccessStandard
+                            )
+                        }
+                    }
+                }, onClick = {
                     val intent = Intent(Intent.ACTION_SEND).apply {
                         type = "message/rfc822"
                         putExtra(Intent.EXTRA_EMAIL, arrayOf(supportEmail))
                         putExtra(Intent.EXTRA_SUBJECT, "AppTime Support Request")
                     }
                     try {
-                        context.startActivity(Intent.createChooser(intent, "Send email via"))
+                        context.startActivity(
+                            Intent.createChooser(
+                                intent,
+                                "Send email via"
+                            )
+                        )
                     } catch (e: Exception) {
                         // No email client available
                     }
-                }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Email,
-                        contentDescription = "Email",
-                        tint = colors.success,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        AppText(
-                            text = "Email Support",
-                            style = AppTextStyle.Body,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.textPrimary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        AppText(
-                            text = supportEmail,
-                            style = AppTextStyle.Label,
-                            color = colors.success
-                        )
-                    }
-                }
+                }, scheme = scheme)
+                Spacer(modifier = Modifier.height(16.dp))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Additional information
-            AppText(
-                text = "Send your query",
-                style = AppTextStyle.Label,
-                fontWeight = FontWeight.Bold,
-                color = colors.textPrimary
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            AppText(
-                text = "Click on the email card above to open your email client and send us your query. We typically respond within 24-48 hours.",
-                style = AppTextStyle.Label,
-                color = colors.textMuted
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
+        },
+        onCloseClicked = onDismiss
+    )
 }
-

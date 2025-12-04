@@ -26,16 +26,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlin.math.absoluteValue
 import com.app.screentime.network.model.AppUsageStatsData
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.AppColors
+import com.telekom.odsystem.atoms.ODSText
 import com.app.screentime.utils.DateUtils
 import org.joda.time.DateTime
 import org.joda.time.Duration
+import com.telekom.odsystem.foundations.HexColor
+import com.telekom.odsystem.DSTextStyles
+
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.neutralScheme
 
 @Composable
 fun TimelineItem(
-    stat: AppUsageStatsData, isFirst: Boolean, isLast: Boolean, colors: AppColors
+    stat: AppUsageStatsData,
+    isFirst: Boolean,
+    isLast: Boolean,
+    scheme: ODSTheme = neutralScheme
 ) {
     // Calculate duration and times
     val (startTime, endTime, durationText) = remember(stat.eventTimestamp, stat.duration) {
@@ -73,20 +87,18 @@ fun TimelineItem(
         Triple(startTimeStr, endTimeStr, durationText)
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(colors.card)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .padding(bottom = 8.dp)
+    ODSBox(
+        modifier = Modifier.fillMaxWidth(),
+        background = listOf(ODSColorModel(scheme.basicBackgroundCard)),
+        cornerRadius = ODSCorners(all = 12.dp), // Approximate MaterialTheme.shapes.medium
+        padding = ODSPadding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Row(
+        ODSRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
+            ODSRow(
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -94,62 +106,61 @@ fun TimelineItem(
 
                 val iconColor = remember(stat.packageName) {
                     val colorsList = listOf(
-                        androidx.compose.ui.graphics.Color(0xFFE1BEE7), // Light purple
-                        androidx.compose.ui.graphics.Color(0xFFF8BBD0), // Light pink
-                        androidx.compose.ui.graphics.Color(0xFFBBDEFB), // Light blue
-                        androidx.compose.ui.graphics.Color(0xFFC5E1A5), // Light green
-                        androidx.compose.ui.graphics.Color(0xFFFFE0B2), // Light orange
+                        HexColor("#E1BEE7"), // Light purple
+                        HexColor("#F8BBD0"), // Light pink
+                        HexColor("#BBDEFB"), // Light blue
+                        HexColor("#C5E1A5"), // Light green
+                        HexColor("#FFE0B2"), // Light orange
                     )
                     colorsList[stat.packageName.hashCode().absoluteValue % colorsList.size]
                 }
 
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(iconColor),
+                ODSBox(
+                    modifier = Modifier.size(24.dp),
+                    background = listOf(ODSColorModel(iconColor)),
+                    cornerRadius = ODSCorners(all = 12.dp), // Circle
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = androidx.compose.ui.graphics.Color.White,
-                        modifier = Modifier.size(16.dp)
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            imageVector = Icons.Default.CheckCircle,
+                            tint = HexColor("#FFFFFF")
+                        ),
+                        width = 16.dp,
+                        height = 16.dp
                     )
                 }
 
                 // App name and duration
-                Column {
-                    AppText(
+                ODSColumn {
+                    ODSText(
                         text = stat.appName,
-                        style = AppTextStyle.Body,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
+                        style = DSTextStyles.bodyMRegular,
+                        color = scheme.basicText
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    AppText(
+                    ODSText(
                         text = durationText,
-                        style = AppTextStyle.Label,
-                        color = colors.textSecondary
+                        style = DSTextStyles.bodyMBold,
+                        color = scheme.basicTextRecessive
                     )
                 }
             }
 
-            Column(
+            ODSColumn(
                 horizontalAlignment = Alignment.End
             ) {
-                AppText(
+                ODSText(
                     text = startTime,
-                    style = AppTextStyle.Body,
-                    fontWeight = FontWeight.Medium,
-                    color = colors.textPrimary
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicText
                 )
                 if (endTime.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(2.dp))
-                    AppText(
+                    ODSText(
                         text = "→ $endTime",
-                        style = AppTextStyle.Label,
-                        color = colors.textSecondary
+                        style = DSTextStyles.bodyMBold,
+                        color = scheme.basicTextRecessive
                     )
                 }
             }

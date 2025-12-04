@@ -1,19 +1,26 @@
 package com.app.screentime.record.usecase
 
+import android.content.Context
 import com.app.screentime.network.model.ApiResponse
 import com.app.screentime.network.model.AppUsageStatsData
 import com.app.screentime.network.model.BatchUsageRecord
 import com.app.screentime.network.model.UsageRecordResponse
+import com.app.screentime.record.mapper.SummaryTabMapper
+import com.app.screentime.record.model.SummaryTabUiProps
 import com.app.screentime.record.model.TimelineListItem
 import com.app.screentime.record.repository.RecordRepository
 import com.app.screentime.utils.DateUtils
+import com.telekom.odsystem.foundations.HexColor
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 /**
  * Use case for recording and retrieving usage data
  */
 class RecordUseCase @Inject constructor(
-    private val recordRepository: RecordRepository
+    private val recordRepository: RecordRepository,
+    private val summaryTabMapper: SummaryTabMapper,
+    @ApplicationContext private val context: Context
 ) {
 
 
@@ -77,5 +84,32 @@ class RecordUseCase @Inject constructor(
         }
         
         return items
+    }
+
+    /**
+     * Get Summary Tab UI Props
+     * This is the main method that returns all UI state needed for the summary tab
+     */
+    suspend fun getSummaryTabUiProps(
+        stats: List<AppUsageStatsData>,
+        isLoading: Boolean = false,
+        error: String? = null
+    ): SummaryTabUiProps {
+        // Default chart colors
+        val chartColors = listOf(
+            HexColor(0xFF0070CC), // basicAccent
+            HexColor(0xFF00A651), // functionalSuccessStandard
+            HexColor(0xFF0070CC), // functionalInformationalStandard
+            HexColor(0xFFFFB300), // functionalWarningStandard
+            HexColor(0xFF0070CC)  // basicAccent
+        )
+
+        return summaryTabMapper.toUiProps(
+            stats = stats,
+            context = context,
+            chartColors = chartColors,
+            isLoading = isLoading,
+            error = error
+        )
     }
 }

@@ -4,12 +4,12 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.screentime.challenge.mapper.ChallengeMapper
+import com.app.screentime.challenge.model.GroupedChallenges
 import com.app.screentime.challenge.repository.ChallengeRepository
 import com.app.screentime.database.entity.JoinedChallengeEntity
 import com.app.screentime.database.repository.JoinedChallengeRepository
 import com.app.screentime.network.model.Challenge
-import com.app.screentime.network.model.ChallengeDetails
-import com.app.screentime.network.model.ChallengeRankingsResponse
 import com.app.screentime.sync.ChallengeSyncWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -23,18 +23,16 @@ data class ChallengesUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val challenges: List<Challenge> = emptyList(),
+    val groupedChallenges: GroupedChallenges? = null,
     val lastUpdated: String? = null,
-    val joiningChallengeIds: Set<Int> = emptySet(),
-    val challengeDetails: ChallengeDetails? = null,
-    val challengeRankings: ChallengeRankingsResponse? = null,
-    val isLoadingDetails: Boolean = false,
-    val detailsError: String? = null
+    val joiningChallengeIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
 class ChallengeViewModel @Inject constructor(
     private val challengeRepository: ChallengeRepository,
     private val joinedChallengeRepository: JoinedChallengeRepository,
+    private val challengeMapper: ChallengeMapper,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -56,6 +54,7 @@ class ChallengeViewModel @Inject constructor(
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             challenges = challenges,
+                            groupedChallenges = challengeMapper.groupChallengesByType(challenges),
                             lastUpdated = "Just now",
                             error = null
                         )
@@ -67,7 +66,8 @@ class ChallengeViewModel @Inject constructor(
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             error = errorMsg,
-                            challenges = emptyList()
+                            challenges = emptyList(),
+                            groupedChallenges = null
                         )
                     }
                 },
@@ -75,7 +75,8 @@ class ChallengeViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = throwable.message ?: "Failed to load challenges",
-                        challenges = emptyList()
+                        challenges = emptyList(),
+                        groupedChallenges = null
                     )
                 }
             )
@@ -191,7 +192,7 @@ class ChallengeViewModel @Inject constructor(
      * Fetch challenge details to get package names and update local DB
      * Only called when package names are missing
      */
-    private suspend fun fetchAndUpdatePackageNames(challengeId: Int) {
+    private suspend fun fetchAndUpdatePackageNames(challengeId: String) {
         try {
             challengeRepository.getChallengeDetails(challengeId).fold(
                 onSuccess = { response ->
@@ -227,56 +228,12 @@ class ChallengeViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(error = null)
     }
 
-    fun loadChallengeDetails(challengeId: Int) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isLoadingDetails = true,
-                detailsError = null,
-                challengeDetails = null,
-                challengeRankings = null
-            )
-
-            // Load challenge details
-            challengeRepository.getChallengeDetails(challengeId).fold(
-                onSuccess = { response ->
-                    if (response.success == true && response.data != null) {
-                        _uiState.value = _uiState.value.copy(
-                            challengeDetails = response.data,
-                            isLoadingDetails = false
-                        )
-                    } else {
-                        _uiState.value = _uiState.value.copy(
-                            isLoadingDetails = false,
-                            detailsError = response.message ?: "Failed to load challenge details"
-                        )
-                    }
-                },
-                onFailure = { throwable ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoadingDetails = false,
-                        detailsError = throwable.message ?: "Failed to load challenge details"
-                    )
-                }
-            )
-
-            // Load challenge rankings
-            challengeRepository.getChallengeRankings(challengeId).fold(
-                onSuccess = { response ->
-                    if (response.success == true && response.data != null) {
-                        _uiState.value = _uiState.value.copy(
-                            challengeRankings = response.data
-                        )
-                    }
-                },
-                onFailure = {
-                    // Rankings failure is not critical, just log it
-                }
-            )
-        }
-    }
-
+    /**
+     * Join a challenge (used by challenge list screen)
+     * Updates the local state to mark challenge as joined
+     */
     fun joinChallenge(
-        challengeId: Int,
+        challengeId: String,
         onSuccess: () -> Unit = {},
         onError: (String) -> Unit = {}
     ) {
@@ -291,18 +248,6 @@ class ChallengeViewModel @Inject constructor(
                 joiningChallengeIds = _uiState.value.joiningChallengeIds + challengeId
             )
 
-            // Find the challenge to get its details
-            val challenge = _uiState.value.challenges.find { it.id == challengeId }
-            if (challenge == null) {
-                val errorMsg = "Challenge not found"
-                _uiState.value = _uiState.value.copy(
-                    error = errorMsg,
-                    joiningChallengeIds = _uiState.value.joiningChallengeIds - challengeId
-                )
-                onError(errorMsg)
-                return@launch
-            }
-
             challengeRepository.joinChallenge(challengeId).fold(
                 onSuccess = { response ->
                     if (response.success == true) {
@@ -316,11 +261,15 @@ class ChallengeViewModel @Inject constructor(
                         }
                         _uiState.value = _uiState.value.copy(
                             joiningChallengeIds = _uiState.value.joiningChallengeIds - challengeId,
-                            challenges = updatedChallenges
+                            challenges = updatedChallenges,
+                            groupedChallenges = challengeMapper.groupChallengesByType(updatedChallenges)
                         )
 
-                        // Save to database and schedule sync
-                        saveChallengeAndScheduleSync(challenge)
+                        // Find the challenge in the list and save it
+                        val challenge = updatedChallenges.find { it.id == challengeId }
+                        if (challenge != null) {
+                            saveChallengeAndScheduleSync(challenge)
+                        }
                         onSuccess()
                     } else {
                         val errorMsg = response.message ?: "Failed to join challenge"

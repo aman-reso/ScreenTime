@@ -2,6 +2,7 @@ package com.app.screentime.utils
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import com.app.screentime.config.AppSecrets
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -14,9 +15,9 @@ import javax.crypto.spec.SecretKeySpec
 
 object CryptoHelper {
 
-    private const val KEY_ALIAS = "device_encryption_key"
-    private const val TRANSFORMATION = "AES/GCM/NoPadding"
-    private const val ANDROID_KEYSTORE = "AndroidKeyStore"
+    private val KEY_ALIAS = AppSecrets.Encryption.KEY_ALIAS
+    private val TRANSFORMATION = AppSecrets.Encryption.TRANSFORMATION
+    private val ANDROID_KEYSTORE = AppSecrets.Encryption.ANDROID_KEYSTORE
 
     init {
         generateSecretKey()
@@ -72,9 +73,9 @@ object CryptoHelper {
 
 object EncryptionManager {
 
-    const val ALGORITHM = "AES/GCM/NoPadding"
-    private const val KEY_SIZE = 32 // 256-bit key
-    const val IV_SIZE = 12  // GCM standard
+    val ALGORITHM = AppSecrets.Encryption.TRANSFORMATION
+    private val KEY_SIZE = AppSecrets.Encryption.KEY_SIZE // 256-bit key
+    val IV_SIZE = AppSecrets.Encryption.IV_SIZE  // GCM standard
 
     // You should store this key securely, not hardcode
     private val secretKey: SecretKey = generateRandomKey()

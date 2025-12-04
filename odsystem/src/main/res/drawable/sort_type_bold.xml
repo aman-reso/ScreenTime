@@ -1,0 +1,13 @@
+<!-- Auto-generated full copy from sort_type_bold_size_standard. Do not edit manually. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M20.12 15.62c0.49-0.5 1.28-0.5 1.76 0 0.5 0.48 0.5 1.28 0 1.76l-4.5 4.5c-0.48 0.5-1.28 0.5-1.76 0l-4.5-4.5c-0.5-0.48-0.5-1.28 0-1.76 0.48-0.5 1.28-0.5 1.76 0l2.37 2.36V3c0-0.7 0.56-1.25 1.25-1.25 0.7 0 1.25 0.56 1.25 1.25v14.98l2.37-2.36Z"/>
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M11.12 8.38c0.49 0.5 1.28 0.5 1.76 0 0.5-0.48 0.5-1.28 0-1.76l-4.5-4.5c-0.48-0.5-1.28-0.5-1.76 0l-4.5 4.5c-0.5 0.48-0.5 1.28 0 1.76 0.48 0.5 1.28 0.5 1.76 0l2.37-2.36V21c0 0.7 0.56 1.25 1.25 1.25S8.75 21.69 8.75 21V6.02l2.37 2.36Z"/>
+</vector>

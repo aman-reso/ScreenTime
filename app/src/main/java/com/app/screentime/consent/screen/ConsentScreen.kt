@@ -1,37 +1,51 @@
 package com.app.screentime.consent.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.R
 import com.app.screentime.consent.viewmodel.ConsentViewModel
-import com.app.screentime.ui.atom.AppLoader
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.LocalAppColors
+import com.telekom.odsystem.atoms.ODSText
+
+import com.telekom.odsystem.foundations.HexColor
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonButtonType
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.atoms.switch.ODSSwitch
+import com.telekom.odsystem.atoms.switch.ODSSwitchProps
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 @Composable
 fun ConsentScreen(
     onDismiss: () -> Unit,
     onAccept: () -> Unit,
-    viewModel: ConsentViewModel = hiltViewModel()
+    viewModel: ConsentViewModel = hiltViewModel(),
+    scheme: ODSTheme = neutralScheme
+
 ) {
-    val colors = LocalAppColors.current ?: return
     val uiState by viewModel.uiState.collectAsState()
 
     // Get consent items from API response
@@ -59,112 +73,121 @@ fun ConsentScreen(
             dismissOnClickOutside = false
         )
     ) {
-        Box(
+        ODSBox(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .clickable { /* Prevent dismiss on background click */ }
+                .clickable { /* Prevent dismiss on background click */ },
+            background = listOf(ODSColorModel(HexColor("#000000", alpha = 0.5f)))
         ) {
-            Card(
+            ODSBox(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.9f)
-                    .align(Alignment.Center)
                     .padding(horizontal = 24.dp, vertical = 32.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFDFCFF) // Light off-white background
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                background = listOf(ODSColorModel(scheme.basicBackgroundCard)),
+                cornerRadius = ODSCorners(all = 28.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Column(
+                ODSColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(24.dp)
                 ) {
                     // Header with close button
-                    Row(
+                    ODSRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Spacer(modifier = Modifier.width(40.dp)) // Balance for close button
 
-                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                            AppText(
-                                text = "Privacy & Consent",
-                                style = AppTextStyle.Title,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1C1B1F) // Dark grey/black
+                        ODSBox(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.privacy_consent),
+                                style = DSTextStyles.titleS,
+                                color = scheme.basicText
                             )
                         }
 
-                        IconButton(
-                            onClick = onDismiss,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Close",
-                                tint = Color(0xFF49454F), // Dark grey
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
+                        ODSButton(
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                buttonIcon = ODSIconModel(
+                                    imageVector = Icons.Default.Close,
+                                    tint = scheme.basicTextRecessive,
+                                    contentDescription = "Close"
+                                ),
+                                buttonType = ODSButtonButtonType.ICON_ONLY,
+                                variant = ODSButtonVariant.GHOST,
+                                size = ODSButtonSize.SMALL
+                            ),
+                            onClick = onDismiss
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Introductory text
-                    AppText(
-                        text = "We value your privacy and want to be transparent about how we use your data. Please review and accept the following:",
-                        style = AppTextStyle.Body,
-                        color = Color(0xFF1C1B1F) // Dark grey
+                    ODSText(
+                        text = stringResource(R.string.privacy_consent_description),
+                        style = DSTextStyles.bodyMRegular,
+                        color = scheme.basicText
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Loading state
                     if (uiState.isLoading) {
-                        Box(
+                        ODSBox(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(200.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            AppLoader()
+                            // ODSLoader if available, otherwise show text
+                            ODSText(
+                                text = stringResource(R.string.loading),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.basicTextRecessive
+                            )
                         }
                     } else if (uiState.error != null && consentItems.isEmpty()) {
                         // Error state
-                        Box(
+                        ODSBox(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
-                            AppText(
-                                text = uiState.error ?: "Failed to load consents",
-                                style = AppTextStyle.Body,
-                                color = colors.error
+                            ODSText(
+                                text = uiState.error
+                                    ?: stringResource(R.string.failed_to_load_consents),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.functionalDestructiveStandard
                             )
                         }
                     } else if (consentItems.isEmpty()) {
                         // Empty state
-                        Box(
+                        ODSBox(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
-                            AppText(
-                                text = "No consents available",
-                                style = AppTextStyle.Body,
-                                color = colors.textSecondary
+                            ODSText(
+                                text = stringResource(R.string.no_consents_available),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.basicTextRecessive
                             )
                         }
                     } else {
                         // Display submission error if any
                         if (uiState.error != null && !uiState.isLoading) {
-                            AppText(
-                                text = uiState.error ?: "Failed to submit consents",
-                                style = AppTextStyle.Label,
-                                color = colors.error
+                            ODSText(
+                                text = uiState.error
+                                    ?: stringResource(R.string.failed_to_submit_consents),
+                                style = DSTextStyles.bodyMBold,
+                                color = scheme.functionalDestructiveStandard
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
@@ -181,7 +204,8 @@ fun ConsentScreen(
                                     isMandatory = consentItem.isMandatory,
                                     onCheckedChange = { newValue ->
                                         state.value = newValue
-                                    }
+                                    },
+                                    scheme = scheme
                                 )
                                 if (index < consentItems.size - 1) {
                                     Spacer(modifier = Modifier.height(16.dp))
@@ -193,7 +217,15 @@ fun ConsentScreen(
                     Spacer(modifier = Modifier.height(32.dp))
 
                     // Accept button
-                    Button(
+                    ODSButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        scheme = scheme,
+                        props = ODSButtonProps(
+                            label = if (uiState.isSubmitting) stringResource(R.string.submitting) else stringResource(
+                                R.string.accept
+                            ),
+                            disabled = uiState.isLoading || uiState.isSubmitting || consentItems.isEmpty()
+                        ),
                         onClick = {
                             // Get final consent values (mandatory items will always be true)
                             val finalValues = consentItems.mapIndexed { index, item ->
@@ -204,34 +236,8 @@ fun ConsentScreen(
                                 }
                             }.toMap()
                             viewModel.submitConsents(finalValues)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        enabled = !uiState.isLoading && !uiState.isSubmitting && consentItems.isNotEmpty(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF6750A4), // Solid purple
-                            contentColor = Color.White,
-                            disabledContainerColor = Color(0xFFE0E0E0),
-                            disabledContentColor = Color(0xFF9E9E9E)
-                        ),
-                        shape = RoundedCornerShape(28.dp)
-                    ) {
-                        if (uiState.isSubmitting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
                         }
-                        AppText(
-                            text = if (uiState.isSubmitting) "Submitting..." else "Accept",
-                            style = AppTextStyle.Body,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -244,91 +250,54 @@ private fun ConsentSectionCard(
     description: String,
     checked: Boolean,
     isMandatory: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    scheme: ODSTheme = neutralScheme
 ) {
-    // Light lavender background for mandatory items when checked
-    val lightLavender = Color(0xFFEADDFF) // Light lavender/purple tint
-    val cardBackground = if (isMandatory && checked) {
-        lightLavender
-    } else {
-        Color(0xFFFDFCFF) // White/very light off-white
-    }
-
-    Card(
+    ODSBox(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = cardBackground
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        background = if (isMandatory && checked) {
+            listOf(ODSColorModel(scheme.basicAccent))
+        } else {
+            listOf(ODSColorModel(scheme.basicBackgroundCard))
+        },
+        cornerRadius = ODSCorners(all = 20.dp),
+        padding = ODSPadding(all = 16.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+        ODSRow(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
+            ODSColumn(
                 modifier = Modifier.weight(1f)
             ) {
-                AppText(
+                ODSText(
                     text = title,
-                    style = AppTextStyle.Body,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1C1B1F) // Dark grey/black
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicText
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                AppText(
+                ODSText(
                     text = description,
-                    style = AppTextStyle.Label,
-                    color = Color(0xFF49454F) // Medium grey
+                    style = DSTextStyles.bodyMBold,
+                    color = scheme.basicTextRecessive
                 )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Custom Switch
-            ConsentSwitch(
-                checked = if (isMandatory) true else checked,
-                onCheckedChange = onCheckedChange,
-                enabled = !isMandatory
+            // ODS Switch
+            ODSSwitch(
+                scheme = scheme,
+                props = ODSSwitchProps(
+                    selected = if (isMandatory) true else checked,
+                    disabled = isMandatory,
+                    readOnly = isMandatory
+                ),
+                onCheckedChange = onCheckedChange
             )
         }
     }
 }
 
-@Composable
-private fun ConsentSwitch(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean
-) {
-    val primaryPurple = Color(0xFF6750A4) // Solid purple
-    val grayTrack = Color(0xFFE0E0E0) // Light grey
-    val darkGrayHandle = Color(0xFF79747E) // Dark grey
-
-    Switch(
-        checked = checked,
-        onCheckedChange = onCheckedChange,
-        enabled = enabled,
-        colors = SwitchDefaults.colors(
-            checkedThumbColor = Color.White,
-            checkedTrackColor = primaryPurple,
-            uncheckedThumbColor = darkGrayHandle,
-            uncheckedTrackColor = grayTrack
-        ),
-        thumbContent = {
-            if (!checked) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = Color.White
-                )
-            }
-            // When checked, no icon (empty thumbContent)
-        }
-    )
-}
 

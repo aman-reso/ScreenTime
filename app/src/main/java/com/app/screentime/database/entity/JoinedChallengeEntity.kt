@@ -9,7 +9,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "joined_challenges")
 data class JoinedChallengeEntity(
     @PrimaryKey
-    val challengeId: Int,
+    val challengeId: String,
     val title: String,
     val description: String,
     val reward: String,

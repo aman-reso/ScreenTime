@@ -13,7 +13,8 @@ data class TodayUsageData(
     val topUsedApps: List<AppUsage>,
     val displayWifiDataUsage: String?,
     val displayMobileDataUsage: String?,
-    val displayTotalDataUsage: String?
+    val displayTotalDataUsage: String?,
+    val categoryUsage: List<CategoryUsage> = emptyList()
 ) {
     /**
      * Updates LandingUiState with this formatted data

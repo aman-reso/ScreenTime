@@ -1,5 +1,6 @@
 package com.app.screentime.network
 
+import com.app.screentime.config.AppSecrets
 import com.app.screentime.config.RemoteConfigManager
 
 /**
@@ -10,7 +11,7 @@ object ApiEndpoints {
 
     // Base URL will be fetched from Firebase Remote Config
     // This is a fallback value
-    private const val DEFAULT_BASE_URL = "https://344cdbb499c9.ngrok-free.app"
+    private val DEFAULT_BASE_URL = AppSecrets.Api.DEFAULT_BASE_URL
 
     // Lazy initialization of RemoteConfigManager
     private var remoteConfigManager: RemoteConfigManager? = null

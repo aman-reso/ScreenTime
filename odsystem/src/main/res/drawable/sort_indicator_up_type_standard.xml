@@ -1,0 +1,10 @@
+<!-- Auto-generated full copy from sort_indicator_up_type_standard_size_standard. Do not edit manually. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M5 16.1c-0.4 0-0.77-0.25-0.92-0.62-0.16-0.38-0.07-0.8 0.21-1.1l7-7C11.48 7.2 11.73 7.1 12 7.1c0.26 0 0.52 0.1 0.7 0.3l7 7c0.3 0.28 0.38 0.71 0.22 1.09-0.15 0.37-0.51 0.61-0.92 0.61H5Z"/>
+</vector>

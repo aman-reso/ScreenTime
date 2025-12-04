@@ -37,8 +37,6 @@ import androidx.glance.unit.ColorProvider
 import com.app.screentime.MainActivity
 import com.app.screentime.R
 import com.app.screentime.record.repository.formatDuration
-import com.app.screentime.ui.theme.DarkBackground
-import com.app.screentime.ui.theme.DarkTextPrimary
 import org.json.JSONArray
 
 
@@ -74,7 +72,7 @@ fun ScreenTimeWidgetContent(
         modifier = GlanceModifier
             .fillMaxWidth()
             .fillMaxHeight()
-            .background(DarkBackground)
+//            .background(DarkBackground)
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .clickable(actionStartActivity<MainActivity>())
     ) {
@@ -89,7 +87,7 @@ fun ScreenTimeWidgetContent(
                 text = "Screen Time",
                 modifier = GlanceModifier.defaultWeight(),
                 style = TextStyle(
-                    color = ColorProvider(DarkTextPrimary),
+//                    color = ColorProvider(DarkTextPrimary),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = monoSpace
@@ -121,7 +119,7 @@ fun ScreenTimeWidgetContent(
             text = formattedTime,
             modifier = GlanceModifier.fillMaxWidth(),
             style = TextStyle(
-                color = ColorProvider(DarkTextPrimary),
+//                color = ColorProvider(DarkTextPrimary),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = monoSpace,
@@ -156,12 +154,12 @@ fun ScreenTimeWidgetContent(
                                 .wrapContentWidth()
                                 .wrapContentHeight()
                                 .padding(horizontal = 6.dp, vertical = 3.dp)
-                                .background(
-                                    color = DarkTextPrimary.copy(alpha = 0.15f)
-                                )
+//                                .background(
+//                                    color = DarkTextPrimary.copy(alpha = 0.15f)
+//                                )
                                 .cornerRadius(6.dp),
                             style = TextStyle(
-                                color = ColorProvider(DarkTextPrimary),
+//                                color = ColorProvider(DarkTextPrimary),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium,
                                 fontFamily = monoSpace
@@ -177,7 +175,7 @@ fun ScreenTimeWidgetContent(
                             .defaultWeight()
                             .wrapContentHeight(),
                         style = TextStyle(
-                            color = ColorProvider(DarkTextPrimary.copy(alpha = 0.8f)),
+//                            color = ColorProvider(DarkTextPrimary.copy(alpha = 0.8f)),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal,
                             fontFamily = monoSpace
@@ -190,7 +188,7 @@ fun ScreenTimeWidgetContent(
                 text = "No app data",
                 modifier = GlanceModifier.fillMaxWidth(),
                 style = TextStyle(
-                    color = ColorProvider(DarkTextPrimary.copy(alpha = 0.6f)),
+//                    color = ColorProvider(DarkTextPrimary.copy(alpha = 0.6f)),
                     fontSize = 12.sp,
                     fontFamily = monoSpace
                 )

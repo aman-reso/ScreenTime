@@ -3,11 +3,8 @@ package com.app.screentime.landing.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.screentime.R
-import com.app.screentime.landing.model.LandingUiState
+import com.app.screentime.landing.model.LandingUiProps
 import com.app.screentime.landing.usecase.LandingUsecase
-import com.app.screentime.record.usecase.RecordUseCase
-import com.app.screentime.network.model.BatchUsageRecord
 import com.app.screentime.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.widget.ScreenTimeWidgetHelper
@@ -19,82 +16,68 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
 @HiltViewModel
 class LandingViewModel @Inject constructor(
     private val landingUsecase: LandingUsecase,
-    private val recordUseCase: RecordUseCase,
     private val preferences: PreferencesUseCase,
     private val preferencesManager: PreferencesManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LandingUiState())
-    val uiState: StateFlow<LandingUiState> = _uiState.asStateFlow()
+    private val _uiProps = MutableStateFlow<LandingUiProps?>(null)
+    val uiProps: StateFlow<LandingUiProps?> = _uiProps.asStateFlow()
 
     init {
-        loadUsername()
-        loadRealUsageDataFromHelper()
-    }
-
-    private fun loadUsername() {
-        val username = preferencesManager.getUsername()
-        _uiState.value = _uiState.value.copy(username = username)
-    }
-
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        loadLandingData()
     }
 
     /**
-     * Load today's usage data from the repository
-     * Delegates business logic to the UseCase
+     * Load landing screen data and get UI Props from use case
      */
-
-    internal fun loadRealUsageDataFromHelper() {
+    fun loadLandingData() {
         viewModelScope.launch(Dispatchers.Default) {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            landingUsecase.getTodayUsageData()
-                .fold(
-                    onSuccess = { todayUsageData ->
-                        _uiState.value = todayUsageData.updateUiState(_uiState.value)
-                        val dailyLimit = 3 * 60 * 60 * 1000L // Default 3 hours in milliseconds
-                        ScreenTimeWidgetHelper.updateWidgetFromAppUsages(
-                            context = context,
-                            appUsages = todayUsageData.topUsedApps,
-                            dailyLimit = dailyLimit
-                        )
-                    },
-                    onFailure = { exception ->
-                        val errorMessage = when (exception) {
-                            is SecurityException -> context.getString(
-                                R.string.permission_denied,
-                                exception.message ?: ""
-                            )
+            val username = preferencesManager.getUsername()
 
-                            else -> context.getString(
-                                R.string.failed_to_load_usage_data,
-                                exception.message ?: ""
-                            )
-                        }
-                        _uiState.value = _uiState.value.copy(
-                            error = errorMessage,
-                            isLoading = false
-                        )
-                    }
+            // Show loading state
+            _uiProps.value = landingUsecase.getLandingUiProps(
+                username = username,
+                isLoading = true
+            )
+
+            // Load actual data
+            val props = landingUsecase.getLandingUiProps(
+                username = username,
+                isLoading = false
+            )
+            _uiProps.value = props
+
+            // Update widget if we have data
+            if (props.topUsedApps.isNotEmpty()) {
+                val dailyLimit = 3 * 60 * 60 * 1000L // Default 3 hours in milliseconds
+                ScreenTimeWidgetHelper.updateWidgetFromAppUsages(
+                    context = context,
+                    appUsages = props.topUsedApps,
+                    dailyLimit = dailyLimit
                 )
+            }
+        }
+    }
+
+    fun clearError() {
+        val currentProps = _uiProps.value
+        if (currentProps != null) {
+            _uiProps.value = currentProps.copy(error = null)
         }
     }
 
     fun shouldShowConsentScreen(): Boolean {
-        return preferences.shouldShowConsentSheet()
+        return landingUsecase.shouldShowConsentScreen()
     }
 
     fun markConsentShown() {
-        preferences.markConsentSheetShown()
+        landingUsecase.markConsentShown()
+        loadLandingData()
     }
 
     fun shouldAskForUsageStatsPermission(): Boolean {

@@ -1,94 +1,105 @@
 package com.app.screentime.record.component
 
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.app.screentime.record.model.TimelineListItem
-import com.app.screentime.record.viewmodel.RecordDetailUiState
-import com.app.screentime.record.viewmodel.RecordDetailViewModel
-import com.app.screentime.ui.atom.AppLoader
-import com.app.screentime.ui.atom.AppLoaderType
-import com.app.screentime.ui.atom.AppSecondaryButton
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.theme.AppColors
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.app.screentime.R
 import kotlinx.coroutines.launch
+import com.app.screentime.record.model.TimelineListItem
+import com.app.screentime.record.viewmodel.RecordDetailUiState
+import com.app.screentime.record.viewmodel.RecordDetailViewModel
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSLazyColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.link.ODSLinkProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerLabelAlignment
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerVariant
+
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
 
 @Composable
 fun TimelineTab(
-    uiState: RecordDetailUiState, viewModel: RecordDetailViewModel, colors: AppColors
+    uiState: RecordDetailUiState, viewModel: RecordDetailViewModel, scheme: com.telekom.odsystem.tokens.tokens.ODSTheme
 ) {
+    
     when {
         uiState.isLoading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+            ODSBox(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                AppLoader(type = AppLoaderType.CIRCULAR)
+                ODSLoadingSpinner(
+                    scheme = scheme,
+                    props = ODSLoadingSpinnerProps(
+                        size = ODSLoadingSpinnerSize.LARGE,
+                        variant = ODSLoadingSpinnerVariant.STANDARD,
+                        labelAlignment = ODSLoadingSpinnerLabelAlignment.VERTICAL,
+                        labelText = stringResource(R.string.loading)
+                    )
+                )
             }
         }
 
         uiState.error != null -> {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+            ODSColumn(
+                modifier = Modifier.fillMaxSize(),
+                padding = ODSPadding(all = DSVariables.spacingComponent5)
             ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
-                        containerColor = colors.error.copy(alpha = 0.2f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        AppText(
-                            text = "Error", style = AppTextStyle.SubTitle, color = colors.error
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        AppText(
-                            text = uiState.error,
-                            style = AppTextStyle.Body,
-                            color = colors.textPrimary
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        AppSecondaryButton(
-                            text = "Dismiss", onClick = { viewModel.clearError() })
+                ODSInlineNotification(
+                    modifier = Modifier.fillMaxWidth(),
+                    scheme = scheme,
+                    props = ODSInlineNotificationProps(
+                        mode = ODSInlineNotificationMode.ERROR,
+                        title = stringResource(R.string.error),
+                        text = uiState.error ?: stringResource(R.string.failed_to_load_usage_data),
+                        link1Props = ODSLinkProps(
+                            label = stringResource(R.string.retry)
+                        ),
+                        showCloseButton = true
+                    ),
+                    onDismiss = { viewModel.clearError() },
+                    onFirstLinkClicked = {
+                        viewModel.clearError()
                     }
-                }
+                )
             }
         }
 
         uiState.stats.isEmpty() -> {
-            Box(
-                modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+            ODSBox(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                AppText(
+                ODSText(
                     text = "No usage records found",
-                    style = AppTextStyle.Body,
-                    color = colors.textSecondary
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicTextRecessive
                 )
             }
         }
@@ -115,20 +126,23 @@ fun TimelineTab(
                 }.toMap()
             }
             
-            Column(modifier = Modifier.fillMaxSize()) {
+            ODSColumn(modifier = Modifier.fillMaxSize()) {
                 // Hour range chips
                 if (availableHours.isNotEmpty()) {
-                    Row(
+                    ODSRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
                             .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        padding = ODSPadding(
+                            horizontal = DSVariables.spacingComponent4,
+                            vertical = DSVariables.spacingComponent2
+                        ),
+                        gap = DSVariables.spacingComponent2
                     ) {
                         availableHours.forEach { hour ->
                             HourRangeChip(
                                 hour = hour,
-                                colors = colors,
+                                scheme = scheme,
                                 selected = selectedHour == hour,
                                 onClick = {
                                     selectedHour = hour
@@ -144,11 +158,14 @@ fun TimelineTab(
                 }
                 
                 // Timeline list
-                LazyColumn(
+                ODSLazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    padding = ODSPadding(
+                        horizontal = DSVariables.spacingComponent4,
+                        vertical = DSVariables.spacingComponent2
+                    ),
+                    gap = DSVariables.spacingComponent2
                 ) {
                     itemsIndexed(
                         items = uiState.timeLines,
@@ -162,10 +179,10 @@ fun TimelineTab(
                         when (item) {
                             is TimelineListItem.HourHeaderItem -> {
                                 if (listIndex > 0) {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent2))
                                 }
-                                HourRangeHeader(hour = item.hour, colors = colors)
-                                Spacer(modifier = Modifier.height(8.dp))
+                                HourRangeHeader(hour = item.hour, scheme = scheme)
+                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent2))
                             }
 
                             is TimelineListItem.TimelineEventItem -> {
@@ -173,7 +190,7 @@ fun TimelineTab(
                                     stat = item.stat,
                                     isFirst = item.isFirst,
                                     isLast = item.isLast,
-                                    colors = colors
+                                    scheme = scheme
                                 )
                             }
                         }

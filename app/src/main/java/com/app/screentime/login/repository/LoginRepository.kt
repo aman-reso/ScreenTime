@@ -17,9 +17,9 @@ class LoginRepository @Inject constructor(
     /**
      * Register device with backend API and get userId
      */
-    suspend fun registerDevice(): Result<DeviceRegistrationResponse> {
+    suspend fun registerDevice(firebaseToken: String? = null): Result<DeviceRegistrationResponse> {
         val deviceInfo = deviceInfoUtils.getDeviceInfo()
-        return loginService.registerDevice(deviceInfo).map { apiResponse ->
+        return loginService.registerDevice(deviceInfo, firebaseToken).map { apiResponse ->
             apiResponse.data ?: throw Exception("Device registration failed: ${apiResponse.message}")
         }
     }

@@ -29,6 +29,7 @@ class PreferencesManager @Inject constructor(
         private const val KEY_LAST_FOCUS_SYNC_TIME = "last_focus_sync_time"
         private const val USER_REG_INFO = "user_reg_info"
         private const val KEY_USAGE_STATS_PERMISSION_REQUESTED = "usage_stats_permission_requested"
+        private const val KEY_USAGE_DATA_DISCLOSURE_SHOWN = "usage_data_disclosure_shown"
     }
 
     private val prefs: SharedPreferences by lazy {
@@ -159,6 +160,16 @@ class PreferencesManager @Inject constructor(
         }
     }
 
+    fun getString(key: String, defaultValue: String? = null): String? {
+        return prefs.getString(key, defaultValue)
+    }
+
+    fun remove(key: String) {
+        prefs.edit {
+            remove(key)
+        }
+    }
+
     // Last Sync Time Management
     fun getLastSyncTime(): Long = prefs.getLong(KEY_LAST_SYNC_TIME, 0L)
 
@@ -185,6 +196,15 @@ class PreferencesManager @Inject constructor(
     fun setUsageStatsPermissionRequested(requested: Boolean = true) {
         prefs.edit {
             putBoolean(KEY_USAGE_STATS_PERMISSION_REQUESTED, requested)
+        }
+    }
+    
+    // Usage Data Disclosure Tracking (Google Play Compliance)
+    fun isUsageDataDisclosureShown(): Boolean = prefs.getBoolean(KEY_USAGE_DATA_DISCLOSURE_SHOWN, false)
+    
+    fun setUsageDataDisclosureShown(shown: Boolean = true) {
+        prefs.edit {
+            putBoolean(KEY_USAGE_DATA_DISCLOSURE_SHOWN, shown)
         }
     }
 }

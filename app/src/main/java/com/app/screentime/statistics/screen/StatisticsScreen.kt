@@ -1,102 +1,119 @@
 package com.app.screentime.statistics.screen
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.AllInclusive
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.app.screentime.R
-import com.app.screentime.data.entity.AppUsage
+import com.app.screentime.data.uiModel.WeeklyDataReport
 import com.app.screentime.navigation.Screen
-import com.app.screentime.record.repository.LocalAppUsageRepository
-import com.app.screentime.record.repository.formatDuration
-import com.app.screentime.record.repository.toReadableDataSize
+import com.app.screentime.statistics.model.ChartFormatterProps
 import com.app.screentime.statistics.viewmodel.StatisticsViewModel
-import com.app.screentime.ui.atom.AppLoader
-import com.app.screentime.ui.atom.AppLoaderType
-import com.app.screentime.ui.atom.AppText
-import com.app.screentime.ui.atom.AppTextStyle
-import com.app.screentime.ui.atom.AppUsageListUi
-import com.app.screentime.ui.atom.WeeklyUsageChart
-import com.app.screentime.ui.theme.LocalAppColors
-import com.app.screentime.ui.theme.LocalThemeMode
+import com.app.screentime.ui.atom.appUsageListUi
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.DSVariables
 
-@OptIn(ExperimentalMaterial3Api::class)
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSLazyColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonButtonType
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerLabelAlignment
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerVariant
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.barchart.ODSBarChart
+import com.telekom.odsystem.organisms.barchart.ODSBarChartProps
+import com.telekom.odsystem.organisms.barchart.ODSBarItemDirection
+import com.telekom.odsystem.organisms.barchart.ODSBarItemProps
+import com.telekom.odsystem.organisms.barchart.ODSBarItemShape
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasicProps
+import com.telekom.odsystem.tokens.tokens.lagoonSecondaryScheme
+
 @Composable
 fun StatisticsScreen(
     modifier: Modifier = Modifier,
     navController: NavController? = null,
-    viewModel: StatisticsViewModel = hiltViewModel()
+    viewModel: StatisticsViewModel = hiltViewModel(),
+    scheme: ODSTheme = neutralScheme
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val colors = LocalAppColors.current ?: return
-    val isDarkMode = LocalThemeMode.current
+    val uiProps by viewModel.uiProps.collectAsState()
+    val chartFormatterProps = viewModel.getChartFormatterProps()
 
     when {
-        uiState.isLoading -> {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp),
+        uiProps == null || uiProps!!.isLoading -> {
+            ODSBox(
+                modifier = modifier.fillMaxSize(),
+                padding = ODSPadding(horizontal = DSVariables.spacingComponent3),
                 contentAlignment = Alignment.Center
             ) {
-                AppLoader(
-                    type = AppLoaderType.CIRCULAR
+                ODSLoadingSpinner(
+                    modifier = Modifier.wrapContentHeight(),
+                    scheme = scheme,
+                    props = ODSLoadingSpinnerProps(
+                        labelText = "Please wait...",
+                        size = ODSLoadingSpinnerSize.SMALL,
+                        variant = ODSLoadingSpinnerVariant.STANDARD,
+                        labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
+                    )
                 )
             }
         }
 
-        uiState.error != null -> {
-            LazyColumn(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp)
+        uiProps!!.error != null -> {
+            ODSLazyColumn(
+                modifier = modifier.fillMaxSize(),
+                padding = ODSPadding(horizontal = 8.dp)
             ) {
                 item {
-                    Card(
+                    ODSBox(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                        background = listOf(ODSColorModel(scheme.functionalDestructiveSubtle)),
+                        cornerRadius = ODSCorners(all = 12.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
+                        ODSColumn(modifier = Modifier.padding(16.dp)) {
+                            ODSText(
                                 text = stringResource(R.string.error),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                                style = DSTextStyles.titleS,
+                                color = scheme.functionalDestructiveStandard
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = uiState.error ?: "",
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                            ODSText(
+                                text = uiProps!!.error ?: "",
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.functionalDestructiveStandard
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.clearError() }) {
-                                Text(stringResource(R.string.retry))
+                                ODSText(
+                                    text = stringResource(R.string.retry),
+                                    style = DSTextStyles.bodyMBold,
+                                    color = scheme.basicTextOnAccent
+                                )
                             }
                         }
                     }
@@ -104,20 +121,20 @@ fun StatisticsScreen(
             }
         }
 
-        uiState.weeklyReports.isEmpty() -> {
-            LazyColumn(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp)
+        uiProps!!.barChartData.isEmpty() -> {
+            ODSLazyColumn(
+                modifier = modifier.fillMaxSize(),
+                padding = ODSPadding(horizontal = DSVariables.spacingComponent3)
             ) {
                 item {
-                    Box(
+                    ODSBox(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
+                        ODSText(
                             text = stringResource(R.string.no_data_available),
-                            style = MaterialTheme.typography.bodyLarge
+                            style = DSTextStyles.bodyL,
+                            color = scheme.basicText
                         )
                     }
                 }
@@ -125,73 +142,210 @@ fun StatisticsScreen(
         }
 
         else -> {
-            LazyColumn(
-                modifier = modifier
-                    .fillMaxSize()
-                    .background(
-                        colors.background
-                    )
-                    .padding(
-                        horizontal = 8.dp,
-                        vertical = 8.dp
-                    )
+            ODSLazyColumn(
+                modifier = modifier.fillMaxSize(),
+                background = listOf(ODSColorModel(scheme.basicBackground)),
+                padding = ODSPadding(all = DSVariables.spacingComponent3),
+                gap = DSVariables.spacingComponent3
             ) {
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
+                    ODSRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        AppText(
-                            text = "Activity",
-                            style = AppTextStyle.Title,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.textPrimary
+                        ODSText(
+                            text = stringResource(R.string.activity),
+                            style = DSTextStyles.subtitle,
+                            color = scheme.basicText
+                        )
+                        ODSButton(
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                buttonIcon = ODSIconModel(
+                                    imageVector = Icons.Default.SwapVert,
+                                    contentDescription = "Toggle chart orientation"
+                                ),
+                                buttonType = ODSButtonButtonType.ICON_ONLY,
+                                variant = ODSButtonVariant.GHOST,
+                                size = ODSButtonSize.SMALL
+                            ),
+                            onClick = { viewModel.toggleChartOrientation() }
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                item {
+                    SelectedDayInfoCard(
+                        selectedDayReport = uiProps!!.selectedDayReport
+                    )
                 }
 
                 item {
                     WeeklyUsageChart(
-                        weeklyReports = uiState.weeklyReports,
-                        selectedDayIndex = uiState.selectedDayIndex,
+                        barChartData = uiProps!!.barChartData,
+                        weeklyReports = uiProps!!.weeklyReports,
+                        chartFormatterProps = chartFormatterProps,
+                        chartOrientation = uiProps!!.chartOrientation,
                         onBarClick = { dayIndex ->
                             viewModel.selectDay(dayIndex)
                         },
+                        scheme = scheme
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                uiState.selectedDayIndex?.let { dayIndex ->
-                    if (dayIndex in uiState.weeklyReports.indices) {
-                        val selectedDay = uiState.weeklyReports[dayIndex]
-                        val appUsageList =
-                            selectedDay.appUsage?.sortedByDescending { it.appScreenTime }
-                                ?: emptyList()
+                item {
+                    ODSBox(height = DSVariables.spacingComponent5) {}
+                }
 
-                        itemsIndexed(
-                            items = appUsageList,
-                            key = { _, appUsage -> appUsage.packageName ?: appUsage.id.toString() },
-                            contentType = { _, _ -> "app_usage_item" }) { index, appUsage ->
-                            AppUsageListUi(
-                                appUsage = appUsage,
-                                index = index,
-                                totalCount = appUsageList.size,
-                                onClick = {
-                                    appUsage.packageName?.let { packageName ->
-                                        navController?.navigate(
-                                            Screen.SingleAppUsageDetail.createRoute(packageName)
-                                        )
-                                    }
-                                },
-                                showIcon = false // Hide app icons in RecordDetailScreen
-                            )
+                if (uiProps!!.selectedDayAppUsageList.isNotEmpty()) {
+                    appUsageListUi(
+                        appUsageList = uiProps!!.selectedDayAppUsageList,
+                        onClick = { appUsage ->
+                            appUsage.packageName?.let { packageName ->
+                                navController?.navigate(
+                                    Screen.SingleAppUsageDetail.createRoute(packageName)
+                                )
+                            }
                         }
-                    }
+                    )
                 }
             }
         }
     }
 }
+
+/**
+ * Weekly Usage Chart using ODSBarChart
+ */
+@Composable
+fun WeeklyUsageChart(
+    barChartData: List<ODSBarItemProps>,
+    weeklyReports: List<WeeklyDataReport>,
+    chartFormatterProps: ChartFormatterProps,
+    chartOrientation: ODSBarItemDirection,
+    onBarClick: (Int) -> Unit,
+    scheme: ODSTheme = neutralScheme
+) {
+    ODSBox(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(
+                if (chartOrientation == ODSBarItemDirection.HORIZONTAL) {
+                    // Horizontal charts need more height
+                    DSVariables.sizingComponent19 * 2
+                } else {
+                    DSVariables.sizingComponent19 + DSVariables.sizingMinimumTappableArea
+                }
+            ),
+    ) {
+        if (barChartData.isNotEmpty()) {
+            ODSBarChart(
+                modifier = Modifier.fillMaxSize(),
+                scheme = scheme,
+                props = ODSBarChartProps(
+                    barItemsList = barChartData,
+                    direction = chartOrientation,
+                    shape = ODSBarItemShape.PILLED,
+                    showTopLabels = chartOrientation == ODSBarItemDirection.VERTICAL,
+                    showBottomLabels = true,
+                    showLeftLabels = chartOrientation == ODSBarItemDirection.HORIZONTAL,
+                    showRightLabels = chartOrientation == ODSBarItemDirection.VERTICAL,
+                    stepCount = 2,
+                    zoomEnabled = false,
+                    scrollEnabled = false
+                ),
+                valueFormatter = chartFormatterProps.valueFormatter,
+                onBarSelected = { index ->
+                    if (index in weeklyReports.indices) {
+                        onBarClick(index)
+                    }
+                },
+                onBarDeSelected = {},
+                verticalAxisFormatter = chartFormatterProps.verticalAxisFormatter
+            )
+        } else {
+            ODSColumn(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                ODSText(
+                    text = stringResource(R.string.no_data_available),
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicTextRecessive
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun SelectedDayInfoCard(
+    selectedDayReport: WeeklyDataReport?,
+    scheme: ODSTheme = neutralScheme
+) {
+    selectedDayReport?.let { selectedDay ->
+        ODSCardBasic(
+            modifier = Modifier.fillMaxWidth(),
+            scheme = lagoonSecondaryScheme,
+            contentPadding = ODSPadding(
+                horizontal = DSVariables.spacingComponent5,
+                vertical = DSVariables.spacingComponent5
+            ),
+            props = ODSCardBasicProps(),
+            contentSlot = {
+                ODSColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    gap = DSVariables.spacingComponent4
+                ) {
+                    ODSText(
+                        text = selectedDay.dayName ?: "",
+                        style = DSTextStyles.bodyMBold,
+                        color = scheme.basicText
+                    )
+                    ODSRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        gap = DSVariables.spacingComponent4
+                    ) {
+                        ODSColumn(
+                            modifier = Modifier.weight(1f),
+                            gap = DSVariables.spacingComponent1
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.screen_time),
+                                style = DSTextStyles.bodySRegular,
+                                color = scheme.basicTextRecessive
+                            )
+                            ODSText(
+                                text = selectedDay.displayScreenTime ?: "N/A",
+                                style = DSTextStyles.linkSBold,
+                                color = scheme.basicText
+                            )
+                        }
+                        if (!selectedDay.displayTotalDataUsage.isNullOrEmpty()) {
+                            ODSColumn(
+                                modifier = Modifier.weight(1f),
+                                gap = DSVariables.spacingComponent1
+                            ) {
+                                ODSText(
+                                    text = stringResource(R.string.network_usage),
+                                    style = DSTextStyles.bodySRegular,
+                                    color = scheme.basicTextRecessive
+                                )
+                                ODSText(
+                                    text = selectedDay.displayTotalDataUsage,
+                                    style = DSTextStyles.linkSBold,
+                                    color = scheme.basicText
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            onClick = {}
+        )
+    }
+
+}
+

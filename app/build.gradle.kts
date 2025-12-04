@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,14 +15,38 @@ android {
     namespace = "com.app.screentime"
     compileSdk = 36
 
+    // Load secrets from local.properties
+    val localPropertiesFile = rootProject.file("local.properties")
+    val localProperties = Properties()
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { localProperties.load(it) }
+    }
+
     defaultConfig {
         applicationId = "com.app.screentime"
         minSdk = 24
         targetSdk = 36
-        versionCode = 24
-        versionName = "2.3"
+        versionCode = 29
+        versionName = "2.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // BuildConfig fields for secrets (read from local.properties or use defaults)
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"${localProperties.getProperty("API_BASE_URL", "https://api.apptime.in")}\""
+        )
+        buildConfigField(
+            "String",
+            "API_DEV_BASE_URL",
+            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://api.apptime.in")}\""
+        )
+        buildConfigField(
+            "String",
+            "TOTP_FALLBACK_SECRET",
+            "\"${localProperties.getProperty("TOTP_FALLBACK_SECRET", "O5YRY4I2737IGHVYOHXM6T7RWWNAW3X7")}\""
+        )
 
 //        ndk {
 //            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
@@ -48,13 +74,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
+    kotlin {
+        jvmToolchain(11)
+        compilerOptions {
+            freeCompilerArgs.add("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
+        }
     }
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     hilt {
@@ -65,9 +94,20 @@ android {
         arg("room.incremental", "true")
         arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
     }
+    
+    // Configure to handle AAR files without sources
+    configurations.all {
+        resolutionStrategy {
+            eachDependency {
+                // Suppress missing sources warnings for local AAR files
+            }
+        }
+    }
 }
 
 dependencies {
+    // ODS Library module with sources
+    implementation(project(":odsystem"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -129,7 +169,7 @@ dependencies {
     implementation(libs.glance.appwidget)
 
     // Coil for image loading
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation(libs.coil.compose)
 
     // Security/Crypto for EncryptedSharedPreferences
     implementation(libs.androidx.security.crypto)
@@ -151,6 +191,7 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.config)
+    implementation(libs.firebase.messaging)
 
     // ConstraintLayout Compose
     implementation(libs.androidx.constraintlayout.compose)

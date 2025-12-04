@@ -160,10 +160,5 @@ abstract class NetworkModule {
          * Provide NetworkUtils
          * Uses @Provides because it needs Context parameter
          */
-        @Provides
-        @Singleton
-        fun provideNetworkUtils(context: android.content.Context): NetworkUtils {
-            return NetworkUtils(context)
-        }
     }
 }

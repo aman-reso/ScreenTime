@@ -15,11 +15,12 @@ class RemoteConfigManager @Inject constructor() {
 
     companion object {
         private const val TAG = "RemoteConfigManager"
-        private const val KEY_BASE_URL = "api_base_url"
-        private const val DEFAULT_BASE_URL = "https://3c5bcc423d9e.ngrok-free.app"
+        private const val KEY_BASE_URL = AppSecrets.Firebase.REMOTE_CONFIG_KEY_BASE_URL
+        private val DEFAULT_BASE_URL = AppSecrets.Api.DEFAULT_BASE_URL
 
         // Cache expiration time (in seconds)
-        private const val CACHE_EXPIRATION_SECONDS = 3600L // 1 hour
+        private const val CACHE_EXPIRATION_SECONDS =
+            AppSecrets.Firebase.REMOTE_CONFIG_CACHE_EXPIRATION_SECONDS
     }
 
     init {
