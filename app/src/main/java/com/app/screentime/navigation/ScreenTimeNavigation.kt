@@ -12,7 +12,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -51,24 +50,52 @@ fun ScreenTimeNavigation(
     scheme: ODSTheme = neutralScheme,
     props: ScreenTimeNavigationProps = ScreenTimeNavigationProps(),
     tokens: ScreenTimeNavigationTokens = defaultScreenTimeNavigationTokens,
-    style: ScreenTimeNavigationStyle = ScreenTimeNavigationStyle().getStyle(scheme)
+    style: ScreenTimeNavigationStyle = ScreenTimeNavigationStyle().getStyle(scheme),
+    deeplinkUri: android.net.Uri? = null
 ) {
     val backStack = remember { mutableStateListOf<Screen>(Screen.Permission) }
     var selectedIndex by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(backStack) {
+    LaunchedEffect(backStack.toList()) {
         val top = backStack.lastOrNull()
         val newIndex = tokens.bottomNavigationRoutes.indexOf(top)
         selectedIndex = if (newIndex >= 0) newIndex else -1
     }
 
+    // Handle deep links
+    LaunchedEffect(deeplinkUri) {
+        if (deeplinkUri != null) {
+            val deeplinkScreen = DeeplinkParser.parseDeeplink(deeplinkUri)
+            if (deeplinkScreen != null) {
+                // Clear back stack if navigating to Landing
+                if (DeeplinkParser.shouldClearBackStack(deeplinkScreen)) {
+                    backStack.clear()
+                    backStack.add(deeplinkScreen)
+                }
+                // Add Landing to back stack first if needed
+                else if (DeeplinkParser.shouldAddLandingToBackStack(deeplinkScreen)) {
+                    backStack.clear()
+                    backStack.add(Screen.Landing)
+                    backStack.add(deeplinkScreen)
+                }
+                // Just navigate to the screen
+                else {
+                    backStack.clear()
+                    backStack.add(deeplinkScreen)
+                }
+            }
+        }
+    }
+
     val navigationHandlers = remember {
         object {
             fun onIndexChanged(index: Int) {
-                selectedIndex = index
                 val route = tokens.bottomNavigationRoutes.getOrNull(index)
                 if (route != null) {
-                    if (backStack.isNotEmpty()) {
+                    val currentScreen = backStack.lastOrNull()
+                    if (currentScreen == Screen.Landing && route != Screen.Landing) {
+                        backStack.add(route)
+                    } else if (backStack.isNotEmpty()) {
                         backStack[backStack.lastIndex] = route
                     } else {
                         backStack.add(route)

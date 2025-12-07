@@ -66,11 +66,18 @@ class MainActivity : ComponentActivity() {
             val languageViewModel: LanguageViewModel = hiltViewModel()
             val language by languageViewModel.language.collectAsState()
             SetLocale(language)
+            
+            // Track deeplink URI from intent
+            var deeplinkUri by remember { mutableStateOf(intent.data) }
+            
+            // Update deeplink when intent changes
+            LaunchedEffect(intent) {
+                deeplinkUri = intent.data
+            }
+            
             ScreenTimeTheme(themeViewModel) {
                 val useDarkTheme = LocalThemeMode.current
                 val scheme = neutralScheme
-                // Note: Navigation 3 uses a different navigation pattern
-                // Deeplink handling may need to be updated for Navigation 3
 
                 SideEffect {
                     // Set status bar and navigation bar icons based on theme
@@ -103,7 +110,10 @@ class MainActivity : ComponentActivity() {
                             .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
                             .fillMaxWidth()
                     ) {}
-                    ScreenTimeNavigation(scheme = scheme)
+                    ScreenTimeNavigation(
+                        scheme = scheme,
+                        deeplinkUri = deeplinkUri
+                    )
                 }
             }
         }

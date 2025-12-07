@@ -10,10 +10,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.widget.TextViewCompat
-import com.telekom.odsystem.toSp
 
 data class ODSTextStyle(
     val fontFamily: Int,
@@ -52,13 +52,13 @@ data class ODSTextStyle(
     }
 
     fun getFontSizeAsSp(): Int {
-        return fontSize.toFloat().toSp.toInt()
+        return fontSize.toFloat().dp.value.toInt()
     }
 
     // Create a function to apply the ODSTextStyle to a TextView
     fun applyTextStyle(textView: TextView) {
         val fontSize = this.fontSize.toFloat()
-        val fontLineHeight = this.lineHeight.toFloat().toSp.toInt() - fontSize.toInt()
+        val fontLineHeight = this.lineHeight.toFloat().dp.value.toInt() - fontSize.toInt()
 
         textView.apply {
             // Set font family
