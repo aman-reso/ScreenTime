@@ -1,0 +1,11 @@
+<!-- Auto-generated full copy from checkmark_type_bold_size_standard. Do not edit manually. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M20.88 5.62c0.5 0.48 0.5 1.28 0 1.76l-11 11c-0.48 0.5-1.28 0.5-1.76 0l-5-5c-0.5-0.48-0.5-1.28 0-1.76 0.48-0.5 1.28-0.5 1.76 0L9 15.73 19.12 5.62c0.48-0.5 1.28-0.5 1.76 0Z"/>
+</vector>

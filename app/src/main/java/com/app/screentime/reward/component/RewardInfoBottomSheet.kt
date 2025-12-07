@@ -1,0 +1,370 @@
+package com.app.screentime.reward.component
+
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.app.screentime.R
+import com.app.screentime.reward.model.RewardCatalogItem
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSImage
+import com.telekom.odsystem.atoms.ODSImageModel
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.textfield.ODSTextField
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldMode
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldProps
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldSize
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldSupportMessageProps
+import com.telekom.odsystem.atoms.divider.ODSDivider
+import com.telekom.odsystem.atoms.divider.ODSDividerProps
+import com.telekom.odsystem.atoms.divider.ODSDividerVariant
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerLabelAlignment
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerVariant
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheetProps
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+
+/**
+ * Helper function to determine if a reward is physical
+ * Physical rewards typically require shipping address
+ */
+private fun isPhysicalReward(category: String?): Boolean {
+    // Categories that typically require physical shipping
+    val physicalCategories = listOf(
+        "Electronics",
+        "Physical",
+        "Gift Card",
+        "Merchandise",
+        "Hardware"
+    )
+    return category != null && physicalCategories.any {
+        category.contains(it, ignoreCase = true)
+    }
+}
+
+/**
+ * Validation functions
+ */
+private fun isValidEmail(email: String): Boolean {
+    if (email.isBlank()) return false
+    val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$".toRegex()
+    return email.matches(emailRegex)
+}
+
+private fun isValidName(name: String): Boolean {
+    return name.trim().length >= 2
+}
+
+private fun isValidAddress(address: String): Boolean {
+    return address.trim().isNotBlank()
+}
+
+private fun isValidPostalCode(postalCode: String): Boolean {
+    return postalCode.length == 6 && postalCode.all { it.isDigit() }
+}
+
+private fun isValidPhoneNumber(phoneNumber: String): Boolean {
+    if (phoneNumber.isBlank()) return false
+    // Remove common phone number characters like +, -, spaces, parentheses
+    val cleaned = phoneNumber.replace(Regex("[+\\s()-]"), "")
+    return cleaned.all { it.isDigit() } && cleaned.length >= 10
+}
+
+/**
+ * Reward Info Bottom Sheet Component
+ * Displays reward information and claim form
+ * Shows address fields only if reward is physical
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RewardInfoBottomSheet(
+    showBottomSheet: Boolean,
+    onDismiss: () -> Unit,
+    reward: RewardCatalogItem?,
+    isLoading: Boolean = false,
+    onClaimClick: (String, String, String, String?, String?) -> Unit = { _, _, _, _, _ -> },
+    scheme: ODSTheme
+) {
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var postalCode by remember { mutableStateOf("") }
+
+    val isPhysical = reward?.let { isPhysicalReward(it.rewardType) } ?: false
+
+    // Validation states
+    val nameError = remember(name) { if (name.isNotBlank() && !isValidName(name)) "Name must be at least 2 characters" else null }
+    val emailError = remember(email) { if (email.isNotBlank() && !isValidEmail(email)) "Please enter a valid email address" else null }
+    val phoneError = remember(phoneNumber) { if (phoneNumber.isNotBlank() && !isValidPhoneNumber(phoneNumber)) "Please enter a valid phone number (digits only)" else null }
+    val addressError = remember(address) { if (isPhysical && address.isNotBlank() && !isValidAddress(address)) "Address cannot be empty" else null }
+    val postalCodeError = remember(postalCode) { 
+        if (isPhysical && postalCode.isNotBlank() && !isValidPostalCode(postalCode)) {
+            if (postalCode.any { !it.isDigit() }) "Postal code must contain only numbers" 
+            else "Postal code must be exactly 6 digits"
+        } else null 
+    }
+
+    // Check if form is valid
+    val isFormValid = isValidName(name) && 
+            isValidEmail(email) && 
+            isValidPhoneNumber(phoneNumber) && 
+            (!isPhysical || (isValidAddress(address) && isValidPostalCode(postalCode)))
+
+    if (reward == null) return
+
+    ODSBottomSheet(
+        scheme = scheme,
+        props = ODSBottomSheetProps(
+            showHandle = false
+        ),
+        showBottomSheet = showBottomSheet,
+        bottomSheetState = bottomSheetState,
+        onDismissRequest = {
+            if (!isLoading) {
+                onDismiss()
+            }
+        },
+        onCloseClicked = {
+            if (!isLoading) {
+                onDismiss()
+            }
+        },
+        titleSlot = {
+            ODSText(
+                text = reward.title,
+                style = DSTextStyles.titleS,
+                color = scheme.basicText
+            )
+        },
+        contentSlot = {
+            if (isLoading) {
+                ODSBox(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSLoadingSpinner(
+                        modifier = Modifier.wrapContentHeight(),
+                        scheme = scheme,
+                        props = ODSLoadingSpinnerProps(
+                            labelText = stringResource(R.string.loading),
+                            size = ODSLoadingSpinnerSize.SMALL,
+                            variant = ODSLoadingSpinnerVariant.STANDARD,
+                            labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
+                        )
+                    )
+                }
+            } else {
+                ODSColumn(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    gap = DSVariables.spacingComponent4
+                ) {
+                    reward.imageUrl?.let { imageUrl ->
+                        ODSImage(
+                            imageModel = ODSImageModel(
+                                url = imageUrl,
+                                contentDescription = reward.title
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            cornerRadius = ODSCorners(all = 12.dp)
+                        )
+                    }
+
+                    // Reward Description
+                    ODSText(
+                        text = reward.description,
+                        style = DSTextStyles.bodyMRegular,
+                        color = scheme.basicText
+                    )
+
+                    // Reward Details
+                    ODSColumn(
+                        gap = DSVariables.spacingComponent2
+                    ) {
+                        ODSText(
+                            text = "Price: ${reward.coinPrice} coins",
+                            style = DSTextStyles.bodyMBold,
+                            color = scheme.basicText
+                        )
+
+                        if (reward.stockQuantity > 0) {
+                            ODSText(
+                                text = "Stock: ${reward.stockQuantity} available",
+                                style = DSTextStyles.bodySRegular,
+                                color = scheme.basicTextRecessive
+                            )
+                        } else {
+                            ODSText(
+                                text = "Out of stock",
+                                style = DSTextStyles.bodySRegular,
+                                color = scheme.functionalDestructiveStandard
+                            )
+                        }
+
+                        if (reward.category.isNotEmpty()) {
+                            ODSText(
+                                text = "Category: ${reward.category}",
+                                style = DSTextStyles.bodySRegular,
+                                color = scheme.basicTextRecessive
+                            )
+                        }
+                    }
+
+                    // Divider
+                    if (reward.isActive && reward.stockQuantity > 0) {
+                        ODSDivider(
+                            scheme = scheme,
+                            props = ODSDividerProps(
+                                variant = ODSDividerVariant.HORIZONTAL
+                            )
+                        )
+
+                        // Claim Form
+                        ODSText(
+                            text = "Claim Reward",
+                            style = DSTextStyles.subtitle,
+                            color = scheme.basicText
+                        )
+
+                        // Name field (required)
+                        ODSTextField(
+                            scheme = scheme,
+                            props = ODSTextFieldProps(
+                                label = "Name",
+                                inputText = name,
+                                size = ODSTextFieldSize.SMALL,
+                                mode = if (nameError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
+                                supportMessageProps = nameError?.let {
+                                    ODSTextFieldSupportMessageProps(message = it)
+                                }
+                            ),
+                            onValueChange = { name = it }
+                        )
+
+                        // Email field (required)
+                        ODSTextField(
+                            scheme = scheme,
+                            props = ODSTextFieldProps(
+                                label = "Email",
+                                inputText = email,
+                                size = ODSTextFieldSize.SMALL,
+                                mode = if (emailError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
+                                supportMessageProps = emailError?.let {
+                                    ODSTextFieldSupportMessageProps(message = it)
+                                }
+                            ),
+                            onValueChange = { email = it }
+                        )
+
+                        // Phone Number field (required)
+                        ODSTextField(
+                            scheme = scheme,
+                            props = ODSTextFieldProps(
+                                label = "Phone Number",
+                                inputText = phoneNumber,
+                                size = ODSTextFieldSize.SMALL,
+                                mode = if (phoneError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
+                                supportMessageProps = phoneError?.let {
+                                    ODSTextFieldSupportMessageProps(message = it)
+                                }
+                            ),
+                            onValueChange = { newValue ->
+                                // Allow only digits, +, -, spaces, and parentheses
+                                phoneNumber = newValue.filter { it.isDigit() || it == '+' || it == '-' || it == ' ' || it == '(' || it == ')' }
+                            }
+                        )
+
+                        // Address fields (only if physical reward)
+                        if (isPhysical) {
+                            ODSTextField(
+                                scheme = scheme,
+                                props = ODSTextFieldProps(
+                                    label = "Address",
+                                    inputText = address,
+                                    size = ODSTextFieldSize.SMALL,
+                                    mode = if (addressError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
+                                    supportMessageProps = addressError?.let {
+                                        ODSTextFieldSupportMessageProps(message = it)
+                                    }
+                                ),
+                                onValueChange = { address = it }
+                            )
+
+                            ODSTextField(
+                                scheme = scheme,
+                                props = ODSTextFieldProps(
+                                    label = "Postal Code",
+                                    inputText = postalCode,
+                                    size = ODSTextFieldSize.SMALL,
+                                    mode = if (postalCodeError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
+                                    supportMessageProps = postalCodeError?.let {
+                                        ODSTextFieldSupportMessageProps(message = it)
+                                    }
+                                ),
+                                onValueChange = { newValue ->
+                                    // Allow only digits and limit to 6 characters
+                                    postalCode = newValue.filter { it.isDigit() }.take(6)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        actionSlot = {
+            if (reward.isActive && reward.stockQuantity > 0 && !isLoading) {
+                ODSButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    scheme = scheme,
+                    props = ODSButtonProps(
+                        label = "Claim Reward",
+                        variant = ODSButtonVariant.PRIMARY,
+                        size = ODSButtonSize.LARGE,
+                        disabled = !isFormValid
+                    ),
+                    onClick = {
+                        if (isFormValid) {
+                            onClaimClick(
+                                name,
+                                email,
+                                phoneNumber,
+                                if (isPhysical) address else null,
+                                if (isPhysical) postalCode else null
+                            )
+                        }
+                    }
+                )
+            }
+        }
+    )
+}
+

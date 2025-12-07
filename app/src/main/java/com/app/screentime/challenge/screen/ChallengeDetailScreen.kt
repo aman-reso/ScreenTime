@@ -1,9 +1,12 @@
 package com.app.screentime.challenge.screen
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -19,8 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import com.app.screentime.R
 import com.app.screentime.challenge.component.detail.ChallengeErrorState
@@ -37,10 +38,17 @@ import com.app.screentime.challenge.component.detail.RulesSection
 import com.app.screentime.challenge.component.detail.SponsorSection
 import com.app.screentime.challenge.model.ChallengeDetailUiProps
 import com.app.screentime.challenge.viewmodel.ChallengeDetailViewModel
+import com.app.screentime.reward.component.RewardCardV2
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.telekom.odsystem.atoms.ODSImageModel
+import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSLazyColumn
+import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerLabelAlignment
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
@@ -57,7 +65,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
  *
  * @param challengeId The ID of the challenge to display
  * @param modifier Modifier to be applied to the component
- * @param navController Navigation controller for back navigation
+ * @param onBackClick Callback for back navigation
  * @param viewModel ViewModel for challenge data
  * @param scheme ODS theme scheme
  */
@@ -65,7 +73,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun ChallengeDetailScreen(
     challengeId: String,
     modifier: Modifier = Modifier,
-    navController: NavController? = null,
+    onBackClick: () -> Unit = {},
     viewModel: ChallengeDetailViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
@@ -125,7 +133,7 @@ fun ChallengeDetailScreen(
                                 viewModel.loadChallengeDetails(challengeId)
                             })
                     },
-                    navController = navController,
+                    onBackClick = onBackClick,
                     viewModel = viewModel,
                     scheme = neutralScheme
                 )
@@ -145,7 +153,7 @@ internal fun ChallengeContent(
     isJoining: Boolean,
     onRefresh: () -> Unit,
     onJoinChallenge: () -> Unit,
-    navController: NavController?,
+    onBackClick: () -> Unit,
     viewModel: ChallengeDetailViewModel,
     scheme: ODSTheme = neutralScheme
 ) {
@@ -180,7 +188,7 @@ internal fun ChallengeContent(
         {
             item(key = "header") {
                 ChallengeHeader(
-                    onBackClick = { navController?.popBackStack() },
+                    onBackClick = onBackClick,
                     onShareClick = {
                         coroutineScope.launch {
                             viewModel.shareChallenge(
@@ -248,6 +256,56 @@ internal fun ChallengeContent(
                         userRank = uiProps.userRank,
                         scheme = scheme
                     )
+                }
+            }
+
+            // Available Rewards
+            if (uiProps.availableRewards.isNotEmpty()) {
+                item(key = "availableRewards") {
+                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                    ODSColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        gap = DSVariables.spacingComponent2
+                    ) {
+                        ODSText(
+                            text = "Available rewards",
+                            style = DSTextStyles.subtitle,
+                            color = scheme.basicText
+                        )
+                        LazyRow(
+                            state = rememberLazyListState(),
+                            horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent3),
+                            contentPadding = PaddingValues(horizontal = 0.dp)
+                        ) {
+                            items(uiProps.availableRewards) { reward ->
+                                RewardCardV2(
+                                    title = reward.title,
+                                    description = reward.description,
+                                    coin = reward.coin,
+                                    image = reward.imageUrl?.let {
+                                        ODSImageModel(
+                                            url = it,
+                                            contentDescription = reward.title
+                                        )
+                                    },
+                                    tag = reward.tagUrl?.let {
+                                        ODSImageModel(
+                                            url = it,
+                                            contentDescription = "Reward tag"
+                                        )
+                                    },
+                                    onClaimClick = {
+                                        // TODO: Handle claim click
+                                    },
+                                    onClick = {
+                                        // TODO: Handle card click
+                                    },
+                                    modifier = Modifier.fillParentMaxWidth(0.6f),
+                                    scheme = scheme
+                                )
+                            }
+                        }
+                    }
                 }
             }
 

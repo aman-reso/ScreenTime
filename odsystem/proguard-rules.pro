@@ -24,3 +24,5 @@
 -keep class com.telekom.odsystem.** { *; }
 -dontwarn com.telekom.odsystem.**
 
+
+

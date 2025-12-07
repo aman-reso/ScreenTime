@@ -25,7 +25,6 @@ import com.app.screentime.landing.util.AppCategoryUtils
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
-import com.telekom.odsystem.atoms.ODSImage
 import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.ODSColorModel
@@ -44,18 +43,15 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 /**
  * Get icon for a category
  * Uses drawable resources from AppCategoryUtils if available, otherwise falls back to Material Icons
+ * Returns ODSImageModel for proper alignment in ODSListRowStandard
  */
-@Composable
 private fun getCategoryIcon(
-    category: AppCategoryUtils.AppCategory,
-    scheme: ODSTheme
-): Any {
+    category: AppCategoryUtils.AppCategory
+): ODSImageModel? {
     val drawableRes = category.drawableRes
 
     return if (drawableRes != 0) {
-        ODSImage(
-            imageModel = ODSImageModel(drawableRes = drawableRes),
-        )
+        ODSImageModel(drawableRes = drawableRes)
     } else {
         val iconVector = when (category) {
             AppCategoryUtils.AppCategory.SOCIAL_MEDIA -> Icons.Rounded.SocialDistance
@@ -69,9 +65,7 @@ private fun getCategoryIcon(
             AppCategoryUtils.AppCategory.OTHERS -> Icons.Rounded.Category
             else -> Icons.Rounded.Category
         }
-        ODSImage(
-            imageModel = ODSImageModel(imageVector = iconVector),
-        )
+        ODSImageModel(imageVector = iconVector)
     }
 }
 
@@ -126,10 +120,7 @@ fun CategoryUsageSection(
                                     labelText = category.category.displayName,
                                     descriptionTitle = category.formattedTime,
                                     descriptionText = "${category.percentage.toInt()}% of total",
-                                    image = getCategoryIcon(
-                                        category.category,
-                                        scheme
-                                    ) as? ODSImageModel?
+                                    image = getCategoryIcon(category.category)
                                 )
                             )
                         }

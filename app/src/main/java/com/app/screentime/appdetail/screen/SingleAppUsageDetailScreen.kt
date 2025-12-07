@@ -86,7 +86,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SingleAppUsageDetailScreen(
     packageName: String,
-    navController: NavController,
+    onBackClick: () -> Unit = {},
     viewModel: SingleAppUsageDetailViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
@@ -254,7 +254,7 @@ fun SingleAppUsageDetailScreen(
                             item {
                                 HeaderSection(
                                     appName = uiState.appName.ifEmpty { packageName },
-                                    onBackClick = { navController.popBackStack() },
+                                    onBackClick = onBackClick,
                                     onMoreClick = { /* TODO */ },
                                     scheme = scheme
                                 )
@@ -371,7 +371,7 @@ fun SingleAppUsageDetailScreen(
                         item {
                             HeaderSection(
                                 appName = uiState.appName.ifEmpty { packageName },
-                                onBackClick = { navController.popBackStack() },
+                                onBackClick = onBackClick,
                                 onMoreClick = { /* TODO */ },
                                 scheme = scheme
                             )

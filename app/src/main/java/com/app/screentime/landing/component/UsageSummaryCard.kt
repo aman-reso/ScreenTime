@@ -63,7 +63,6 @@ fun UsageSummaryCard(
                             style = DSTextStyles.bodyMRegular,
                             color = scheme.basicTextRecessive
                         )
-                        // Show percentage change if available
                         percentageChange?.let { change ->
                             val changeText = if (change > 0) {
                                 "+${change.toInt()}%"
@@ -71,9 +70,9 @@ fun UsageSummaryCard(
                                 "${change.toInt()}%"
                             }
                             val changeColor = if (change > 0) {
-                                scheme.functionalDestructiveStandard // Red for increase
+                                scheme.basicTextDominant // Red for increase
                             } else {
-                                scheme.functionalSuccessStandard // Green for decrease
+                                scheme.basicTextDominant // Green for decrease
                             }
                             ODSText(
                                 text = changeText,

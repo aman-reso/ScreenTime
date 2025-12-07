@@ -56,8 +56,9 @@ import org.joda.time.format.DateTimeFormat
 @Composable
 fun RecordDetailScreen(
     modifier: Modifier = Modifier,
-    navController: NavController,
     username: String,
+    onBackClick: () -> Unit = {},
+    onNavigateToAppDetails: (String) -> Unit = {},
     scheme: ODSTheme = neutralScheme,
     viewModel: RecordDetailViewModel = hiltViewModel()
 ) {
@@ -121,7 +122,7 @@ fun RecordDetailScreen(
                     variant = ODSButtonVariant.GHOST,
                     size = com.telekom.odsystem.atoms.button.ODSButtonSize.SMALL
                 ),
-                onClick = { navController.popBackStack() }
+                onClick = onBackClick
             )
 
             ODSText(
@@ -175,7 +176,7 @@ fun RecordDetailScreen(
                     SummaryTab(
                         viewModel = viewModel,
                         uiState = uiState,
-                        navController = navController,
+                        onNavigateToAppDetails = onNavigateToAppDetails,
                         selectedDateDisplay = selectedDateDisplay, scheme = scheme
                     )
                 }

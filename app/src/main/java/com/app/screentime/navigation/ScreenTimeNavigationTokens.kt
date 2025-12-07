@@ -7,8 +7,8 @@ package com.app.screentime.navigation
  * @property bottomNavigationRoutes List of routes that should show bottom navigation.
  */
 data class ScreenTimeNavigationTokens(
-    val routeToIndexMap: Map<String, Int>,
-    val bottomNavigationRoutes: List<String>
+    val routeToIndexMap: Map<Screen, Int>,
+    val bottomNavigationRoutes: List<Screen>
 )
 
 /**
@@ -16,16 +16,16 @@ data class ScreenTimeNavigationTokens(
  */
 val defaultScreenTimeNavigationTokens = ScreenTimeNavigationTokens(
     routeToIndexMap = mapOf(
-        Screen.Landing.route to 0,
-        Screen.Statistics.route to 1,
-        Screen.Challenges.route to 2,
-        Screen.Profile.route to 3
+        Screen.Landing to 0,
+        Screen.Statistics to 1,
+        Screen.Challenges to 2,
+        Screen.Profile to 3
     ),
     bottomNavigationRoutes = listOf(
-        Screen.Landing.route,
-        Screen.Statistics.route,
-        Screen.Profile.route,
-        Screen.Challenges.route
+        Screen.Landing,
+        Screen.Statistics,
+        Screen.Challenges,
+        Screen.Profile
     )
 )
 

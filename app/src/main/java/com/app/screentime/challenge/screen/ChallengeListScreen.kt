@@ -28,6 +28,8 @@ import com.app.screentime.challenge.component.SpecialEventCardV
 import com.app.screentime.challenge.component.SpecialEventCardV1
 import com.app.screentime.challenge.viewmodel.ChallengeViewModel
 import com.app.screentime.challenge.viewmodel.ChallengesUiState
+import com.app.screentime.challenge.viewmodel.JoinedChallengeViewModel
+import com.app.screentime.challenge.viewmodel.ChallengeFilter
 import com.app.screentime.navigation.Screen
 
 import com.telekom.odsystem.DSTextStyles
@@ -63,14 +65,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChallengeListScreen(
     modifier: Modifier = Modifier,
-    navController: NavController? = null,
+    onNavigateToChallengeDetail: (String) -> Unit = {},
     viewModel: ChallengeViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
 
-    val tabs = listOf("Challenges", "Joined")
+    val tabs = listOf(stringResource(R.string.challenges), stringResource(R.string.joined))
     val pagerState = rememberPagerState(pageCount = { tabs.size }, initialPage = 0)
     val coroutineScope = rememberCoroutineScope()
 
@@ -92,7 +94,8 @@ fun ChallengeListScreen(
 
     // Tab elements
     val tabElements = listOf(
-        ODSTabItemModel(label = "Challenges"), ODSTabItemModel(label = "Joined")
+        ODSTabItemModel(label = stringResource(R.string.challenges)),
+        ODSTabItemModel(label = stringResource(R.string.joined))
     )
 
     ODSColumn(
@@ -104,7 +107,7 @@ fun ChallengeListScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             ODSText(
-                text = "Challenges", style = DSTextStyles.subtitle, color = scheme.basicText
+                text = stringResource(R.string.challenges), style = DSTextStyles.subtitle, color = scheme.basicText
             )
         }
 
@@ -129,20 +132,17 @@ fun ChallengeListScreen(
                     // All Challenges Tab
                     ChallengesTab(
                         uiState = uiState,
-                        navController = navController,
+                        onNavigateToChallengeDetail = onNavigateToChallengeDetail,
                         viewModel = viewModel,
                         scheme = scheme
                     )
                 }
 
                 1 -> {
-//                    // Joined Challenges Tab
-//                    JoinedChallengesTab(
-//                        uiState = uiState,
-//                        navController = navController,
-//                        viewModel = viewModel,
-//                        scheme = scheme
-//                    )
+                    JoinedChallengesTab(
+                        onNavigateToChallengeDetail = onNavigateToChallengeDetail,
+                        scheme = scheme
+                    )
                 }
             }
         }
@@ -153,14 +153,19 @@ fun ChallengeListScreen(
 @Composable
 private fun ChallengesTab(
     uiState: ChallengesUiState,
-    navController: NavController?,
+    onNavigateToChallengeDetail: (String) -> Unit = {},
     viewModel: ChallengeViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
     val groupedChallenges = uiState.groupedChallenges
 
     var selectedFilter by remember { mutableIntStateOf(0) }
-    val filters = listOf("All", "Fitness", "Mindfulness", "Coding")
+    val filters = listOf(
+        stringResource(R.string.all),
+        stringResource(R.string.fitness),
+        stringResource(R.string.mindfulness),
+        stringResource(R.string.coding)
+    )
 
     when {
         uiState.isLoading -> {
@@ -232,7 +237,7 @@ private fun ChallengesTab(
                 groupedChallenges?.featuredChallenge?.let { featuredChallenge ->
                     item {
                         ODSText(
-                            text = "Featured Challenge",
+                            text = stringResource(R.string.featured_challenge),
                             style = DSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )
@@ -240,9 +245,7 @@ private fun ChallengesTab(
                     item {
                         SpecialEventCardV(
                             challenge = featuredChallenge, onView = {
-                                navController?.navigate(
-                                    Screen.ChallengeDetail.createRoute(featuredChallenge.id)
-                                )
+                                onNavigateToChallengeDetail(featuredChallenge.id)
                             }, scheme = featuredChallenge.getTheme()
                         )
                     }
@@ -255,7 +258,7 @@ private fun ChallengesTab(
                     }
                     item {
                         ODSText(
-                            text = "Trending Now",
+                            text = stringResource(R.string.trending_now),
                             style = DSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )
@@ -271,9 +274,7 @@ private fun ChallengesTab(
                                     challenge = challenge,
                                     modifier = Modifier.fillParentMaxWidth(0.75f),
                                     onView = {
-                                        navController?.navigate(
-                                            Screen.ChallengeDetail.createRoute(challenge.id)
-                                        )
+                                        onNavigateToChallengeDetail(challenge.id)
                                     },
                                     scheme = challenge.getTheme()
                                 )
@@ -288,7 +289,7 @@ private fun ChallengesTab(
                     }
                     item {
                         ODSText(
-                            text = "Special Events",
+                            text = stringResource(R.string.special_events),
                             style = DSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )
@@ -296,9 +297,7 @@ private fun ChallengesTab(
                     items(groupedChallenges.specialEvents) { challenge ->
                         SpecialEventCardV(
                             challenge = challenge, modifier = Modifier.fillMaxWidth(), onView = {
-                                navController?.navigate(
-                                    Screen.ChallengeDetail.createRoute(challenge.id)
-                                )
+                                onNavigateToChallengeDetail(challenge.id)
                             }, scheme = challenge.getTheme()
                         )
                     }
@@ -310,7 +309,7 @@ private fun ChallengesTab(
                     }
                     item {
                         ODSText(
-                            text = "Quick Join",
+                            text = stringResource(R.string.quick_join),
                             style = DSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )
@@ -320,9 +319,7 @@ private fun ChallengesTab(
                         key = { it.id }) { challenge ->
                         QuickJoinCard(
                             challenge = challenge, modifier = Modifier.fillMaxWidth(), onJoin = {
-                                navController?.navigate(
-                                    Screen.ChallengeDetail.createRoute(challenge.id)
-                                )
+                                onNavigateToChallengeDetail(challenge.id)
                             }, scheme = challenge.getTheme()
                         )
                     }
@@ -332,132 +329,146 @@ private fun ChallengesTab(
     }
 }
 
-//
-//@Composable
-//private fun JoinedChallengesTab(
-//    uiState: com.app.screentime.challenge.viewmodel.ChallengesUiState,
-//    navController: NavController?,
-//    viewModel: ChallengeViewModel,
-//    scheme: ODSTheme = neutralScheme
-//) {
-//
-//    val joinedChallenges = uiState.challenges.filter { it.hasJoined }
-//
-//    ODSColumn(
-//        modifier = Modifier.fillMaxSize()
-//    ) {
-//        when {
-//            uiState.isLoading -> {
-//                ODSBox(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .weight(1f),
-//                    contentAlignment = Alignment.Center
-//                ) {
-//                    ODSText(
-//                        text = "Loading...",
-//                        style = DSTextStyles.bodyMRegular,
-//                        color = scheme.basicTextRecessive
-//                    )
-//                }
-//            }
-//
-//            uiState.error != null -> {
-//                ODSColumn(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .weight(1f)
-//                        .padding(12.dp),
-//                    horizontalAlignment = Alignment.CenterHorizontally,
-//                    verticalArrangement = Arrangement.Center
-//                ) {
-//                    ODSText(
-//                        text = uiState.error ?: "Unable to load challenges.",
-//                        style = DSTextStyles.bodyMRegular,
-//                        color = scheme.functionalDestructiveStandard
-//                    )
-//                    Spacer(modifier = Modifier.height(8.dp))
-//                    ODSButton(
-//                        scheme = scheme,
-//                        props = ODSButtonProps(
-//                            label = "Retry",
-//                            variant = ODSButtonVariant.OUTLINE
-//                        ),
-//                        onClick = viewModel::refresh
-//                    )
-//                }
-//            }
-//
-//            joinedChallenges.isEmpty() -> {
-//                ODSColumn(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .weight(1f)
-//                        .padding(32.dp),
-//                    horizontalAlignment = Alignment.CenterHorizontally,
-//                    verticalArrangement = Arrangement.Center
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Flag,
-//                        contentDescription = null,
-//                        tint = scheme.basicTextRecessive,
-//                        modifier = Modifier.size(48.dp)
-//                    )
-//                    Spacer(modifier = Modifier.height(12.dp))
-//                    ODSText(
-//                        text = "No joined challenges",
-//                        style = DSTextStyles.subtitle,
-//                        color = scheme.basicText
-//                    )
-//                    Spacer(modifier = Modifier.height(12.dp))
-//                    ODSText(
-//                        text = "Join challenges from the Challenges tab to see them here.",
-//                        style = DSTextStyles.bodyMRegular,
-//                        color = scheme.basicTextRecessive,
-//                        textAlign = TextAlign.Center
-//                    )
-//                }
-//            }
-//
-//            else -> {
-//                LazyVerticalGrid(
-//                    columns = GridCells.Fixed(2),
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .weight(1f),
-//                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-//                    verticalArrangement = Arrangement.spacedBy(12.dp)
-//                ) {
-//                    itemsIndexed(
-//                        joinedChallenges,
-//                        key = { _, challenge -> challenge.id },
-//                        span = { index, _ ->
-//                            val config = getCardSizeConfig(index)
-//                            GridItemSpan(config.span)
-//                        }
-//                    ) { index, challenge ->
-//                        val config = getCardSizeConfig(index)
-//                        CurrentChallengeCard(
-//                            challenge = challenge,
-//                            index = index,
-//                            cardHeight = config.height.dp,
-//                            useOverlayDesign = config.pattern == 0,
-//                            useHorizontalDesign = config.pattern == 2,
-//                            isJoining = uiState.joiningChallengeIds.contains(challenge.id),
-//                            onViewDetails = {
-//                                navController?.navigate(
-//                                    Screen.ChallengeDetail.createRoute(challenge.id.toString())
-//                                )
-//                            },
-//                            onJoin = {
-//                                viewModel.joinChallenge(challenge.id)
-//                            },
-//                            scheme = scheme
-//                        )
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
+@Composable
+private fun JoinedChallengesTab(
+    onNavigateToChallengeDetail: (String) -> Unit = {},
+    viewModel: JoinedChallengeViewModel = hiltViewModel(),
+    scheme: ODSTheme = neutralScheme
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val filters = listOf(
+        stringResource(R.string.current),
+        stringResource(R.string.expired)
+    )
+
+    when {
+        uiState.isLoading -> {
+            ODSBox(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                ODSLoadingSpinner(
+                    scheme = scheme,
+                    props = ODSLoadingSpinnerProps(
+                        size = ODSLoadingSpinnerSize.SMALL,
+                        variant = ODSLoadingSpinnerVariant.STANDARD,
+                        labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL,
+                        labelText = stringResource(R.string.loading)
+                    )
+                )
+            }
+        }
+
+        uiState.error != null -> {
+            ODSColumn(
+                modifier = Modifier.fillMaxSize(),
+                padding = ODSPadding(all = DSVariables.spacingComponent4)
+            ) {
+                ODSInlineNotification(
+                    modifier = Modifier.fillMaxWidth(),
+                    scheme = scheme,
+                    props = ODSInlineNotificationProps(
+                        mode = ODSInlineNotificationMode.ERROR,
+                        title = stringResource(R.string.error),
+                        text = uiState.error,
+                        link1Props = ODSLinkProps(
+                            label = stringResource(R.string.retry)
+                        ),
+                        showCloseButton = false
+                    ),
+                    onFirstLinkClicked = {
+                        viewModel.loadJoinedChallenges()
+                    }
+                )
+            }
+        }
+
+        uiState.filteredChallenges.isEmpty() -> {
+            ODSColumn(
+                modifier = Modifier.fillMaxSize(),
+                padding = ODSPadding(all = DSVariables.spacingComponent4),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                ODSText(
+                    text = if (uiState.selectedFilter == ChallengeFilter.CURRENT) {
+                        stringResource(R.string.no_current_challenges)
+                    } else {
+                        stringResource(R.string.no_expired_challenges)
+                    },
+                    style = DSTextStyles.subtitle,
+                    color = scheme.basicText
+                )
+                ODSBox(modifier = Modifier.height(DSVariables.spacingComponent3)) { }
+                ODSText(
+                    text = if (uiState.selectedFilter == ChallengeFilter.CURRENT) {
+                        stringResource(R.string.no_active_challenges_message)
+                    } else {
+                        stringResource(R.string.no_expired_challenges_message)
+                    },
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicTextRecessive
+                )
+            }
+        }
+
+        else -> {
+            ODSLazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                gap = DSVariables.spacingComponent4,
+                padding = ODSPadding(
+                    horizontal = DSVariables.spacingComponent2,
+                    vertical = DSVariables.spacingComponent3
+                ),
+            ) {
+                item {
+                    ODSRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        gap = DSVariables.spacingComponent2
+                    ) {
+                        filters.forEachIndexed { index, filter ->
+                            val isSelected = when (index) {
+                                0 -> uiState.selectedFilter == ChallengeFilter.CURRENT
+                                1 -> uiState.selectedFilter == ChallengeFilter.EXPIRED
+                                else -> false
+                            }
+                            ODSToggleChip(
+                                scheme = scheme,
+                                props = ODSToggleChipProps(
+                                    label = filter,
+                                    selected = isSelected
+                                ),
+                                onToggle = {
+                                    if (it) {
+                                        val newFilter = when (index) {
+                                            0 -> ChallengeFilter.CURRENT
+                                            1 -> ChallengeFilter.EXPIRED
+                                            else -> ChallengeFilter.CURRENT
+                                        }
+                                        viewModel.setFilter(newFilter)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                items(
+                    items = uiState.filteredChallenges,
+                    key = { it.id }
+                ) { challenge ->
+                    QuickJoinCard(
+                        challenge = challenge,
+                        modifier = Modifier.fillMaxWidth(),
+                        onJoin = {
+                            onNavigateToChallengeDetail(challenge.id)
+                        },
+                        scheme = challenge.getTheme()
+                    )
+                }
+            }
+        }
+    }
+}

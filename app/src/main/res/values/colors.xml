@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="splash_dark_blue">#FF1A237E</color>
+    <!-- Light mode background - pure white -->
+    <color name="background_light">#FFFFFFFF</color>
+    <!-- Dark mode background - pure black -->
+    <color name="background_dark">#FF000000</color>
 </resources>

@@ -240,4 +240,32 @@
     <!-- App Usage Detail -->
     <string name="usage_insight">Usage Insight</string>
     <string name="usage_insight_description">Track your app usage patterns and set limits to maintain a healthy digital balance.</string>
+    
+    <!-- Challenges -->
+    <string name="challenges">Challenges</string>
+    <string name="joined">Joined</string>
+    <string name="current">Current</string>
+    <string name="expired">Expired</string>
+    <string name="all">All</string>
+    <string name="fitness">Fitness</string>
+    <string name="mindfulness">Mindfulness</string>
+    <string name="coding">Coding</string>
+    <string name="featured_challenge">Featured Challenge</string>
+    <string name="trending_now">Trending Now</string>
+    <string name="special_events">Special Events</string>
+    <string name="quick_join">Quick Join</string>
+    <string name="no_current_challenges">No current challenges</string>
+    <string name="no_expired_challenges">No expired challenges</string>
+    <string name="no_active_challenges_message">You don\'t have any active challenges right now.</string>
+    <string name="no_expired_challenges_message">You don\'t have any expired challenges.</string>
+    <string name="view_all_challenges">View All Challenges</string>
+    
+    <!-- Coin History -->
+    <string name="coin_history_title">Coin History</string>
+    <string name="earned">Earned</string>
+    <string name="used">Used</string>
+    <string name="no_transactions">No transactions found</string>
+    <string name="see_detail">See Detail</string>
+    <string name="search">Search</string>
+    <string name="usage_detail_insight">Usage Detail Insight</string>
 </resources>

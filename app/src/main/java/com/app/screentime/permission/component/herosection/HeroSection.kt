@@ -1,15 +1,18 @@
 package com.app.screentime.permission.component.herosection
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.atoms.ODSBox
@@ -34,6 +37,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun HeroSection(
     modifier: Modifier = Modifier,
     scheme: ODSTheme,
+    scrollState: ScrollState,   // <<< NEW
     props: HeroSectionProps = HeroSectionProps()
 ) {
     val style = remember(scheme) {
@@ -67,83 +71,29 @@ private fun AnimatedIcon(
     tokens: HeroSectionTokens
 ) {
     if (iconTint == null) return
-    ODSBox(
+    ODSColumn(
         modifier = Modifier,
-        width = tokens.diamondSize,
-        height = tokens.diamondSize,
-        contentAlignment = Alignment.Center
+        width = tokens.iconContainerSize,
+        height = tokens.iconContainerSize,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        // Animated diamond background
-        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-        val scale by infiniteTransition.animateFloat(
-            initialValue = tokens.scaleMin,
-            targetValue = tokens.scaleMax,
-            animationSpec = infiniteRepeatable(
-                animation = tween(tokens.animationDuration, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
+        ODSIcon(
+            iconModel = ODSIconModel(
+                imageVector = Icons.Default.Security,
+                tint = iconTint
             ),
-            label = "scale"
+            width = tokens.iconSize,
+            height = tokens.iconSize
         )
-
-        ODSBox(
-            modifier = Modifier,
-            width = tokens.diamondSize,
-            height = tokens.diamondSize,
-            rotate = 45f,
-            scale = scale,
-            background = listOf(
-                com.telekom.odsystem.foundations.ODSColorModel(
-                    gradient = com.telekom.odsystem.foundations.ODSLinearGradientModel(
-                        Pair(0f, HexColor("FF0080")),
-                        Pair(0.5f, HexColor("7928CA")),
-                        Pair(1f, HexColor("FF0080")),
-                        angleInDegrees = 0f
-                    )
-                )
+        ODSIcon(
+            iconModel = ODSIconModel(
+                imageVector = Icons.Default.Add,
+                tint = iconTint
             ),
-            cornerRadius = ODSCorners(all = DSVariables.radiusExtraExtraLarge),
-            contentAlignment = Alignment.Center
-        ) {}
-
-        // Floating shield icon
-        val floatTransition = rememberInfiniteTransition(label = "float")
-        val floatY by floatTransition.animateFloat(
-            initialValue = tokens.floatMin,
-            targetValue = tokens.floatMax,
-            animationSpec = infiniteRepeatable(
-                animation = tween(6000, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "float"
+            width = DSVariables.sizingComponent8,
+            height = DSVariables.sizingComponent8
         )
-
-        ODSColumn(
-            modifier = Modifier
-                .graphicsLayer {
-                    translationY = floatY
-                },
-            width = tokens.iconContainerSize,
-            height = tokens.iconContainerSize,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            ODSIcon(
-                iconModel = ODSIconModel(
-                    imageVector = Icons.Default.Security,
-                    tint = iconTint
-                ),
-                width = tokens.iconSize,
-                height = tokens.iconSize
-            )
-            ODSIcon(
-                iconModel = ODSIconModel(
-                    imageVector = Icons.Default.Add,
-                    tint = iconTint
-                ),
-                width = DSVariables.sizingComponent8,
-                height = DSVariables.sizingComponent8
-            )
-        }
     }
 }
 

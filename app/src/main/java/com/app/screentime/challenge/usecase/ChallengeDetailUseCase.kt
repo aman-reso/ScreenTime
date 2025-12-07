@@ -2,6 +2,7 @@ package com.app.screentime.challenge.usecase
 
 import com.app.screentime.challenge.component.util.formatDate
 import com.app.screentime.challenge.model.ChallengeDetailUiProps
+import com.app.screentime.challenge.model.ChallengeReward
 import com.app.screentime.network.model.ChallengeDetails
 import com.app.screentime.network.model.ChallengeRankingsResponse
 import com.app.screentime.utils.DateUtils
@@ -55,6 +56,34 @@ class ChallengeDetailUseCase @Inject constructor() {
 
         val showJoinButton = !challengeDetails.hasJoined && !isCompleted
 
+        // Get available rewards (for now, using dummy data - can be replaced with API data later)
+        val availableRewards = listOf(
+            ChallengeReward(
+                id = "1",
+                title = "Premium Subscription",
+                description = "Get 1 month free premium subscription",
+                coin = "500 coins",
+                imageUrl = null,
+                tagUrl = null
+            ),
+            ChallengeReward(
+                id = "2",
+                title = "Cash Reward",
+                description = "Win ₹500 cash prize",
+                coin = "1000 coins",
+                imageUrl = null,
+                tagUrl = null
+            ),
+            ChallengeReward(
+                id = "3",
+                title = "Gift Card",
+                description = "Amazon gift card worth ₹1000",
+                coin = "750 coins",
+                imageUrl = null,
+                tagUrl = null
+            )
+        )
+
         return ChallengeDetailUiProps(
             id = challengeDetails.id,
             title = challengeDetails.title,
@@ -77,6 +106,7 @@ class ChallengeDetailUseCase @Inject constructor() {
             showLeaderboard = showLeaderboard,
             rules = challengeDetails.rules,
             sponsor = challengeDetails.sponsor,
+            availableRewards = availableRewards,
             showJoinButton = showJoinButton
         )
     }

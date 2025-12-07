@@ -24,7 +24,8 @@ class LandingUiMapper @Inject constructor() {
         isLoading: Boolean = false,
         error: String? = null,
         chartColors: List<HexColor>,
-        percentageChangeFromYesterday: Float? = null
+        percentageChangeFromYesterday: Float? = null,
+        joinedChallenges: List<com.app.screentime.network.model.UserChallenge> = emptyList()
     ): LandingUiProps {
         val usageDonutData = if (todayUsageData.topUsedApps.isNotEmpty()) {
             createUsageDonutData(
@@ -50,7 +51,8 @@ class LandingUiMapper @Inject constructor() {
             error = error,
             shouldShowConsent = shouldShowConsent,
             percentageChangeFromYesterday = percentageChangeFromYesterday,
-            categoryUsage = todayUsageData.categoryUsage
+            categoryUsage = todayUsageData.categoryUsage,
+            joinedChallenges = joinedChallenges
         )
     }
 
@@ -69,7 +71,8 @@ class LandingUiMapper @Inject constructor() {
             displayMobileDataUsage = null,
             displayTotalDataUsage = null,
             usageDonutData = null,
-            shouldShowConsent = shouldShowConsent
+            shouldShowConsent = shouldShowConsent,
+            joinedChallenges = emptyList()
         )
     }
 
@@ -90,7 +93,8 @@ class LandingUiMapper @Inject constructor() {
             displayTotalDataUsage = null,
             usageDonutData = null,
             error = error,
-            shouldShowConsent = shouldShowConsent
+            shouldShowConsent = shouldShowConsent,
+            joinedChallenges = emptyList()
         )
     }
 

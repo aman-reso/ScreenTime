@@ -124,4 +124,13 @@ object ApiEndpoints {
         const val LAST_SYNC = "/api/challenges/{challengeId}/last-sync"
     }
 
+    // 13. Rewards API endpoints
+    object Rewards {
+        const val COINS = "/api/rewards/coins"
+        const val REWARDS = "/api/rewards"
+        const val CATALOG = "/api/rewards/catalog"
+        const val CLAIM = "/api/rewards/catalog/claim"
+        const val TRANSACTIONS = "/api/rewards/transactions"
+    }
+
 }

@@ -26,6 +26,8 @@ import com.app.screentime.network.service.totp.TOTPService
 import com.app.screentime.network.service.totp.TOTPServiceImpl
 import com.app.screentime.network.service.urlsearch.URLSearchService
 import com.app.screentime.network.service.urlsearch.URLSearchServiceImpl
+import com.app.screentime.reward.service.RewardService
+import com.app.screentime.reward.service.RewardServiceImpl
 import com.app.screentime.search.service.SearchService
 import com.app.screentime.search.service.SearchServiceImpl
 import dagger.Binds
@@ -143,6 +145,13 @@ abstract class NetworkModule {
     @Binds
     @Singleton
     abstract fun bindURLSearchService(urlSearchServiceImpl: URLSearchServiceImpl): URLSearchService
+
+    /**
+     * Bind RewardService implementation
+     */
+    @Binds
+    @Singleton
+    abstract fun bindRewardService(rewardServiceImpl: RewardServiceImpl): RewardService
 
     companion object {
         /**

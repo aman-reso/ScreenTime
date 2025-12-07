@@ -56,25 +56,25 @@ private fun ODSLogoContainer(
     isPressed: (Boolean) -> Unit,
     onClick: () -> Unit
 ) {
-    ODSIcon(
-        modifier = modifier
-            .customClickable(
-                role = Role.Button,
-                isPressed = { isPressed(it) },
-                onClick = onClick
-            )
-            .sizeWithinBounds(
-                minHeight = style.minHeight ?: MIN_HEIGHT.dp,
-                minWidth = style.minWidth ?: MIN_WIDTH.dp
-            ),
-        width = style.width,
-        height = style.height,
-        iconModel = ODSIconModel(
-            drawableRes = R.drawable.dt_logo,
-            tint = style.iconColor,
-            contentDescription = CONTENT_DESCRIPTION
-        )
-    )
+//    ODSIcon(
+//        modifier = modifier
+//            .customClickable(
+//                role = Role.Button,
+//                isPressed = { isPressed(it) },
+//                onClick = onClick
+//            )
+//            .sizeWithinBounds(
+//                minHeight = style.minHeight ?: MIN_HEIGHT.dp,
+//                minWidth = style.minWidth ?: MIN_WIDTH.dp
+//            ),
+//        width = style.width,
+//        height = style.height,
+//        iconModel = ODSIconModel(
+//            drawableRes = R.drawable.,
+//            tint = style.iconColor,
+//            contentDescription = CONTENT_DESCRIPTION
+//        )
+//    )
 }
 
 private const val CONTENT_DESCRIPTION = "Deutsche Telekom logo"

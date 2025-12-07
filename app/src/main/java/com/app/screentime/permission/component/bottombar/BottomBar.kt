@@ -20,6 +20,7 @@ import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.link.ODSLink
 import com.telekom.odsystem.atoms.link.ODSLinkProps
 import com.telekom.odsystem.foundations.HexColor
@@ -69,7 +70,8 @@ fun BottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 scheme = scheme,
                 props = ODSButtonProps(
-                    label = props.buttonLabel
+                    label = props.buttonLabel,
+                    variant = ODSButtonVariant.PRIMARY
                 ),
                 onClick = onAllowClick
             )

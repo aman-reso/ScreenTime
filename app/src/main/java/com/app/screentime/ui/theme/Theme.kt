@@ -52,7 +52,6 @@ fun ScreenTimeTheme(
         LocalThemeMode provides isSystemDark,
     ) {
         MaterialTheme(
-            typography = Typography,
             shapes = Shapes,
             content = content
         )

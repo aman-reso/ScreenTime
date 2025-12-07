@@ -13,6 +13,7 @@ import com.app.screentime.database.repository.JoinedChallengeRepository
 import com.app.screentime.network.model.Challenge
 import com.app.screentime.network.model.ChallengeDetails
 import com.app.screentime.sync.ChallengeSyncWorker
+import com.app.screentime.utils.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -117,7 +118,7 @@ class ChallengeDetailViewModel @Inject constructor(
         onSuccess: () -> Unit = {},
         onError: (String) -> Unit = {}
     ) {
-        // Prevent duplicate join requests
+
         if (_uiState.value.isJoining) {
             return
         }
@@ -128,13 +129,10 @@ class ChallengeDetailViewModel @Inject constructor(
             challengeRepository.joinChallenge(challengeId).fold(
                 onSuccess = { response ->
                     if (response.success == true) {
-                        // Save challenge to local DB and schedule sync
                         val challengeDetails = _uiState.value.challengeDetails
                         if (challengeDetails != null && challengeDetails.id == challengeId) {
                             saveChallengeAndScheduleSync(challengeDetails)
                         }
-
-                        // Reload challenge details to get updated state
                         loadChallengeDetails(challengeId)
                         onSuccess()
                     } else {
@@ -202,28 +200,40 @@ class ChallengeDetailViewModel @Inject constructor(
 
     /**
      * Save challenge to local DB and schedule sync worker
+     * Always saves the challenge when user joins
      */
     private suspend fun saveChallengeAndScheduleSync(challengeDetails: ChallengeDetails) {
         try {
-            // Check if already saved
             val existing = joinedChallengeRepository.getJoinedChallengeById(challengeDetails.id)
-
             if (existing != null) {
-                // Update existing challenge
-                val updated = existing.copy(
-                    packageNames = challengeDetails.packageNames,
-                    title = challengeDetails.title,
-                    description = challengeDetails.description,
-                    reward = challengeDetails.reward,
-                    startTime = challengeDetails.startTime,
-                    endTime = challengeDetails.endTime,
-                    thumbnail = challengeDetails.thumbnail
-                )
-                joinedChallengeRepository.updateJoinedChallenge(updated)
+                val needsUpdate = existing.title != challengeDetails.title ||
+                        existing.description != challengeDetails.description ||
+                        existing.reward != challengeDetails.reward ||
+                        existing.startTime != challengeDetails.startTime ||
+                        existing.endTime != challengeDetails.endTime ||
+                        existing.thumbnail != challengeDetails.thumbnail ||
+                        existing.packageNames != challengeDetails.packageNames
+
+                if (needsUpdate) {
+                    val updated = existing.copy(
+                        packageNames = challengeDetails.packageNames,
+                        title = challengeDetails.title,
+                        description = challengeDetails.description,
+                        reward = challengeDetails.reward,
+                        startTime = challengeDetails.startTime,
+                        endTime = challengeDetails.endTime,
+                        thumbnail = challengeDetails.thumbnail
+                    )
+                    joinedChallengeRepository.updateJoinedChallenge(updated)
+                    Log.d(
+                        "ChallengeDetailViewModel",
+                        "Updated existing joined challenge ${challengeDetails.id}"
+                    )
+                }
             } else {
-                // Create new entity
-                val joinedAt = com.app.screentime.utils.DateUtils.formatISO8601(
-                    com.app.screentime.utils.DateUtils.now()
+                // Create new entity - always save when joining
+                val joinedAt = DateUtils.formatISO8601(
+                    DateUtils.now()
                 )
                 val entity = JoinedChallengeEntity(
                     challengeId = challengeDetails.id,
@@ -241,8 +251,11 @@ class ChallengeDetailViewModel @Inject constructor(
 
                 // Save to database
                 joinedChallengeRepository.insertJoinedChallenge(entity)
+                Log.d(
+                    "ChallengeDetailViewModel",
+                    "Saved new joined challenge ${challengeDetails.id} to database"
+                )
 
-                // Schedule sync worker
                 ChallengeSyncWorker.scheduleChallengeSync(
                     context = context,
                     challengeId = challengeDetails.id,

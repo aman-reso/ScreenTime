@@ -57,7 +57,7 @@ import com.telekom.odsystem.tokens.tokens.lagoonSecondaryScheme
 @Composable
 fun StatisticsScreen(
     modifier: Modifier = Modifier,
-    navController: NavController? = null,
+    onNavigateToSingleAppUsageDetail: (String) -> Unit = {},
     viewModel: StatisticsViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
@@ -202,9 +202,7 @@ fun StatisticsScreen(
                         appUsageList = uiProps!!.selectedDayAppUsageList,
                         onClick = { appUsage ->
                             appUsage.packageName?.let { packageName ->
-                                navController?.navigate(
-                                    Screen.SingleAppUsageDetail.createRoute(packageName)
-                                )
+                                onNavigateToSingleAppUsageDetail(packageName)
                             }
                         }
                     )

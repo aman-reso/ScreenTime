@@ -36,6 +36,9 @@ import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
 
 import com.telekom.odsystem.atoms.button.ODSButtonSize
 import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeader
+import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeaderProps
+import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeaderSize
 import com.telekom.odsystem.slots.bottomsheettitlelabel.ODSBottomSheetTitleLabel
 import com.telekom.odsystem.slots.bottomsheettitlelabel.ODSBottomSheetTitleLabelProps
 import com.telekom.odsystem.slots.dialogbottomsheetpreferredactions.ODSDialogBottomSheetPreferredActions
@@ -101,10 +104,16 @@ fun ConsentBottomSheetContent(
     }
 
     ODSBottomSheet(showBottomSheet = true, onDismissRequest = onDismiss, titleSlot = {
-        ODSBottomSheetTitleLabel(props = ODSBottomSheetTitleLabelProps(stringResource(R.string.privacy_consent)))
+        ODSBottomSheetHeader(
+            props = ODSBottomSheetHeaderProps(
+                smallHeading = stringResource(R.string.privacy_consent),
+                size = ODSBottomSheetHeaderSize.SMALL
+            )
+        )
     }, contentSlot = {
         ODSColumn(
-            modifier = Modifier.fillMaxWidth(), gap = DSVariables.spacingComponent3
+            modifier = Modifier.fillMaxWidth(),
+            gap = DSVariables.spacingComponent3
         ) {
             hardcodedConsentItems.forEachIndexed { index, consentItem ->
                 val state = consentValueStates[index]

@@ -40,8 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.app.screentime.navigation.ScreenTimeNavigation
 import com.app.screentime.ui.language.LanguageViewModel
 
@@ -67,15 +65,12 @@ class MainActivity : ComponentActivity() {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val languageViewModel: LanguageViewModel = hiltViewModel()
             val language by languageViewModel.language.collectAsState()
-            val navController = rememberNavController()
             SetLocale(language)
             ScreenTimeTheme(themeViewModel) {
                 val useDarkTheme = LocalThemeMode.current
                 val scheme = neutralScheme
-                // Handle deeplink from intent
-                LaunchedEffect(intent) {
-                    handleDeeplink(intent, navController)
-                }
+                // Note: Navigation 3 uses a different navigation pattern
+                // Deeplink handling may need to be updated for Navigation 3
 
                 SideEffect {
                     // Set status bar and navigation bar icons based on theme
@@ -108,7 +103,7 @@ class MainActivity : ComponentActivity() {
                             .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
                             .fillMaxWidth()
                     ) {}
-                    ScreenTimeNavigation(navController = navController, scheme = scheme)
+                    ScreenTimeNavigation(scheme = scheme)
                 }
             }
         }
@@ -126,137 +121,137 @@ class MainActivity : ComponentActivity() {
             // This will be handled by LaunchedEffect in the composable
         }
     }
-
-    private fun handleDeeplink(intent: Intent?, navController: NavHostController) {
-        val uri = intent?.data
-        val deeplinkRoute = intent?.getStringExtra("route")
-        val deeplinkParam = intent?.getStringExtra("deeplink")
-
-        when {
-            uri != null -> {
-                // Handle URI-based deeplink (apptime://screen/route or https://apptime.in/route)
-                val route = uri.host ?: uri.pathSegments.firstOrNull() ?: return
-                navigateFromDeeplink(navController, route, uri)
-            }
-
-            !deeplinkRoute.isNullOrEmpty() -> {
-                // Handle route from notification or other source
-                val challengeId = intent.getStringExtra("challengeId")
-                val packageName = intent.getStringExtra("packageName")
-                val username = intent.getStringExtra("username")
-                navigateFromDeeplink(
-                    navController,
-                    deeplinkRoute,
-                    null,
-                    challengeId,
-                    packageName,
-                    username
-                )
-            }
-
-            !deeplinkParam.isNullOrEmpty() -> {
-                // Parse deeplink string
-                parseAndNavigateDeeplink(navController, deeplinkParam)
-            }
-        }
-    }
-
-    private fun navigateFromDeeplink(
-        navController: NavHostController,
-        route: String,
-        uri: Uri?,
-        challengeId: String? = null,
-        packageName: String? = null,
-        username: String? = null
-    ) {
-        when (route) {
-            "landing", "home" -> {
-                navController.navigate("landing") {
-                    popUpTo(navController.graph.startDestinationId) {
-                        inclusive = true
-                    }
-                    launchSingleTop = true
-                }
-            }
-
-            "statistics" -> {
-                navController.navigate("statistics") {
-                    popUpTo(navController.graph.startDestinationId) {
-                        inclusive = false
-                    }
-                    launchSingleTop = true
-                }
-            }
-
-            "challenges", "challenge_list" -> {
-                navController.navigate("challenges") {
-                    popUpTo(navController.graph.startDestinationId) {
-                        inclusive = false
-                    }
-                    launchSingleTop = true
-                }
-            }
-
-            "challenge_detail" -> {
-                val id = challengeId ?: uri?.getQueryParameter("challengeId")
-                ?: uri?.pathSegments?.getOrNull(1)
-                if (id != null) {
-                    navController.navigate("challenge_detail/$id") {
-                        popUpTo(navController.graph.startDestinationId) {
-                            inclusive = false
-                        }
-                        launchSingleTop = true
-                    }
-                }
-            }
-
-            "search" -> {
-                navController.navigate("search") {
-                    popUpTo(navController.graph.startDestinationId) {
-                        inclusive = false
-                    }
-                    launchSingleTop = true
-                }
-            }
-        }
-    }
-
-    private fun parseAndNavigateDeeplink(
-        navController: NavHostController,
-        deeplink: String
-    ) {
-        when {
-            deeplink.startsWith("apptime://") -> {
-                val uri = deeplink.toUri()
-                val route = uri.host ?: uri.pathSegments.firstOrNull() ?: return
-                navigateFromDeeplink(navController, route, uri)
-            }
-
-            deeplink.contains("/") -> {
-                val parts = deeplink.split("/")
-                val route = parts[0]
-                val param = if (parts.size > 1) parts[1] else null
-                when (route) {
-                    "challenge_detail" -> {
-                        if (param != null) {
-                            navController.navigate("challenge_detail/$param") {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    inclusive = false
-                                }
-                                launchSingleTop = true
-                            }
-                        }
-                    }
-
-                    else -> navigateFromDeeplink(navController, route, null)
-                }
-            }
-
-            else -> {
-                navigateFromDeeplink(navController, deeplink, null)
-            }
-        }
-    }
+//
+//    private fun handleDeeplink(intent: Intent?, navController: NavHostController) {
+//        val uri = intent?.data
+//        val deeplinkRoute = intent?.getStringExtra("route")
+//        val deeplinkParam = intent?.getStringExtra("deeplink")
+//
+//        when {
+//            uri != null -> {
+//                // Handle URI-based deeplink (apptime://screen/route or https://apptime.in/route)
+//                val route = uri.host ?: uri.pathSegments.firstOrNull() ?: return
+//                navigateFromDeeplink(navController, route, uri)
+//            }
+//
+//            !deeplinkRoute.isNullOrEmpty() -> {
+//                // Handle route from notification or other source
+//                val challengeId = intent.getStringExtra("challengeId")
+//                val packageName = intent.getStringExtra("packageName")
+//                val username = intent.getStringExtra("username")
+//                navigateFromDeeplink(
+//                    navController,
+//                    deeplinkRoute,
+//                    null,
+//                    challengeId,
+//                    packageName,
+//                    username
+//                )
+//            }
+//
+//            !deeplinkParam.isNullOrEmpty() -> {
+//                // Parse deeplink string
+//                parseAndNavigateDeeplink(navController, deeplinkParam)
+//            }
+//        }
+//    }
+//
+//    private fun navigateFromDeeplink(
+//        navController: NavHostController,
+//        route: String,
+//        uri: Uri?,
+//        challengeId: String? = null,
+//        packageName: String? = null,
+//        username: String? = null
+//    ) {
+//        when (route) {
+//            "landing", "home" -> {
+//                navController.navigate("landing") {
+//                    popUpTo(navController.graph.startDestinationId) {
+//                        inclusive = true
+//                    }
+//                    launchSingleTop = true
+//                }
+//            }
+//
+//            "statistics" -> {
+//                navController.navigate("statistics") {
+//                    popUpTo(navController.graph.startDestinationId) {
+//                        inclusive = false
+//                    }
+//                    launchSingleTop = true
+//                }
+//            }
+//
+//            "challenges", "challenge_list" -> {
+//                navController.navigate("challenges") {
+//                    popUpTo(navController.graph.startDestinationId) {
+//                        inclusive = false
+//                    }
+//                    launchSingleTop = true
+//                }
+//            }
+//
+//            "challenge_detail" -> {
+//                val id = challengeId ?: uri?.getQueryParameter("challengeId")
+//                ?: uri?.pathSegments?.getOrNull(1)
+//                if (id != null) {
+//                    navController.navigate("challenge_detail/$id") {
+//                        popUpTo(navController.graph.startDestinationId) {
+//                            inclusive = false
+//                        }
+//                        launchSingleTop = true
+//                    }
+//                }
+//            }
+//
+//            "search" -> {
+//                navController.navigate("search") {
+//                    popUpTo(navController.graph.startDestinationId) {
+//                        inclusive = false
+//                    }
+//                    launchSingleTop = true
+//                }
+//            }
+//        }
+//    }
+//
+//    private fun parseAndNavigateDeeplink(
+//        navController: NavHostController,
+//        deeplink: String
+//    ) {
+//        when {
+//            deeplink.startsWith("apptime://") -> {
+//                val uri = deeplink.toUri()
+//                val route = uri.host ?: uri.pathSegments.firstOrNull() ?: return
+//                navigateFromDeeplink(navController, route, uri)
+//            }
+//
+//            deeplink.contains("/") -> {
+//                val parts = deeplink.split("/")
+//                val route = parts[0]
+//                val param = if (parts.size > 1) parts[1] else null
+//                when (route) {
+//                    "challenge_detail" -> {
+//                        if (param != null) {
+//                            navController.navigate("challenge_detail/$param") {
+//                                popUpTo(navController.graph.startDestinationId) {
+//                                    inclusive = false
+//                                }
+//                                launchSingleTop = true
+//                            }
+//                        }
+//                    }
+//
+//                    else -> navigateFromDeeplink(navController, route, null)
+//                }
+//            }
+//
+//            else -> {
+//                navigateFromDeeplink(navController, deeplink, null)
+//            }
+//        }
+//    }
 
 
     @Composable

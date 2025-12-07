@@ -59,7 +59,8 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 @Composable
 fun SearchScreen(
     modifier: Modifier = Modifier,
-    navController: NavController,
+    onBackClick: () -> Unit = {},
+    onNavigateToRecordDetail: (String) -> Unit = {},
     viewModel: SearchViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
@@ -114,9 +115,7 @@ fun SearchScreen(
                     focusManager.clearFocus()
                     keyboardController?.hide()
                 },
-                onBackButtonClick = {
-                    navController.popBackStack()
-                },
+                onBackButtonClick = onBackClick,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text, imeAction = ImeAction.Search
                 ),
@@ -199,9 +198,7 @@ fun SearchScreen(
             onVerifySuccess = {
                 showVerifyTOTP = false
                 selectedUsername?.let { username ->
-                    navController.navigate(
-                        Screen.RecordDetail.createRoute(username)
-                    )
+                    onNavigateToRecordDetail(username)
                 }
                 selectedUsername = null
             }

@@ -3,6 +3,7 @@ package com.app.screentime.landing.usecase
 import android.content.Context
 import com.app.screentime.R
 import com.app.screentime.data.entity.AppUsage
+import com.app.screentime.challenge.repository.ChallengeRepository
 import com.app.screentime.landing.mapper.LandingUiMapper
 import com.app.screentime.landing.model.CategoryUsage
 import com.app.screentime.landing.model.LandingUiProps
@@ -33,6 +34,7 @@ class LandingUsecase @Inject constructor(
     private val preferencesUseCase: PreferencesUseCase,
     private val preferencesManager: PreferencesManager,
     private val dataSyncService: DataSyncService,
+    private val challengeRepository: ChallengeRepository,
     @ApplicationContext private val context: Context
 ) {
     /**
@@ -182,6 +184,9 @@ class LandingUsecase @Inject constructor(
                     }
                 }
                 
+                // Fetch joined challenges for notification
+                val joinedChallenges = getJoinedChallenges()
+                
                 landingUiMapper.toUiProps(
                     todayUsageData = todayUsageData,
                     username = username,
@@ -189,7 +194,8 @@ class LandingUsecase @Inject constructor(
                     isLoading = false,
                     error = null,
                     chartColors = chartColors,
-                    percentageChangeFromYesterday = percentageChange
+                    percentageChangeFromYesterday = percentageChange,
+                    joinedChallenges = joinedChallenges
                 )
             },
             onFailure = { exception ->
@@ -221,6 +227,31 @@ class LandingUsecase @Inject constructor(
      */
     fun markConsentShown() {
         preferencesUseCase.markConsentSheetShown()
+    }
+
+    /**
+     * Get user's joined challenges (only active ones for notification)
+     */
+    private suspend fun getJoinedChallenges(): List<com.app.screentime.network.model.UserChallenge> {
+        return withContext(Dispatchers.IO) {
+            try {
+                challengeRepository.getUserChallenges().fold(
+                    onSuccess = { response ->
+                        if (response.success == true && response.data != null) {
+                            // Return only active challenges (not expired)
+                            response.data.challenges.filter { it.isActive && !it.isPast }
+                        } else {
+                            emptyList()
+                        }
+                    },
+                    onFailure = {
+                        emptyList()
+                    }
+                )
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
     }
 
 }

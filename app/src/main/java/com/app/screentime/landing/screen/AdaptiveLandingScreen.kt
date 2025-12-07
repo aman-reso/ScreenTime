@@ -27,7 +27,12 @@ import com.telekom.odsystem.tokens.tokens.whiteScheme
 @Composable
 fun AdaptiveLandingScreen(
     modifier: Modifier = Modifier,
-    navController: NavController? = null,
+    onNavigateToReward: () -> Unit = {},
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToStatistics: () -> Unit = {},
+    onNavigateToSingleAppUsageDetail: (String) -> Unit = {},
+    onNavigateToChallengeDetail: (String) -> Unit = {},
+    onNavigateToChallenges: () -> Unit = {},
     landingViewModel: LandingViewModel = hiltViewModel(),
     statisticsViewModel: StatisticsViewModel = hiltViewModel(),
     openSearchScreen: () -> Unit = {},
@@ -52,7 +57,12 @@ fun AdaptiveLandingScreen(
             ) {
                 LandingScreenV2(
                     modifier = Modifier.fillMaxSize(),
-                    navController = navController,
+                    onNavigateToReward = onNavigateToReward,
+                    onNavigateToSearch = onNavigateToSearch,
+                    onNavigateToStatistics = onNavigateToStatistics,
+                    onNavigateToSingleAppUsageDetail = onNavigateToSingleAppUsageDetail,
+                    onNavigateToChallengeDetail = onNavigateToChallengeDetail,
+                    onNavigateToChallenges = onNavigateToChallenges,
                     viewModel = landingViewModel,
                     openSearchScreen = openSearchScreen,
                     scheme = scheme
@@ -74,7 +84,7 @@ fun AdaptiveLandingScreen(
             ) {
                 StatisticsScreen(
                     modifier = Modifier.fillMaxSize(),
-                    navController = navController,
+                    onNavigateToSingleAppUsageDetail = onNavigateToSingleAppUsageDetail,
                     viewModel = statisticsViewModel,
                     scheme = scheme
                 )
@@ -83,7 +93,12 @@ fun AdaptiveLandingScreen(
     } else {
         LandingScreenV2(
             modifier = modifier.fillMaxSize(),
-            navController = navController,
+            onNavigateToReward = onNavigateToReward,
+            onNavigateToSearch = onNavigateToSearch,
+            onNavigateToStatistics = onNavigateToStatistics,
+            onNavigateToSingleAppUsageDetail = onNavigateToSingleAppUsageDetail,
+            onNavigateToChallengeDetail = onNavigateToChallengeDetail,
+            onNavigateToChallenges = onNavigateToChallenges,
             viewModel = landingViewModel,
             openSearchScreen = openSearchScreen,
             scheme = scheme

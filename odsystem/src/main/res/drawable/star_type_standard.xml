@@ -1,0 +1,11 @@
+<!-- Auto-generated full copy from star_type_standard_size_standard. Do not edit manually. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M10.57 3.86c0.45-1.38 2.4-1.38 2.86 0L15.1 9h5.4c1.45 0 2.05 1.86 0.88 2.72L17 14.89l1.67 5.14c0.45 1.38-1.13 2.53-2.31 1.67L12 18.53 7.63 21.7c-1.18 0.86-2.76-0.29-2.3-1.67l1.66-5.14-4.37-3.17C1.45 10.86 2.05 9 3.5 9h5.4l1.67-5.14ZM12 5.95l-1.3 4.02C10.5 10.58 9.91 11 9.26 11H5.04l3.42 2.49c0.53 0.38 0.75 1.05 0.55 1.67L7.7 19.18l3.42-2.48c0.52-0.38 1.24-0.38 1.76 0l3.42 2.48-1.3-4.02c-0.2-0.62 0.01-1.3 0.54-1.67L18.96 11h-4.23c-0.65 0-1.22-0.42-1.42-1.03L12 5.95Z"/>
+</vector>

@@ -41,7 +41,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun SummaryTab(
     viewModel: RecordDetailViewModel,
     uiState: RecordDetailUiState,
-    navController: NavController,
+    onNavigateToAppDetails: (String) -> Unit = {},
     selectedDateDisplay: String,
     scheme: ODSTheme = neutralScheme
 ) {
@@ -131,7 +131,9 @@ fun SummaryTab(
                 appUsageListUi(
                     appUsageList = summaryTabUiProps!!.appUsageList, scheme = scheme
                 ) { appUsage ->
-                    navController.navigate("app_details/${appUsage.packageName}")
+                    if (!appUsage.packageName.isNullOrEmpty()) {
+                        onNavigateToAppDetails(appUsage.packageName)
+                    }
                 }
             }
         }

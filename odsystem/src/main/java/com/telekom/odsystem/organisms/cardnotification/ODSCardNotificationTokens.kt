@@ -56,7 +56,7 @@ data class ODSCardNotificationTokens(
 
 val defaultODSCardNotificationTokens = ODSCardNotificationTokens(
     padding = ODSPadding(bottom = DSVariables.spacingComponent7),
-    minHeight = DSVariables.sizingComponent19,
+    minHeight = DSVariables.sizingComponent19 - DSVariables.sizingComponent10,
     verticalAlignment = Alignment.Top,
     horizontalAlignment = Alignment.Start,
     verticalArrangement = Arrangement.Top,

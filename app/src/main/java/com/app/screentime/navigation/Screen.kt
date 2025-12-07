@@ -1,29 +1,27 @@
 package com.app.screentime.navigation
 
-sealed class Screen(val route: String) {
-    object Landing : Screen("landing")
-    object Profile : Screen("profile")
-    object Search : Screen("search")
-    object RecordDetail : Screen("record_detail/{username}") {
-        fun createRoute(username: String) = "record_detail/$username"
+
+sealed class Screen {
+    object Landing : Screen()
+    object Profile : Screen()
+    object Search : Screen()
+    data class RecordDetail(val params: RecordDetailParams? = null) : Screen() {
     }
 
-    object AppDetails : Screen("app_details/{packageName}") {
-        fun createRoute(packageName: String) = "app_details/$packageName"
+    object Statistics : Screen()
+    data class SingleAppUsageDetail(val params: SingleAppUsageDetailParams? = null) : Screen() {
     }
 
-    object Statistics : Screen("statistics")
-    object SingleAppUsageDetail : Screen("app_usage_detail/{packageName}") {
-        fun createRoute(packageName: String) = "app_usage_detail/$packageName"
+    object Permission : Screen()
+    object FocusMode : Screen()
+    object AppBlocking : Screen()
+    object Leaderboard : Screen()
+    object BlockedLinks : Screen()
+    object Challenges : Screen()
+    data class ChallengeDetail(val params: ChallengeDetailParams? = null) : Screen() {
     }
 
-    object Permission : Screen("permission")
-    object FocusMode : Screen("focus_mode")
-    object AppBlocking : Screen("app_blocking")
-    object Leaderboard : Screen("leaderboard")
-    object BlockedLinks : Screen("blocked_links")
-    object Challenges : Screen("challenges")
-    object ChallengeDetail : Screen("challenge_detail/{challengeId}") {
-        fun createRoute(challengeId: String) = "challenge_detail/$challengeId"
-    }
+    object Reward : Screen()
+    object CoinHistory : Screen()
+    data class RewardTransaction(val transactionId: Int? = null) : Screen()
 }

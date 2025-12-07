@@ -298,14 +298,18 @@ class ChallengeViewModel @Inject constructor(
             val existing = joinedChallengeRepository.getJoinedChallengeById(challenge.id)
 
             if (existing != null) {
-                // Update existing challenge with package names if missing or different
-                val needsUpdate = existing.packageNames != null
+                // Update existing challenge with latest data
+                val needsUpdate = existing.title != challenge.title ||
+                        existing.description != challenge.description ||
+                        existing.reward != challenge.reward ||
+                        existing.startTime != challenge.startTime ||
+                        existing.endTime != challenge.endTime ||
+                        existing.thumbnail != challenge.thumbnail ||
+                        (existing.packageNames.isNullOrBlank() && !challenge.packageNames.isNullOrBlank())
 
                 if (needsUpdate) {
-                    // Use direct UPDATE query for package names to ensure it works
-                    // Also update other fields if needed
                     val updated = existing.copy(
-                        packageNames = challenge.packageNames,
+                        packageNames = challenge.packageNames ?: existing.packageNames,
                         title = challenge.title,
                         description = challenge.description,
                         reward = challenge.reward,
@@ -314,23 +318,20 @@ class ChallengeViewModel @Inject constructor(
                         thumbnail = challenge.thumbnail
                     )
                     joinedChallengeRepository.updateJoinedChallenge(updated)
+                    Log.d(
+                        "ChallengeViewModel",
+                        "Updated existing joined challenge ${challenge.id}"
+                    )
+                }
 
-                    // Verify the update
-                    val verify = joinedChallengeRepository.getJoinedChallengeById(challenge.id)
-                    Log.d(
-                        "ChallengeViewModel",
-                        "After update, challenge ${challenge.id} packageNames='${verify?.packageNames}'"
-                    )
-                } else {
-                    Log.d(
-                        "ChallengeViewModel",
-                        "Challenge ${challenge.id} already has correct package names"
-                    )
+                // If package names are missing, fetch them
+                if (existing.packageNames.isNullOrBlank()) {
+                    fetchAndUpdatePackageNames(challenge.id)
                 }
                 return
             }
 
-            // Create new entity
+            // Create new entity - always save when joining
             val joinedAt =
                 com.app.screentime.utils.DateUtils.formatISO8601(com.app.screentime.utils.DateUtils.now())
             val entity = JoinedChallengeEntity(
@@ -349,6 +350,10 @@ class ChallengeViewModel @Inject constructor(
 
             // Save to database
             joinedChallengeRepository.insertJoinedChallenge(entity)
+            Log.d(
+                "ChallengeViewModel",
+                "Saved new joined challenge ${challenge.id} to database"
+            )
 
             // Schedule sync worker
             ChallengeSyncWorker.scheduleChallengeSync(
@@ -357,6 +362,11 @@ class ChallengeViewModel @Inject constructor(
                 startTime = challenge.startTime,
                 endTime = challenge.endTime
             )
+
+            // If package names are missing, fetch them
+            if (challenge.packageNames.isNullOrBlank()) {
+                fetchAndUpdatePackageNames(challenge.id)
+            }
         } catch (e: Exception) {
             Log.e("ChallengeViewModel", "Failed to save challenge or schedule sync", e)
         }

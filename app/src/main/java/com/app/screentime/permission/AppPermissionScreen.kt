@@ -73,23 +73,18 @@ fun AppPermissionScreen(
         }
     }
 
-    ODSBox(
-        modifier = modifier,
-        width = androidx.compose.ui.unit.Dp.Infinity,
-        height = androidx.compose.ui.unit.Dp.Infinity
-    ) {
-        ODSBox(
-            modifier = Modifier,
-            width = androidx.compose.ui.unit.Dp.Infinity,
-            height = androidx.compose.ui.unit.Dp.Infinity
-        ) {
+    val scrollState = rememberScrollState()
+    println("ScrollValue-->" + scrollState.value)
+    ODSBox(modifier = modifier, clipContent = true) {
+        ODSBox(modifier = Modifier) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
             ) {
                 ODSColumn(
                     modifier = Modifier,
+                    clipContent = true,
                     padding = ODSPadding(
                         horizontal = DSVariables.spacingComponent3,
                         top = DSVariables.spacingLayout4,
@@ -97,10 +92,10 @@ fun AppPermissionScreen(
                     ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
                     HeroSection(
                         scheme = scheme,
-                        props = HeroSectionProps()
+                        props = HeroSectionProps(),
+                        scrollState = scrollState
                     )
 
                     ODSBox(height = DSVariables.spacingLayout4) {}

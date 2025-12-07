@@ -65,7 +65,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
-    navController: NavController? = null,
+    onNavigateToAppBlocking: () -> Unit = {},
+    onNavigateToBlockedLinks: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
     languageViewModel: LanguageViewModel = hiltViewModel(),
@@ -175,7 +176,8 @@ fun ProfileScreen(
                         scheme = scheme,
                         uiProps = props,
                         viewModel = viewModel,
-                        navController = navController,
+                        onNavigateToAppBlocking = onNavigateToAppBlocking,
+                        onNavigateToBlockedLinks = onNavigateToBlockedLinks,
                         context = context,
                         vpnLauncher = vpnLauncher,
                         coroutineScope = coroutineScope,
@@ -201,7 +203,8 @@ private fun ProfileSettingsItem(
     scheme: ODSTheme,
     uiProps: com.app.screentime.profile.model.ProfileUiProps,
     viewModel: ProfileViewModel,
-    navController: NavController?,
+    onNavigateToAppBlocking: () -> Unit,
+    onNavigateToBlockedLinks: () -> Unit,
     context: android.content.Context,
     vpnLauncher: androidx.activity.result.ActivityResultLauncher<Intent>,
     coroutineScope: kotlinx.coroutines.CoroutineScope,
@@ -239,7 +242,7 @@ private fun ProfileSettingsItem(
                             key = key,
                             url = data.url,
                             viewModel = viewModel,
-                            navController = navController,
+                            onNavigateToAppBlocking = onNavigateToAppBlocking,
                             context = context,
                             vpnLauncher = vpnLauncher,
                             coroutineScope = coroutineScope,
@@ -260,7 +263,7 @@ private fun ProfileSettingsItem(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    navController?.navigate(Screen.BlockedLinks.route)
+                                    onNavigateToBlockedLinks()
                                 }
                         ) {
                             Row(
@@ -333,7 +336,7 @@ private fun handleSettingsItemClick(
     key: ProfileSettingsKey,
     url: String,
     viewModel: ProfileViewModel,
-    navController: NavController?,
+    onNavigateToAppBlocking: () -> Unit,
     context: android.content.Context,
     vpnLauncher: androidx.activity.result.ActivityResultLauncher<Intent>,
     coroutineScope: kotlinx.coroutines.CoroutineScope,
@@ -346,7 +349,11 @@ private fun handleSettingsItemClick(
 
     when (result) {
         is SettingsItemClickResult.NavigateToScreen -> {
-            navController?.navigate(result.route)
+            // Handle navigation based on route
+            when (result.route) {
+                "app_blocking" -> onNavigateToAppBlocking()
+                // Add other routes as needed
+            }
         }
         is SettingsItemClickResult.ShowDialog -> {
             when (result.type) {

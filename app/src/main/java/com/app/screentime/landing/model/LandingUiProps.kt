@@ -1,6 +1,7 @@
 package com.app.screentime.landing.model
 
 import com.app.screentime.data.entity.AppUsage
+import com.app.screentime.network.model.UserChallenge
 
 /**
  * UI Props for Landing Screen
@@ -21,6 +22,7 @@ data class LandingUiProps(
     val error: String? = null,
     val shouldShowConsent: Boolean = false,
     val percentageChangeFromYesterday: Float? = null, // Percentage change from yesterday (null if no data)
-    val categoryUsage: List<CategoryUsage> = emptyList() // Category-wise usage data
+    val categoryUsage: List<CategoryUsage> = emptyList(), // Category-wise usage data
+    val joinedChallenges: List<UserChallenge> = emptyList() // User's joined challenges for notification
 )
 

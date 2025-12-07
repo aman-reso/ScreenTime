@@ -83,7 +83,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppBlockingScreen(
     modifier: Modifier = Modifier,
-    navController: NavController? = null,
+    onBackClick: () -> Unit = {},
     viewModel: AppBlockingViewModel = hiltViewModel(),
     onNavigateToAppSelection: () -> Unit = {},
     scheme: ODSTheme = neutralScheme
@@ -235,19 +235,17 @@ fun AppBlockingScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (navController != null) {
-                    ODSButton(
-                        scheme = scheme, props = ODSButtonProps(
-                            buttonIcon = ODSIconModel(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                tint = scheme.basicText,
-                                contentDescription = "Back"
-                            ),
-                            buttonType = ODSButtonButtonType.ICON_ONLY,
-                            variant = ODSButtonVariant.GHOST,
-                            size = ODSButtonSize.SMALL
-                        ), onClick = { navController.popBackStack() })
-                }
+                ODSButton(
+                    scheme = scheme, props = ODSButtonProps(
+                        buttonIcon = ODSIconModel(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            tint = scheme.basicText,
+                            contentDescription = "Back"
+                        ),
+                        buttonType = ODSButtonButtonType.ICON_ONLY,
+                        variant = ODSButtonVariant.GHOST,
+                        size = ODSButtonSize.SMALL
+                    ), onClick = onBackClick)
                 ODSText(
                     text = "App blocking",
                     style = DSTextStyles.subtitle,

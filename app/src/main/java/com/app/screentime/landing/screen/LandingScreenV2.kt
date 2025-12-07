@@ -3,9 +3,12 @@ package com.app.screentime.landing.screen
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -33,6 +36,7 @@ import com.app.screentime.landing.component.GreetingUi
 import com.app.screentime.landing.component.NetworkCard
 import com.app.screentime.landing.component.CategoryUsageSection
 import com.app.screentime.landing.component.UsageSummaryCard
+import com.app.screentime.landing.component.JoinedChallengesCardStack
 import com.app.screentime.landing.viewmodel.LandingViewModel
 import com.app.screentime.navigation.Screen
 import com.telekom.odsystem.molecules.searchbar.ODSSearchBarProps
@@ -64,12 +68,18 @@ import com.telekom.odsystem.tokens.tokens.darkMode
 import com.telekom.odsystem.tokens.tokens.guacamoleSecondaryScheme
 import com.telekom.odsystem.tokens.tokens.kingfisherSecondaryScheme
 import com.telekom.odsystem.tokens.tokens.lagoonSecondaryScheme
+import com.telekom.odsystem.tokens.tokens.macawSecondaryScheme
 import com.telekom.odsystem.tokens.tokens.orchidSecondaryScheme
 
 @Composable
 fun LandingScreenV2(
     modifier: Modifier = Modifier,
-    navController: NavController? = null,
+    onNavigateToReward: () -> Unit = {},
+    onNavigateToSearch: () -> Unit = {},
+    onNavigateToStatistics: () -> Unit = {},
+    onNavigateToSingleAppUsageDetail: (String) -> Unit = {},
+    onNavigateToChallengeDetail: (String) -> Unit = {},
+    onNavigateToChallenges: () -> Unit = {},
     viewModel: LandingViewModel = hiltViewModel(),
     openSearchScreen: () -> Unit = {},
     scheme: ODSTheme = neutralScheme
@@ -100,181 +110,196 @@ fun LandingScreenV2(
         )
     }
 
-    ODSLazyColumn(
-        modifier = modifier,
-        gap = DSVariables.spacingComponent3,
-        padding = ODSPadding(horizontal = DSVariables.spacingComponent4)
-    ) {
-        item {
-            GreetingUi(
-                username = uiProps?.username, onLeaderboardClick = {
-                    navController?.navigate(Screen.Leaderboard.route)
-                })
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-        stickyHeader {
-            var searchQuery by remember { mutableStateOf("") }
-            var hasNavigated by remember { mutableStateOf(false) }
-            ODSSearchView(
-                modifier = Modifier.fillMaxWidth(),
-                scheme = neutralScheme,
-                props = ODSSearchViewProps(
-                    showBackButton = false,
-                    searchBarProps = ODSSearchBarProps(
-                        input = searchQuery,
-                        disabled = false,
-                        placeholder = "@ Search by username...",
-                        buttonProps = ODSSearchBarButtonProps(
-                            buttonIcon = ODSIconModel(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search"
-                            )
-                        )
-                    )
-                ),
-                onButtonClick = {
-                    navController?.navigate(Screen.Search.route)
-                },
-                onBackButtonClick = { },
-                onSearchValueChange = { newValue ->
-                    if (!hasNavigated && newValue.isNotEmpty()) {
-                        hasNavigated = true
-                        navController?.navigate(Screen.Search.route)
-                    }
-                },
-                onFocusChange = { focusState ->
-                    if (focusState.isFocused && !hasNavigated) {
-                        hasNavigated = true
-                        navController?.navigate(Screen.Search.route)
-                    }
-                },
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        navController?.navigate(Screen.Search.route)
-                    }
-                ),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Search
+    ODSColumn(modifier = Modifier.fillMaxSize()) {
+        ODSLazyColumn(
+            modifier = modifier,
+            gap = DSVariables.spacingComponent3,
+            padding = ODSPadding(horizontal = DSVariables.spacingComponent4)
+        ) {
+            item {
+                GreetingUi(
+                    username = uiProps?.username, onLeaderboardClick = onNavigateToReward
                 )
-            )
-        }
-        when {
-            uiProps == null || uiProps!!.isLoading -> {
-                item {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    ODSBox(
-                        modifier = Modifier
-                            .height(40.dp)
-                            .fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ODSLoadingSpinner(
-                            scheme = scheme, props = ODSLoadingSpinnerProps(
-                                labelText = stringResource(R.string.loading),
-                                size = ODSLoadingSpinnerSize.SMALL,
-                                variant = ODSLoadingSpinnerVariant.STANDARD,
-                                labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            stickyHeader {
+                var searchQuery by remember { mutableStateOf("") }
+                var hasNavigated by remember { mutableStateOf(false) }
+                ODSSearchView(
+                    modifier = Modifier.fillMaxWidth(),
+                    scheme = neutralScheme,
+                    props = ODSSearchViewProps(
+                        showBackButton = false,
+                        searchBarProps = ODSSearchBarProps(
+                            input = searchQuery,
+                            disabled = false,
+                            placeholder = "@ Search by username...",
+                            buttonProps = ODSSearchBarButtonProps(
+                                buttonIcon = ODSIconModel(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = stringResource(R.string.search)
+                                )
                             )
                         )
-                    }
-                }
+                    ),
+                    onButtonClick = {
+                        onNavigateToSearch()
+                    },
+                    onBackButtonClick = { },
+                    onSearchValueChange = { newValue ->
+                        if (!hasNavigated && newValue.isNotEmpty()) {
+                            hasNavigated = true
+                            onNavigateToSearch()
+                        }
+                    },
+                    onFocusChange = { focusState ->
+                        if (focusState.isFocused && !hasNavigated) {
+                            hasNavigated = true
+                            onNavigateToSearch()
+                        }
+                    },
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            onNavigateToSearch()
+                        }
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Search
+                    )
+                )
             }
-
-            uiProps!!.error != null -> {
-                item {
-                    ODSInlineNotification(
-                        modifier = Modifier.fillMaxWidth(),
-                        scheme = scheme,
-                        props = ODSInlineNotificationProps(
-                            mode = ODSInlineNotificationMode.ERROR,
-                            title = stringResource(R.string.error),
-                            text = uiProps!!.error,
-                            link1Props = ODSLinkProps(label = stringResource(R.string.retry)),
-                            showCloseButton = false
-                        ),
-                        onFirstLinkClicked = {
-                            viewModel.loadLandingData()
-                        },
-                        onDismiss = {
-                            viewModel.clearError()
-                        })
-                }
-            }
-
-            uiProps!!.topUsedApps.isEmpty() -> {
-                item {
-                    ODSColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent5))
-                        ODSText(
-                            text = stringResource(R.string.no_data_available),
-                            style = DSTextStyles.bodyMRegular,
-                            color = scheme.basicTextRecessive
-                        )
-                    }
-                }
-            }
-
-            else -> {
-                item {
-                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                }
-                item {
-                    uiProps?.usageDonutData?.let { donutData ->
-                        UsageSummaryCard(
-                            todayTotal = donutData.formattedTotalTime,
-                            dailyGoal = "6h",
-                            percentageChange = uiProps!!.percentageChangeFromYesterday,
-                            onClick = {
-                                navController?.navigate(Screen.Statistics.route)
-                            },
-                            scheme = kingfisherSecondaryScheme
-                        )
-                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                    }
-                }
-
-                uiProps?.let { it ->
+            when {
+                uiProps == null || uiProps!!.isLoading -> {
                     item {
-                        NetworkCard(
-                            modifier = Modifier.fillMaxWidth(),
-                            wifiDataUsage = it.todayTotalWifiDataUsage,
-                            wifiDataUsageDisplay = it.displayWifiDataUsage,
-                            cellularDataUsage = it.todayTotalMobileDataUsage,
-                            cellularDataUsageDisplay = it.displayMobileDataUsage,
-                            totalDataDisplayName = it.displayTotalDataUsage
-                        )
-                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                    }
-                }
-
-                item {
-                    CategoryUsageSection(
-                        categoryUsage = uiProps!!.categoryUsage,
-                        scheme = scheme
-                    )
-                }
-                item {
-                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                }
-                item {
-                    ODSText(
-                        text = "Usage Detail Insight",
-                        style = DSTextStyles.bodyMBold,
-                        color = scheme.basicText
-                    )
-                }
-                appUsageListUi(
-                    uiProps!!.topUsedApps, scheme = scheme, onClick = { data ->
-                        data.packageName?.let { packageName ->
-                            navController?.navigate(
-                                Screen.SingleAppUsageDetail.createRoute(packageName)
+                        Spacer(modifier = Modifier.height(20.dp))
+                        ODSBox(
+                            modifier = Modifier
+                                .height(40.dp)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSLoadingSpinner(
+                                scheme = scheme, props = ODSLoadingSpinnerProps(
+                                    labelText = stringResource(R.string.loading),
+                                    size = ODSLoadingSpinnerSize.SMALL,
+                                    variant = ODSLoadingSpinnerVariant.STANDARD,
+                                    labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
+                                )
                             )
                         }
-                    })
+                    }
+                }
+
+                uiProps!!.error != null -> {
+                    item {
+                        ODSInlineNotification(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme,
+                            props = ODSInlineNotificationProps(
+                                mode = ODSInlineNotificationMode.ERROR,
+                                title = stringResource(R.string.error),
+                                text = uiProps!!.error,
+                                link1Props = ODSLinkProps(label = stringResource(R.string.retry)),
+                                showCloseButton = false
+                            ),
+                            onFirstLinkClicked = {
+                                viewModel.loadLandingData()
+                            },
+                            onDismiss = {
+                                viewModel.clearError()
+                            })
+                    }
+                }
+
+                uiProps!!.topUsedApps.isEmpty() -> {
+                    item {
+                        ODSColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(modifier = Modifier.height(DSVariables.spacingComponent5))
+                            ODSText(
+                                text = stringResource(R.string.no_data_available),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.basicTextRecessive
+                            )
+                        }
+                    }
+                }
+
+                else -> {
+                    item {
+                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                    }
+
+                    // Show joined challenges CardStack notification if available
+                    uiProps?.joinedChallenges?.takeIf { it.isNotEmpty() }?.let { challenges ->
+                        item {
+                            JoinedChallengesCardStack(
+                                joinedChallenges = challenges,
+                                modifier = Modifier.fillMaxWidth(),
+                                onNavigateToChallengeDetail = onNavigateToChallengeDetail,
+                                onNavigateToChallenges = onNavigateToChallenges,
+                                scheme = scheme,
+                                onDismiss = {
+                                    // Dismiss handled by component
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                        }
+                    }
+
+                    item {
+                        uiProps?.usageDonutData?.let { donutData ->
+                            UsageSummaryCard(
+                                todayTotal = donutData.formattedTotalTime,
+                                dailyGoal = "6h",
+                                percentageChange = uiProps!!.percentageChangeFromYesterday,
+                                onClick = onNavigateToStatistics,
+                                scheme = macawSecondaryScheme
+                            )
+                            Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                        }
+                    }
+
+                    uiProps?.let { it ->
+                        item {
+                            NetworkCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                wifiDataUsage = it.todayTotalWifiDataUsage,
+                                wifiDataUsageDisplay = it.displayWifiDataUsage,
+                                cellularDataUsage = it.todayTotalMobileDataUsage,
+                                cellularDataUsageDisplay = it.displayMobileDataUsage,
+                                totalDataDisplayName = it.displayTotalDataUsage
+                            )
+                            Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                        }
+                    }
+
+                    item {
+                        CategoryUsageSection(
+                            categoryUsage = uiProps!!.categoryUsage,
+                            scheme = scheme
+                        )
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                    }
+                    item {
+                        ODSText(
+                            text = stringResource(R.string.usage_detail_insight),
+                            style = DSTextStyles.bodyMBold,
+                            color = scheme.basicText
+                        )
+                    }
+                    appUsageListUi(
+                        uiProps!!.topUsedApps, scheme = scheme, onClick = { data ->
+                            data.packageName?.let { packageName ->
+                                onNavigateToSingleAppUsageDetail(packageName)
+                            }
+                        })
+                }
             }
         }
     }

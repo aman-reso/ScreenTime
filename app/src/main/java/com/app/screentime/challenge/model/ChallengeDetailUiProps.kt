@@ -48,7 +48,23 @@ data class ChallengeDetailUiProps(
     val rules: String?,
     val sponsor: String?,
     
+    // Rewards
+    val availableRewards: List<ChallengeReward>,
+    
     // Actions
     val showJoinButton: Boolean
+)
+
+/**
+ * Reward item for challenge detail screen
+ */
+@Stable
+data class ChallengeReward(
+    val id: String,
+    val title: String,
+    val description: String? = null,
+    val coin: String? = null,
+    val imageUrl: String? = null,
+    val tagUrl: String? = null
 )
 
