@@ -92,6 +92,9 @@ private fun ODSSwitchContainer(
         verticalAlignment = style.verticalAlignment
     ) {
         val label = props.label
+        if (!label.isNullOrEmpty()) {
+            ODSSwitchLabelContainer(style = style, label = label, modifier = Modifier.weight(1f))
+        }
         ODSSwitchIconContainer(
             scheme = scheme,
             style = style,
@@ -99,9 +102,6 @@ private fun ODSSwitchContainer(
             isHovered = isHovered,
             props = props
         )
-        if (!label.isNullOrEmpty()) {
-            ODSSwitchLabelContainer(style = style, label = label, modifier = Modifier.weight(1f))
-        }
     }
 }
 

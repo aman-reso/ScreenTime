@@ -1,8 +1,18 @@
 package com.app.screentime.search.screen
 
+import android.graphics.Color
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardActions
@@ -12,6 +22,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +42,7 @@ import com.app.screentime.R
 import com.app.screentime.navigation.Screen
 import com.app.screentime.profile.screen.VerifyTOTPBottomSheetContent
 import com.app.screentime.search.viewmodel.SearchViewModel
+import com.app.screentime.ui.theme.LocalThemeMode
 
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
@@ -79,114 +91,137 @@ fun SearchScreen(
             keyboardController?.hide()
         }
     }
+    val activity = LocalActivity.current
+    // Get theme mode for status bar styling
+    val useDarkTheme = LocalThemeMode.current
+    SideEffect {
+        if (activity is ComponentActivity) {
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (useDarkTheme) {
+                    SystemBarStyle.dark(scheme.basicBackground.getIntColor())
+                } else {
+                    SystemBarStyle.light(
+                        scheme.basicBackground.getIntColor(),
+                        darkScrim = scheme.basicBackground.getIntColor()
+                    )
+                },
+                navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT,
+                    Color.TRANSPARENT
+                )
+            )
+        }
+    }
 
-    ODSBox(
+    ODSColumn(
         modifier = modifier.fillMaxSize(),
         padding = ODSPadding(horizontal = DSVariables.spacingComponent3),
         background = listOf(ODSColorModel(scheme.basicBackground))
     ) {
-        ODSColumn(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            ODSSearchView(
-                modifier = Modifier.fillMaxWidth(),
-                scheme = neutralScheme,
-                props = ODSSearchViewProps(
-                    showBackButton = true, searchBarProps = ODSSearchBarProps(
-                        input = searchQuery,
-                        placeholder = "@ Search User name ...",
-                        buttonProps = ODSSearchBarButtonProps(
-                            buttonIcon = ODSIconModel(
-                                imageVector = Icons.Default.Clear, contentDescription = "Clear"
-                            )
+        ODSBox(
+            modifier = Modifier
+                .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                .fillMaxWidth()
+        ) {}
+
+        ODSSearchView(
+            modifier = Modifier.fillMaxWidth(),
+            scheme = neutralScheme,
+            props = ODSSearchViewProps(
+                showBackButton = true, searchBarProps = ODSSearchBarProps(
+                    input = searchQuery,
+                    placeholder = "@ Search User name ...",
+                    buttonProps = ODSSearchBarButtonProps(
+                        buttonIcon = ODSIconModel(
+                            imageVector = Icons.Default.Clear, contentDescription = "Clear"
                         )
                     )
-                ),
-                onSearchValueChange = {
-                    searchQuery = it
-                    if (it.length > 2) {
-                        viewModel.searchUsers(it)
-                    } else {
-                        viewModel.clearSearch()
-                    }
-                },
-                onButtonClick = {
-                    searchQuery = ""
+                )
+            ),
+            onSearchValueChange = {
+                searchQuery = it
+                if (it.length > 2) {
+                    viewModel.searchUsers(it)
+                } else {
+                    viewModel.clearSearch()
+                }
+            },
+            onButtonClick = {
+                searchQuery = ""
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            },
+            onBackButtonClick = onBackClick,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text, imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
                     focusManager.clearFocus()
-                    keyboardController?.hide()
-                },
-                onBackButtonClick = onBackClick,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text, imeAction = ImeAction.Search
-                ),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        focusManager.clearFocus()
-                    }),
-                resultListSlot = {
-                    if (uiState.isLoading) {
+                }),
+            resultListSlot = {
+                if (uiState.isLoading) {
+                    ODSBox(
+                        modifier = Modifier
+                            .height(60.dp)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSLoadingSpinner(
+                            modifier = Modifier.wrapContentHeight(),
+                            scheme = scheme,
+                            props = ODSLoadingSpinnerProps(
+                                labelText = "Please wait...",
+                                size = ODSLoadingSpinnerSize.SMALL,
+                                variant = ODSLoadingSpinnerVariant.STANDARD,
+                                labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
+                            )
+                        )
+                    }
+                } else {
+                    if (searchQuery.length <= 2) {
                         ODSBox(
-                            modifier = Modifier
-                                .height(60.dp)
-                                .fillMaxWidth(),
+                            modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            ODSLoadingSpinner(
-                                modifier = Modifier.wrapContentHeight(),
-                                scheme = scheme,
-                                props = ODSLoadingSpinnerProps(
-                                    labelText = "Please wait...",
-                                    size = ODSLoadingSpinnerSize.SMALL,
-                                    variant = ODSLoadingSpinnerVariant.STANDARD,
-                                    labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
-                                )
+                            Image(
+                                painter = painterResource(R.drawable.search_empty_state),
+                                contentDescription = "empty screen"
                             )
                         }
                     } else {
-                        if (searchQuery.length <= 2) {
+                        if (uiState.searchResults.isEmpty()) {
                             ODSBox(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Image(
-                                    painter = painterResource(R.drawable.search_empty_state),
-                                    contentDescription = "empty screen"
+                                ODSText(
+                                    text = "No users found",
+                                    style = DSTextStyles.bodyMRegular,
+                                    color = scheme.basicText
                                 )
                             }
                         } else {
-                            if (uiState.searchResults.isEmpty()) {
-                                ODSBox(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    ODSText(
-                                        text = "No users found",
-                                        style = DSTextStyles.bodyMRegular,
-                                        color = scheme.basicText
-                                    )
-                                }
-                            } else {
-                                ODSSearchResultList(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    scheme = neutralScheme,
-                                    props = ODSSearchResultListProps(
-                                        label = "Search Results",
-                                        resultList = uiState.searchResults.map {
-                                            ODSResultItemProps(labelText = it.username)
-                                        }),
-                                    onItemClick = { index ->
-                                        focusManager.clearFocus()
-                                        keyboardController?.hide()
-                                        uiState.searchResults[index].also { result ->
-                                            selectedUsername = result.username
-                                            showVerifyTOTP = true
-                                        }
-                                    })
-                            }
+                            ODSSearchResultList(
+                                modifier = Modifier.fillMaxWidth(),
+                                scheme = neutralScheme,
+                                props = ODSSearchResultListProps(
+                                    label = "Search Results",
+                                    resultList = uiState.searchResults.map {
+                                        ODSResultItemProps(labelText = it.username)
+                                    }),
+                                onItemClick = { index ->
+                                    focusManager.clearFocus()
+                                    keyboardController?.hide()
+                                    uiState.searchResults[index].also { result ->
+                                        selectedUsername = result.username
+                                        showVerifyTOTP = true
+                                    }
+                                })
                         }
                     }
-                })
-        }
+                }
+            })
     }
     if (showVerifyTOTP && !selectedUsername.isNullOrBlank()) {
         VerifyTOTPBottomSheetContent(

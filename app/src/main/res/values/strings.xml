@@ -37,7 +37,9 @@
     <string name="about_app">About App</string>
     <string name="help_support">Help &amp; Support</string>
     <string name="appearance">Appearance</string>
+    <string name="set_wallpaper">Set Wallpaper</string>
     <string name="restriction">Restriction</string>
+    <string name="admin">Admin</string>
     <string name="app_blocking">App blocking</string>
     <string name="app_blocking_permissions_title">App Blocking Permissions</string>
     <string name="app_blocking_permissions_description">To enable app blocking, we need the following permissions to ensure your focus is protected.</string>
@@ -45,6 +47,7 @@
     <string name="accessibility_service_description">Required to detect app launches and usage.</string>
     <string name="display_overlay_title">Display Over Other Apps</string>
     <string name="display_overlay_description">Required to show blocking overlay when limits are exceeded.</string>
+    <string name="app_lock_overlay_description">Required to show lock screen overlay when locked apps are accessed.</string>
     <string name="permission_granted">Granted</string>
     <string name="permission_action_required">Action Required</string>
     <string name="continue_label">Continue</string>
@@ -55,12 +58,19 @@
     <string name="block_app">Block App</string>
     <string name="set_app_limit">Set App Limit</string>
     <string name="set_app_launch_limit">Set App Launch Limit</string>
+    <string name="app_lock">App Lock</string>
+    <string name="app_lock_permissions_title">App Lock Permissions</string>
+    <string name="app_lock_permissions_description">To enable app lock, we need the following permissions to protect your apps.</string>
+    <string name="usage_access_title">Usage Access</string>
+    <string name="usage_access_description">Required to detect which app is currently in use.</string>
     <string name="app_restrictions">App Restrictions</string>
     <string name="vpn_service">VPN Service</string>
     <string name="enable_vpn">Enable VPN</string>
     <string name="disable_vpn">Disable VPN</string>
     <string name="vpn_service_description">Block websites and filter network traffic</string>
     <string name="tap_to_stop_vpn">Tap to stop VPN service</string>
+    <string name="manage_vpn">Manage VPN (Block Distracting Sites)</string>
+    <string name="vpn_feature_explanation">Block distracting websites to stay focused. Enable the VPN service to filter traffic and block the sites listed below.</string>
     <string name="blocked_sites_count">%1$d blocked site(s)</string>
     <string name="see_all_sites">See all sites</string>
     <string name="blocked_sites">Blocked Sites</string>
@@ -268,4 +278,30 @@
     <string name="see_detail">See Detail</string>
     <string name="search">Search</string>
     <string name="usage_detail_insight">Usage Detail Insight</string>
+    <string name="recover_deleted_notifications">Recover Deleted Notifications</string>
+    <string name="enable_notification_access_recovery">Please enable Notification Access to recover deleted notifications</string>
+    
+    <!-- Device Admin Policy -->
+    <string name="device_admin_policy">Device Admin Policy</string>
+    <string name="device_admin_policy_description">Device admin policy allows enhanced device management features for better control over your device settings and restrictions. This feature is optional and can be disabled at any time.</string>
+    <string name="device_admin_policy_explanation">ScreenTime uses device admin to provide focus mode features like locking your screen and temporarily disabling the camera during focus sessions. This helps you stay focused and reduce distractions. You can disable this feature at any time from Settings.</string>
+    <string name="device_admin_policy_info">Device admin policy provides focus mode features like screen lock and camera control. This is completely optional and you can disable it at any time from this screen or from Android Settings > Security > Device Admin Apps. ScreenTime will never prevent you from uninstalling the app or disabling device admin.</string>
+    <string name="device_admin_active">Device Admin Active</string>
+    <string name="device_admin_inactive">Device Admin Inactive</string>
+    <string name="device_admin_active_description">Device admin policy is currently active. You have enhanced device management capabilities enabled.</string>
+    <string name="device_admin_inactive_description">Device admin policy is not active. Enable it to access advanced device management features.</string>
+    <string name="enable_device_admin">Enable Device Admin</string>
+    <string name="disable_device_admin">Disable Device Admin</string>
+    <string name="device_admin_disable_warning">Disabling device admin will remove enhanced device management features. Are you sure you want to continue?</string>
+    
+    <!-- Device Admin Actions -->
+    <string name="device_admin_actions">Device Admin Actions</string>
+    <string name="device_admin_actions_description">Use these features to manage your device. These actions require device admin to be enabled.</string>
+    <string name="lock_screen">Lock Screen</string>
+    <string name="lock_screen_confirmation">This will immediately lock your device screen. Continue?</string>
+    <string name="disable_camera">Disable Camera</string>
+    <string name="enable_camera">Enable Camera</string>
+    <string name="disable_camera_confirmation">This will disable the camera on your device. You can enable it again later.</string>
+    <string name="enable_camera_confirmation">This will enable the camera on your device.</string>
+    <string name="unfortunately_this_content_is_blocked_please_take_a_break_or_try_again_later">Unfortunately, this content is blocked. Please take a break or try again later.</string>
 </resources>

@@ -57,6 +57,9 @@ fun ScreenTimeWidgetContent(
     // Format usage time
     val formattedTime = formatDuration(totalUsage)
     val topApps = parseTopApps(topAppsJson)
+    val backgroundColor = ColorProvider(android.graphics.Color.BLACK)
+    val textPrimaryColor = ColorProvider(android.graphics.Color.WHITE)
+    val cornerRadiusValue = 16.dp
 
     val refreshAction = if (context != null) {
         actionSendBroadcast(
@@ -72,7 +75,8 @@ fun ScreenTimeWidgetContent(
         modifier = GlanceModifier
             .fillMaxWidth()
             .fillMaxHeight()
-//            .background(DarkBackground)
+            .background(backgroundColor)
+            .cornerRadius(cornerRadiusValue)
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .clickable(actionStartActivity<MainActivity>())
     ) {
@@ -87,7 +91,7 @@ fun ScreenTimeWidgetContent(
                 text = "Screen Time",
                 modifier = GlanceModifier.defaultWeight(),
                 style = TextStyle(
-//                    color = ColorProvider(DarkTextPrimary),
+                    color = textPrimaryColor,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = monoSpace
@@ -105,6 +109,7 @@ fun ScreenTimeWidgetContent(
                 ) {
                     Image(
                         provider = ImageProvider(R.drawable.ic_refresh),
+                        colorFilter = androidx.glance.ColorFilter.tint(textPrimaryColor),
                         contentDescription = "Refresh",
                         modifier = GlanceModifier.size(20.dp)
                     )
@@ -119,7 +124,7 @@ fun ScreenTimeWidgetContent(
             text = formattedTime,
             modifier = GlanceModifier.fillMaxWidth(),
             style = TextStyle(
-//                color = ColorProvider(DarkTextPrimary),
+                color = textPrimaryColor,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = monoSpace,
@@ -144,7 +149,7 @@ fun ScreenTimeWidgetContent(
                     // Usage time badge - fixed width for alignment
                     Box(
                         modifier = GlanceModifier
-                            .width(60.dp)
+                            .width(62.dp)
                             .wrapContentHeight(),
                         contentAlignment = Alignment.CenterStart
                     ) {
@@ -153,14 +158,11 @@ fun ScreenTimeWidgetContent(
                             modifier = GlanceModifier
                                 .wrapContentWidth()
                                 .wrapContentHeight()
-                                .padding(horizontal = 6.dp, vertical = 3.dp)
-//                                .background(
-//                                    color = DarkTextPrimary.copy(alpha = 0.15f)
-//                                )
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
                                 .cornerRadius(6.dp),
                             style = TextStyle(
-//                                color = ColorProvider(DarkTextPrimary),
-                                fontSize = 11.sp,
+                                color = textPrimaryColor,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium,
                                 fontFamily = monoSpace
                             )
@@ -175,8 +177,8 @@ fun ScreenTimeWidgetContent(
                             .defaultWeight()
                             .wrapContentHeight(),
                         style = TextStyle(
-//                            color = ColorProvider(DarkTextPrimary.copy(alpha = 0.8f)),
-                            fontSize = 12.sp,
+                            color = textPrimaryColor,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Normal,
                             fontFamily = monoSpace
                         )
@@ -188,15 +190,12 @@ fun ScreenTimeWidgetContent(
                 text = "No app data",
                 modifier = GlanceModifier.fillMaxWidth(),
                 style = TextStyle(
-//                    color = ColorProvider(DarkTextPrimary.copy(alpha = 0.6f)),
+                    color = textPrimaryColor,
                     fontSize = 12.sp,
                     fontFamily = monoSpace
                 )
             )
         }
-
-        // Make the entire widget clickable to open app (except refresh button)
-        // The refresh button has its own click handler
     }
 }
 

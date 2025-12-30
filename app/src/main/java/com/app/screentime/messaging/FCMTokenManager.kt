@@ -2,7 +2,8 @@ package com.app.screentime.messaging
 
 import android.content.Context
 import android.util.Log
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.config.AppSecrets
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.profile.service.ProfileService
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,7 +21,7 @@ class FCMTokenManager @Inject constructor(
 ) {
     companion object {
         private const val TAG = "FCMTokenManager"
-        private val PREF_FCM_TOKEN = com.app.screentime.config.AppSecrets.Preferences.PREF_FCM_TOKEN
+        private val PREF_FCM_TOKEN = AppSecrets.Preferences.PREF_FCM_TOKEN
     }
 
     /**

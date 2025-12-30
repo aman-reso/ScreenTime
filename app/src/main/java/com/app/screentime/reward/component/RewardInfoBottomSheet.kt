@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.app.screentime.R
 import com.app.screentime.reward.model.RewardCatalogItem
+import com.app.screentime.reward.model.SavedClaimDetails
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.atoms.ODSBox
@@ -25,6 +28,10 @@ import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSImage
 import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.checkbox.ODSCheckbox
+import com.telekom.odsystem.atoms.checkbox.ODSCheckboxProps
+import com.telekom.odsystem.atoms.checkbox.ODSCheckboxSelected
+import com.telekom.odsystem.atoms.checkbox.ODSCheckboxSize
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
 import com.telekom.odsystem.atoms.button.ODSButtonSize
@@ -106,35 +113,74 @@ fun RewardInfoBottomSheet(
     onDismiss: () -> Unit,
     reward: RewardCatalogItem?,
     isLoading: Boolean = false,
-    onClaimClick: (String, String, String, String?, String?) -> Unit = { _, _, _, _, _ -> },
+    errorMessage: String? = null,
+    savedClaimDetails: SavedClaimDetails? = null,
+    onClaimClick: (String, String, String, String?, String?, Boolean) -> Unit = { _, _, _, _, _, _ -> },
     scheme: ODSTheme
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var postalCode by remember { mutableStateOf("") }
+    var saveDetails by remember { mutableStateOf(false) }
+
+    // Load saved details when bottom sheet opens
+    LaunchedEffect(showBottomSheet) {
+        if (showBottomSheet) {
+            savedClaimDetails?.let { details ->
+                name = details.name
+                email = details.email
+                phoneNumber = details.phone
+                address = details.address ?: ""
+                postalCode = details.postalCode ?: ""
+                saveDetails = true // Auto-check if saved data exists
+            } ?: run {
+                // Reset fields if no saved details
+                name = ""
+                email = ""
+                phoneNumber = ""
+                address = ""
+                postalCode = ""
+                saveDetails = false
+            }
+        }
+    }
+
+    // Show error toast when error occurs
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(
+                message = errorMessage
+            )
+        }
+    }
 
     val isPhysical = reward?.let { isPhysicalReward(it.rewardType) } ?: false
 
     // Validation states
-    val nameError = remember(name) { if (name.isNotBlank() && !isValidName(name)) "Name must be at least 2 characters" else null }
-    val emailError = remember(email) { if (email.isNotBlank() && !isValidEmail(email)) "Please enter a valid email address" else null }
-    val phoneError = remember(phoneNumber) { if (phoneNumber.isNotBlank() && !isValidPhoneNumber(phoneNumber)) "Please enter a valid phone number (digits only)" else null }
-    val addressError = remember(address) { if (isPhysical && address.isNotBlank() && !isValidAddress(address)) "Address cannot be empty" else null }
-    val postalCodeError = remember(postalCode) { 
+    val nameError =
+        remember(name) { if (name.isNotBlank() && !isValidName(name)) "Name must be at least 2 characters" else null }
+    val emailError =
+        remember(email) { if (email.isNotBlank() && !isValidEmail(email)) "Please enter a valid email address" else null }
+    val phoneError =
+        remember(phoneNumber) { if (phoneNumber.isNotBlank() && !isValidPhoneNumber(phoneNumber)) "Please enter a valid phone number (digits only)" else null }
+    val addressError =
+        remember(address) { if (isPhysical && address.isNotBlank() && !isValidAddress(address)) "Address cannot be empty" else null }
+    val postalCodeError = remember(postalCode) {
         if (isPhysical && postalCode.isNotBlank() && !isValidPostalCode(postalCode)) {
-            if (postalCode.any { !it.isDigit() }) "Postal code must contain only numbers" 
+            if (postalCode.any { !it.isDigit() }) "Postal code must contain only numbers"
             else "Postal code must be exactly 6 digits"
-        } else null 
+        } else null
     }
 
     // Check if form is valid
-    val isFormValid = isValidName(name) && 
-            isValidEmail(email) && 
-            isValidPhoneNumber(phoneNumber) && 
+    val isFormValid = isValidName(name) &&
+            isValidEmail(email) &&
+            isValidPhoneNumber(phoneNumber) &&
             (!isPhysical || (isValidAddress(address) && isValidPostalCode(postalCode)))
 
     if (reward == null) return
@@ -146,6 +192,7 @@ fun RewardInfoBottomSheet(
         ),
         showBottomSheet = showBottomSheet,
         bottomSheetState = bottomSheetState,
+        snackbarHostState = snackbarHostState,
         onDismissRequest = {
             if (!isLoading) {
                 onDismiss()
@@ -159,7 +206,7 @@ fun RewardInfoBottomSheet(
         titleSlot = {
             ODSText(
                 text = reward.title,
-                style = DSTextStyles.titleS,
+                style = DSTextStyles.bodyL,
                 color = scheme.basicText
             )
         },
@@ -251,7 +298,7 @@ fun RewardInfoBottomSheet(
                         // Claim Form
                         ODSText(
                             text = "Claim Reward",
-                            style = DSTextStyles.subtitle,
+                            style = DSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )
 
@@ -299,7 +346,8 @@ fun RewardInfoBottomSheet(
                             ),
                             onValueChange = { newValue ->
                                 // Allow only digits, +, -, spaces, and parentheses
-                                phoneNumber = newValue.filter { it.isDigit() || it == '+' || it == '-' || it == ' ' || it == '(' || it == ')' }
+                                phoneNumber =
+                                    newValue.filter { it.isDigit() || it == '+' || it == '-' || it == ' ' || it == '(' || it == ')' }
                             }
                         )
 
@@ -336,6 +384,19 @@ fun RewardInfoBottomSheet(
                                 }
                             )
                         }
+
+                        // Save details checkbox
+                        ODSCheckbox(
+                            scheme = scheme,
+                            props = ODSCheckboxProps(
+                                label = "Save details for future reference",
+                                selected = if (saveDetails) ODSCheckboxSelected.SELECTED else ODSCheckboxSelected.UNSELECTED,
+                                size = ODSCheckboxSize.SMALL
+                            ),
+                            onClick = { newState ->
+                                saveDetails = newState == ODSCheckboxSelected.SELECTED
+                            }
+                        )
                     }
                 }
             }
@@ -347,8 +408,8 @@ fun RewardInfoBottomSheet(
                     scheme = scheme,
                     props = ODSButtonProps(
                         label = "Claim Reward",
-                        variant = ODSButtonVariant.PRIMARY,
-                        size = ODSButtonSize.LARGE,
+                        variant = ODSButtonVariant.SECONDARY,
+                        size = ODSButtonSize.SMALL,
                         disabled = !isFormValid
                     ),
                     onClick = {
@@ -358,7 +419,8 @@ fun RewardInfoBottomSheet(
                                 email,
                                 phoneNumber,
                                 if (isPhysical) address else null,
-                                if (isPhysical) postalCode else null
+                                if (isPhysical) postalCode else null,
+                                saveDetails
                             )
                         }
                     }

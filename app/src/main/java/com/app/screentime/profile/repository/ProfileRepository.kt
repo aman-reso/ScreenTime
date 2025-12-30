@@ -1,7 +1,8 @@
 package com.app.screentime.profile.repository
 
-import com.app.screentime.network.model.ApiResponse
-import com.app.screentime.network.model.DeviceRegistrationResponse
+import com.app.screentime.core.network.model.ApiResponse
+import com.app.screentime.core.network.preferences.PreferencesManager
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
 import com.app.screentime.network.model.UserProfile
 import com.app.screentime.network.model.UserPreferences
 import com.app.screentime.network.model.UsernameUpdateRequest

@@ -1,8 +1,8 @@
 package com.app.screentime.login.service
 
-import com.app.screentime.network.model.ApiResponse
-import com.app.screentime.network.model.DeviceRegistrationResponse
-import com.app.screentime.utils.DeviceInfoUtils
+import com.app.screentime.core.network.model.ApiResponse
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
+import com.app.screentime.core.network.utils.DeviceInfoUtils
 
 /**
  * API Service interface for Login and Device Registration operations

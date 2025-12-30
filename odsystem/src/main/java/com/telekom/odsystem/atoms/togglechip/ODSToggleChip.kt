@@ -119,7 +119,6 @@ private fun ODSToggleChipContainer(
 ) {
     ODSRow(
         modifier = Modifier.sizeWithinBounds(
-            minWidth = style.toggleChipMinWidth ?: MIN_WIDTH.dp,
             minHeight = style.toggleChipMinHeight ?: MIN_HEIGHT.dp
         ),
         gap = style.toggleChipGap,
@@ -141,7 +140,7 @@ private fun ODSToggleChipContainer(
         )
         if (!props.label.isNullOrEmpty()) {
             ODSText(
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = Modifier.weight(1f, fill = true),
                 text = props.label,
                 style = style.chipStyle,
                 color = style.chipColor,

@@ -15,6 +15,7 @@ sealed class Screen {
     object Permission : Screen()
     object FocusMode : Screen()
     object AppBlocking : Screen()
+    object AppLock : Screen()
     object Leaderboard : Screen()
     object BlockedLinks : Screen()
     object Challenges : Screen()
@@ -24,4 +25,6 @@ sealed class Screen {
     object Reward : Screen()
     object CoinHistory : Screen()
     data class RewardTransaction(val transactionId: Int? = null) : Screen()
+    object Wallpaper : Screen()
+    object CapturedNotifications : Screen()
 }

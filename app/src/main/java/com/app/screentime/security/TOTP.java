@@ -1,7 +1,6 @@
 package com.app.screentime.security;
 
 import com.app.screentime.BuildConfig;
-import com.app.screentime.config.AppSecrets;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -71,7 +70,7 @@ public class TOTP {
      * If you prefer, replace this with Apache Commons Codec Base32.decode().
      */
     private static byte[] base32Decode(String base32) {
-        String base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        String base32Chars = BuildConfig.TOTP_DECODE_SECRET;
         // remove padding and whitespace, uppercase
         String s = base32.trim().replace("=", "").replaceAll("\\s+", "").toUpperCase();
 

@@ -8,8 +8,10 @@ import android.content.Context
 import com.app.screentime.database.dao.BlockedLinkDao
 import com.app.screentime.database.dao.FocusTimeDao
 import com.app.screentime.database.dao.JoinedChallengeDao
+import com.app.screentime.database.dao.CapturedNotificationDao
 import com.app.screentime.database.dao.NotificationDao
 import com.app.screentime.database.entity.BlockedLinkEntity
+import com.app.screentime.database.entity.CapturedNotificationEntity
 import com.app.screentime.database.entity.FocusTimeEntity
 import com.app.screentime.database.entity.JoinedChallengeEntity
 import com.app.screentime.database.entity.NotificationEntity
@@ -18,8 +20,14 @@ import com.app.screentime.database.entity.NotificationEntity
  * Room database for ScreenTime app
  */
 @Database(
-    entities = [FocusTimeEntity::class, BlockedLinkEntity::class, NotificationEntity::class, JoinedChallengeEntity::class],
-    version = 4,
+    entities = [
+        FocusTimeEntity::class,
+        BlockedLinkEntity::class,
+        NotificationEntity::class,
+        JoinedChallengeEntity::class,
+        CapturedNotificationEntity::class
+    ],
+    version = 5,
     exportSchema = false
 )
 abstract class ScreenTimeDatabase : RoomDatabase() {
@@ -28,6 +36,7 @@ abstract class ScreenTimeDatabase : RoomDatabase() {
     abstract fun blockedLinkDao(): BlockedLinkDao
     abstract fun notificationDao(): NotificationDao
     abstract fun joinedChallengeDao(): JoinedChallengeDao
+    abstract fun capturedNotificationDao(): CapturedNotificationDao
     
     companion object {
         private const val DATABASE_NAME = "screentime_database"

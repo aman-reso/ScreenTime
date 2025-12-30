@@ -24,10 +24,9 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun RulesSection(
     rules: String,
     scheme: ODSTheme,
+    expanded: Boolean = false,
     onExpandedChange: ((Boolean) -> Unit)? = null
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
-
     ODSColumn(
         modifier = Modifier.fillMaxWidth(),
         gap = DSVariables.spacingComponent3
@@ -37,12 +36,11 @@ fun RulesSection(
             scheme = scheme,
             props = ODSAccordionProps(
                 headerText = "Rules",
-                expanded = isExpanded,
+                expanded = expanded,
                 size = ODSAccordionSize.SMALL
             ),
-            onClick = { expanded ->
-                isExpanded = expanded
-                onExpandedChange?.invoke(expanded)
+            onClick = { newExpanded ->
+                onExpandedChange?.invoke(newExpanded)
             }, contentSlot = {
                 ODSAccordionTextBody(
                     scheme = scheme,

@@ -14,13 +14,14 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.app.screentime.database.ScreenTimeDatabase
 import com.app.screentime.database.repository.FocusTimeRepository
-import com.app.screentime.network.NetworkClient
+import com.app.screentime.core.network.NetworkClient
 import com.app.screentime.network.model.FocusModeStatsSyncRequest
 import com.app.screentime.network.repository.focus.FocusRepository
+import com.app.screentime.core.network.preferences.PreferencesManager
+import com.app.screentime.network.service.focus.FocusService
 import com.app.screentime.network.service.focus.FocusServiceImpl
 import com.app.screentime.network.sync.SyncResult
 import com.app.screentime.network.utils.NetworkUtils
-import com.app.screentime.preferences.PreferencesManager
 import java.util.concurrent.TimeUnit
 
 /**
@@ -42,7 +43,7 @@ class FocusSyncWorker(
     }
 
     private val focusRepository by lazy {
-        val networkClient = NetworkClient(appContext)
+        val networkClient = NetworkClient(appContext, preferencesManager)
         val focusService = FocusServiceImpl(networkClient)
         FocusRepository(focusService)
     }

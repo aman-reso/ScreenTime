@@ -1,8 +1,11 @@
 package com.app.screentime.network.service.screentime
 
-import com.app.screentime.network.ApiEndpoints
-import com.app.screentime.network.NetworkClient
-import com.app.screentime.network.model.*
+import com.app.screentime.core.network.ApiEndpoints
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.model.*
+import com.app.screentime.network.model.BatchUsageEventsRequest
+import com.app.screentime.network.model.UsageLastSyncResponse
+import com.app.screentime.network.model.UsageStatsResponse
 import io.ktor.client.call.*
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException

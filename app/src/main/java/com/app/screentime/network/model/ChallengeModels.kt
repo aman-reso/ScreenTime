@@ -191,21 +191,11 @@ data class ChallengeRankingsResponse(
     val challengeId: String,
     val challengeTitle: String,
     val challengeType: String, // "LESS_SCREENTIME" or "MORE_SCREENTIME"
-    val rankings: List<ChallengeRanking> = emptyList(),
-    val userRank: ChallengeRanking? = null,
+    val rankings: List<LeaderboardEntry> = emptyList(),
+    val userRank: LeaderboardEntry? = null,
     val totalParticipants: Int
 )
 
-/**
- * Individual ranking entry
- */
-@Serializable
-data class ChallengeRanking(
-    val rank: Int,
-    val userId: String,
-    val totalDuration: Long, // milliseconds
-    val appCount: Int
-)
 
 /**
  * Submit challenge stats request

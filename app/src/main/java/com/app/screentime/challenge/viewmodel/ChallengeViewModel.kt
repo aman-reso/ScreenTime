@@ -50,7 +50,7 @@ class ChallengeViewModel @Inject constructor(
             challengeRepository.getActiveChallenges().fold(
                 onSuccess = { response ->
                     if (response.success == true && response.data != null) {
-                        val challenges = response.data.challenges
+                        val challenges = response.data!!.challenges
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             challenges = challenges,
@@ -197,7 +197,7 @@ class ChallengeViewModel @Inject constructor(
             challengeRepository.getChallengeDetails(challengeId).fold(
                 onSuccess = { response ->
                     if (response.success == true && response.data != null) {
-                        val packageNames = response.data.packageNames
+                        val packageNames = response.data!!.packageNames
                         if (!packageNames.isNullOrBlank()) {
                             joinedChallengeRepository.updatePackageNames(challengeId, packageNames)
                             Log.d(

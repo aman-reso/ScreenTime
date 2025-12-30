@@ -1,8 +1,16 @@
 package com.app.screentime.network.service.focus
 
-import com.app.screentime.network.ApiEndpoints
-import com.app.screentime.network.NetworkClient
-import com.app.screentime.network.model.*
+import com.app.screentime.core.network.ApiEndpoints
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.model.*
+import com.app.screentime.network.model.FocusDurationHistoryRequest
+import com.app.screentime.network.model.FocusDurationHistoryResponse
+import com.app.screentime.network.model.FocusDurationStatsResponse
+import com.app.screentime.network.model.FocusDurationSubmissionRequest
+import com.app.screentime.network.model.FocusDurationSubmissionResponse
+import com.app.screentime.network.model.FocusModeStatsResponse
+import com.app.screentime.network.model.FocusModeStatsSyncRequest
+import com.app.screentime.network.model.FocusModeStatsSyncResponse
 import io.ktor.client.call.*
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException

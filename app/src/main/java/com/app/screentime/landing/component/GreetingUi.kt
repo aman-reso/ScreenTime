@@ -2,13 +2,16 @@ package com.app.screentime.landing.component
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,11 +37,6 @@ import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.R.*
-import com.telekom.odsystem.atoms.button.ODSButton
-import com.telekom.odsystem.atoms.button.ODSButtonButtonType
-import com.telekom.odsystem.atoms.button.ODSButtonProps
-import com.telekom.odsystem.atoms.button.ODSButtonSize
-import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.neutralScheme
 import java.util.Calendar
 
@@ -47,6 +45,8 @@ import java.util.Calendar
 fun GreetingUi(
     username: String? = null,
     onLeaderboardClick: (() -> Unit)? = null,
+    onRewardClick: (() -> Unit)? = null,
+    onSearchClick: (() -> Unit)? = null,
     scheme: ODSTheme = neutralScheme
 ) {
     ODSRow(
@@ -66,32 +66,34 @@ fun GreetingUi(
         }
         Spacer(modifier = Modifier.weight(1f))
 
-        val successColor = scheme.functionalSuccessStandard
-        // Animated pulsing effect
-        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-        val scale by infiniteTransition.animateFloat(
-            initialValue = 1f,
-            targetValue = 1.1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(1000, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "scale"
-        )
+        ODSRow(
+            horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent4),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ODSIcon(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable {
+                        onSearchClick?.invoke()
+                    },
+                iconModel = ODSIconModel(
+                    imageVector = Icons.Outlined.Search,
+                    tint = scheme.basicAccentSecondary,
+                    contentDescription = stringResource(R.string.search)
+                )
+            )
 
-        ODSButton(
-            scheme = scheme,
-            props = ODSButtonProps(
-                buttonIcon = ODSIconModel(
+
+            ODSIcon(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { onLeaderboardClick?.invoke() },
+                iconModel = ODSIconModel(
                     drawableRes = drawable.achievement_type_standard_size_standard,
-                    tint = scheme.functionalDestructiveStandard
-                ),
-                buttonType = ODSButtonButtonType.ICON_ONLY,
-                variant = ODSButtonVariant.OUTLINE,
-                size = ODSButtonSize.SMALL
-            ),
-            onClick = { onLeaderboardClick?.invoke() }
-        )
+                    tint = scheme.basicAccentSecondary
+                )
+            )
+        }
     }
 }
 

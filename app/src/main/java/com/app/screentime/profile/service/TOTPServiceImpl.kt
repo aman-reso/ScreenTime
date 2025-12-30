@@ -1,8 +1,9 @@
 package com.app.screentime.profile.service
 
-import com.app.screentime.network.ApiEndpoints
-import com.app.screentime.network.NetworkClient
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.ApiEndpoints
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.model.ApiResponse
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
 import com.app.screentime.network.model.TOTPVerifyResponse
 import com.app.screentime.network.model.UsernameTOTPVerifyRequest
 import io.ktor.client.call.*

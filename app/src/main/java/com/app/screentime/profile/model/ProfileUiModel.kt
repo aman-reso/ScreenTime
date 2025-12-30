@@ -7,7 +7,8 @@ import androidx.annotation.StringRes
  */
 data class ProfileUiModel(
     val username: String? = null,
-    val userId: String? = null
+    val userId: String? = null,
+    val joinedOn: String? = null
 )
 
 data class ProfileSettingUiData(val data: List<ProfileSettingsUi>? = null)

@@ -5,10 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.app.screentime.consent.mapper.ConsentMapper
 import com.app.screentime.consent.model.ConsentUiModel
 import com.app.screentime.consent.usecase.ConsentUseCase
-import com.app.screentime.network.model.ApiConsentItem
-import com.app.screentime.network.model.ConsentSubmissionItem
-import com.app.screentime.network.model.ConsentSubmissionRequest
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.model.*
+import com.app.screentime.network.model.*
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +43,7 @@ class ConsentViewModel @Inject constructor(
                     if (apiResponse.success == true && apiResponse.data != null) {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            consentItems = apiResponse.data
+                            consentItems = apiResponse.data!!
                         )
                     } else {
                         // Even if API fails, we still show the sheet (with error message)

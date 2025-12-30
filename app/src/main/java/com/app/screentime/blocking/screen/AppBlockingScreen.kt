@@ -1,16 +1,22 @@
 package com.app.screentime.blocking.screen
 
 import android.content.Intent
+import android.graphics.Color
 import android.provider.Settings
-import android.view.accessibility.AccessibilityManager
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -21,6 +27,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -38,14 +45,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.navigation.NavController
 import com.app.screentime.blocking.component.AddBlockingRuleBottomSheet
 import com.app.screentime.blocking.component.BlockingRuleCard
 import com.app.screentime.blocking.component.PermissionScreenContent
 import com.app.screentime.blocking.model.BlockingRule
 import com.app.screentime.blocking.viewmodel.AppBlockingViewModel
 import com.app.screentime.ui.atom.AppImageIcon
-
+import com.app.screentime.ui.theme.LocalThemeMode
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -53,14 +59,14 @@ import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSLazyColumn
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
-import com.telekom.odsystem.atoms.divider.ODSDivider
-import com.telekom.odsystem.atoms.divider.ODSDividerProps
-import com.telekom.odsystem.atoms.divider.ODSDividerVariant
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonButtonType
 import com.telekom.odsystem.atoms.button.ODSButtonProps
 import com.telekom.odsystem.atoms.button.ODSButtonSize
 import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.divider.ODSDivider
+import com.telekom.odsystem.atoms.divider.ODSDividerProps
+import com.telekom.odsystem.atoms.divider.ODSDividerVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.extensions.onClick
@@ -88,24 +94,43 @@ fun AppBlockingScreen(
     onNavigateToAppSelection: () -> Unit = {},
     scheme: ODSTheme = neutralScheme
 ) {
+    val activity = LocalActivity.current
+    // Get theme mode for status bar styling
+    val useDarkTheme = LocalThemeMode.current
+    SideEffect {
+        if (activity is ComponentActivity) {
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (useDarkTheme) {
+                    SystemBarStyle.dark(scheme.basicBackground.getIntColor())
+                } else {
+                    SystemBarStyle.light(
+                        scheme.basicBackground.getIntColor(),
+                        darkScrim = scheme.basicBackground.getIntColor()
+                    )
+                },
+                navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT,
+                    Color.TRANSPARENT
+                )
+            )
+        }
+    }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Check permissions
-    var hasAccessibilityPermission by remember {
+    var hasUsageStatsPermission by remember {
         mutableStateOf(
-            isAccessibilityServiceEnabled(
-                context
-            )
+            hasUsageStatsPermission(context)
         )
     }
     var hasOverlayPermission by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
 
     // Re-check permissions when screen is focused
     LaunchedEffect(Unit) {
-        hasAccessibilityPermission = isAccessibilityServiceEnabled(context)
+        hasUsageStatsPermission = hasUsageStatsPermission(context)
         hasOverlayPermission = Settings.canDrawOverlays(context)
     }
 
@@ -113,7 +138,7 @@ fun AppBlockingScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                hasAccessibilityPermission = isAccessibilityServiceEnabled(context)
+                hasUsageStatsPermission = hasUsageStatsPermission(context)
                 hasOverlayPermission = Settings.canDrawOverlays(context)
             }
         }
@@ -123,41 +148,42 @@ fun AppBlockingScreen(
         }
     }
 
-    val allPermissionsGranted = hasAccessibilityPermission || hasOverlayPermission
+    val allPermissionsGranted = hasUsageStatsPermission || hasOverlayPermission
 
     if (!allPermissionsGranted) {
         PermissionScreenContent(
             modifier = modifier,
-            hasAccessibilityPermission = hasAccessibilityPermission,
+            hasAccessibilityPermission = hasUsageStatsPermission, // Reusing prop name for now or refactor
             hasOverlayPermission = hasOverlayPermission,
             onContinue = {
 
             },
+            onBackClick = onBackClick,
             scheme = scheme,
             onAccessibilityPermissionClick = {
                 try {
-                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(intent)
                     Toast.makeText(
                         context,
-                        "Please enable accessibility service in Accessibility Settings",
+                        "Please enable Usage Access for ScreenTime",
                         Toast.LENGTH_LONG
                     ).show()
                     // Re-check permission periodically when user might return
                     coroutineScope.launch {
                         repeat(10) {
                             delay(1000)
-                            val newStatus = isAccessibilityServiceEnabled(context)
-                            if (newStatus != hasAccessibilityPermission) {
-                                hasAccessibilityPermission = newStatus
+                            val newStatus = hasUsageStatsPermission(context)
+                            if (newStatus != hasUsageStatsPermission) {
+                                hasUsageStatsPermission = newStatus
                                 return@launch
                             }
                         }
                     }
                 } catch (e: Exception) {
                     Toast.makeText(
-                        context, "Error opening Accessibility Settings", Toast.LENGTH_SHORT
+                        context, "Error opening Usage Settings", Toast.LENGTH_SHORT
                     ).show()
                 }
             },
@@ -168,6 +194,7 @@ fun AppBlockingScreen(
                             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                             "package:${context.packageName}".toUri()
                         )
+                        intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         context.startActivity(intent)
                         Toast.makeText(
@@ -222,11 +249,18 @@ fun AppBlockingScreen(
         }
     }
 
-    ODSBox(
+    ODSColumn(
         modifier = modifier.fillMaxSize(),
         background = listOf(ODSColorModel(scheme.basicBackground)),
         padding = ODSPadding(horizontal = 8.dp)
     ) {
+        // Status bar padding
+        ODSBox(
+            modifier = Modifier
+                .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                .fillMaxWidth()
+        ) {}
+
         ODSColumn(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -245,7 +279,8 @@ fun AppBlockingScreen(
                         buttonType = ODSButtonButtonType.ICON_ONLY,
                         variant = ODSButtonVariant.GHOST,
                         size = ODSButtonSize.SMALL
-                    ), onClick = onBackClick)
+                    ), onClick = onBackClick
+                )
                 ODSText(
                     text = "App blocking",
                     style = DSTextStyles.subtitle,
@@ -448,24 +483,14 @@ private fun AllAppsTab(
 /**
  * Check if accessibility service is enabled
  */
-private fun isAccessibilityServiceEnabled(context: android.content.Context): Boolean {
-    val accessibilityManager =
-        context.getSystemService(android.content.Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-    val enabledServices =
-        accessibilityManager.getEnabledAccessibilityServiceList(android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-
-    val serviceClassName = com.app.screentime.service.AppAccessibilityService::class.java.name
-    val packageName = context.packageName
-
-    // Check if our service is in the enabled services list
-    // The service info name is the class name, and we need to match it with the package
-    return enabledServices.any { serviceInfo ->
-        val serviceInfoName = serviceInfo.resolveInfo.serviceInfo.name
-        val servicePackageName = serviceInfo.resolveInfo.serviceInfo.packageName
-
-        // Match by package name and class name
-        servicePackageName == packageName && serviceInfoName == serviceClassName
-    }
+private fun hasUsageStatsPermission(context: android.content.Context): Boolean {
+    val appOps = context.getSystemService(android.content.Context.APP_OPS_SERVICE) as android.app.AppOpsManager
+    val mode = appOps.checkOpNoThrow(
+        android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+        android.os.Process.myUid(),
+        context.packageName
+    )
+    return mode == android.app.AppOpsManager.MODE_ALLOWED
 }
 
 

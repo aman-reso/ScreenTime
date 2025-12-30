@@ -1,32 +1,9 @@
 package com.app.screentime.network.model
 
 import com.app.screentime.record.repository.AppEvent
-import com.app.screentime.utils.DeviceInfoUtils
+import com.app.screentime.core.network.utils.DeviceInfoUtils
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
-/**
- * Base API response wrapper
- */
-@Serializable
-data class ApiResponse<T>(
-    val success: Boolean? = null,
-    val status: Int? = null,
-    val data: T? = null,
-    val message: String? = null,
-    val timestamp: String? = null,
-    val error: ApiError? = null
-)
-
-/**
- * API error model
- */
-@Serializable
-data class ApiError(
-    val code: String? = null,
-    val message: String? = null,
-    val details: Map<String, String>? = null
-)
 
 /**
  * Screen time usage data for API
@@ -185,35 +162,6 @@ data class QuietHours(
 )
 
 /**
- * Device registration request
- */
-@Serializable
-data class DeviceRegistrationRequest(
-    val deviceInfo: DeviceInfoUtils.DeviceInfo,
-    val firebaseToken: String? = null
-)
-
-/**
- * Device registration response
- */
-@Serializable
-data class DeviceRegistrationResponse(
-    val userId: String,
-    val username: String,
-    val createdAt: String,
-    val totpSecret: String? = null,
-    val totpEnabled: Boolean = false,
-    val totpPeriod: Int = 60,
-    val updatedAt: String? = null,
-    val lastSyncTime: String? = null, // ISO 8601 format timestamp string (e.g., "2025-11-17T01:52:57.500Z")
-    val email: String? = null,
-    val name: String? = null
-) {
-    // Convenience property for deviceId (if needed for backward compatibility)
-    val deviceId: String get() = userId
-}
-
-/**
  * Username update request
  */
 @Serializable
@@ -253,72 +201,6 @@ data class UsageRecordResponse(
     val duration: Long? = null,
     val isSystemApp: Boolean? = null,
     val eventTimestamp: String? = null,
-)
-
-/**
- * Consent item from API
- */
-@Serializable
-data class ApiConsentItem(
-    val id: Int,
-    val name: String,
-    val description: String,
-    val isMandatory: Boolean
-)
-
-/**
- * Consent submission item model
- */
-@Serializable
-data class ConsentSubmissionItem(
-    val id: Int,
-    val value: String // "accepted" or "rejected"
-)
-
-/**
- * Consent submission request model
- */
-@Serializable
-data class ConsentSubmissionRequest(
-    val consents: List<ConsentSubmissionItem>
-)
-
-/**
- * Consent submission response item model
- */
-@Serializable
-data class ConsentSubmissionResponseItem(
-    val id: Int,
-    val consentId: Int? = null,
-    val consentName: String? = null,
-    val value: String? = null,
-    val submittedAt: String? = null
-)
-
-/**
- * Consent request model (legacy - kept for backward compatibility)
- */
-@Serializable
-data class ConsentRequest(
-    val username: String,
-    val hasConsent: Boolean,
-    val dataSharing: Boolean,
-    val analytics: Boolean,
-    val marketing: Boolean
-)
-
-/**
- * Consent response model
- */
-@Serializable
-data class ConsentResponse(
-    val username: String? = null,
-    val hasConsent: Boolean? = null,
-    val dataSharing: Boolean? = null,
-    val analytics: Boolean? = null,
-    val marketing: Boolean? = null,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
 )
 
 /**

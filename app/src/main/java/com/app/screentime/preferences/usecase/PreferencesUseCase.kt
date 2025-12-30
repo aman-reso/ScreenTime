@@ -1,7 +1,7 @@
 package com.app.screentime.preferences.usecase
 
 import android.content.Context
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.preferences.PreferencesManager
 import javax.inject.Inject
 
 /**

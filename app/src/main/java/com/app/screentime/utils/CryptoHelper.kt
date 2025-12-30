@@ -2,13 +2,13 @@ package com.app.screentime.utils
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import com.app.screentime.config.AppSecrets
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import android.util.Base64
+import com.app.screentime.core.network.config.AppSecrets
 import kotlinx.serialization.json.Json
 import java.security.SecureRandom
 import javax.crypto.spec.SecretKeySpec

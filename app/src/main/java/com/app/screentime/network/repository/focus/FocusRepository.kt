@@ -1,5 +1,6 @@
 package com.app.screentime.network.repository.focus
 
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.*
 import com.app.screentime.network.service.focus.FocusService
 import javax.inject.Inject

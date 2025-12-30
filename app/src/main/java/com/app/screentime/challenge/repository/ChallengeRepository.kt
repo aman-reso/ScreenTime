@@ -1,7 +1,7 @@
 package com.app.screentime.challenge.repository
 
 import com.app.screentime.challenge.service.ChallengeService
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.ActiveChallengesResponse
 import com.app.screentime.network.model.ChallengeDetails
 import com.app.screentime.network.model.ChallengeRankingsResponse

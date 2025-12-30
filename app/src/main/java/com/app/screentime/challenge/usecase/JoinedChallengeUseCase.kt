@@ -22,7 +22,7 @@ class JoinedChallengeUseCase @Inject constructor(
         return challengeRepository.getUserChallenges().fold(
             onSuccess = { response ->
                 if (response.success == true && response.data != null) {
-                    Result.success(response.data.challenges)
+                    Result.success(response.data!!.challenges)
                 } else {
                     Result.failure(
                         Exception(response.message ?: "Failed to load joined challenges")

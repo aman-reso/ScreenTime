@@ -1,11 +1,11 @@
 package com.app.screentime.login.service
 
-import com.app.screentime.network.ApiEndpoints
-import com.app.screentime.network.NetworkClient
-import com.app.screentime.network.model.ApiResponse
-import com.app.screentime.network.model.DeviceRegistrationRequest
-import com.app.screentime.network.model.DeviceRegistrationResponse
-import com.app.screentime.utils.DeviceInfoUtils
+import com.app.screentime.core.network.ApiEndpoints
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.model.ApiResponse
+import com.app.screentime.core.network.model.DeviceRegistrationRequest
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
+import com.app.screentime.core.network.utils.DeviceInfoUtils
 import io.ktor.client.call.*
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
@@ -25,7 +25,10 @@ class LoginServiceImpl @Inject constructor(
 
     private val httpClient = networkClient.httpClient
 
-    override suspend fun registerDevice(deviceInfo: DeviceInfoUtils.DeviceInfo, firebaseToken: String?): Result<ApiResponse<DeviceRegistrationResponse>> {
+    override suspend fun registerDevice(
+        deviceInfo: DeviceInfoUtils.DeviceInfo,
+        firebaseToken: String?
+    ): Result<ApiResponse<DeviceRegistrationResponse>> {
         return try {
             val request = DeviceRegistrationRequest(
                 deviceInfo = deviceInfo,

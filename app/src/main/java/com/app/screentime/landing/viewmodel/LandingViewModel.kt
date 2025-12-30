@@ -5,7 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.landing.model.LandingUiProps
 import com.app.screentime.landing.usecase.LandingUsecase
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.widget.ScreenTimeWidgetHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -61,6 +62,10 @@ class LandingViewModel @Inject constructor(
                     dailyLimit = dailyLimit
                 )
             }
+
+            val joinedChallenges = landingUsecase.getJoinedChallenges()
+            val recentData = _uiProps.value?.copy(joinedChallenges = joinedChallenges)
+            _uiProps.value = recentData
         }
     }
 

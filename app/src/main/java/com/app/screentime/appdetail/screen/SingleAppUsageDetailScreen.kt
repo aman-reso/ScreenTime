@@ -2,14 +2,22 @@ package com.app.screentime.appdetail.screen
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EditNotifications
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
@@ -37,6 +46,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -48,9 +58,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.app.screentime.R
 import com.app.screentime.appdetail.viewmodel.SingleAppUsageDetailViewModel
 import com.app.screentime.blocking.component.AddBlockingRuleBottomSheet
@@ -58,7 +68,15 @@ import com.app.screentime.blocking.manager.AppBlockManager
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.data.uiModel.WeeklyDataReport
 import com.app.screentime.landing.component.NetworkCard
+import com.app.screentime.landing.component.UsageSummaryCard
 import com.app.screentime.record.repository.toReadableDataSize
+import com.app.screentime.record.repository.formatDuration
+import com.app.screentime.statistics.screen.WeeklyUsageChart
+import com.app.screentime.statistics.model.ChartFormatterProps
+import com.telekom.odsystem.organisms.barchart.ODSBarItemDirection
+import com.telekom.odsystem.organisms.barchart.ODSBarItemProps
+import com.app.screentime.ui.theme.LocalThemeMode
+import com.app.screentime.ui.theme.headerTheme
 
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
@@ -73,6 +91,7 @@ import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.tokens.tokens.frogSecondaryScheme
 import com.telekom.odsystem.organisms.cardquickaction.ODSCardQuickAction
 import com.telekom.odsystem.organisms.cardquickaction.ODSCardQuickActionProps
 import com.telekom.odsystem.organisms.cardquickaction.ODSCardQuickActionSize
@@ -90,6 +109,25 @@ fun SingleAppUsageDetailScreen(
     viewModel: SingleAppUsageDetailViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
+    val activity = LocalActivity.current
+    // Get theme mode for status bar styling
+    val useDarkTheme = LocalThemeMode.current
+    SideEffect {
+        if (activity is ComponentActivity) {
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (useDarkTheme) {
+                    SystemBarStyle.dark(scheme.basicBackground.getIntColor())
+                } else {
+                    SystemBarStyle.light(
+                        scheme.basicBackground.getIntColor(),
+                        darkScrim = scheme.basicBackground.getIntColor()
+                    )
+                }, navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT, Color.TRANSPARENT
+                )
+            )
+        }
+    }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
@@ -123,22 +161,24 @@ fun SingleAppUsageDetailScreen(
             0L
         }
     }
-    val todayUsageMinutes = (todayUsage / (1000 * 60)).toInt()
+    val todayUsageFormatted = remember(todayUsage) {
+        formatDuration(todayUsage)
+    }
 
-    // Calculate weekly change percentage (compare first half vs second half of week)
-    val weeklyChangePercent = remember(uiState.weeklyUsageData) {
-        if (uiState.weeklyUsageData.size >= 6) {
-            val firstHalf = uiState.weeklyUsageData.take(3).sumOf { it.screenTime }
-            val secondHalf = uiState.weeklyUsageData.drop(3).take(3).sumOf { it.screenTime }
-            if (firstHalf > 0) {
-                ((secondHalf - firstHalf).toDouble() / firstHalf * 100).toInt()
-            } else if (secondHalf > 0) {
-                100 // If first half is 0 but second half has usage, show 100% increase
+    // Calculate percentage change (compare today with previous day)
+    val percentageChange = remember(uiState.weeklyUsageData) {
+        if (uiState.weeklyUsageData.size >= 2) {
+            val today = uiState.weeklyUsageData.lastOrNull()?.screenTime ?: 0L
+            val yesterday = uiState.weeklyUsageData[uiState.weeklyUsageData.size - 2].screenTime
+            if (yesterday > 0) {
+                ((today - yesterday).toFloat() / yesterday * 100f)
+            } else if (today > 0) {
+                100f // If yesterday is 0 but today has usage, show 100% increase
             } else {
-                0
+                null
             }
         } else {
-            0
+            null
         }
     }
 
@@ -158,8 +198,7 @@ fun SingleAppUsageDetailScreen(
                         mobileDataUsage = dayData.mobileDataUsage
                     ).apply {
                         applicationInfo = appInfo
-                    }
-                ),
+                    }),
                 totalScreenTime = dayData.screenTime,
                 displayScreenTime = dayData.displayScreenTime,
                 totalWifiDataUsage = dayData.wifiDataUsage,
@@ -173,27 +212,73 @@ fun SingleAppUsageDetailScreen(
 
     var selectedDayIndex by remember { mutableStateOf<Int?>(null) }
 
-    // Calculate network usage
+    // Create bar chart data from weekly reports
+    val chartOrientation = ODSBarItemDirection.VERTICAL
+    val barChartData = remember(weeklyReports, chartOrientation) {
+        weeklyReports.mapIndexed { index, report ->
+            val screenTimeHours = (report.totalScreenTime ?: 0L) / (1000.0 * 60.0 * 60.0)
+            val dayLabel = when {
+                report.dayName.isNullOrEmpty() -> "${index + 1}"
+                report.dayName.length >= 3 -> report.dayName.take(3).uppercase()
+                else -> report.dayName.uppercase()
+            }
+            ODSBarItemProps(
+                xValue = index.toDouble(),
+                xLabel = dayLabel,
+                yValue = screenTimeHours,
+                yLabel = String.format("%.1f", screenTimeHours)
+            )
+        }
+    }
+
+    // Create chart formatter props
+    val chartFormatterProps = remember {
+        ChartFormatterProps(
+            valueFormatter = { x, y ->
+                val hours = y.toInt()
+                val minutes = ((y - hours) * 60).toInt()
+                when {
+                    hours > 0 -> "${hours}h ${minutes}m"
+                    minutes > 0 -> "${minutes}m"
+                    else -> "< 1m"
+                }
+            },
+            verticalAxisFormatter = { value ->
+                val hours = value.toInt()
+                if (hours > 0) "${hours}h" else "${value.toInt()}h"
+            }
+        )
+    }
+
+    // Calculate network usage (in bytes)
     val totalWifiData = uiState.weeklyUsageData.sumOf { it.wifiDataUsage }
     val totalCellularData = uiState.weeklyUsageData.sumOf { it.mobileDataUsage }
     val totalData = totalWifiData + totalCellularData
-    val wifiDataGB = totalWifiData / (1024L * 1024L * 1024L)
-    val cellularDataGB = totalCellularData / (1024L * 1024L * 1024L)
-    val totalDataGB = totalData / (1024L * 1024L * 1024L)
+    val wifiDataDisplay = totalWifiData.toReadableDataSize()
+    val cellularDataDisplay = totalCellularData.toReadableDataSize()
+    val totalDataDisplay = totalData.toReadableDataSize()
 
     // Bottom sheet states
     var showBlockBottomSheet by remember { mutableStateOf(false) }
     var showTimerBottomSheet by remember { mutableStateOf(false) }
 
-    ODSBox(
+    ODSColumn(
         modifier = Modifier.fillMaxSize(),
         background = listOf(ODSColorModel(scheme.basicBackground))
     ) {
+        // Status bar padding
+        ODSBox(
+            modifier = Modifier
+                .height(
+                    WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                )
+                .fillMaxWidth()
+        ) {}
+
         when {
             uiState.isLoading -> {
                 ODSBox(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(color = scheme.functionalSuccessStandard.getColor())
                 }
@@ -216,9 +301,7 @@ fun SingleAppUsageDetailScreen(
                                 iconModel = ODSIconModel(
                                     imageVector = Icons.Default.Error,
                                     tint = scheme.functionalDestructiveStandard
-                                ),
-                                width = 48.dp,
-                                height = 48.dp
+                                ), width = 48.dp, height = 48.dp
                             )
                             ODSText(
                                 text = uiState.error ?: "Error loading data",
@@ -273,8 +356,7 @@ fun SingleAppUsageDetailScreen(
                                     ),
                                     onDismiss = {
                                         // Handle dismiss if needed
-                                    }
-                                )
+                                    })
                             }
 
                             item {
@@ -283,7 +365,8 @@ fun SingleAppUsageDetailScreen(
                                     onSetTimerClick = { showTimerBottomSheet = true },
                                     onBlockClick = { showBlockBottomSheet = true },
                                     onSettingsClick = { openAppSettings(context, packageName) },
-                                    scheme = scheme
+                                    scheme = scheme,
+                                    packageName = packageName
                                 )
                             }
                             item {
@@ -308,24 +391,50 @@ fun SingleAppUsageDetailScreen(
                             padding = ODSPadding(horizontal = 8.dp)
                         ) {
                             item {
+                                UsageSummaryCard(
+                                    todayTotal = todayUsageFormatted,
+                                    dailyGoal = "6h",
+                                    percentageChange = percentageChange,
+                                    onClick = {},
+                                    scheme = headerTheme.current
+                                )
+                            }
+
+                            if (totalData > 0) {
+                                item {
+                                    NetworkCard(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        wifiDataUsage = totalWifiData,
+                                        wifiDataUsageDisplay = wifiDataDisplay,
+                                        cellularDataUsage = totalCellularData,
+                                        cellularDataUsageDisplay = cellularDataDisplay,
+                                        totalDataDisplayName = totalDataDisplay,
+                                        scheme = scheme
+                                    )
+                                }
+                            }
+                            
+                            item {
                                 ODSText(
                                     text = stringResource(R.string.activity),
-                                    style = DSTextStyles.titleS,
+                                    style = DSTextStyles.bodyL,
                                     color = scheme.basicText
                                 )
                             }
                             if (weeklyReports.isNotEmpty()) {
-//                                item {
-//                                    WeeklyUsageChart(
-//                                        weeklyReports = weeklyReports,
-//                                        selectedDayIndex = selectedDayIndex,
-//                                        onBarClick = { index ->
-//                                            selectedDayIndex =
-//                                                if (selectedDayIndex == index) null else index
-//                                        },
-//                                        scheme = scheme
-//                                    )
-//                                }
+                                item {
+                                    WeeklyUsageChart(
+                                        barChartData = barChartData,
+                                        weeklyReports = weeklyReports,
+                                        chartFormatterProps = chartFormatterProps,
+                                        chartOrientation = chartOrientation,
+                                        onBarClick = { index ->
+                                            selectedDayIndex =
+                                                if (selectedDayIndex == index) null else index
+                                        },
+                                        scheme = scheme
+                                    )
+                                }
                             } else {
                                 item {
                                     ODSBox(
@@ -338,19 +447,6 @@ fun SingleAppUsageDetailScreen(
                                             color = scheme.basicTextRecessive
                                         )
                                     }
-                                }
-                            }
-
-                            if (totalData > 0) {
-                                item {
-                                    NetworkCard(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        wifiDataUsage = wifiDataGB,
-                                        wifiDataUsageDisplay = wifiDataGB.toReadableDataSize(),
-                                        cellularDataUsage = cellularDataGB,
-                                        cellularDataUsageDisplay = cellularDataGB.toReadableDataSize(),
-                                        totalDataDisplayName = totalDataGB.toReadableDataSize()
-                                    )
                                 }
                             }
                             item {
@@ -390,22 +486,47 @@ fun SingleAppUsageDetailScreen(
                                 ),
                                 onDismiss = {
                                     // Handle dismiss if needed
-                                }
+                                })
+                        }
+
+                        item {
+                            UsageSummaryCard(
+                                todayTotal = todayUsageFormatted,
+                                dailyGoal = "6h",
+                                percentageChange = percentageChange,
+                                onClick = {},
+                                scheme = frogSecondaryScheme
                             )
                         }
 
+                        if (totalData > 0) {
+                            item {
+                                NetworkCard(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    wifiDataUsage = totalWifiData,
+                                    wifiDataUsageDisplay = wifiDataDisplay,
+                                    cellularDataUsage = totalCellularData,
+                                    cellularDataUsageDisplay = cellularDataDisplay,
+                                    totalDataDisplayName = totalDataDisplay,
+                                    scheme = scheme
+                                )
+                            }
+                        }
+
                         if (weeklyReports.isNotEmpty()) {
-//                            item {
-//                                WeeklyUsageChart(
-//                                    weeklyReports = weeklyReports,
-//                                    selectedDayIndex = selectedDayIndex,
-//                                    onBarClick = { index ->
-//                                        selectedDayIndex =
-//                                            if (selectedDayIndex == index) null else index
-//                                    },
-//                                    scheme = scheme
-//                                )
-//                            }
+                            item {
+                                WeeklyUsageChart(
+                                    barChartData = barChartData,
+                                    weeklyReports = weeklyReports,
+                                    chartFormatterProps = chartFormatterProps,
+                                    chartOrientation = chartOrientation,
+                                    onBarClick = { index ->
+                                        selectedDayIndex =
+                                            if (selectedDayIndex == index) null else index
+                                    },
+                                    scheme = scheme
+                                )
+                            }
                         }
 
                         item {
@@ -414,21 +535,9 @@ fun SingleAppUsageDetailScreen(
                                 onSetTimerClick = { showTimerBottomSheet = true },
                                 onBlockClick = { showBlockBottomSheet = true },
                                 onSettingsClick = { openAppSettings(context, packageName) },
-                                scheme = scheme
+                                scheme = scheme,
+                                packageName
                             )
-                        }
-
-                        if (totalData > 0) {
-                            item {
-                                NetworkCard(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    wifiDataUsage = wifiDataGB,
-                                    wifiDataUsageDisplay = wifiDataGB.toReadableDataSize(),
-                                    cellularDataUsage = cellularDataGB,
-                                    cellularDataUsageDisplay = cellularDataGB.toReadableDataSize(),
-                                    totalDataDisplayName = totalDataGB.toReadableDataSize()
-                                )
-                            }
                         }
                         item {
                             Spacer(modifier = Modifier.height(DSVariables.spacingComponent3 * 3))
@@ -461,7 +570,8 @@ fun SingleAppUsageDetailScreen(
                 onBlockAfterDuration = { pkgName, appName, maxDurationMinutes ->
                     // This will be handled by the blocking system
                     showBlockBottomSheet = false
-                }, scheme = neutralScheme
+                },
+                scheme = neutralScheme
             )
         }
 
@@ -474,61 +584,42 @@ fun SingleAppUsageDetailScreen(
                 onSetTimer = { minutes ->
                     // Set timer logic here
                     showTimerBottomSheet = false
-                }
-            )
+                })
         }
     }
 }
 
 @Composable
 private fun HeaderSection(
-    appName: String,
-    onBackClick: () -> Unit,
-    onMoreClick: () -> Unit,
-    scheme: ODSTheme
+    appName: String, onBackClick: () -> Unit, onMoreClick: () -> Unit, scheme: ODSTheme
 ) {
 
     ODSRow(
-        modifier = Modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.size(44.dp)
+            onClick = onBackClick, modifier = Modifier.size(44.dp)
         ) {
             ODSIcon(
                 iconModel = ODSIconModel(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     tint = scheme.basicTextRecessive,
                     contentDescription = "Back"
-                ),
-                width = 24.dp,
-                height = 24.dp
+                ), width = 24.dp, height = 24.dp
             )
         }
 
         ODSText(
-            text = appName,
-            style = DSTextStyles.titleS,
-            color = scheme.basicText
+            text = appName, 
+            style = DSTextStyles.bodyL, 
+            color = scheme.basicText,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = DSVariables.spacingComponent2),
+            textAlign = TextAlign.Center
         )
-
-        IconButton(
-            onClick = onMoreClick,
-            modifier = Modifier.size(44.dp)
-        ) {
-            ODSIcon(
-                iconModel = ODSIconModel(
-                    imageVector = Icons.Default.MoreVert,
-                    tint = scheme.basicTextRecessive,
-                    contentDescription = "More"
-                ),
-                width = 24.dp,
-                height = 24.dp
-            )
-        }
     }
 }
 
@@ -538,50 +629,57 @@ private fun QuickActionsCard(
     onSetTimerClick: () -> Unit,
     onBlockClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    scheme: ODSTheme
+    scheme: ODSTheme,
+    packageName: String
 ) {
+    val context = LocalContext.current
 
     ODSColumn(
-        modifier = Modifier
-            .fillMaxWidth(),
-        gap = DSVariables.spacingComponent3
+        modifier = Modifier.fillMaxWidth(), gap = DSVariables.spacingComponent3
     ) {
         ODSText(
-            text = "Quick actions",
-            style = DSTextStyles.subtitle,
-            color = scheme.basicText
+            text = "Quick actions", style = DSTextStyles.bodyMRegular, color = scheme.basicText
         )
+        if (packageName != context.packageName) {
+            ActionCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.AutoMirrored.Filled.ArrowForward,
+                text = "Launch",
+                onClick = onLaunchClick,
+                scheme = scheme
+            )
 
-        ActionCard(
-            modifier = Modifier.weight(1f),
-            icon = Icons.AutoMirrored.Filled.ArrowForward,
-            text = "Launch",
-            onClick = onLaunchClick,
-            scheme = scheme
-        )
+            ActionCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.Timer,
+                text = "Set timer",
+                onClick = onSetTimerClick,
+                scheme = scheme
+            )
 
-        ActionCard(
-            modifier = Modifier.weight(1f),
-            icon = Icons.Default.Timer,
-            text = "Set timer",
-            onClick = onSetTimerClick,
-            scheme = scheme
-        )
+            // Block
+            ActionCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.Block,
+                text = "Block",
+                onClick = onBlockClick,
+                scheme = scheme
+            )
 
-        // Block
-        ActionCard(
-            modifier = Modifier.weight(1f),
-            icon = Icons.Default.Block,
-            text = "Block",
-            onClick = onBlockClick,
-            scheme = scheme
-        )
-
+        }
         ActionCard(
             modifier = Modifier.weight(1f),
             icon = Icons.Default.Settings,
             text = "Settings",
             onClick = onSettingsClick,
+            scheme = scheme
+        )
+
+        ActionCard(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Default.EditNotifications,
+            text = "Recover Notification",
+            onClick = onBlockClick,
             scheme = scheme
         )
     }
@@ -596,14 +694,9 @@ private fun ActionCard(
     scheme: ODSTheme
 ) {
     ODSCardQuickAction(
-        modifier = modifier,
-        scheme = scheme,
-        props = ODSCardQuickActionProps(
-            size = ODSCardQuickActionSize.SMALL,
-            filled = false
-        ),
-        onClick = onClick,
-        contentSlot = {
+        modifier = modifier, scheme = scheme, props = ODSCardQuickActionProps(
+            size = ODSCardQuickActionSize.SMALL, filled = false
+        ), onClick = onClick, contentSlot = {
             ODSRow(
                 modifier = Modifier.fillMaxWidth(),
                 gap = DSVariables.spacingComponent3,
@@ -627,13 +720,10 @@ private fun ActionCard(
                 }
 
                 ODSText(
-                    text = text,
-                    style = DSTextStyles.bodyMBold,
-                    color = scheme.basicText
+                    text = text, style = DSTextStyles.bodySBold, color = scheme.basicText
                 )
             }
-        }
-    )
+        })
 }
 
 
@@ -675,10 +765,7 @@ private fun openAppTimerSettings(context: Context, packageName: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TimerBottomSheet(
-    appName: String,
-    packageName: String,
-    onDismiss: () -> Unit,
-    onSetTimer: (Int) -> Unit
+    appName: String, packageName: String, onDismiss: () -> Unit, onSetTimer: (Int) -> Unit
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -739,17 +826,14 @@ private fun TimerBottomSheet(
                     }
                 }
                 IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.size(40.dp)
+                    onClick = onDismiss, modifier = Modifier.size(40.dp)
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(
                             imageVector = Icons.Default.Close,
                             tint = scheme.basicText,
                             contentDescription = "Close"
-                        ),
-                        width = 24.dp,
-                        height = 24.dp
+                        ), width = 24.dp, height = 24.dp
                     )
                 }
             }

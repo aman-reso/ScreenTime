@@ -26,8 +26,8 @@ android {
         applicationId = "com.app.screentime"
         minSdk = 24
         targetSdk = 36
-        versionCode = 31
-        versionName = "3.1"
+        versionCode = 44
+        versionName = "4.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -47,10 +47,11 @@ android {
             "TOTP_FALLBACK_SECRET",
             "\"${localProperties.getProperty("TOTP_FALLBACK_SECRET", "O5YRY4I2737IGHVYOHXM6T7RWWNAW3X7")}\""
         )
-
-//        ndk {
-//            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
-//        }
+        buildConfigField(
+            "String",
+            "TOTP_DECODE_SECRET",
+            "\"${localProperties.getProperty("TOTP_DECODE_SECRET", "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")}\""
+        )
     }
 
     buildTypes {
@@ -109,6 +110,12 @@ dependencies {
     // ODS Library module with sources
     implementation(project(":odsystem"))
 
+    // Core Network module
+    implementation(project(":core:network"))
+
+    // Wallpaper module
+    implementation(project(":wallpaper"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -126,6 +133,7 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.recyclerview)
     ksp(libs.hilt.compiler)
 
     // Room dependencies
@@ -170,6 +178,10 @@ dependencies {
 
     // Coil for image loading
     implementation(libs.coil.compose)
+    
+    // Google Play In-App Updates
+    implementation(libs.play.app.update)
+    implementation(libs.play.app.update.ktx)
 
     // Security/Crypto for EncryptedSharedPreferences
     implementation(libs.androidx.security.crypto)

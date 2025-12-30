@@ -20,6 +20,7 @@ import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
 import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.link.ODSLink
 import com.telekom.odsystem.atoms.link.ODSLinkProps
@@ -71,7 +72,7 @@ fun BottomBar(
                 scheme = scheme,
                 props = ODSButtonProps(
                     label = props.buttonLabel,
-                    variant = ODSButtonVariant.PRIMARY
+                    variant = ODSButtonVariant.PRIMARY, size = ODSButtonSize.SMALL
                 ),
                 onClick = onAllowClick
             )

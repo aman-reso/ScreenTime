@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.security.TOTP
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.DSTextStyles
@@ -119,7 +119,7 @@ fun ShowTOTPBottomSheetContent(
                     ODSColumn {
                         ODSText(
                             text = otp,
-                            style = DSTextStyles.titleS,
+                            style = DSTextStyles.bodyL,
                             color = scheme.functionalSuccessStandard
                         )
                         ODSBox(height = DSVariables.spacingComponent1) {}

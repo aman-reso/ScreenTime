@@ -59,7 +59,7 @@ fun HeroSection(
 
         ODSText(
             text = props.title,
-            style = DSTextStyles.titleS,
+            style = DSTextStyles.bodyL,
             color = style.titleColor ?: scheme.basicText
         )
     }

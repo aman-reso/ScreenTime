@@ -12,7 +12,8 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.app.screentime.network.NetworkClient
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.network.model.BatchUsageEventsRequest
 import com.app.screentime.network.model.UsageEvent
 import com.app.screentime.network.repository.screentime.ScreenTimeRepository
@@ -20,7 +21,6 @@ import com.app.screentime.network.service.screentime.ScreenTimeServiceImpl
 import com.app.screentime.network.sync.DataSyncService
 import com.app.screentime.network.sync.SyncResult
 import com.app.screentime.network.utils.NetworkUtils
-import com.app.screentime.preferences.PreferencesManager
 import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.record.repository.NetworkUsageHelper
 import com.app.screentime.record.repository.ScreenUsageHelper
@@ -51,7 +51,7 @@ class DataSyncWorker(
 
     // Create DataSyncService using object creation instead of injection
     private val dataSyncService by lazy {
-        val networkClient = NetworkClient(applicationContext)
+        val networkClient = NetworkClient(applicationContext, preferencesManager)
         val screenTimeService = ScreenTimeServiceImpl(networkClient)
         val screenTimeRepository = ScreenTimeRepository(screenTimeService)
         val networkUtils = NetworkUtils(applicationContext)
@@ -60,7 +60,7 @@ class DataSyncWorker(
 
     // Create ScreenTimeRepository for fetching last sync time
     private val screenTimeRepository by lazy {
-        val networkClient = NetworkClient(applicationContext)
+        val networkClient = NetworkClient(applicationContext, preferencesManager)
         val screenTimeService = ScreenTimeServiceImpl(networkClient)
         ScreenTimeRepository(screenTimeService)
     }

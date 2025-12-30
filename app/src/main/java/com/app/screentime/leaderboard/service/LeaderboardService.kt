@@ -1,6 +1,6 @@
 package com.app.screentime.leaderboard.service
 
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.LeaderboardResponse
 
 /**

@@ -11,13 +11,15 @@ import com.app.screentime.landing.model.TodayUsageData
 import com.app.screentime.landing.util.AppCategoryUtils
 import com.app.screentime.network.model.BatchUsageEventsRequest
 import com.app.screentime.network.model.UsageEvent
+import com.app.screentime.network.model.UserChallenge
 import com.app.screentime.network.sync.DataSyncService
-import com.app.screentime.network.sync.SyncResult
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.record.repository.toReadableDataSize
 import com.app.screentime.utils.DateUtils
+import com.telekom.odsystem.foundations.HexColor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -50,11 +52,11 @@ class LandingUsecase @Inject constructor(
                 calendar[Calendar.SECOND] = 0
                 calendar[Calendar.MILLISECOND] = 0
                 calendar.add(Calendar.DAY_OF_MONTH, -1) // Go to yesterday
-                
+
                 val yesterdayStart = calendar.timeInMillis
                 calendar.add(Calendar.DAY_OF_MONTH, 1) // End of yesterday
                 val yesterdayEnd = calendar.timeInMillis
-                
+
                 val yesterdayReport = localAppUsageRepository.getAppsUsageForInterval(
                     yesterdayStart, yesterdayEnd
                 )
@@ -163,13 +165,12 @@ class LandingUsecase @Inject constructor(
             return landingUiMapper.toErrorUiProps(username, error, shouldShowConsent)
         }
 
-        // Default chart colors - these could be moved to a theme/config if needed
         val chartColors = listOf(
-            com.telekom.odsystem.foundations.HexColor(0xFF0070CC), // basicAccent
-            com.telekom.odsystem.foundations.HexColor(0xFF00A651), // functionalSuccessStandard
-            com.telekom.odsystem.foundations.HexColor(0xFF0070CC), // functionalInformationalStandard
-            com.telekom.odsystem.foundations.HexColor(0xFFFFB300), // functionalWarningStandard
-            com.telekom.odsystem.foundations.HexColor(0xFF0070CC)  // basicAccent
+            HexColor(0xFF0070CC), // basicAccent
+            HexColor(0xFF00A651), // functionalSuccessStandard
+            HexColor(0xFF0070CC), // functionalInformationalStandard
+            HexColor(0xFFFFB300), // functionalWarningStandard
+            HexColor(0xFF0070CC)  // basicAccent
         )
 
         return getTodayUsageData().fold(
@@ -183,10 +184,7 @@ class LandingUsecase @Inject constructor(
                         null
                     }
                 }
-                
-                // Fetch joined challenges for notification
-                val joinedChallenges = getJoinedChallenges()
-                
+
                 landingUiMapper.toUiProps(
                     todayUsageData = todayUsageData,
                     username = username,
@@ -195,7 +193,7 @@ class LandingUsecase @Inject constructor(
                     error = null,
                     chartColors = chartColors,
                     percentageChangeFromYesterday = percentageChange,
-                    joinedChallenges = joinedChallenges
+                    joinedChallenges = emptyList()
                 )
             },
             onFailure = { exception ->
@@ -222,6 +220,7 @@ class LandingUsecase @Inject constructor(
         return preferencesUseCase.shouldShowConsentSheet()
     }
 
+
     /**
      * Mark consent as shown
      */
@@ -232,14 +231,14 @@ class LandingUsecase @Inject constructor(
     /**
      * Get user's joined challenges (only active ones for notification)
      */
-    private suspend fun getJoinedChallenges(): List<com.app.screentime.network.model.UserChallenge> {
+    suspend fun getJoinedChallenges(): List<UserChallenge> {
         return withContext(Dispatchers.IO) {
             try {
                 challengeRepository.getUserChallenges().fold(
                     onSuccess = { response ->
                         if (response.success == true && response.data != null) {
                             // Return only active challenges (not expired)
-                            response.data.challenges.filter { it.isActive && !it.isPast }
+                            response.data!!.challenges.filter { it.isActive && !it.isPast }
                         } else {
                             emptyList()
                         }

@@ -15,6 +15,9 @@ enum class ProfileSettingsKey {
     TERMS_OF_SERVICE,
     HELP_SUPPORT,
     TOTP,
-    AD_BLOCKING
+    AD_BLOCKING,
+    NOTIFICATION_HISTORY,
+    APP_LOCK,
+    WALLPAPER
 }
 

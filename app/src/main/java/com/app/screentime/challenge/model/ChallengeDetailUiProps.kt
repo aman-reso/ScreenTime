@@ -1,7 +1,7 @@
 package com.app.screentime.challenge.model
 
 import androidx.compose.runtime.Stable
-import com.app.screentime.network.model.ChallengeRanking
+import com.app.screentime.network.model.LeaderboardEntry
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
@@ -40,8 +40,8 @@ data class ChallengeDetailUiProps(
     val isCompleted: Boolean,
     
     // Leaderboard
-    val topRankings: List<ChallengeRanking>,
-    val userRank: ChallengeRanking?,
+    val topRankings: List<LeaderboardEntry>,
+    val userRank: LeaderboardEntry?,
     val showLeaderboard: Boolean,
     
     // Content

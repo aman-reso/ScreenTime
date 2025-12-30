@@ -1,18 +1,24 @@
 package com.app.screentime.network.model
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 /**
  * Leaderboard entry model from API
  */
 @Serializable
-data class LeaderboardEntry(
-    val userId: String,
-    val username: String,
-    val name: String,
+data class LeaderboardEntry @OptIn(ExperimentalSerializationApi::class) constructor(
+    val userId: String? = null,
+    val username: String? = null,
+    val name: String? = null,
     val avatar: String? = null,
-    val totalScreenTime: Long, // Total screen time in milliseconds
-    val rank: Int
+    @SerialName("totalScreenTime") // used when SERIALIZING
+    @JsonNames("totalDuration", "totalScreenTime")
+    val totalScreenTime: Long? = null, // Total screen time in milliseconds
+    val rank: Int,
+    val appCount: Int? = null
 )
 
 /**

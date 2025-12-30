@@ -1,6 +1,6 @@
 package com.app.screentime.profile.repository
 
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.TOTPVerifyResponse
 import com.app.screentime.network.model.UsernameTOTPVerifyRequest
 import com.app.screentime.profile.service.TOTPService

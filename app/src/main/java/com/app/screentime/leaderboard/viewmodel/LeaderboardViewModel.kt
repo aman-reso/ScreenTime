@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.leaderboard.repository.LeaderboardRepository
 import com.app.screentime.network.model.LeaderboardEntry
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.preferences.PreferencesManager
+import com.app.screentime.leaderboard.service.LeaderboardService
 import com.app.screentime.record.repository.formatDuration
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,8 @@ data class LeaderboardUiState(
     val userWeeklyRank: Int? = null,
     val userDailyDuration: Long? = null,
     val userWeeklyDuration: Long? = null,
-    val currentUsername: String? = null
+    val currentUsername: String? = null,
+    val currentUserId: String? = null
 )
 
 @HiltViewModel
@@ -43,6 +45,7 @@ class LeaderboardViewModel @Inject constructor(
         val username = preferencesManager.getUsername() ?: "You"
         _uiState.value = _uiState.value.copy(
             currentUsername = username,
+            currentUserId = userId,
             isLoading = true,
             error = null
         )
@@ -51,14 +54,14 @@ class LeaderboardViewModel @Inject constructor(
             // Load daily leaderboard
             leaderboardRepository.getDailyLeaderboard(date).fold(
                 onSuccess = { apiResponse ->
-                    if (apiResponse.success == true && apiResponse.data != null) {
+                    if (apiResponse.success == true && apiResponse.data != null && apiResponse.data?.entries != null) {
                         val leaderboardData = apiResponse.data
-                        val dailyEntries = leaderboardData.entries
-                        
+                        val dailyEntries = leaderboardData!!.entries
+
                         // Find user's entry in the list or use userRank
-                        val userEntry = dailyEntries.find { it.userId == userId } 
+                        val userEntry = dailyEntries.find { it.userId == userId }
                             ?: leaderboardData.userRank
-                        
+
                         _uiState.value = _uiState.value.copy(
                             dailyEntries = dailyEntries,
                             userDailyRank = userEntry?.rank,
@@ -76,7 +79,7 @@ class LeaderboardViewModel @Inject constructor(
                     )
                 }
             )
-            
+
             // Note: isLoading is set to false only after weekly leaderboard loads
             // This ensures both requests complete before hiding the loader
 
@@ -84,13 +87,13 @@ class LeaderboardViewModel @Inject constructor(
             leaderboardRepository.getWeeklyLeaderboard().fold(
                 onSuccess = { apiResponse ->
                     if (apiResponse.success == true && apiResponse.data != null) {
-                        val leaderboardData = apiResponse.data
+                        val leaderboardData = apiResponse.data!!
                         val weeklyEntries = leaderboardData.entries
-                        
+
                         // Find user's entry in the list or use userRank
                         val userEntry = weeklyEntries.find { it.userId == userId }
                             ?: leaderboardData.userRank
-                        
+
                         _uiState.value = _uiState.value.copy(
                             weeklyEntries = weeklyEntries,
                             userWeeklyRank = userEntry?.rank,

@@ -1,6 +1,6 @@
 package com.app.screentime.record.repository
 
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.AppUsageStatsData
 import com.app.screentime.network.model.BatchUsageRecord
 import com.app.screentime.network.model.UsageRecordResponse

@@ -1,8 +1,18 @@
 package com.app.screentime.reward.screen
 
+import android.graphics.Color
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -12,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -24,6 +35,7 @@ import kotlinx.coroutines.launch
 import com.app.screentime.R
 import com.app.screentime.reward.component.RewardTransactionItem
 import com.app.screentime.reward.viewmodel.RewardTransactionViewModel
+import com.app.screentime.ui.theme.LocalThemeMode
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
@@ -58,6 +70,29 @@ fun RewardTransactionScreen(
     scheme: ODSTheme = neutralScheme,
     viewModel: RewardTransactionViewModel = hiltViewModel()
 ) {
+
+    val activity = LocalActivity.current
+    // Get theme mode for status bar styling
+    val useDarkTheme = LocalThemeMode.current
+    SideEffect {
+        if (activity is ComponentActivity) {
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (useDarkTheme) {
+                    SystemBarStyle.dark(scheme.basicBackground.getIntColor())
+                } else {
+                    SystemBarStyle.light(
+                        scheme.basicBackground.getIntColor(),
+                        darkScrim = scheme.basicBackground.getIntColor()
+                    )
+                },
+                navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT,
+                    Color.TRANSPARENT
+                )
+            )
+        }
+    }
+
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -80,6 +115,13 @@ fun RewardTransactionScreen(
             .fillMaxSize(),
         background = listOf(ODSColorModel(scheme.basicBackground))
     ) {
+        // Status bar padding
+        ODSBox(
+            modifier = Modifier
+                .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                .fillMaxWidth()
+        ) {}
+        
         // Back button and Title row
         ODSRow(
             padding = ODSPadding(vertical = DSVariables.spacingComponent4),
@@ -110,11 +152,47 @@ fun RewardTransactionScreen(
 
             ODSText(
                 text = "Transaction History",
-                style = com.telekom.odsystem.DSTextStyles.titleS,
+                style = com.telekom.odsystem.DSTextStyles.bodyL,
                 color = scheme.basicText
             )
         }
 
+        RewardTransactionPage(
+            modifier = Modifier.weight(1f),
+            transactionId = transactionId,
+            scheme = scheme,
+            viewModel = viewModel
+        )
+    }
+}
+
+@Composable
+fun RewardTransactionPage(
+    modifier: Modifier = Modifier,
+    transactionId: Int? = null,
+    scheme: ODSTheme = neutralScheme,
+    viewModel: RewardTransactionViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    // Scroll to transaction when it's loaded and transactionId is provided
+    LaunchedEffect(transactionId, uiState.transactions) {
+        if (transactionId != null && uiState.transactions.isNotEmpty() && !uiState.isLoading) {
+            val index = uiState.transactions.indexOfFirst { it.id == transactionId }
+            if (index >= 0) {
+                coroutineScope.launch {
+                    listState.animateScrollToItem(index)
+                }
+            }
+        }
+    }
+
+    ODSBox(
+        modifier = modifier.fillMaxSize(),
+        background = listOf(ODSColorModel(scheme.basicBackground))
+    ) {
         // Transaction List
         ODSLazyColumn(
             state = listState,

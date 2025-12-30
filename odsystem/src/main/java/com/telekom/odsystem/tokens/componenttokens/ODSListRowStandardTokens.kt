@@ -78,8 +78,7 @@ val defaultODSListRowStandardTokens = ODSListRowStandardTokens(
     textContentHorizontalArrangement = Arrangement.Start,
     labelTextContentGap = DSVariables.spacingComponent1,
     labelTextContentPadding = ODSPadding(
-        top = DSVariables.spacingComponent4,
-        bottom = DSVariables.spacingComponent4
+        top = DSVariables.spacingComponent0,
     ),
     labelTextContentVerticalAlignment = Alignment.CenterVertically,
     labelTextContentHorizontalAlignment = Alignment.Start,
@@ -90,8 +89,7 @@ val defaultODSListRowStandardTokens = ODSListRowStandardTokens(
     labelTextTextAlign = TextAlign.Left,
     descriptionTextContentGap = DSVariables.spacingComponent1,
     descriptionTextContentPadding = ODSPadding(
-        top = DSVariables.spacingComponent4,
-        bottom = DSVariables.spacingComponent4
+        top = DSVariables.spacingComponent0,
     ),
     descriptionTextContentVerticalAlignment = Alignment.CenterVertically,
     descriptionTextContentHorizontalAlignment = Alignment.End,

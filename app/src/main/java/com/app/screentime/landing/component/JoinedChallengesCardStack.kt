@@ -16,6 +16,7 @@ import com.telekom.odsystem.organisms.cardnotificationstack.ODSCardNotificationS
 import com.telekom.odsystem.organisms.cardnotificationstack.ODSCardNotificationStackProps
 import com.telekom.odsystem.organisms.cardnotificationstack.ODSCardNotificationStackViewAllButtonProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import com.telekom.odsystem.tokens.tokens.jacuzziSecondaryScheme
 
 /**
  * CardStack notification component for displaying joined challenges
@@ -27,7 +28,7 @@ fun JoinedChallengesCardStack(
     modifier: Modifier = Modifier,
     onNavigateToChallengeDetail: (String) -> Unit = {},
     onNavigateToChallenges: () -> Unit = {},
-    scheme: ODSTheme = neutralScheme,
+    scheme: ODSTheme = jacuzziSecondaryScheme,
     onDismiss: () -> Unit = {}
 ) {
     if (joinedChallenges.isEmpty()) {

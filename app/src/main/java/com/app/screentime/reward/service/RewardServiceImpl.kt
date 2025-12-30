@@ -1,9 +1,9 @@
 package com.app.screentime.reward.service
 
-import com.app.screentime.network.ApiEndpoints
-import com.app.screentime.network.NetworkClient
-import com.app.screentime.network.model.ApiError
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.ApiEndpoints
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.model.ApiError
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.reward.model.CoinHistoryResponse
 import com.app.screentime.reward.model.RewardCatalogResponse
 import com.app.screentime.reward.model.RewardClaimRequest
@@ -111,49 +111,58 @@ class RewardServiceImpl @Inject constructor(
                 )
                 Result.success(apiResponse)
             } else {
-                // Try to parse error response
-                val errorBody = try {
+                // Try to parse error response - extract only message
+                val errorMessage = try {
                     val errorResponse: ApiResponse<*> = response.body()
                     errorResponse.error?.message ?: errorResponse.message ?: "Failed to claim reward"
                 } catch (e: Exception) {
-                    response.bodyAsText() ?: "Failed to claim reward: ${response.status}"
+                    val errorBody = response.bodyAsText()
+                    // Try to extract message from JSON string
+                    errorBody?.let { body ->
+                        try {
+                            val messageMatch = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(body)
+                            messageMatch?.groupValues?.get(1) ?: "Failed to claim reward"
+                        } catch (e: Exception) {
+                            "Failed to claim reward"
+                        }
+                    } ?: "Failed to claim reward"
                 }
-                Result.failure(Exception(errorBody))
+                Result.failure(Exception(errorMessage))
             }
         } catch (e: ClientRequestException) {
-            // Try to parse error response body
+            // Extract only the error message, not the full response
             val errorMessage = try {
                 val errorResponse: ApiResponse<*> = e.response.body()
-                errorResponse.error?.message ?: errorResponse.message ?: "Client error: ${e.response.status}"
+                errorResponse.error?.message ?: errorResponse.message ?: "Failed to claim reward"
             } catch (parseError: Exception) {
                 val errorBody = e.response.bodyAsText()
                 // Try to extract message from JSON string if parsing failed
                 errorBody?.let { body ->
                     try {
                         val messageMatch = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(body)
-                        messageMatch?.groupValues?.get(1) ?: body
+                        messageMatch?.groupValues?.get(1) ?: "Failed to claim reward"
                     } catch (e: Exception) {
-                        body
+                        "Failed to claim reward"
                     }
-                } ?: "Client error: ${e.response.status}"
+                } ?: "Failed to claim reward"
             }
             Result.failure(Exception(errorMessage))
         } catch (e: ServerResponseException) {
-            // Try to parse error response body
+            // Extract only the error message, not the full response
             val errorMessage = try {
                 val errorResponse: ApiResponse<*> = e.response.body()
-                errorResponse.error?.message ?: errorResponse.message ?: "Server error: ${e.response.status}"
+                errorResponse.error?.message ?: errorResponse.message ?: "Failed to claim reward"
             } catch (parseError: Exception) {
                 val errorBody = e.response.bodyAsText()
                 // Try to extract message from JSON string if parsing failed
                 errorBody?.let { body ->
                     try {
                         val messageMatch = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(body)
-                        messageMatch?.groupValues?.get(1) ?: body
+                        messageMatch?.groupValues?.get(1) ?: "Failed to claim reward"
                     } catch (e: Exception) {
-                        body
+                        "Failed to claim reward"
                     }
-                } ?: "Server error: ${e.response.status}"
+                } ?: "Failed to claim reward"
             }
             Result.failure(Exception(errorMessage))
         } catch (e: Exception) {

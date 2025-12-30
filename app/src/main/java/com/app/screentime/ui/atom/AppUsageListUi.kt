@@ -1,6 +1,7 @@
 package com.app.screentime.ui.atom
 
 import android.content.pm.ApplicationInfo
+import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -10,12 +11,14 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +43,8 @@ import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardProps
 import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardVariant
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 fun LazyListScope.appUsageListUi(
     appUsageList: List<AppUsage>,
@@ -58,7 +63,7 @@ fun LazyListScope.appUsageListUi(
             modifier = Modifier.fillMaxWidth(),
             background = listOf(ODSColorModel(scheme.basicBackgroundCard)),
             cornerRadius = ODSCorners(all = DSVariables.radiusSmall),
-            padding = ODSPadding(horizontal = DSVariables.spacingComponent4)
+            padding = ODSPadding(horizontal = DSVariables.spacingComponent4, vertical = DSVariables.spacingComponent3)
         ) {
             AppUsageItem(
                 appUsage = appUsage,
@@ -82,12 +87,12 @@ private fun AppUsageItem(
     val (variant, image, icon) = if (appIconBitmap != null && appUsage.applicationInfo?.icon != 0) {
         Triple(
             ODSListRowStandardVariant.IMAGE,
-            second = AppImageIcon(appUsage.applicationInfo),
+            second = appIconBitmap,
             null
         )
     } else {
         val fallbackIcon = when {
-            appUsage.applicationInfo == null -> Icons.Filled.Help
+            appUsage.applicationInfo == null -> Icons.AutoMirrored.Filled.Help
             appUsage.applicationInfo?.icon == 0 -> Icons.Filled.Help
             else -> Icons.Filled.Android
         }
@@ -127,15 +132,39 @@ private fun AppUsageItem(
 fun AppImageIcon(
     appInfo: ApplicationInfo?
 ): ODSImageModel? {
-    if (appInfo == null) {
-        return null
-    }
+    if (appInfo == null) return null
+
     val context = LocalContext.current
-    return remember(appInfo.icon) {
-        val drawable = appInfo.loadIcon(context.packageManager)
-        drawable?.toBitmap()
-    }?.let {
+    val packageName = appInfo.packageName
+
+    val bitmapState = produceState<Bitmap?>(initialValue = null, key1 = packageName) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                val drawable = appInfo.loadIcon(context.packageManager)
+                drawable?.toBitmap()
+            }.getOrNull()
+        }
+    }
+
+    return bitmapState.value?.let {
         ODSImageModel(bitmap = it)
     }
 }
+
+
+//@Composable
+//fun AppImageIcon(
+//    appInfo: ApplicationInfo?
+//): ODSImageModel? {
+//    if (appInfo == null) {
+//        return null
+//    }
+//    val context = LocalContext.current
+//    return remember(appInfo.icon) {
+//        val drawable = appInfo.loadIcon(context.packageManager)
+//        drawable?.toBitmap()
+//    }?.let {
+//        ODSImageModel(bitmap = it)
+//    }
+//}
 

@@ -3,7 +3,8 @@
     android:id="@+id/overlay_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFFFF"
+    android:alpha="0.8"
+    android:background="@color/background_dark"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="32dp">
@@ -15,7 +16,7 @@
         android:layout_marginBottom="32dp"
         android:contentDescription="Locked Feature"
         android:src="@drawable/rounded_lock_clock_24"
-        android:tint="#212121" />
+        android:tint="@color/background_light" />
 
     <!-- Title -->
     <TextView
@@ -23,8 +24,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:fontFamily="@font/tasaexplorer_medium"
         android:text="Feature Locked"
-        android:textColor="#000000"
+        android:textColor="@color/background_light"
         android:textSize="22sp"
         android:textStyle="bold" />
 
@@ -34,18 +36,19 @@
         android:layout_width="260dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
+        android:fontFamily="@font/tasaexplorer_regular"
         android:gravity="center"
-        android:text="Unfortunately, this content is blocked. Please take a break or try again later."
-        android:textColor="#777777"
+        android:text="@string/unfortunately_this_content_is_blocked_please_take_a_break_or_try_again_later"
+        android:textColor="@color/background_light"
         android:textSize="14sp" />
 
-    <!-- Call to Action Button -->
     <Button
         android:id="@+id/btn_ok"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
         android:background="@drawable/bg_outline_button"
         android:elevation="0dp"
+        android:fontFamily="@font/tasaexplorer_regular"
         android:paddingHorizontal="32dp"
         android:text="Close App"
         android:textAllCaps="false"
@@ -57,10 +60,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:elevation="0dp"
+        android:fontFamily="@font/oxanium_light"
         android:padding="8dp"
         android:paddingHorizontal="32dp"
-        android:text="Emergency"
+        android:text="Emergency Use"
         android:textAllCaps="false"
-        android:textColor="#000000"
+        android:textColor="@color/background_light"
         android:textStyle="bold" />
 </LinearLayout>

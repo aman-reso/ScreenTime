@@ -1,7 +1,8 @@
 package com.app.screentime.consent.service
 
-import com.app.screentime.network.ApiEndpoints
-import com.app.screentime.network.NetworkClient
+import com.app.screentime.core.network.ApiEndpoints
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.model.*
 import com.app.screentime.network.model.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.ClientRequestException

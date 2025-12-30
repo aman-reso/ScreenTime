@@ -1,11 +1,15 @@
 package com.app.screentime.network.service.user
 
-import com.app.screentime.network.ApiEndpoints
-import com.app.screentime.network.NetworkClient
-import com.app.screentime.network.model.*
-import com.app.screentime.network.model.DeviceRegistrationRequest
-import com.app.screentime.network.model.DeviceRegistrationResponse
-import com.app.screentime.utils.DeviceInfoUtils
+import com.app.screentime.core.network.ApiEndpoints
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.model.*
+import com.app.screentime.core.network.model.DeviceRegistrationRequest
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
+import com.app.screentime.core.network.utils.DeviceInfoUtils
+import com.app.screentime.network.model.UserPreferences
+import com.app.screentime.network.model.UserProfile
+import com.app.screentime.network.model.UserProfileWithSync
+import com.app.screentime.network.model.UserSearchResult
 import io.ktor.client.call.*
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
@@ -48,7 +52,8 @@ class UserServiceImpl @Inject constructor(
 
     override suspend fun getUserProfile(userId: String): Result<ApiResponse<UserProfile>> {
         return try {
-            val response: HttpResponse = httpClient.get("${ApiEndpoints.Profile.GET_PROFILE}/$userId")
+            val response: HttpResponse =
+                httpClient.get("${ApiEndpoints.Profile.GET_PROFILE}/$userId")
 
             if (response.status.isSuccess()) {
                 val apiResponse: ApiResponse<UserProfile> = response.body()
@@ -69,9 +74,10 @@ class UserServiceImpl @Inject constructor(
 
     override suspend fun getUserProfileWithSync(userId: String): Result<ApiResponse<UserProfileWithSync>> {
         return try {
-            val response: HttpResponse = httpClient.get("${ApiEndpoints.Profile.GET_PROFILE}/$userId") {
-                parameter("includeSyncTime", "true")
-            }
+            val response: HttpResponse =
+                httpClient.get("${ApiEndpoints.Profile.GET_PROFILE}/$userId") {
+                    parameter("includeSyncTime", "true")
+                }
 
             if (response.status.isSuccess()) {
                 val apiResponse: ApiResponse<UserProfileWithSync> = response.body()
@@ -115,7 +121,8 @@ class UserServiceImpl @Inject constructor(
 
     override suspend fun getUserPreferences(userId: String): Result<ApiResponse<UserPreferences>> {
         return try {
-            val response: HttpResponse = httpClient.get("${ApiEndpoints.Profile.GET_PREFERENCES}/$userId")
+            val response: HttpResponse =
+                httpClient.get("${ApiEndpoints.Profile.GET_PREFERENCES}/$userId")
 
             if (response.status.isSuccess()) {
                 val apiResponse: ApiResponse<UserPreferences> = response.body()

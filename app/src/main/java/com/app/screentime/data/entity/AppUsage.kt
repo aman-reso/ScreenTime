@@ -1,10 +1,12 @@
 package com.app.screentime.data.entity
 
 import android.content.pm.ApplicationInfo
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
+@Stable
 data class AppUsage(
     val id: Long = 0,
     val timestamp: Long = System.currentTimeMillis(),

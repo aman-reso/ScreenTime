@@ -1,8 +1,8 @@
 package com.app.screentime.consent.mapper
 
 import com.app.screentime.consent.model.ConsentUiModel
-import com.app.screentime.network.model.ConsentRequest
-import com.app.screentime.network.model.ConsentResponse
+import com.app.screentime.core.network.model.*
+import com.app.screentime.network.model.*
 import javax.inject.Inject
 
 /**

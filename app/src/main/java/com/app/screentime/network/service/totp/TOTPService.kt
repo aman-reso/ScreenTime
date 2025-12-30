@@ -1,5 +1,6 @@
 package com.app.screentime.network.service.totp
 
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.*
 
 /**

@@ -1,16 +1,27 @@
 package com.app.screentime.challenge.screen
 
+import android.graphics.Color
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -31,6 +42,7 @@ import com.app.screentime.challenge.viewmodel.ChallengesUiState
 import com.app.screentime.challenge.viewmodel.JoinedChallengeViewModel
 import com.app.screentime.challenge.viewmodel.ChallengeFilter
 import com.app.screentime.navigation.Screen
+import com.app.screentime.ui.theme.LocalThemeMode
 
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
@@ -69,7 +81,27 @@ fun ChallengeListScreen(
     viewModel: ChallengeViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
-
+    val activity = LocalActivity.current
+    // Get theme mode for status bar styling
+    val useDarkTheme = LocalThemeMode.current
+    SideEffect {
+        if (activity is ComponentActivity) {
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (useDarkTheme) {
+                    SystemBarStyle.dark(scheme.basicBackground.getIntColor())
+                } else {
+                    SystemBarStyle.light(
+                        scheme.basicBackground.getIntColor(),
+                        darkScrim = scheme.basicBackground.getIntColor()
+                    )
+                },
+                navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT,
+                    Color.TRANSPARENT
+                )
+            )
+        }
+    }
     val uiState by viewModel.uiState.collectAsState()
 
     val tabs = listOf(stringResource(R.string.challenges), stringResource(R.string.joined))
@@ -103,11 +135,20 @@ fun ChallengeListScreen(
         background = listOf(ODSColorModel(scheme.basicBackground)),
         padding = ODSPadding(horizontal = DSVariables.spacingComponent4)
     ) {
+        // Status bar padding
+        ODSBox(
+            modifier = Modifier
+                .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                .fillMaxWidth()
+        ) {}
+
         ODSBox(
             modifier = Modifier.fillMaxWidth()
         ) {
             ODSText(
-                text = stringResource(R.string.challenges), style = DSTextStyles.subtitle, color = scheme.basicText
+                text = stringResource(R.string.challenges),
+                style = DSTextStyles.subtitle,
+                color = scheme.basicText
             )
         }
 
@@ -162,9 +203,8 @@ private fun ChallengesTab(
     var selectedFilter by remember { mutableIntStateOf(0) }
     val filters = listOf(
         stringResource(R.string.all),
-        stringResource(R.string.fitness),
-        stringResource(R.string.mindfulness),
-        stringResource(R.string.coding)
+        "Active",
+        "Past",
     )
 
     when {
@@ -227,6 +267,7 @@ private fun ChallengesTab(
                     ) {
                         filters.forEachIndexed { index, filter ->
                             ODSToggleChip(
+                                modifier = Modifier.wrapContentWidth(),
                                 scheme = scheme, props = ODSToggleChipProps(
                                     label = filter, selected = selectedFilter == index
                                 ), onToggle = { if (it) selectedFilter = index })

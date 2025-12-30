@@ -1,8 +1,9 @@
 package com.app.screentime.network.service.user
 
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.*
-import com.app.screentime.network.model.DeviceRegistrationResponse
-import com.app.screentime.utils.DeviceInfoUtils
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
+import com.app.screentime.core.network.utils.DeviceInfoUtils
 
 /**
  * Service interface for User related API operations

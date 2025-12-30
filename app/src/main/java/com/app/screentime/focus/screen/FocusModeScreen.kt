@@ -97,7 +97,7 @@
 //                // Title
 //                ODSText(
 //                    text = "Focus Mode",
-//                    style = DSTextStyles.titleS,
+//                    style = DSTextStyles.bodyL,
 //                    color = scheme.basicText,
 //                    textAlign = TextAlign.Center
 //                )
@@ -645,7 +645,7 @@
 //                    // Show countdown in MM:SS format
 //                    ODSText(
 //                        text = formatDurationMMSS(remainingTime),
-//                        style = DSTextStyles.titleS,
+//                        style = DSTextStyles.bodyL,
 //                        color = HexColor(colors.textPrimary.value),
 //                        textAlign = TextAlign.Center
 //                    )
@@ -654,7 +654,7 @@
 //                // Show initial duration when not running
 //                ODSText(
 //                    text = formatDurationMMSS(sessionDurationMs),
-//                    style = DSTextStyles.titleS,
+//                    style = DSTextStyles.bodyL,
 //                    color = HexColor(colors.textSecondary.value),
 //                    textAlign = TextAlign.Center
 //                )

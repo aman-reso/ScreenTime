@@ -112,5 +112,6 @@
     <string name="enter_otp">OTP লিখুন</string>
     <string name="verify">যাচাই করুন</string>
     <string name="verifying">যাচাই করা হচ্ছে…</string>
+    <string name="unfortunately_this_content_is_blocked_please_take_a_break_or_try_again_later">Unfortunately, this content is blocked. Please take a break or try again later.</string>
 </resources>
 

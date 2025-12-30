@@ -11,7 +11,7 @@
     <!-- Permission for notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Permission to query all packages (for app usage tracking) -->
+
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
@@ -30,9 +30,8 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.BIND_VPN_SERVICE" />
+    <!-- <uses-permission android:name="android.permission.BIND_VPN_SERVICE" /> -->
 
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -66,11 +65,9 @@
             android:theme="@style/Theme.ScreenTime">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- Deep Links -->
+            
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -145,39 +142,26 @@
             android:name=".widget.WidgetPinResultReceiver"
             android:exported="false" />
 
-        <service
-            android:name=".service.AppAccessibilityService"
-            android:exported="false"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility" />
-        </service>
-
         <!-- Focus Mode Service -->
-        <service
-            android:name=".focus.FocusModeService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="focus_mode" />
-        </service>
+<!--        <service-->
+<!--            android:name=".focus.FocusModeService"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="false"-->
+<!--            android:foregroundServiceType="specialUse">-->
+<!--            <property-->
+<!--                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"-->
+<!--                android:value="focus_mode" />-->
+<!--        </service>-->
 
         <!-- VPN Service -->
+
         <service
-            android:name=".service.ScreenTimeVpnService"
-            android:enabled="true"
+            android:name=".service.NotificationHistoryListener"
             android:exported="false"
-            android:foregroundServiceType="specialUse"
-            android:permission="android.permission.BIND_VPN_SERVICE">
+            android:label="@string/recover_deleted_notifications"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
-                <action android:name="android.net.VpnService" />
+                <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
 
@@ -189,6 +173,38 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <!-- VPN Service - Commented out
+        <service
+            android:name=".service.ScreenTimeVpnService"
+            android:enabled="true"
+            android:exported="true"
+            android:foregroundServiceType="specialUse"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+        -->
+
+
+        <service
+            android:name=".service.ListenerService"
+            android:foregroundServiceType="specialUse"
+            android:label="My Listener"
+            android:enabled="true"
+            android:exported="true"
+            android:stopWithTask="false"
+            tools:ignore="ForegroundServicePermission" />
+
+        <receiver
+            android:name=".service.BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <!-- Device Admin removed - not suitable for consumer apps -->
 
     </application>
 

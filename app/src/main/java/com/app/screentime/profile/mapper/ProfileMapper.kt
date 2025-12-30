@@ -1,7 +1,9 @@
 package com.app.screentime.profile.mapper
 
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
 import com.app.screentime.profile.model.ProfileUiModel
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.preferences.PreferencesManager
+import com.app.screentime.utils.DateUtils
 import javax.inject.Inject
 
 /**
@@ -15,9 +17,11 @@ class ProfileMapper @Inject constructor() {
     fun toUiModel(
         preferencesManager: PreferencesManager
     ): ProfileUiModel {
+        val data = preferencesManager.getUserInformation()
         return ProfileUiModel(
-            username = preferencesManager.getUsername(),
-            userId = preferencesManager.getUserId()
+            username = data?.username,
+            userId = data?.userId,
+            joinedOn = DateUtils.formatDate(data?.createdAt ?: "")
         )
     }
 

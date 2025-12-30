@@ -15,6 +15,8 @@ data class BlockedLinksUiState(
     val isLoading: Boolean = false,
     val blockedLinks: List<BlockedLinkEntity> = emptyList(),
     val showAddDialog: Boolean = false,
+    val isVpnRunning: Boolean = false,
+    val hasVpnPermission: Boolean = false,
     val error: String? = null
 ) {
     val totalBlockCount: Int
@@ -100,6 +102,33 @@ class BlockedLinksViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    // VPN Management - Commented out VPN feature
+    /*
+    fun checkVpnStatus(context: android.content.Context) {
+        val am = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val isRunning = am.getRunningServices(Integer.MAX_VALUE)
+            .any { it.service.className == com.app.screentime.service.ScreenTimeVpnService::class.java.name }
+        
+        val vpnPermissionManager = com.app.screentime.service.VpnPermissionManager(context)
+        val hasPermission = vpnPermissionManager.hasVpnPermission()
+        
+        if (_uiState.value.isVpnRunning != isRunning || _uiState.value.hasVpnPermission != hasPermission) {
+             _uiState.value = _uiState.value.copy(
+                 isVpnRunning = isRunning,
+                 hasVpnPermission = hasPermission
+             )
+        }
+    }
+    */
+    
+    // VPN feature disabled - set status to false
+    fun checkVpnStatus(context: android.content.Context) {
+        _uiState.value = _uiState.value.copy(
+            isVpnRunning = false,
+            hasVpnPermission = false
+        )
     }
 }
 

@@ -2,7 +2,9 @@ package com.app.screentime.profile.screen
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,8 +21,10 @@ import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
 import com.telekom.odsystem.atoms.textfield.ODSTextField
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldProps
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldSize
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldSupportMessageProps
 import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
 import com.telekom.odsystem.neutralScheme
@@ -36,14 +40,25 @@ fun EditUsernameBottomSheetContent(
 ) {
     var usernameText by remember { mutableStateOf(currentUsername ?: "") }
     val uiProps by viewModel.uiProps.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiProps?.error) {
+        if (uiProps?.error != null) {
+            snackbarHostState.showSnackbar(
+                message = uiProps?.error ?: "Failed to update username"
+            )
+        }
+    }
 
     ODSBottomSheet(
+        snackbarHostState = snackbarHostState,
         actionSlot = {
             ODSColumn(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 ODSButton(
                     modifier = Modifier.fillMaxWidth(), scheme = scheme, props = ODSButtonProps(
+                        size = ODSButtonSize.SMALL,
                         label = stringResource(R.string.save),
                         disabled = (uiProps?.isUpdating
                             ?: false) || usernameText.isBlank() || usernameText == currentUsername
@@ -60,7 +75,7 @@ fun EditUsernameBottomSheetContent(
             ) {
                 ODSText(
                     text = stringResource(R.string.edit_username),
-                    style = DSTextStyles.titleM,
+                    style = DSTextStyles.bodyL,
                     color = scheme.basicText
                 )
 
@@ -78,13 +93,21 @@ fun EditUsernameBottomSheetContent(
                     scheme = scheme, props = ODSTextFieldProps(
                         label = stringResource(R.string.username),
                         inputText = usernameText,
+                        size = ODSTextFieldSize.SMALL,
                         placeholderText = stringResource(R.string.enter_username),
                         disabled = uiProps?.isUpdating ?: false,
-                        supportMessageProps = ODSTextFieldSupportMessageProps(message = uiProps?.error)
-                    ), onValueChange = { usernameText = it })
+                        supportMessageProps = ODSTextFieldSupportMessageProps(message = null)
+                    ), onValueChange = {
+                        usernameText = it
+                        // Clear error when user starts typing
+                        if (uiProps?.error != null) {
+                            viewModel.clearError()
+                        }
+                    })
             }
         }, onCloseClicked = onDismiss
     )
 }
+
 
 

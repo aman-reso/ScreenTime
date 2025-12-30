@@ -93,7 +93,9 @@ fun AddBlockingRuleBottomSheet(
                 scheme = scheme,
                 props = ODSButtonProps(
                     label = "Add Blocking Rule",
-                    disabled = blockType == null
+                    disabled = blockType == null,
+                    size = ODSButtonSize.SMALL,
+                    variant = ODSButtonVariant.SECONDARY
                 ),
                 onClick = {
                     when (blockType) {
@@ -161,7 +163,6 @@ fun AddBlockingRuleBottomSheet(
                     modifier = Modifier.fillMaxWidth(),
                     gap = DSVariables.spacingComponent3
                 ) {
-                    // Block Instantly
                     ODSCardChoiceSimple(
                         modifier = Modifier.fillMaxWidth(),
                         scheme = scheme,

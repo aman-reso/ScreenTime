@@ -1,6 +1,6 @@
 package com.app.screentime.search.repository
 
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.UserSearchResult
 import com.app.screentime.search.service.SearchService
 import javax.inject.Inject

@@ -24,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -35,28 +36,41 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.navigation.ScreenTimeNavigation
 import com.app.screentime.ui.language.LanguageViewModel
-
+import com.app.screentime.update.InAppUpdateManager
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ui.theme.ScreenTimeTheme
 import com.app.screentime.ui.theme.ThemeViewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
+import com.app.screentime.ui.theme.ColorPalette
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.tokens.tokens.ODSTheme
 import com.telekom.odsystem.tokens.tokens.magentaScheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var inAppUpdateManager: InAppUpdateManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installSplashScreen()
@@ -66,15 +80,15 @@ class MainActivity : ComponentActivity() {
             val languageViewModel: LanguageViewModel = hiltViewModel()
             val language by languageViewModel.language.collectAsState()
             SetLocale(language)
-            
+
             // Track deeplink URI from intent
             var deeplinkUri by remember { mutableStateOf(intent.data) }
-            
+
             // Update deeplink when intent changes
             LaunchedEffect(intent) {
                 deeplinkUri = intent.data
             }
-            
+
             ScreenTimeTheme(themeViewModel) {
                 val useDarkTheme = LocalThemeMode.current
                 val scheme = neutralScheme
@@ -105,11 +119,6 @@ class MainActivity : ComponentActivity() {
                     background = listOf(ODSColorModel(scheme.basicBackground)),
                     verticalArrangement = Arrangement.Top
                 ) {
-                    ODSBox(
-                        modifier = Modifier
-                            .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
-                            .fillMaxWidth()
-                    ) {}
                     ScreenTimeNavigation(
                         scheme = scheme,
                         deeplinkUri = deeplinkUri
@@ -121,6 +130,36 @@ class MainActivity : ComponentActivity() {
         val appLinkIntent: Intent = intent
         val appLinkAction: String? = appLinkIntent.action
         val appLinkData: Uri? = appLinkIntent.data
+    }
+
+    override fun onStart() {
+        super.onStart()
+        inAppUpdateManager.initialize(this)
+        lifecycleScope.launch {
+            inAppUpdateManager.checkForUpdate(this@MainActivity)
+        }
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+        // Check for update completion when app resumes
+        lifecycleScope.launch {
+            if (inAppUpdateManager.isUpdateInProgress(this@MainActivity)) {
+                inAppUpdateManager.completeUpdate()
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // Handle in-app update result
+        if (requestCode == 1001) {
+            if (resultCode != RESULT_OK) {
+                // Update flow was cancelled or failed
+                // You can show a message or retry logic here
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

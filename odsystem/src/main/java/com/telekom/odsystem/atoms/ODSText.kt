@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.Dp
 import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSTextStyle
 import com.telekom.odsystem.foundations.sizeWithinBounds
+import com.telekom.odsystem.tokens.toTextStyleIgnoreScale
 
 /**
  * Created by dmarinopoulos on 1/3/24
@@ -92,7 +93,7 @@ fun ODSText(
     onTextLayout: ((TextLayoutResult) -> Unit)? = null
 ) {
     var internalModifier = modifier ?: Modifier
-    val internalTextStyle = style?.toTextStyle() ?: TextStyle()
+    val internalTextStyle = style?.toTextStyleIgnoreScale() ?: TextStyle()
     val internalTextColor = color?.getColor() ?: LocalContentColor.current
     val internalOverflow = overflow ?: TextOverflow.Clip
     val internalSoftWrap = softWrap != false

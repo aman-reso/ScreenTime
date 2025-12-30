@@ -6,25 +6,23 @@ import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequest
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.app.screentime.challenge.repository.ChallengeRepository
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.database.ScreenTimeDatabase
-import com.app.screentime.database.entity.JoinedChallengeEntity
 import com.app.screentime.database.repository.JoinedChallengeRepository
 import com.app.screentime.network.model.BatchChallengeStatsRequest
 import com.app.screentime.network.model.ChallengeStatsRequest
 import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.record.repository.NetworkUsageHelper
 import com.app.screentime.record.repository.ScreenUsageHelper
+import com.app.screentime.utils.DateUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.app.screentime.utils.DateUtils
 import java.util.concurrent.TimeUnit
 
 /**
@@ -47,7 +45,7 @@ class ChallengeSyncWorker(
     private val challengeRepository by lazy {
         ChallengeRepository(
             com.app.screentime.challenge.service.ChallengeServiceImpl(
-                com.app.screentime.network.NetworkClient(applicationContext)
+                NetworkClient(applicationContext, preferencesManager)
             )
         )
     }
@@ -61,7 +59,7 @@ class ChallengeSyncWorker(
     }
 
     private val preferencesManager by lazy {
-        com.app.screentime.preferences.PreferencesManager(applicationContext)
+        PreferencesManager(applicationContext)
     }
 
     override suspend fun doWork(): Result {
@@ -112,7 +110,7 @@ class ChallengeSyncWorker(
                         lastSyncResult.fold(
                             onSuccess = { response ->
                                 if (response.success == true && response.data != null) {
-                                    val lastSyncTimeStr = response.data.lastSyncTime
+                                    val lastSyncTimeStr = response.data!!.lastSyncTime
                                     if (lastSyncTimeStr != null) {
                                         serverLastSyncTime = parseISO8601(lastSyncTimeStr)
                                         Log.d(TAG, "ChallengeSyncWorker: Server last sync time for challenge ${challenge.challengeId}: $serverLastSyncTime")
@@ -222,7 +220,11 @@ class ChallengeSyncWorker(
                             challengeId = challenge.challengeId,
                             appName = appName,
                             packageName = allPackageNames, // Comma-separated package names in single event
-                            startSyncTime = DateUtils.formatISO8601(DateUtils.fromMillis(effectiveLastSyncTime)),
+                            startSyncTime = DateUtils.formatISO8601(
+                                DateUtils.fromMillis(
+                                    effectiveLastSyncTime
+                                )
+                            ),
                             endSyncTime = DateUtils.formatISO8601(DateUtils.fromMillis(syncEndTime)),
                             duration = totalDuration
                         )
@@ -359,7 +361,7 @@ class ChallengeSyncWorker(
                 val repository = JoinedChallengeRepository(database.joinedChallengeDao())
                 val challengeRepository = ChallengeRepository(
                     com.app.screentime.challenge.service.ChallengeServiceImpl(
-                        com.app.screentime.network.NetworkClient(context)
+                        NetworkClient(context, PreferencesManager(context))
                     )
                 )
                 
@@ -371,7 +373,7 @@ class ChallengeSyncWorker(
                         result.fold(
                             onSuccess = { response ->
                                 if (response.success == true && response.data != null) {
-                                    val serverChallenges = response.data.challenges
+                                    val serverChallenges = response.data!!.challenges
                                     Log.d(TAG, "Fetched ${serverChallenges.size} user challenges from server")
                                     
                                     // Get existing challenges from database
@@ -395,7 +397,7 @@ class ChallengeSyncWorker(
                                             detailsResult.fold(
                                                 onSuccess = { detailsResponse ->
                                                     if (detailsResponse.success == true && detailsResponse.data != null) {
-                                                        packageNames = detailsResponse.data.packageNames
+                                                        packageNames = detailsResponse.data!!.packageNames
                                                     }
                                                 },
                                                 onFailure = {
@@ -490,7 +492,6 @@ class ChallengeSyncWorker(
                 val database = ScreenTimeDatabase.getDatabase(context)
                 val repository = JoinedChallengeRepository(database.joinedChallengeDao())
                 
-                // Use a coroutine scope to access suspend function
                 CoroutineScope(Dispatchers.IO).launch {
                     val activeChallenges = repository.getActiveChallenges()
                     for (challenge in activeChallenges) {

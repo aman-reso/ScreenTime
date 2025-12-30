@@ -2,7 +2,7 @@ package com.app.screentime.record.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.AppUsageStatsData
 import com.app.screentime.network.model.DailyUsage
 import com.app.screentime.network.model.UsageRecordResponse

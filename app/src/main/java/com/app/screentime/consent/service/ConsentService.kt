@@ -1,5 +1,6 @@
 package com.app.screentime.consent.service
 
+import com.app.screentime.core.network.model.*
 import com.app.screentime.network.model.*
 
 /**

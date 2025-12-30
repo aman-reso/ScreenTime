@@ -2,12 +2,22 @@ package com.app.screentime.permission
 
 import android.app.AppOpsManager
 import android.content.Intent
+import android.graphics.Color
 import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
@@ -21,6 +31,7 @@ import com.app.screentime.permission.component.herosection.HeroSection
 import com.app.screentime.permission.component.herosection.HeroSectionProps
 import com.app.screentime.permission.component.infocard.InfoCardList
 import com.app.screentime.permission.component.infocard.InfoCardProps
+import com.app.screentime.ui.theme.LocalThemeMode
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
@@ -39,6 +50,28 @@ fun AppPermissionScreen(
     onAllPermissionsGranted: () -> Unit = {},
     scheme: ODSTheme = neutralScheme
 ) {
+    val activity = LocalActivity.current
+    // Get theme mode for status bar styling
+    val useDarkTheme = LocalThemeMode.current
+    SideEffect {
+        if (activity is ComponentActivity) {
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (useDarkTheme) {
+                    SystemBarStyle.dark(scheme.basicBackground.getIntColor())
+                } else {
+                    SystemBarStyle.light(
+                        scheme.basicBackground.getIntColor(),
+                        darkScrim = scheme.basicBackground.getIntColor()
+                    )
+                },
+                navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT,
+                    Color.TRANSPARENT
+                )
+            )
+        }
+    }
+
     val context = LocalContext.current
 
     // Permission state
@@ -82,6 +115,11 @@ fun AppPermissionScreen(
                     .fillMaxSize()
                     .verticalScroll(scrollState)
             ) {
+                ODSBox(
+                    modifier = Modifier
+                        .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                        .fillMaxWidth()
+                ) {}
                 ODSColumn(
                     modifier = Modifier,
                     clipContent = true,

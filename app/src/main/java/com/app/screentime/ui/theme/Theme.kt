@@ -16,8 +16,10 @@ import com.telekom.odsystem.ODSThemeLiveDataHolder
 import com.telekom.odsystem.ODSThemeType
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import com.telekom.odsystem.tokens.tokens.lagoonSecondaryScheme
 
 val LocalThemeMode = compositionLocalOf { false }
+val headerTheme = compositionLocalOf { lagoonSecondaryScheme }
 
 @Composable
 fun ScreenTimeTheme(
@@ -50,6 +52,7 @@ fun ScreenTimeTheme(
 
     CompositionLocalProvider(
         LocalThemeMode provides isSystemDark,
+        headerTheme provides ColorPalette.BenefitScheme.pickSchemeRandom()
     ) {
         MaterialTheme(
             shapes = Shapes,

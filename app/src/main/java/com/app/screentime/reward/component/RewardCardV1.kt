@@ -1,10 +1,12 @@
 package com.app.screentime.reward.component
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.telekom.odsystem.DSTextStyles
@@ -44,19 +46,16 @@ fun RewardCardV1(
             modifier.width(180.dp)
         } else {
             modifier
-        })
-            .customClickable(
-                onClick = onClick,
-                isPressed = {}
-            ),
+        }).customClickable(
+            onClick = onClick, isPressed = {}),
         background = listOf(ODSColorModel(scheme.basicBackgroundCard)),
-        cornerRadius = ODSCorners(all = 16.dp),
-        padding = ODSPadding(all = DSVariables.spacingComponent3)
+        cornerRadius = ODSCorners(all = DSVariables.radiusSmall),
+        clipContent = true
     ) {
         ODSColumn(
+            modifier = Modifier.fillMaxWidth(),
             gap = DSVariables.spacingComponent2
         ) {
-            // Image Tag - always show, use provided or dummy
             ODSImage(
                 imageModel = imageTag ?: ODSImageModel(
                     url = "https://via.placeholder.com/180x100",
@@ -65,49 +64,52 @@ fun RewardCardV1(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp),
-                cornerRadius = ODSCorners(all = 12.dp)
+                    .height(80.dp),
+                cornerRadius = ODSCorners(all = DSVariables.radiusSmall),
+                contentScale = ContentScale.Crop
             )
 
-            // Title - max 2 lines
-            ODSText(
-                text = title,
-                style = DSTextStyles.bodyMBold,
-                color = scheme.basicText,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            // Coin or Price (if provided) - shown as normal text
-            coinOrPrice?.let {
+            ODSColumn(padding = ODSPadding(horizontal = DSVariables.spacingComponent3)) {
+                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                 ODSText(
-                    text = it,
-                    style = DSTextStyles.oxBodyMRegular,
-                    color = scheme.basicText
+                    text = title,
+                    style = DSTextStyles.bodySRegular,
+                    color = scheme.basicText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-            }
-
-            // Action Text (if provided) - Secondary button
-            actionText?.let { action ->
-                if (onActionClick != null) {
-                    ODSButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        scheme = scheme,
-                        props = ODSButtonProps(
-                            label = action,
-                            variant = ODSButtonVariant.SECONDARY,
-                            size = ODSButtonSize.SMALL
-                        ),
-                        onClick = onActionClick
-                    )
-                } else {
+                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                coinOrPrice?.let {
                     ODSText(
-                        text = action,
-                        style = DSTextStyles.oxBodySRegular,
-                        color = scheme.basicTextLink,
-                        modifier = Modifier.fillMaxWidth()
+                        text = it,
+                        style = DSTextStyles.oxBodyMBold,
+                        color = scheme.functionalSuccessStandard
                     )
                 }
+                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+
+                actionText?.let { action ->
+                    if (onActionClick != null) {
+                        ODSButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = action,
+                                variant = ODSButtonVariant.SECONDARY,
+                                size = ODSButtonSize.SMALL
+                            ),
+                            onClick = onActionClick
+                        )
+                    } else {
+                        ODSText(
+                            text = action,
+                            style = DSTextStyles.oxBodySRegular,
+                            color = scheme.basicTextLink,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
             }
         }
     }

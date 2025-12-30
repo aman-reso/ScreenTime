@@ -1,8 +1,18 @@
 package com.app.screentime.record.screen
 
+import android.graphics.Color
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -11,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -27,6 +38,7 @@ import com.app.screentime.record.component.DateSpinner
 import com.app.screentime.record.component.SummaryTab
 import com.app.screentime.record.component.TimelineTab
 import com.app.screentime.record.viewmodel.RecordDetailViewModel
+import com.app.screentime.ui.theme.LocalThemeMode
 
 import com.app.screentime.utils.DateUtils
 import kotlinx.coroutines.launch
@@ -62,6 +74,27 @@ fun RecordDetailScreen(
     scheme: ODSTheme = neutralScheme,
     viewModel: RecordDetailViewModel = hiltViewModel()
 ) {
+    val activity = LocalActivity.current
+    // Get theme mode for status bar styling
+    val useDarkTheme = LocalThemeMode.current
+    SideEffect {
+        if (activity is ComponentActivity) {
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (useDarkTheme) {
+                    SystemBarStyle.dark(scheme.basicBackground.getIntColor())
+                } else {
+                    SystemBarStyle.light(
+                        scheme.basicBackground.getIntColor(),
+                        darkScrim = scheme.basicBackground.getIntColor()
+                    )
+                },
+                navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT,
+                    Color.TRANSPARENT
+                )
+            )
+        }
+    }
     val uiState by viewModel.uiState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -104,6 +137,13 @@ fun RecordDetailScreen(
         modifier = modifier.fillMaxSize(),
         background = listOf(ODSColorModel(scheme.basicBackground))
     ) {
+        // Status bar padding
+        ODSBox(
+            modifier = Modifier
+                .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                .fillMaxWidth()
+        ) {}
+        
         ODSRow(
             modifier = Modifier.fillMaxWidth(),
             padding = ODSPadding(horizontal = 8.dp),
@@ -127,7 +167,7 @@ fun RecordDetailScreen(
 
             ODSText(
                 text = username,
-                style = DSTextStyles.titleS,
+                style = DSTextStyles.bodyL,
                 color = scheme.basicText,
                 modifier = Modifier.weight(1f)
             )

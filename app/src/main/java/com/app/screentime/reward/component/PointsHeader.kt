@@ -23,20 +23,12 @@ import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
-import com.telekom.odsystem.atoms.button.ODSButtonSize
-import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.foundations.customClickable
-import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenu
-import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenuButtonProps
-import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenuMenuSize
-import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenuOptions
-import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenuProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
@@ -47,22 +39,12 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun PointsHeader(
     points: Int? = null,
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit = {},
     onInfoClick: () -> Unit = {},
     onOrderHistoryClick: () -> Unit = {},
     onCoinHistoryClick: () -> Unit = {},
     scheme: ODSTheme
 ) {
     var showMenu by remember { mutableStateOf(false) }
-
-    val menuOptions = listOf(
-        ODSFlyoutMenuOptions(
-            label = "Order History"
-        ),
-        ODSFlyoutMenuOptions(
-            label = "Coin History"
-        )
-    )
 
     ODSColumn(
         modifier = modifier.fillMaxWidth(),
@@ -73,78 +55,6 @@ fun PointsHeader(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ODSRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ODSBox(
-                modifier = Modifier
-                    .size(24.dp)
-                    .customClickable(
-                        onClick = onBackClick,
-                        isPressed = {}
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.left_condensed_type_standard,
-                        tint = scheme.basicText,
-                        contentDescription = "Back"
-                    ),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            ODSBox(
-                modifier = Modifier.size(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // ODSFlyoutMenu with invisible button (for anchor positioning)
-                ODSFlyoutMenu(
-                    modifier = Modifier.size(24.dp),
-                    scheme = scheme,
-                    props = ODSFlyoutMenuProps(
-                        expanded = showMenu,
-                        menuSize = ODSFlyoutMenuMenuSize.SMALL,
-                        buttonProps = ODSFlyoutMenuButtonProps(
-                            buttonIcon = ODSIconModel(
-                                drawableRes = R.drawable.menu_type_standard_size_standard,
-                                tint = scheme.basicText,
-                                contentDescription = "Menu"
-                            ),
-                            variant = ODSButtonVariant.GHOST,
-                            size = ODSButtonSize.SMALL
-                        ),
-                        options = menuOptions
-                    ),
-                    onClick = { showMenu = true },
-                    onDismissRequest = { showMenu = false },
-                    onMenuListItemClicked = { index ->
-                        showMenu = false
-                        when (index) {
-                            0 -> onOrderHistoryClick()
-                            1 -> onCoinHistoryClick()
-                        }
-                    }
-                )
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.menu_type_standard_size_standard,
-                        tint = scheme.basicText,
-                        contentDescription = "Menu"
-                    ),
-                    modifier = Modifier
-                        .size(24.dp)
-                        .customClickable(
-                            onClick = { showMenu = true },
-                            isPressed = {}
-                        )
-                )
-            }
-        }
-
-        ODSRow(
             padding = ODSPadding(vertical = DSVariables.spacingComponent4),
             modifier = Modifier.wrapContentWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -152,9 +62,8 @@ fun PointsHeader(
             gap = DSVariables.spacingComponent2
         ) {
             ODSText(
-                text = points?.let {
-                    it.toString().replace(Regex("(\\d)(?=(\\d{3})+(?!\\d))"), "$1,")
-                } ?: "---",
+                text = points?.toString()?.replace(Regex("(\\d)(?=(\\d{3})+(?!\\d))"), "$1,")
+                    ?: "---",
                 style = DSTextStyles.oxDisplayL,
                 color = scheme.basicText
             )
@@ -193,6 +102,15 @@ fun PointsHeader(
                 scheme = scheme
             )
         }
+
+        ExpiringPointsBanner(
+            expiringPoints = 20,
+            onUseClick = {
+                // Handle use click
+            },
+            modifier = Modifier.fillMaxWidth(),
+            scheme = scheme
+        )
     }
 }
 

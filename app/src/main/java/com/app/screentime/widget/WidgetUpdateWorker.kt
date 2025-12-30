@@ -13,7 +13,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.app.screentime.landing.mapper.LandingUiMapper
 import com.app.screentime.landing.usecase.LandingUsecase
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.record.repository.NetworkUsageHelper

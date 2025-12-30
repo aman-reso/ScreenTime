@@ -21,17 +21,18 @@ fun ChallengeTitleSection(
     scheme: ODSTheme = neutralScheme
 ) {
     ODSColumn(
+        padding = ODSPadding(top = DSVariables.spacingComponent4),
         modifier = Modifier.fillMaxWidth(),
         gap = DSVariables.spacingComponent2
     ) {
         ODSText(
             text = title,
-            style = DSTextStyles.bodyMBold,
+            style = DSTextStyles.oxBodyMBold,
             color = scheme.basicText
         )
         ODSText(
             text = description,
-            style = DSTextStyles.bodySRegular,
+            style = DSTextStyles.oxBodySRegular,
             color = scheme.basicTextRecessive
         )
     }

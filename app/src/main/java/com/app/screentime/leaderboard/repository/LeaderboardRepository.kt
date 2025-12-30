@@ -1,7 +1,7 @@
 package com.app.screentime.leaderboard.repository
 
 import com.app.screentime.leaderboard.service.LeaderboardService
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.LeaderboardResponse
 import javax.inject.Inject
 import javax.inject.Singleton

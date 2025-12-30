@@ -88,9 +88,12 @@ fun ODSListRowStandard(
             horizontalAlignment = style.textContentHorizontalAlignment,
             verticalAlignment = style.textContentVerticalAlignment
         ) {
+            val hasDescription = props.showDescriptionTitle && 
+                (!props.descriptionTitle.isNullOrEmpty() || !props.descriptionText.isNullOrEmpty())
+            
             ODSColumn(
                 modifier = Modifier
-                    .weight(1f)
+                    .then(if (hasDescription) Modifier.weight(1f) else Modifier)
                     .semantics {
                         isTraversalGroup = true
                     }, // Not exported by plugin
@@ -119,7 +122,7 @@ fun ODSListRowStandard(
                     )
                 }
             }
-            if (props.showDescriptionTitle) {
+            if (hasDescription) {
                 ODSColumn(
                     modifier = Modifier
                         .weight(1f)

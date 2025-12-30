@@ -108,7 +108,7 @@ fun ConsentScreen(
                         ) {
                             ODSText(
                                 text = stringResource(R.string.privacy_consent),
-                                style = DSTextStyles.titleS,
+                                style = DSTextStyles.bodyL,
                                 color = scheme.basicText
                             )
                         }

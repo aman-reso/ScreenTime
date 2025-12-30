@@ -12,5 +12,6 @@ data class RewardUiState(
     val unclaimedCount: Int = 0,
     val rewards: List<RewardItem> = emptyList(),
     val catalog: List<RewardCatalogItem> = emptyList(),
+    val catalogPairs: List<List<RewardCatalogItem>> = emptyList(), // Catalog items grouped in pairs for 2 items per row
     val error: String? = null
 )

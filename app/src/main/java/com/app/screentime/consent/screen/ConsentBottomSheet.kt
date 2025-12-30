@@ -145,7 +145,7 @@ fun ConsentBottomSheetContent(
             props = ODSDialogBottomSheetPreferredActionsProps(
                 variant = ODSDialogBottomSheetPreferredActionsVariant.STACKED,
                 secondaryActionProps = ODSButtonProps(
-                    size = ODSButtonSize.LARGE,
+                    size = ODSButtonSize.SMALL,
                     label = if (uiState.isSubmitting) stringResource(R.string.submitting) else stringResource(
                         R.string.action_allow
                     ), disabled = uiState.isSubmitting
@@ -153,7 +153,7 @@ fun ConsentBottomSheetContent(
                 mainActionProps = ODSButtonProps(
                     label = stringResource(R.string.deny),
                     variant = ODSButtonVariant.OUTLINE,
-                    size = ODSButtonSize.LARGE,
+                    size = ODSButtonSize.SMALL,
                     disabled = uiState.isSubmitting
                 ),
             ),

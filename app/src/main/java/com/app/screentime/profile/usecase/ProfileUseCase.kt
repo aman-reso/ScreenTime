@@ -1,9 +1,10 @@
 package com.app.screentime.profile.usecase
 
 import android.content.Context
-import android.content.Intent
-import android.net.VpnService
+// import android.content.Intent
+// import android.net.VpnService
 import com.app.screentime.R
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.network.model.UsernameUpdateRequest
 import com.app.screentime.profile.mapper.ProfileMapper
 import com.app.screentime.profile.mapper.ProfileUiMapper
@@ -14,14 +15,11 @@ import com.app.screentime.profile.model.ProfileUiModel
 import com.app.screentime.profile.model.ProfileUiProps
 import com.app.screentime.profile.model.SettingsItemClickResult
 import com.app.screentime.profile.repository.ProfileRepository
-import com.app.screentime.profile.usecase.BlockedSitesUseCase
-import com.app.screentime.preferences.PreferencesManager
-import com.app.screentime.service.ScreenTimeVpnService
 import com.app.screentime.service.VpnPermissionManager
+// import com.app.screentime.service.ScreenTimeVpnService
+// import com.app.screentime.service.VpnPermissionManager
 import com.app.screentime.widget.WidgetSetupHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -45,15 +43,6 @@ class ProfileUseCase @Inject constructor(
     }
 
     /**
-     * Update profile preferences
-     * @param profile The profile UI model to save
-     */
-    fun updateProfile(profile: ProfileUiModel) {
-        profileMapper.toPreferences(profile, preferencesManager)
-    }
-
-
-    /**
      * Update username
      * Updates both the API profile and local preferences
      * @return true if successful (success == true), false otherwise
@@ -71,17 +60,23 @@ class ProfileUseCase @Inject constructor(
         if (response.success == true && response.data != null) {
             // Update local preferences with new username from API response
             val updatedUserInfo = response.data.let { updatedData ->
-                currentUserInfo.copy(
-                    username = updatedData.username,
-                    // Preserve other fields from current user info
-                    userId = updatedData.userId,
-                    createdAt = updatedData.createdAt,
-                    totpSecret = updatedData.totpSecret ?: currentUserInfo.totpSecret,
-                    totpEnabled = updatedData.totpEnabled,
-                    totpPeriod = updatedData.totpPeriod
-                )
+                if (updatedData != null) {
+                    currentUserInfo.copy(
+                        username = updatedData.username,
+                        // Preserve other fields from current user info
+                        userId = updatedData.userId,
+                        createdAt = updatedData.createdAt,
+                        totpSecret = updatedData.totpSecret ?: currentUserInfo.totpSecret,
+                        totpEnabled = updatedData.totpEnabled,
+                        totpPeriod = updatedData.totpPeriod
+                    )
+                } else {
+                    null
+                }
             }
-            preferencesManager.saveUserInformation(updatedUserInfo)
+            updatedUserInfo?.let {
+                preferencesManager.saveUserInformation(updatedUserInfo)
+            }
             return true
         } else {
             // API returned success=false
@@ -123,9 +118,23 @@ class ProfileUseCase @Inject constructor(
             )
             add(
                 ProfileSettingsUi.Other(
-                    R.string.enable_vpn,
+                    R.string.manage_vpn,
                     url = "",
                     key = ProfileSettingsKey.VPN_SERVICE
+                )
+            )
+            add(
+                ProfileSettingsUi.Other(
+                    text = R.string.recover_deleted_notifications,
+                    url = "",
+                    key = ProfileSettingsKey.NOTIFICATION_HISTORY
+                )
+            )
+            add(
+                ProfileSettingsUi.Other(
+                    text = R.string.app_lock,
+                    url = "",
+                    key = ProfileSettingsKey.APP_LOCK
                 )
             )
 
@@ -144,6 +153,13 @@ class ProfileUseCase @Inject constructor(
                     R.string.set_widget,
                     url = "",
                     key = ProfileSettingsKey.WIDGET
+                )
+            )
+            add(
+                ProfileSettingsUi.Other(
+                    R.string.set_wallpaper,
+                    url = "",
+                    key = ProfileSettingsKey.WALLPAPER
                 )
             )
 
@@ -170,12 +186,18 @@ class ProfileUseCase @Inject constructor(
                     key = ProfileSettingsKey.HELP_SUPPORT
                 )
             )
+
+            // Note: Device Admin removed - not suitable for consumer apps
+            // Google Play rejects device admin for non-enterprise apps
+            // Use Focus Mode and App Blocking instead
         }
     }
 
     /**
      * Check if VPN service is currently running
      */
+    // Commented out VPN feature
+    /*
     fun isVpnServiceRunning(): Boolean {
         val activityManager =
             context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
@@ -190,17 +212,24 @@ class ProfileUseCase @Inject constructor(
         val vpnPermissionManager = VpnPermissionManager(context)
         return vpnPermissionManager.hasVpnPermission() && isVpnServiceRunning()
     }
+    */
+    
+    // VPN feature disabled - return false
+    fun isVpnServiceRunning(): Boolean = false
+    fun isVpnRunning(): Boolean = false
 
     /**
      * Get blocked sites count
      * Returns 0 if VPN is not running
      */
+    // VPN feature disabled - always return 0
     suspend fun getBlockedSitesCount(): Int {
-        return if (isVpnRunning()) {
-            blockedSitesUseCase.getBlockedSitesCount()
-        } else {
-            0
-        }
+        // return if (isVpnRunning()) {
+        //     blockedSitesUseCase.getBlockedSitesCount()
+        // } else {
+        //     0
+        // }
+        return 0
     }
 
     /**
@@ -249,8 +278,13 @@ class ProfileUseCase @Inject constructor(
             ProfileSettingsKey.SET_APP_LAUNCH_LIMIT,
             ProfileSettingsKey.AD_BLOCKING -> SettingsItemClickResult.NavigateToScreen("app_blocking")
 
+            ProfileSettingsKey.NOTIFICATION_HISTORY -> SettingsItemClickResult.NavigateToScreen("captured_notifications")
+            ProfileSettingsKey.APP_LOCK -> SettingsItemClickResult.NavigateToScreen("app_lock")
+            ProfileSettingsKey.WALLPAPER -> SettingsItemClickResult.NavigateToScreen("wallpaper")
+            // Device Admin removed - not suitable for consumer apps
+
             ProfileSettingsKey.VPN_SERVICE -> {
-                handleVpnServiceClick(isVpnRunning, vpnPermissionManager)
+                SettingsItemClickResult.NavigateToScreen("blocked_links")
             }
 
             else -> {
@@ -266,6 +300,8 @@ class ProfileUseCase @Inject constructor(
     /**
      * Handle VPN service click - returns the appropriate action
      */
+    // VPN feature disabled - commented out
+    /*
     private fun handleVpnServiceClick(
         isVpnRunning: Boolean,
         vpnPermissionManager: VpnPermissionManager
@@ -293,6 +329,7 @@ class ProfileUseCase @Inject constructor(
             }
         }
     }
+    */
 
     /**
      * Request widget setup

@@ -11,6 +11,7 @@ object SettingsIconMapper {
         ProfileSettingsKey.BLOCK_APP to Icons.Default.Block,
         ProfileSettingsKey.SET_APP_LIMIT to Icons.Default.Timer,
         ProfileSettingsKey.SET_APP_LAUNCH_LIMIT to Icons.Default.PlayArrow,
+        ProfileSettingsKey.APP_LOCK to Icons.Default.Lock,
         ProfileSettingsKey.AD_BLOCKING to Icons.Default.AdsClick,
         ProfileSettingsKey.THEME to Icons.Default.Palette,
         ProfileSettingsKey.LANGUAGE to Icons.Default.Language,

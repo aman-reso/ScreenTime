@@ -1,8 +1,9 @@
 package com.app.screentime.network.service.notification
 
-import com.app.screentime.network.ApiEndpoints
-import com.app.screentime.network.NetworkClient
-import com.app.screentime.network.model.*
+import com.app.screentime.core.network.ApiEndpoints
+import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.model.ApiResponse
+import com.app.screentime.network.model.NotificationSettings
 import com.app.screentime.network.service.NotificationData
 import io.ktor.client.call.*
 import io.ktor.client.plugins.ClientRequestException
@@ -23,38 +24,6 @@ class NotificationServiceImpl @Inject constructor(
 
     private val httpClient = networkClient.httpClient
 
-    override suspend fun sendNotification(
-        userId: String,
-        message: String,
-        type: String
-    ): Result<ApiResponse<Unit>> {
-        return try {
-            val request = mapOf(
-                "userId" to userId,
-                "message" to message,
-                "type" to type
-            )
-
-            val response: HttpResponse = httpClient.post(ApiEndpoints.Notifications.SEND) {
-                setBody(request)
-            }
-
-            if (response.status.isSuccess()) {
-                val apiResponse: ApiResponse<Unit> = response.body()
-                Result.success(apiResponse)
-            } else {
-                Result.failure(Exception("Failed to send notification: ${response.status}"))
-            }
-        } catch (e: ClientRequestException) {
-            val errorBody = e.response.bodyAsText()
-            Result.failure(Exception("Client error: ${e.response.status}, $errorBody", e))
-        } catch (e: ServerResponseException) {
-            val errorBody = e.response.bodyAsText()
-            Result.failure(Exception("Server error: ${e.response.status}, $errorBody", e))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
     override suspend fun getNotificationHistory(userId: String): Result<ApiResponse<List<NotificationData>>> {
         return try {

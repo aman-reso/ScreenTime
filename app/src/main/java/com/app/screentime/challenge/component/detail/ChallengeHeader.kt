@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
+import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonButtonType
 import com.telekom.odsystem.atoms.button.ODSButtonProps
@@ -19,10 +21,11 @@ import com.telekom.odsystem.R.drawable
 import com.telekom.odsystem.neutralScheme
 
 /**
- * Header with back and share buttons.
+ * Header with back arrow, challenge title, and share icon.
  */
 @Composable
 fun ChallengeHeader(
+    title: String,
     onBackClick: () -> Unit,
     onShareClick: () -> Unit,
     scheme: ODSTheme = neutralScheme
@@ -45,6 +48,13 @@ fun ChallengeHeader(
                 size = ODSButtonSize.SMALL
             ),
             onClick = onBackClick
+        )
+
+        ODSText(
+            text = title,
+            style = DSTextStyles.oxBodyL,
+            color = scheme.basicText,
+            modifier = Modifier.weight(1f)
         )
 
         ODSButton(

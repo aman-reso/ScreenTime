@@ -1,652 +1,681 @@
-//package com.app.screentime.leaderboard.screen
-//
-//import androidx.compose.foundation.background
-//import androidx.compose.foundation.border
-//import androidx.compose.foundation.layout.*
-//import androidx.compose.foundation.lazy.LazyColumn
-//import androidx.compose.foundation.lazy.itemsIndexed
-//import androidx.compose.foundation.pager.HorizontalPager
-//import androidx.compose.foundation.pager.rememberPagerState
-//import androidx.compose.foundation.shape.CircleShape
-//import androidx.compose.ui.draw.clip
-//
-//import androidx.compose.material.icons.Icons
-//import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-//import androidx.compose.material.icons.filled.*
-//import androidx.compose.material.icons.filled.Star
-//import androidx.compose.material3.*
-//import com.app.screentime.ui.atom.SegmentedControl
-//import androidx.compose.runtime.*
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.draw.shadow
-//import androidx.compose.ui.graphics.Color
-//import androidx.compose.ui.text.font.FontWeight
-//import androidx.compose.ui.unit.dp
-//import androidx.hilt.navigation.compose.hiltViewModel
-//import androidx.navigation.NavController
-//import com.app.screentime.leaderboard.viewmodel.LeaderboardViewModel
-//import com.app.screentime.network.model.LeaderboardEntry
-//import com.app.screentime.record.repository.formatDuration
-//import com.telekom.odsystem.atoms.ODSText
-//import com.telekom.odsystem.atoms.ODSTextStyle
-//
-//import kotlinx.coroutines.launch
-//import androidx.compose.runtime.rememberCoroutineScope
-//import androidx.compose.ui.res.stringResource
-//import com.app.screentime.R
-//import com.app.screentime.ui.atom.AppLoader
-//import com.telekom.odsystem.tokens.tokens.ODSTheme
-//import kotlin.math.absoluteValue
-//import com.telekom.odsystem.foundations.HexColor
-//import com.telekom.odsystem.DSTextStyles
-//import com.telekom.odsystem.atoms.ODSBox
-//import com.telekom.odsystem.atoms.ODSColumn
-//import com.telekom.odsystem.atoms.ODSRow
-//import com.telekom.odsystem.atoms.button.ODSButton
-//import com.telekom.odsystem.atoms.button.ODSButtonProps
-//import com.telekom.odsystem.atoms.button.ODSButtonVariant
-//import com.telekom.odsystem.atoms.icon.ODSIcon
-//import com.telekom.odsystem.atoms.icon.ODSIconModel
-//import com.telekom.odsystem.foundations.ODSColorModel
-//import com.telekom.odsystem.foundations.ODSPadding
-//
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun LeaderboardScreen(
-//    modifier: Modifier = Modifier,
-//    navController: NavController? = null,
-//    viewModel: LeaderboardViewModel = hiltViewModel(),
-//    scheme: ODSTheme = neutralScheme
-//) {
-//
-//    val uiState by viewModel.uiState.collectAsState()
-//
-//    val tabs = listOf("Daily", "Weekly")
-//    val pagerState = rememberPagerState(pageCount = { tabs.size }, initialPage = 0)
-//    val coroutineScope = rememberCoroutineScope()
-//
-//    ODSBox(
-//        modifier = modifier.fillMaxSize(),
-//        background = listOf(ODSColorModel(scheme.basicBackground))
-//    ) {
-//        ODSColumn(
-//            modifier = Modifier
-//                .fillMaxSize(),
-//            padding = ODSPadding(horizontal = 8.dp)
-//        ) {
-//            // Header
-//            ODSBox(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .wrapContentHeight(),
-//                padding = ODSPadding(vertical = 8.dp)
-//            ) {
-//                ODSRow(
-//                    modifier = Modifier
-//                        .fillMaxWidth(),
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    if (navController != null) {
-//                        ODSButton(
-//                            scheme = scheme,
-//                            props = ODSButtonProps(
-//                                buttonIcon = ODSIconModel(
-//                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-//                                    tint = scheme.basicText,
-//                                    contentDescription = "Back"
-//                                ),
-//                                buttonType = ODSButtonButtonType.ICON_ONLY,
-//                                variant = ODSButtonVariant.GHOST,
-//                                size = com.telekom.odsystem.atoms.button.ODSButtonSize.SMALL
-//                            ),
-//                            onClick = { navController.popBackStack() }
-//                        )
-//                    }
-//                    ODSColumn(modifier = Modifier.weight(1f)) {
-//                        ODSText(
-//                            text = "Leaderboard",
-//                            style = DSTextStyles.titleS,
-//                            color = scheme.basicText
-//                        )
-//                    }
-//                    ODSButton(
-//                        scheme = scheme,
-//                        props = ODSButtonProps(
-//                            buttonIcon = ODSIconModel(
-//                                imageVector = Icons.Default.Refresh,
-//                                tint = scheme.functionalSuccessStandard,
-//                                contentDescription = stringResource(R.string.refresh)
-//                            ),
-//                            buttonType = ODSButtonButtonType.ICON_ONLY,
-//                            variant = ODSButtonVariant.GHOST,
-//                            size = com.telekom.odsystem.atoms.button.ODSButtonSize.SMALL
-//                        ),
-//                        onClick = { viewModel.refresh() }
-//                    )
-//                }
-//            }
-//
-//            // Segmented Control
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(vertical = 8.dp)
-//            ) {
-//                SegmentedControl(
-//                    items = tabs,
-//                    selectedIndex = pagerState.currentPage,
-//                    onItemSelected = { index ->
-//                        coroutineScope.launch {
-//                            pagerState.animateScrollToPage(index)
-//                        }
-//                    }
-//                )
-//            }
-//
-//            Spacer(modifier = Modifier.height(8.dp))
-//
-//            // Content
-//            HorizontalPager(
-//                pageSpacing = 12.dp,
-//                state = pagerState,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .weight(1f)
-//            ) { page ->
-//                when (page) {
-//                    0 -> DailyLeaderboardContent(
-//                        entries = uiState.dailyEntries,
-//                        userRank = uiState.userDailyRank,
-//                        userDuration = uiState.userDailyDuration,
-//                        currentUsername = uiState.currentUsername,
-//                        isLoading = uiState.isLoading,
-//                        error = uiState.error
-//                    )
-//
-//                    1 -> WeeklyLeaderboardContent(
-//                        entries = uiState.weeklyEntries,
-//                        userRank = uiState.userWeeklyRank,
-//                        userDuration = uiState.userWeeklyDuration,
-//                        currentUsername = uiState.currentUsername,
-//                        isLoading = uiState.isLoading,
-//                        error = uiState.error
-//                    )
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//@Composable
-//private fun DailyLeaderboardContent(
-//    entries: List<LeaderboardEntry>,
-//    userRank: Int?,
-//    userDuration: Long?,
-//    currentUsername: String?,
-//    isLoading: Boolean,
-//    error: String?
-//) {
-//    LeaderboardContent(
-//        title = "Daily Leaderboard",
-//        entries = entries,
-//        userRank = userRank,
-//        userDuration = userDuration,
-//        currentUsername = currentUsername,
-//        isLoading = isLoading,
-//        error = error
-//    )
-//}
-//
-//@Composable
-//private fun WeeklyLeaderboardContent(
-//    entries: List<LeaderboardEntry>,
-//    userRank: Int?,
-//    userDuration: Long?,
-//    currentUsername: String?,
-//    isLoading: Boolean,
-//    error: String?
-//) {
-//    LeaderboardContent(
-//        title = "Weekly Leaderboard",
-//        entries = entries,
-//        userRank = userRank,
-//        userDuration = userDuration,
-//        currentUsername = currentUsername,
-//        isLoading = isLoading,
-//        error = error
-//    )
-//}
-//
-//@Composable
-//private fun LeaderboardContent(
-//    title: String,
-//    entries: List<LeaderboardEntry>,
-//    userRank: Int?,
-//    userDuration: Long?,
-//    currentUsername: String?,
-//    isLoading: Boolean,
-//    error: String?
-//) {
-//
-//
-//    if (isLoading) {
-//        Box(
-//            modifier = Modifier.fillMaxSize(),
-//            contentAlignment = Alignment.Center
-//        ) {
-//            AppLoader(color = HexColor(colors.success.value))
-//        }
-//        return
-//    }
-//
-//    if (error != null) {
-//        Box(
-//            modifier = Modifier.fillMaxSize(),
-//            contentAlignment = Alignment.Center
-//        ) {
-//            Column(
-//                horizontalAlignment = Alignment.CenterHorizontally,
-//                verticalArrangement = Arrangement.spacedBy(16.dp)
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Default.Error,
-//                    contentDescription = null,
-//                    tint = colors.error,
-//                    modifier = Modifier.size(48.dp)
-//                )
-//                ODSText(
-//                    text = error,
-//                    style = DSTextStyles.bodyMRegular,
-//                    color = HexColor(colors.error.value)
-//                )
-//            }
-//        }
-//        return
-//    }
-//
-//    LazyColumn(
-//        modifier = Modifier.fillMaxSize(),
-//        verticalArrangement = Arrangement.spacedBy(16.dp)
-//    ) {
-//        // User Profile Card
-//        if (userRank != null && userDuration != null && currentUsername != null) {
-//            item {
-//                UserProfileCard(
-//                    username = currentUsername,
-//                    rank = userRank,
-//                    duration = entries.find { it.username == currentUsername }?.totalScreenTime?.let {
-//                        formatDuration(
-//                            it
-//                        )
-//                    }
-//                        ?: formatDuration(userDuration),
-//                    isDaily = title.contains("Daily", ignoreCase = true)
-//                )
-//            }
-//        }
-//
-//        // Top 10 List Header
-//        item {
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Row(
-//                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Star,
-//                        contentDescription = null,
-//                        tint = colors.success,
-//                        modifier = Modifier.size(20.dp)
-//                    )
-//                    ODSText(
-//                        text = "Top 10",
-//                        style = DSTextStyles.subtitle,
-//                        color = HexColor(colors.textPrimary.value)
-//                    )
-//                }
-//                ODSText(
-//                    text = "${entries.size} players",
-//                    style = DSTextStyles.bodyMBold,
-//                    color = HexColor(colors.textSecondary.value)
-//                )
-//            }
-//        }
-//
-//        itemsIndexed(entries.take(10)) { index, entry ->
-//            LeaderboardItem(
-//                rank = entry.rank,
-//                username = entry.username,
-//                name = entry.name,
-//                duration = formatDuration(entry.totalScreenTime),
-//                isCurrentUser = entry.username == currentUsername,
-//                rankPosition = index + 1
-//            )
-//        }
-//
-//        if (entries.isEmpty()) {
-//            item {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(32.dp),
-//                    contentAlignment = Alignment.Center
-//                ) {
-//                    Column(
-//                        horizontalAlignment = Alignment.CenterHorizontally,
-//                        verticalArrangement = Arrangement.spacedBy(16.dp)
-//                    ) {
-//                        Icon(
-//                            imageVector = Icons.Default.Leaderboard,
-//                            contentDescription = null,
-//                            tint = colors.textMuted,
-//                            modifier = Modifier.size(64.dp)
-//                        )
-//                        ODSText(
-//                            text = stringResource(R.string.no_leaderboard_data_available),
-//                            style = DSTextStyles.bodyMRegular,
-//                            color = HexColor(colors.textMuted.value)
-//                        )
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-//
-///**
-// * Get initials from a name or username
-// */
-//private fun getInitials(name: String?, username: String): String {
-//    val text = name?.trim() ?: username.trim()
-//    if (text.isEmpty()) return "?"
-//
-//    val parts = text.split(" ", ".", "_", "-").filter { it.isNotEmpty() }
-//    return when {
-//        parts.size >= 2 -> "${parts[0].first().uppercaseChar()}${parts[1].first().uppercaseChar()}"
-//        text.length >= 2 -> text.take(2).uppercase()
-//        else -> text.first().uppercaseChar().toString()
-//    }
-//}
-//
-///**
-// * Get a color for an avatar based on the name/username
-// */
-//private fun getAvatarColor(name: String?, username: String): Color {
-//    val text = (name ?: username).lowercase()
-//    val colors = listOf(
-//        Color(0xFFFFC1C1), // Light pink
-//        Color(0xFFB3E5FC), // Light blue
-//        Color(0xFFFFF59D), // Light yellow
-//        Color(0xFFC5E1A5), // Light green
-//        Color(0xFFFFCCBC), // Light orange
-//        Color(0xFFE1BEE7), // Light purple
-//        Color(0xFFB2DFDB), // Light teal
-//        Color(0xFFFFE0B2), // Light amber
-//    )
-//    val index = text.hashCode().absoluteValue % colors.size
-//    return colors[index]
-//}
-//
-//@Composable
-//private fun AvatarWithInitials(
-//    name: String?,
-//    username: String,
-//    size: androidx.compose.ui.unit.Dp = 44.dp,
-//    modifier: Modifier = Modifier
-//) {
-//    val initials = remember(name, username) { getInitials(name, username) }
-//    val backgroundColor = remember(name, username) { getAvatarColor(name, username) }
-//
-//
-//    Box(
-//        modifier = modifier
-//            .size(size)
-//            .clip(CircleShape)
-//            .background(backgroundColor),
-//        contentAlignment = Alignment.Center
-//    ) {
-//        ODSText(
-//            text = initials,
-//            style = DSTextStyles.bodyMRegular,
-//            color = HexColor(colors.textPrimary.value)
-//        )
-//    }
-//}
-//
-//@Composable
-//private fun LeaderboardItem(
-//    rank: Int,
-//    username: String,
-//    name: String?,
-//    duration: String,
-//    isCurrentUser: Boolean,
-//    rankPosition: Int
-//) {
-//
-//
-//    val rankColor = when (rankPosition) {
-//        1 -> colors.rankGold
-//        2 -> colors.rankSilver
-//        3 -> colors.rankBronze
-//        else -> colors.card
-//    }
-//
-//    val cardBackground = if (isCurrentUser) {
-//        colors.success.copy(alpha = 0.1f)
-//    } else if (rankPosition <= 3) {
-//        rankColor.copy(alpha = 0.08f)
-//    } else {
-//        colors.card
-//    }
-//
-//    Box(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .background(color = HexColor(cardBackground.value), shape = MaterialTheme.shapes.medium)
-//            .then(
-//                if (isCurrentUser || rankPosition <= 3) {
-//                    Modifier.border(
-//                        width = 1.5.dp,
-//                        color = HexColor(if.value) (rankPosition <= 3) rankColor else colors.success,
-//                        shape = MaterialTheme.shapes.medium
-//                    )
-//                } else Modifier
-//            )
-//    ) {
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(horizontal = 16.dp, vertical = 14.dp),
-//            horizontalArrangement = Arrangement.spacedBy(14.dp),
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            // Rank number
-//            ODSText(
-//                text = "$rank",
-//                style = DSTextStyles.bodyMRegular,
-//                color = HexColor(Color.value)(0xFF9CA3AF), // Gray color for rank
-//                modifier = Modifier.width(28.dp)
-//            )
-//
-//            // Avatar with initials
-//            AvatarWithInitials(
-//                name = name,
-//                username = username,
-//                size = 44.dp
-//            )
-//
-//            // Username and duration
-//            Column(modifier = Modifier.weight(1f)) {
-//                Row(
-//                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    ODSText(
-//                        text = username,
-//                        style = DSTextStyles.bodyMRegular) FontWeight.Bold else FontWeight.Medium,
-//                        color = HexColor(colors.textPrimary.value)
-//                    )
-//                    if (isCurrentUser) {
-//                        Box(
-//                            modifier = Modifier
-//                                .background(
-//                                    color = HexColor(colors.success.copy.value)(alpha = 0.2f),
-//                                    shape = MaterialTheme.shapes.extraSmall
-//                                )
-//                                .padding(horizontal = 6.dp, vertical = 2.dp)
-//                        ) {
-//                            ODSText(
-//                                text = "You",
-//                                style = DSTextStyles.bodyMBold,
-//                                color = HexColor(colors.success.value))
-//                        }
-//                    }
-//                }
-//            }
-//
-//            // Duration
-//            ODSText(
-//                text = duration,
-//                style = DSTextStyles.bodyMBold,
-//                color = HexColor(Color.value)(0xFF6B7280) // Gray color for time
-//            )
-//        }
-//    }
-//}
-//
-//@Composable
-//private fun UserProfileCard(
-//    username: String,
-//    rank: Int,
-//    duration: String,
-//    isDaily: Boolean
-//) {
-//
-//
-//    // Blue colors
-//    val primaryBlue = colors.success
-//
-//    Box(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .shadow(
-//                elevation = 12.dp,
-//                shape = MaterialTheme.shapes.large,
-//                spotColor = primaryBlue.copy(alpha = 0.4f)
-//            )
-//    ) {
-//        // Main blue card
-//        Box(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .background(
-//                    color = HexColor(primaryBlue.value),
-//                    shape = MaterialTheme.shapes.large
-//                )
-//                .padding(20.dp)
-//        ) {
-//            Column {
-//                // Username
-//                ODSText(
-//                    text = username,
-//                    style = DSTextStyles.titleS,
-//                    color = HexColor(colors.textOnPrimary.value)
-//                )
-//
-//                Spacer(modifier = Modifier.height(20.dp))
-//
-//                // Statistics section - 2x2 grid
-//                Column(
-//                    verticalArrangement = Arrangement.spacedBy(16.dp)
-//                ) {
-//                    // First row: Rank and ScreenTime
-//                    Row(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        horizontalArrangement = Arrangement.SpaceBetween
-//                    ) {
-//                        // Rank
-//                        Column(
-//                            horizontalAlignment = Alignment.Start
-//                        ) {
-//                            ODSText(
-//                                text = "Rank",
-//                                style = DSTextStyles.bodyMBold,
-//                                color = HexColor(colors.textOnPrimary.copy.value)(alpha = 0.7f)
-//                            )
-//                            Spacer(modifier = Modifier.height(4.dp))
-//                            ODSText(
-//                                text = "$rank",
-//                                style = DSTextStyles.subtitle,
-//                                color = HexColor(colors.textOnPrimary.value)
-//                            )
-//                        }
-//
-//                        // ScreenTime
-//                        Column(
-//                            horizontalAlignment = Alignment.End
-//                        ) {
-//                            ODSText(
-//                                text = "ScreenTime",
-//                                style = DSTextStyles.bodyMBold,
-//                                color = HexColor(colors.textOnPrimary.copy.value)(alpha = 0.7f)
-//                            )
-//                            Spacer(modifier = Modifier.height(4.dp))
-//                            ODSText(
-//                                text = duration,
-//                                style = DSTextStyles.subtitle,
-//                                color = HexColor(colors.textOnPrimary.value)
-//                            )
-//                        }
-//                    }
-//
-//                    // Second row: Focus Time and Activity
-//                    Row(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        horizontalArrangement = Arrangement.SpaceBetween
-//                    ) {
-//                        // Focus Time
-//                        Column(
-//                            horizontalAlignment = Alignment.Start
-//                        ) {
-//                            ODSText(
-//                                text = "Focus Time",
-//                                style = DSTextStyles.bodyMBold,
-//                                color = HexColor(colors.textOnPrimary.copy.value)(alpha = 0.7f)
-//                            )
-//                            Spacer(modifier = Modifier.height(4.dp))
-//                            ODSText(
-//                                text = duration,
-//                                style = DSTextStyles.subtitle,
-//                                color = HexColor(colors.textOnPrimary.value)
-//                            )
-//                        }
-//
-//                        // Activity
-//                        Column(
-//                            horizontalAlignment = Alignment.End
-//                        ) {
-//                            ODSText(
-//                                text = "Activity",
-//                                style = DSTextStyles.bodyMBold,
-//                                color = HexColor(colors.textOnPrimary.copy.value)(alpha = 0.7f)
-//                            )
-//                            Spacer(modifier = Modifier.height(4.dp))
-//                            ODSText(
-//                                text = "${rank * 2} Days",
-//                                style = DSTextStyles.subtitle,
-//                                color = HexColor(colors.textOnPrimary.value)
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-//
+package com.app.screentime.leaderboard.screen
+
+import android.graphics.Color
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.R
+import com.app.screentime.leaderboard.viewmodel.LeaderboardViewModel
+import com.app.screentime.network.model.LeaderboardEntry
+import com.app.screentime.record.repository.formatDuration
+import com.app.screentime.ui.theme.ColorPalette
+import com.app.screentime.ui.theme.LocalThemeMode
+import com.app.screentime.ui.theme.headerTheme
+import com.telekom.odsystem.DSTextStyles
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonButtonType
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerLabelAlignment
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerVariant
+import com.telekom.odsystem.atoms.tagstatic.ODSTagStatic
+import com.telekom.odsystem.atoms.tagstatic.ODSTagStaticProps
+import com.telekom.odsystem.atoms.tagstatic.ODSTagStaticType
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.molecules.tabs.ODSTabItemModel
+import com.telekom.odsystem.molecules.tabs.ODSTabs
+import com.telekom.odsystem.molecules.tabs.ODSTabsProps
+import com.telekom.odsystem.molecules.tabs.ODSTabsSize
+import com.telekom.odsystem.molecules.tabs.ODSTabsVariant
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasicProps
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+import kotlinx.coroutines.launch
+
+/**
+ * Leaderboard Screen
+ * Displays daily and weekly leaderboards with top 3 players prominently displayed
+ */
+@Composable
+fun LeaderboardScreen(
+    modifier: Modifier = Modifier,
+    onBackClick: () -> Unit = {},
+    scheme: ODSTheme = neutralScheme,
+    headerScheme: ODSTheme = headerTheme.current,
+    viewModel: LeaderboardViewModel = hiltViewModel()
+) {
+    val activity = LocalActivity.current
+    // Get theme mode for status bar styling
+    val useDarkTheme = LocalThemeMode.current
+    val uiState by viewModel.uiState.collectAsState()
+
+    // Calculate ColorPalette schemes for top 3 (rank 1, 2, 3)
+    val rank1Scheme = ColorPalette.schemeGet(headerScheme)
+    val rank2Scheme = ColorPalette.schemeGet(rank1Scheme)
+    val rank3Scheme = ColorPalette.schemeGet(rank2Scheme)
+
+    SideEffect {
+        if (activity is ComponentActivity) {
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (useDarkTheme) {
+                    SystemBarStyle.dark(headerScheme.basicBackgroundCard.getIntColor())
+                } else {
+                    SystemBarStyle.light(
+                        headerScheme.basicBackgroundCard.getIntColor(),
+                        darkScrim = headerScheme.basicBackgroundCard.getIntColor()
+                    )
+                },
+                navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT,
+                    Color.TRANSPARENT
+                )
+            )
+        }
+    }
+
+    ODSColumn(
+        modifier = modifier.fillMaxSize(),
+        background = listOf(ODSColorModel(scheme.basicBackground))
+    ) {
+        // Status bar padding
+        ODSBox(
+            modifier = Modifier
+                .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                .fillMaxWidth()
+        ) {}
+
+        // Header section with scheme background
+        ODSBox(
+            modifier = Modifier.fillMaxWidth(),
+            background = listOf(ODSColorModel(headerScheme.basicBackgroundCard)),
+            padding = ODSPadding(bottom = DSVariables.spacingComponent3)
+        ) {
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth(),
+                gap = DSVariables.spacingComponent2
+            ) {
+                ODSRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    padding = ODSPadding(
+                        horizontal = DSVariables.spacingComponent3
+                    ),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ODSButton(
+                        scheme = headerScheme, props = ODSButtonProps(
+                            buttonIcon = ODSIconModel(
+                                drawableRes = com.telekom.odsystem.R.drawable.left_condensed_type_standard_size_standard,
+                                tint = headerScheme.basicText,
+                                contentDescription = "Back"
+                            ),
+                            buttonType = ODSButtonButtonType.ICON_ONLY,
+                            variant = ODSButtonVariant.GHOST,
+                            size = ODSButtonSize.SMALL
+                        ), onClick = onBackClick
+                    )
+
+                    ODSText(
+                        text = "Leaderboard",
+                        style = DSTextStyles.bodyL,
+                        color = headerScheme.basicText,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = DSVariables.spacingComponent2),
+                        textAlign = TextAlign.Center
+                    )
+
+                    ODSButton(
+                        scheme = headerScheme, props = ODSButtonProps(
+                            buttonIcon = ODSIconModel(
+                                imageVector = Icons.Default.Refresh,
+                                tint = headerScheme.basicText,
+                                contentDescription = stringResource(R.string.refresh)
+                            ),
+                            buttonType = ODSButtonButtonType.ICON_ONLY,
+                            variant = ODSButtonVariant.GHOST,
+                            size = ODSButtonSize.SMALL
+                        ), onClick = { viewModel.refresh() })
+                }
+            }
+        }
+
+        LeaderboardPage(
+            modifier = Modifier.weight(1f),
+            scheme = scheme,
+            headerScheme = headerScheme,
+            viewModel = viewModel
+        )
+    }
+}
+
+@Composable
+fun LeaderboardPage(
+    modifier: Modifier = Modifier,
+    scheme: ODSTheme = neutralScheme,
+    headerScheme: ODSTheme = headerTheme.current,
+    viewModel: LeaderboardViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val pagerState = rememberPagerState(
+        initialPage = 0
+    ) { 2 }
+
+    // Calculate ColorPalette schemes for top 3 (rank 1, 2, 3)
+    val rank1Scheme = ColorPalette.schemeGet(headerScheme)
+    val rank2Scheme = ColorPalette.schemeGet(rank1Scheme)
+    val rank3Scheme = ColorPalette.schemeGet(rank2Scheme)
+
+    ODSColumn(
+        modifier = modifier.fillMaxSize(),
+        background = listOf(ODSColorModel(scheme.basicBackground))
+    ) {
+        ODSBox(
+            modifier = Modifier.fillMaxWidth(),
+            background = listOf(ODSColorModel(headerScheme.basicBackgroundCard)),
+            cornerRadius = ODSCorners(
+                bottomLeft = DSVariables.spacingComponent4,
+                bottomRight = DSVariables.spacingComponent4
+            ),
+            padding = ODSPadding(bottom = DSVariables.spacingComponent3)
+        ) {
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth(),
+                gap = DSVariables.spacingComponent2
+            ) {
+                ODSTabs(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = DSVariables.spacingComponent3),
+                    scheme = headerScheme,
+                    props = ODSTabsProps(
+                        tabElements = listOf(
+                            ODSTabItemModel(label = "Daily"),
+                            ODSTabItemModel(label = "Weekly")
+                        ),
+                        variant = ODSTabsVariant.FILL,
+                        size = ODSTabsSize.SMALL,
+                        showDividerFrame = true
+                    ),
+                    selectedTabIndex = pagerState.currentPage,
+                    onSelectedTabChange = { index ->
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    }
+                )
+
+                // Add spacing between tabs and top 3 section
+                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+
+                if (!uiState.isLoading && uiState.error == null) {
+                    val entries =
+                        if (pagerState.currentPage == 0) uiState.dailyEntries else uiState.weeklyEntries
+                    if (entries.size >= 3) {
+                        TopThreePlayersSection(
+                            firstPlace = entries[0],
+                            secondPlace = entries[1],
+                            thirdPlace = entries[2],
+                            rank1Scheme = rank1Scheme,
+                            rank2Scheme = rank2Scheme,
+                            rank3Scheme = rank3Scheme,
+                            modifier = Modifier.padding(
+                                horizontal = DSVariables.spacingComponent3,
+                                vertical = DSVariables.spacingComponent3
+                            )
+                        )
+                    } else if (entries.isNotEmpty()) {
+                        TopPlayersSection(
+                            entries = entries.take(3),
+                            rank1Scheme = rank1Scheme,
+                            rank2Scheme = rank2Scheme,
+                            rank3Scheme = rank3Scheme,
+                            modifier = Modifier.padding(
+                                horizontal = DSVariables.spacingComponent3,
+                                vertical = DSVariables.spacingComponent3
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        when {
+            uiState.isLoading -> {
+                ODSBox(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSLoadingSpinner(
+                        modifier = Modifier.wrapContentHeight(),
+                        scheme = scheme,
+                        props = ODSLoadingSpinnerProps(
+                            labelText = stringResource(R.string.loading),
+                            size = ODSLoadingSpinnerSize.SMALL,
+                            variant = ODSLoadingSpinnerVariant.STANDARD,
+                            labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
+                        )
+                    )
+                }
+            }
+
+            uiState.error != null -> {
+                ODSColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    gap = DSVariables.spacingComponent3
+                ) {
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            imageVector = Icons.Default.EmojiEvents,
+                            tint = scheme.functionalDestructiveStandard,
+                            contentDescription = null
+                        ), modifier = Modifier.size(48.dp)
+                    )
+                    ODSText(
+                        text = uiState.error ?: "Error loading leaderboard",
+                        style = DSTextStyles.bodyMRegular,
+                        color = scheme.functionalDestructiveStandard,
+                        textAlign = TextAlign.Center
+                    )
+                    ODSButton(
+                        scheme = scheme, props = ODSButtonProps(
+                            label = "Retry",
+                            variant = ODSButtonVariant.PRIMARY,
+                            size = ODSButtonSize.SMALL
+                        ), onClick = { viewModel.refresh() })
+                }
+            }
+
+            else -> {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.weight(1f),
+                    userScrollEnabled = true
+                ) { pageIndex ->
+                    val entries =
+                        if (pageIndex == 0) uiState.dailyEntries else uiState.weeklyEntries
+                    LeaderboardContent(
+                        entries = entries,
+                        currentUserId = uiState.currentUserId,
+                        scheme = scheme,
+                        rank1Scheme = rank1Scheme,
+                        rank2Scheme = rank2Scheme,
+                        rank3Scheme = rank3Scheme
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LeaderboardContent(
+    entries: List<LeaderboardEntry>,
+    currentUserId: String?,
+    scheme: ODSTheme,
+    rank1Scheme: ODSTheme,
+    rank2Scheme: ODSTheme,
+    rank3Scheme: ODSTheme,
+) {
+    val scrollState = rememberScrollState()
+
+    ODSColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState),
+        padding = ODSPadding(
+            top = DSVariables.spacingComponent4,
+            horizontal = DSVariables.spacingComponent4
+        )
+    ) {
+        if (entries.isNotEmpty()) {
+            entries.forEachIndexed { index, entry ->
+                val itemScheme = when (entry.rank) {
+                    1 -> rank1Scheme
+                    2 -> rank2Scheme
+                    3 -> rank3Scheme
+                    else -> scheme
+                }
+                LeaderboardItem(
+                    entry = entry,
+                    isCurrentUser = entry.userId == currentUserId,
+                    scheme = itemScheme
+                )
+                if (index < entries.size - 1) {
+                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                }
+            }
+        } else {
+            ODSColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 48.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent3),
+                gap = DSVariables.spacingComponent3
+            ) {
+                ODSIcon(
+                    iconModel = ODSIconModel(
+                        imageVector = Icons.Default.EmojiEvents,
+                        tint = scheme.basicTextRecessive,
+                        contentDescription = null
+                    ), modifier = Modifier.size(64.dp)
+                )
+                ODSText(
+                    text = stringResource(R.string.no_leaderboard_data_available),
+                    style = DSTextStyles.bodyMRegular,
+                    color = scheme.basicTextRecessive,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TopThreePlayersSection(
+    firstPlace: LeaderboardEntry,
+    secondPlace: LeaderboardEntry,
+    thirdPlace: LeaderboardEntry,
+    rank1Scheme: ODSTheme,
+    rank2Scheme: ODSTheme,
+    rank3Scheme: ODSTheme,
+    modifier: Modifier = Modifier
+) {
+    ODSRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.Bottom
+    ) {
+
+        TopPlayerCard(
+            entry = secondPlace,
+            rank = 2,
+            modifier = Modifier.weight(1f),
+            scheme = rank2Scheme
+        )
+
+        Spacer(modifier = Modifier.width(DSVariables.spacingComponent2))
+
+        // First Place (Center) - Larger with crown
+        TopPlayerCard(
+            entry = firstPlace,
+            rank = 1,
+            modifier = Modifier.weight(1.2f),
+            scheme = rank1Scheme
+        )
+
+        Spacer(modifier = Modifier.width(DSVariables.spacingComponent2))
+
+        // Third Place (Right)
+        TopPlayerCard(
+            entry = thirdPlace,
+            rank = 3,
+            modifier = Modifier.weight(1f),
+            scheme = rank3Scheme
+        )
+    }
+}
+
+@Composable
+private fun TopPlayersSection(
+    entries: List<LeaderboardEntry>,
+    rank1Scheme: ODSTheme,
+    rank2Scheme: ODSTheme,
+    rank3Scheme: ODSTheme,
+    modifier: Modifier = Modifier
+) {
+    ODSRow(
+        modifier = modifier.fillMaxWidth(),
+        padding = ODSPadding(vertical = DSVariables.spacingComponent3),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        entries.forEachIndexed { index, entry ->
+            if (index > 0) {
+                Spacer(modifier = Modifier.width(DSVariables.spacingComponent2))
+            }
+            // Use ColorPalette scheme based on rank
+            val cardScheme = when (entry.rank) {
+                1 -> rank1Scheme
+                2 -> rank2Scheme
+                3 -> rank3Scheme
+                else -> neutralScheme
+            }
+            TopPlayerCard(
+                entry = entry,
+                rank = entry.rank,
+                modifier = Modifier.weight(1f),
+                scheme = cardScheme
+            )
+        }
+    }
+}
+
+@Composable
+private fun TopPlayerCard(
+    entry: LeaderboardEntry,
+    rank: Int,
+    modifier: Modifier = Modifier,
+    scheme: ODSTheme
+) {
+    ODSColumn(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        gap = DSVariables.spacingComponent1
+    ) {
+        val ringSize = if (rank == 1) 100.dp else 85.dp
+        Box(
+            modifier = Modifier.size(ringSize),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .zIndex(2f)
+                    .align(Alignment.TopCenter)
+                    .offset(y = (-15).dp)
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(scheme.basicAccentSecondary.getColor()),
+                contentAlignment = Alignment.Center
+            ) {
+                ODSText(
+                    text = "$rank",
+                    style = DSTextStyles.bodySBold,
+                    color = scheme.basicText
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(ringSize)
+                    .padding(DSVariables.spacingComponent1)
+                    .clip(CircleShape)
+                    .background(scheme.basicBackground.getColor())
+                    .border(
+                        width = DSVariables.spacingComponent1,
+                        color = scheme.basicAccentSecondary.getColor(), shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                ODSText(
+                    text = getInitials(entry.name, entry.username ?: ""),
+                    style = if (rank == 1)
+                        DSTextStyles.bodyL
+                    else
+                        DSTextStyles.bodyL,
+                    color = scheme.basicText
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+
+        ODSText(
+            text = entry.name ?: entry.username,
+            style = if (rank == 1) DSTextStyles.bodyMBold else DSTextStyles.bodyMRegular,
+            color = scheme.basicText,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun LeaderboardItem(
+    entry: LeaderboardEntry,
+    isCurrentUser: Boolean,
+    scheme: ODSTheme,
+) {
+    ODSCardBasic(
+        modifier = Modifier.fillMaxWidth(),
+        scheme = scheme,
+        props = ODSCardBasicProps(isHorizontal = true),
+        contentSlot = {
+            ODSRow(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent3),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ODSBox(
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 24.dp, minHeight = 24.dp)
+                        .clip(CircleShape)
+                        .background(
+                            color = neutralScheme.basicBackground.getColor()
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSText(
+                        text = "${entry.rank}",
+                        style = DSTextStyles.bodyMRegular,
+                        color = neutralScheme.basicText
+                    )
+                }
+
+                ODSColumn(
+                    modifier = Modifier.weight(1f), gap = DSVariables.spacingComponent0
+                ) {
+                    ODSText(
+                        text = if (isCurrentUser) "You" else (entry.name ?: entry.username
+                        ?: entry.userId),
+                        style = DSTextStyles.oxBodySBold,
+                        color = scheme.basicText
+                    )
+                }
+                ODSTagStatic(
+                    props = ODSTagStaticProps(
+                        label = formatDuration(entry.totalScreenTime ?: 0),
+                        type = ODSTagStaticType.PROMOTION
+                    )
+                )
+            }
+        })
+}
+
+/**
+ * User rank notification card
+ */
+@Composable
+private fun UserRankNotificationCard(
+    rank: Int, duration: String, scheme: ODSTheme
+) {
+    ODSInlineNotification(
+        modifier = Modifier.fillMaxWidth(),
+        scheme = scheme,
+        props = ODSInlineNotificationProps(
+            title = "Your Rank",
+            text = "You are ranked #$rank with $duration screen time",
+            mode = ODSInlineNotificationMode.INFORMATIVE,
+            showCloseButton = false
+        ),
+        onDismiss = {})
+}
+
+/**
+ * Get initials from a name or username
+ */
+private fun getInitials(name: String?, username: String): String {
+    val text = name?.trim() ?: username.trim()
+    if (text.isEmpty()) return "?"
+
+    val parts = text.split(" ", ".", "_", "-").filter { it.isNotEmpty() }
+    return when {
+        parts.size >= 2 -> "${parts[0].first().uppercaseChar()}${
+            parts[1].first().uppercaseChar()
+        }"
+
+        text.length >= 2 -> text.take(2).uppercase()
+        else -> text.first().uppercaseChar().toString()
+    }
+}

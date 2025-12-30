@@ -25,3 +25,5 @@ dependencyResolutionManagement {
 rootProject.name = "ScreenTime"
 include(":app")
 include(":odsystem")
+include(":wallpaper")
+include(":core:network")

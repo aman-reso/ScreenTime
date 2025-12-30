@@ -1,6 +1,6 @@
 package com.app.screentime.reward.service
 
-import com.app.screentime.network.model.ApiResponse
+import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.reward.model.CoinHistoryResponse
 import com.app.screentime.reward.model.RewardCatalogResponse
 import com.app.screentime.reward.model.RewardClaimRequest

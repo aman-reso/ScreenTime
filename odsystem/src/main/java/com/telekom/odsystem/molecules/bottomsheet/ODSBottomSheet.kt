@@ -1,17 +1,23 @@
 package com.telekom.odsystem.molecules.bottomsheet
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -45,7 +51,11 @@ import com.telekom.odsystem.atoms.divider.ODSDividerVariant
 import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.offset
 import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.toast.ODSToast
+import com.telekom.odsystem.organisms.toast.ODSToastMode
+import com.telekom.odsystem.organisms.toast.ODSToastProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import com.telekom.odsystem.tokens.tokens.ODSVariables
 
 /**
  * ODSBottomSheet composable.
@@ -59,6 +69,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
  * @param titleSlot Parameter for customization.
  * @param actionSlot Parameter for customization.
  * @param onCloseClicked Callback triggered when close action occurs.
+ * @param snackbarHostState Optional SnackbarHostState for showing snackbars with ODS Toast inside the bottom sheet.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +82,8 @@ fun ODSBottomSheet(
     contentSlot: @Composable (() -> Unit)? = null,
     titleSlot: @Composable (() -> Unit)? = null,
     actionSlot: @Composable (() -> Unit)? = null,
-    onCloseClicked: () -> Unit
+    onCloseClicked: () -> Unit,
+    snackbarHostState: SnackbarHostState? = null
 ) {
     val style = ODSBottomSheetStyle().getStyle(scheme = scheme)
 
@@ -98,18 +110,44 @@ fun ODSBottomSheet(
             sheetState = bottomSheetState,
             dragHandle = null,
         ) {
-            ODSBottomSheetContainer(
+            Box(
                 modifier = Modifier
-                    .semantics { isTraversalGroup = true }
-                    .heightIn(max = maxHeight),
-                style = style,
-                props = props,
-                scheme = scheme,
-                contentSlot = contentSlot,
-                actionSlot = actionSlot,
-                titleSlot = titleSlot,
-                onCloseClicked = onCloseClicked
-            )
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
+                ODSBottomSheetContainer(
+                    modifier = Modifier
+                        .semantics { isTraversalGroup = true }
+                        .heightIn(max = maxHeight),
+                    style = style,
+                    props = props,
+                    scheme = scheme,
+                    contentSlot = contentSlot,
+                    actionSlot = actionSlot,
+                    titleSlot = titleSlot,
+                    onCloseClicked = onCloseClicked
+                )
+                if (snackbarHostState != null) {
+                    SnackbarHost(
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        hostState = snackbarHostState,
+                        snackbar = { snackbarData ->
+                            ODSToast(
+                                modifier = Modifier.fillMaxWidth(),
+                                scheme = scheme,
+                                props = ODSToastProps(
+                                    mode = ODSToastMode.INFORMATIVE,
+                                    text = snackbarData.visuals.message,
+                                    showCloseButton = snackbarData.visuals.withDismissAction
+                                ),
+                                onDismiss = {
+                                    snackbarData.dismiss()
+                                }
+                            )
+                        }
+                    )
+                }
+            }
         }
     }
 }

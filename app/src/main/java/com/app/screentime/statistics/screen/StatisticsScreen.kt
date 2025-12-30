@@ -1,11 +1,21 @@
 package com.app.screentime.statistics.screen
 
+import android.graphics.Color
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -20,6 +30,8 @@ import com.app.screentime.navigation.Screen
 import com.app.screentime.statistics.model.ChartFormatterProps
 import com.app.screentime.statistics.viewmodel.StatisticsViewModel
 import com.app.screentime.ui.atom.appUsageListUi
+import com.app.screentime.ui.theme.LocalThemeMode
+import com.app.screentime.ui.theme.headerTheme
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
@@ -61,151 +73,184 @@ fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
+
+    val activity = LocalActivity.current
+    // Get theme mode for status bar styling
+    val useDarkTheme = LocalThemeMode.current
+    SideEffect {
+        if (activity is ComponentActivity) {
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (useDarkTheme) {
+                    SystemBarStyle.dark(scheme.basicBackground.getIntColor())
+                } else {
+                    SystemBarStyle.light(
+                        scheme.basicBackground.getIntColor(),
+                        darkScrim = scheme.basicBackground.getIntColor()
+                    )
+                },
+                navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT,
+                    Color.TRANSPARENT
+                )
+            )
+        }
+    }
+
     val uiProps by viewModel.uiProps.collectAsState()
     val chartFormatterProps = viewModel.getChartFormatterProps()
 
-    when {
-        uiProps == null || uiProps!!.isLoading -> {
-            ODSBox(
-                modifier = modifier.fillMaxSize(),
-                padding = ODSPadding(horizontal = DSVariables.spacingComponent3),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSLoadingSpinner(
-                    modifier = Modifier.wrapContentHeight(),
-                    scheme = scheme,
-                    props = ODSLoadingSpinnerProps(
-                        labelText = "Please wait...",
-                        size = ODSLoadingSpinnerSize.SMALL,
-                        variant = ODSLoadingSpinnerVariant.STANDARD,
-                        labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
-                    )
-                )
-            }
-        }
+    ODSColumn(modifier = Modifier.fillMaxSize()) {
+        // Status bar padding
+        ODSBox(
+            modifier = Modifier
+                .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                .fillMaxWidth()
+        ) {}
 
-        uiProps!!.error != null -> {
-            ODSLazyColumn(
-                modifier = modifier.fillMaxSize(),
-                padding = ODSPadding(horizontal = 8.dp)
-            ) {
-                item {
-                    ODSBox(
-                        modifier = Modifier.fillMaxWidth(),
-                        background = listOf(ODSColorModel(scheme.functionalDestructiveSubtle)),
-                        cornerRadius = ODSCorners(all = 12.dp)
-                    ) {
-                        ODSColumn(modifier = Modifier.padding(16.dp)) {
-                            ODSText(
-                                text = stringResource(R.string.error),
-                                style = DSTextStyles.titleS,
-                                color = scheme.functionalDestructiveStandard
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            ODSText(
-                                text = uiProps!!.error ?: "",
-                                style = DSTextStyles.bodyMRegular,
-                                color = scheme.functionalDestructiveStandard
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = { viewModel.clearError() }) {
+        when {
+            uiProps == null || uiProps!!.isLoading -> {
+                ODSBox(
+                    modifier = modifier.fillMaxSize(),
+                    padding = ODSPadding(horizontal = DSVariables.spacingComponent3),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSLoadingSpinner(
+                        modifier = Modifier.wrapContentHeight(),
+                        scheme = scheme,
+                        props = ODSLoadingSpinnerProps(
+                            labelText = "Please wait...",
+                            size = ODSLoadingSpinnerSize.SMALL,
+                            variant = ODSLoadingSpinnerVariant.STANDARD,
+                            labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
+                        )
+                    )
+                }
+            }
+
+            uiProps!!.error != null -> {
+                ODSLazyColumn(
+                    modifier = modifier.fillMaxSize(),
+                    padding = ODSPadding(horizontal = 8.dp)
+                ) {
+                    item {
+                        ODSBox(
+                            modifier = Modifier.fillMaxWidth(),
+                            background = listOf(ODSColorModel(scheme.functionalDestructiveSubtle)),
+                            cornerRadius = ODSCorners(all = 12.dp)
+                        ) {
+                            ODSColumn(modifier = Modifier.padding(16.dp)) {
                                 ODSText(
-                                    text = stringResource(R.string.retry),
-                                    style = DSTextStyles.bodyMBold,
-                                    color = scheme.basicTextOnAccent
+                                    text = stringResource(R.string.error),
+                                    style = DSTextStyles.bodyL,
+                                    color = scheme.functionalDestructiveStandard
                                 )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                ODSText(
+                                    text = uiProps!!.error ?: "",
+                                    style = DSTextStyles.bodyMRegular,
+                                    color = scheme.functionalDestructiveStandard
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(onClick = { viewModel.clearError() }) {
+                                    ODSText(
+                                        text = stringResource(R.string.retry),
+                                        style = DSTextStyles.bodyMBold,
+                                        color = scheme.basicTextOnAccent
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        uiProps!!.barChartData.isEmpty() -> {
-            ODSLazyColumn(
-                modifier = modifier.fillMaxSize(),
-                padding = ODSPadding(horizontal = DSVariables.spacingComponent3)
-            ) {
-                item {
-                    ODSBox(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ODSText(
-                            text = stringResource(R.string.no_data_available),
-                            style = DSTextStyles.bodyL,
-                            color = scheme.basicText
-                        )
+            uiProps!!.barChartData.isEmpty() -> {
+                ODSLazyColumn(
+                    modifier = modifier.fillMaxSize(),
+                    padding = ODSPadding(horizontal = DSVariables.spacingComponent3)
+                ) {
+                    item {
+                        ODSBox(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.no_data_available),
+                                style = DSTextStyles.bodyL,
+                                color = scheme.basicText
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        else -> {
-            ODSLazyColumn(
-                modifier = modifier.fillMaxSize(),
-                background = listOf(ODSColorModel(scheme.basicBackground)),
-                padding = ODSPadding(all = DSVariables.spacingComponent3),
-                gap = DSVariables.spacingComponent3
-            ) {
-                item {
-                    ODSRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ODSText(
-                            text = stringResource(R.string.activity),
-                            style = DSTextStyles.subtitle,
-                            color = scheme.basicText
-                        )
-                        ODSButton(
-                            scheme = scheme,
-                            props = ODSButtonProps(
-                                buttonIcon = ODSIconModel(
-                                    imageVector = Icons.Default.SwapVert,
-                                    contentDescription = "Toggle chart orientation"
+            else -> {
+                ODSLazyColumn(
+                    modifier = modifier.fillMaxSize(),
+                    background = listOf(ODSColorModel(scheme.basicBackground)),
+                    padding = ODSPadding(all = DSVariables.spacingComponent3),
+                    gap = DSVariables.spacingComponent3
+                ) {
+                    item {
+                        ODSRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.activity),
+                                style = DSTextStyles.subtitle,
+                                color = scheme.basicText
+                            )
+                            ODSButton(
+                                scheme = scheme,
+                                props = ODSButtonProps(
+                                    buttonIcon = ODSIconModel(
+                                        imageVector = Icons.Default.SwapVert,
+                                        contentDescription = "Toggle chart orientation"
+                                    ),
+                                    buttonType = ODSButtonButtonType.ICON_ONLY,
+                                    variant = ODSButtonVariant.GHOST,
+                                    size = ODSButtonSize.SMALL
                                 ),
-                                buttonType = ODSButtonButtonType.ICON_ONLY,
-                                variant = ODSButtonVariant.GHOST,
-                                size = ODSButtonSize.SMALL
-                            ),
-                            onClick = { viewModel.toggleChartOrientation() }
+                                onClick = { viewModel.toggleChartOrientation() }
+                            )
+                        }
+                    }
+                    item {
+                        SelectedDayInfoCard(
+                            selectedDayReport = uiProps!!.selectedDayReport,
+                            scheme = headerTheme.current
                         )
                     }
-                }
-                item {
-                    SelectedDayInfoCard(
-                        selectedDayReport = uiProps!!.selectedDayReport
-                    )
-                }
 
-                item {
-                    WeeklyUsageChart(
-                        barChartData = uiProps!!.barChartData,
-                        weeklyReports = uiProps!!.weeklyReports,
-                        chartFormatterProps = chartFormatterProps,
-                        chartOrientation = uiProps!!.chartOrientation,
-                        onBarClick = { dayIndex ->
-                            viewModel.selectDay(dayIndex)
-                        },
-                        scheme = scheme
-                    )
-                }
+                    item {
+                        WeeklyUsageChart(
+                            barChartData = uiProps!!.barChartData,
+                            weeklyReports = uiProps!!.weeklyReports,
+                            chartFormatterProps = chartFormatterProps,
+                            chartOrientation = uiProps!!.chartOrientation,
+                            onBarClick = { dayIndex ->
+                                viewModel.selectDay(dayIndex)
+                            },
+                            scheme = scheme
+                        )
+                    }
 
-                item {
-                    ODSBox(height = DSVariables.spacingComponent5) {}
-                }
+                    item {
+                        ODSBox(height = DSVariables.spacingComponent5) {}
+                    }
 
-                if (uiProps!!.selectedDayAppUsageList.isNotEmpty()) {
-                    appUsageListUi(
-                        appUsageList = uiProps!!.selectedDayAppUsageList,
-                        onClick = { appUsage ->
-                            appUsage.packageName?.let { packageName ->
-                                onNavigateToSingleAppUsageDetail(packageName)
+                    if (uiProps!!.selectedDayAppUsageList.isNotEmpty()) {
+                        appUsageListUi(
+                            appUsageList = uiProps!!.selectedDayAppUsageList,
+                            onClick = { appUsage ->
+                                appUsage.packageName?.let { packageName ->
+                                    onNavigateToSingleAppUsageDetail(packageName)
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -221,7 +266,7 @@ fun WeeklyUsageChart(
     weeklyReports: List<WeeklyDataReport>,
     chartFormatterProps: ChartFormatterProps,
     chartOrientation: ODSBarItemDirection,
-    onBarClick: (Int) -> Unit,
+    onBarClick: (Int) -> Unit = {},
     scheme: ODSTheme = neutralScheme
 ) {
     ODSBox(
@@ -286,7 +331,7 @@ private fun SelectedDayInfoCard(
     selectedDayReport?.let { selectedDay ->
         ODSCardBasic(
             modifier = Modifier.fillMaxWidth(),
-            scheme = lagoonSecondaryScheme,
+            scheme = scheme,
             contentPadding = ODSPadding(
                 horizontal = DSVariables.spacingComponent5,
                 vertical = DSVariables.spacingComponent5

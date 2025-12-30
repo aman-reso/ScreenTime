@@ -4,13 +4,13 @@ import android.content.Context
 import android.provider.Settings
 import com.app.screentime.login.repository.LoginRepository
 import com.app.screentime.messaging.FCMTokenManager
-import com.app.screentime.network.model.DeviceRegistrationResponse
+import com.app.screentime.core.network.model.DeviceRegistrationResponse
 import com.app.screentime.utils.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import androidx.core.content.edit
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.preferences.PreferencesManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
 

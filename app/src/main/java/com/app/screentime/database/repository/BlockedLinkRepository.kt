@@ -47,10 +47,23 @@ class BlockedLinkRepository @Inject constructor(
     }
     
     /**
-     * Add a blocked link (normalizes to lowercase)
+     * Add a blocked link (normalizes to lowercase, removes protocol and trailing slashes)
+     * Examples:
+     * - "https://aajtak.in/" -> "aajtak.in"
+     * - "http://www.aajtak.in" -> "www.aajtak.in"
+     * - "aajtak.in" -> "aajtak.in"
      */
     suspend fun addBlockedLink(link: String): Long {
-        val normalizedLink = link.lowercase().trim()
+        // Normalize: remove protocol, trailing slashes, and convert to lowercase
+        var normalizedLink = link.lowercase().trim()
+        
+        // Remove protocol (http://, https://)
+        normalizedLink = normalizedLink.removePrefix("http://")
+            .removePrefix("https://")
+        
+        // Remove trailing slashes, dots, and spaces
+        normalizedLink = normalizedLink.trimEnd('/', '.', ' ')
+        
         if (normalizedLink.isEmpty()) return -1
         
         val existing = getBlockedLinkByLink(normalizedLink)

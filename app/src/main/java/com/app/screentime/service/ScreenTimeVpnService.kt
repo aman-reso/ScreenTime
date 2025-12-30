@@ -35,13 +35,6 @@ class ScreenTimeVpnService : VpnService() {
     // ✅ Blocklist (safe & smart) - Default domains
     private val defaultBlockedDomains = setOf(
         // Social & entertainment
-        "facebook.com", "www.facebook.com",
-        "instagram.com", "www.instagram.com",
-        "tiktok.com", "www.tiktok.com",
-        "snapchat.com", "www.snapchat.com",
-        "twitter.com", "x.com", "www.twitter.com",
-        "m.facebook.com",
-        "googleads.g.doubleclick.net",
         // DNS-over-HTTPS (DoH) providers
 //        "dns.google",
         "cloudflare-dns.com",
@@ -51,13 +44,15 @@ class ScreenTimeVpnService : VpnService() {
         "quad9.net",
         "dns.quad9.net",
         "dns.nextdns.io",
-        "ad.doubleclick.net",
         "rr5---sn-gwpa-pmfe.googlevideo.com",
         "www.googleadservices.com"
     ).map { it.lowercase() }.toSet()
 
     // Blocked domains from Room database (updated dynamically)
     private val blockedDomainsFromDb = AtomicReference<Set<String>>(emptySet())
+    @Volatile
+    private var lastDbUpdateTime = 0L
+    private val DB_UPDATE_INTERVAL_MS = 1000L // Update cache every 1 second max
 
     private val blockedLinkRepository by lazy {
         val database = ScreenTimeDatabase.getDatabase(applicationContext)
@@ -94,6 +89,7 @@ class ScreenTimeVpnService : VpnService() {
 
             createNotificationChannel()
             loadBlockedLinks()
+            startBlockedLinksObserver() // Start observing database changes
             startForeground(NOTIFICATION_ID, createNotification())
             startVpn()
         }
@@ -222,18 +218,19 @@ class ScreenTimeVpnService : VpnService() {
         val (domain, nameLen, dnsId) = extractDnsDomain(dnsBuffer)
         if (domain.isNullOrEmpty()) return
 
-        if (isBlocked(domain.lowercase())) {
-            Log.d(TAG, "❌ Blocked DNS query: $domain")
+        val domainLower = domain.lowercase()
+        if (isBlocked(domainLower)) {
+            Log.d(TAG, "❌ BLOCKED DNS query: $domain")
             // Track blocked site in Room database
             serviceScope.launch {
-                blockedLinkRepository.trackBlockedLink(domain.lowercase())
+                blockedLinkRepository.trackBlockedLink(domainLower)
             }
             val questionBytes = ByteArray(nameLen + 4)
             dnsBuffer.position(12)
             dnsBuffer.get(questionBytes)
             craftAndSendBlockedDnsResponse(dnsId, questionBytes, srcIp, srcPort, output)
         } else {
-            Log.d(TAG, "✅ Allowing DNS query: $domain")
+            Log.v(TAG, "✅ Allowing DNS query: $domain")
             forwardDnsAsync(udpPayload, srcIp, srcPort, output)
         }
     }
@@ -262,36 +259,132 @@ class ScreenTimeVpnService : VpnService() {
         return Triple(sb.trimEnd('.').toString(), totalLen, dnsId)
     }
 
+    /**
+     * Check if a domain should be blocked
+     * Handles subdomains: if "aajtak.in" is blocked, it blocks "www.aajtak.in", "m.aajtak.in", etc.
+     */
     private fun isBlocked(domain: String): Boolean {
+        // Normalize domain (remove trailing dots, lowercase)
+        val normalizedDomain = domain.lowercase().trim().removeSuffix(".")
+        
         // Check default domains
-        if (defaultBlockedDomains.any { domain == it || domain.endsWith(".$it") }) {
+        if (defaultBlockedDomains.any { blockedDomain ->
+            matchesDomain(normalizedDomain, blockedDomain)
+        }) {
+            Log.d(TAG, "✅ Blocked by default: $normalizedDomain")
             return true
         }
-        // Check domains from Room database
+        
+        // Use cached database domains for fast lookup
         val dbDomains = blockedDomainsFromDb.get()
-        return dbDomains.any { domain == it || domain.endsWith(".$it") }
+        
+        // Periodically refresh cache if it's been a while (non-blocking check)
+        val now = System.currentTimeMillis()
+        if (now - lastDbUpdateTime > DB_UPDATE_INTERVAL_MS) {
+            // Trigger async refresh without blocking
+            serviceScope.launch {
+                refreshBlockedLinksCache()
+            }
+        }
+        
+        // Check domains from Room database
+        val isBlocked = dbDomains.any { blockedDomain ->
+            matchesDomain(normalizedDomain, blockedDomain)
+        }
+        
+        if (isBlocked) {
+            Log.d(TAG, "✅ Blocked by DB: $normalizedDomain (matched against ${dbDomains.size} blocked domains)")
+        }
+        
+        return isBlocked
+    }
+    
+    /**
+     * Check if a domain matches a blocked domain pattern
+     * Examples:
+     * - "aajtak.in" matches "aajtak.in" ✓
+     * - "www.aajtak.in" matches "aajtak.in" ✓
+     * - "m.aajtak.in" matches "aajtak.in" ✓
+     * - "aajtak.in" matches "www.aajtak.in" ✓
+     */
+    private fun matchesDomain(domain: String, blockedDomain: String): Boolean {
+        // Exact match
+        if (domain == blockedDomain) {
+            return true
+        }
+        
+        // If domain ends with .blockedDomain (subdomain case)
+        // e.g., "www.aajtak.in" ends with ".aajtak.in"
+        if (domain.endsWith(".$blockedDomain")) {
+            return true
+        }
+        
+        // If blockedDomain ends with .domain (reverse subdomain case)
+        // e.g., "www.aajtak.in" contains "aajtak.in"
+        if (blockedDomain.endsWith(".$domain")) {
+            return true
+        }
+        
+        // Contains check for partial matches
+        // e.g., "aajtak.in" is contained in "www.aajtak.in"
+        if (domain.contains(blockedDomain) || blockedDomain.contains(domain)) {
+            return true
+        }
+        
+        return false
     }
 
     /**
-     * Load blocked links from Room database
+     * Load blocked links from Room database (initial load)
      */
     private fun loadBlockedLinks() {
         serviceScope.launch {
+            refreshBlockedLinksCache()
+        }
+    }
+    
+    /**
+     * Refresh blocked links cache from database
+     */
+    private suspend fun refreshBlockedLinksCache() {
+        try {
+            val links = blockedLinkRepository.getAllBlockedLinkStrings()
+            val normalizedLinks = links.map { it.lowercase().trim().removeSuffix(".") }
+            blockedDomainsFromDb.set(normalizedLinks.toSet())
+            lastDbUpdateTime = System.currentTimeMillis()
+            Log.d(TAG, "🔄 Refreshed blocked links cache: ${normalizedLinks.size} domains")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error refreshing blocked links cache", e)
+        }
+    }
+    
+    /**
+     * Start observing database changes via Flow
+     * This ensures cache is updated immediately when links are added/removed
+     */
+    private fun startBlockedLinksObserver() {
+        serviceScope.launch {
             try {
-                val links = blockedLinkRepository.getAllBlockedLinkStrings()
-                blockedDomainsFromDb.set(links.toSet())
-                Log.d(TAG, "Loaded ${links.size} blocked links from database")
+                blockedLinkRepository.getAllBlockedLinkStringsFlow().collect { links ->
+                    val normalizedLinks = links.map { it.lowercase().trim().removeSuffix(".") }
+                    blockedDomainsFromDb.set(normalizedLinks.toSet())
+                    lastDbUpdateTime = System.currentTimeMillis()
+                    Log.d(TAG, "🔄 Blocked links updated via Flow: ${normalizedLinks.size} domains - ${normalizedLinks.take(5).joinToString(", ")}")
+                }
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading blocked links", e)
+                Log.e(TAG, "Error observing blocked links Flow", e)
             }
         }
     }
 
     /**
      * Reload blocked links (call this when links are added/removed)
+     * Note: Flow observer should handle this automatically, but this is a backup
      */
     fun reloadBlockedLinks() {
-        loadBlockedLinks()
+        serviceScope.launch {
+            refreshBlockedLinksCache()
+        }
     }
 
     // ---------------- DNS forwarding -----------------

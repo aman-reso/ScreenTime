@@ -4,6 +4,13 @@
 
 package com.telekom.odsystem.tokens;
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.LineHeightStyle
 import com.telekom.odsystem.foundations.ODSTextStyle
 import androidx.compose.ui.unit.*
 import com.telekom.odsystem.R
@@ -85,4 +92,22 @@ object ODSTextStyles {
         ODSTextStyle(fontFamily = R.font.oxanium_bold, fontSize = 40, lineHeight = 40)
     val oxDisplayL =
         ODSTextStyle(fontFamily = R.font.oxanium_bold, fontSize = 64, lineHeight = 64)
+}
+@Composable
+fun ODSTextStyle.toTextStyleIgnoreScale(): TextStyle {
+    val fontScale = LocalDensity.current.fontScale
+    return TextStyle(
+        fontFamily = FontFamily(
+            Font(fontFamily)
+        ),
+        fontSize = (fontSize.sp / fontScale),
+        lineHeight = (lineHeight.sp / fontScale),
+        lineHeightStyle = LineHeightStyle(
+            alignment = LineHeightStyle.Alignment.Center,
+            trim = LineHeightStyle.Trim.None
+        ),
+        platformStyle = PlatformTextStyle(
+            includeFontPadding = true
+        )
+    )
 }

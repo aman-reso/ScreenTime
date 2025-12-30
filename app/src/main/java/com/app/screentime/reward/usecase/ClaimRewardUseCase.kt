@@ -2,6 +2,7 @@ package com.app.screentime.reward.usecase
 
 import com.app.screentime.reward.model.RewardClaimData
 import com.app.screentime.reward.model.RewardClaimRequest
+import com.app.screentime.reward.model.SavedClaimDetails
 import com.app.screentime.reward.repository.RewardRepository
 import javax.inject.Inject
 
@@ -22,6 +23,18 @@ class ClaimRewardUseCase @Inject constructor(
                 Result.failure(exception)
             }
         )
+    }
+
+    fun saveClaimDetails(details: SavedClaimDetails) {
+        rewardRepository.saveClaimDetails(details)
+    }
+
+    fun getSavedClaimDetails(): SavedClaimDetails? {
+        return rewardRepository.getSavedClaimDetails()
+    }
+
+    fun clearSavedClaimDetails() {
+        rewardRepository.clearSavedClaimDetails()
     }
 }
 

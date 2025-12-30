@@ -224,12 +224,12 @@ fun ODSImage(
             colorFilter = colorFilter,
         )
     } else if (imageModel.bitmap != null) {
-        Image(
+        AsyncImage(
             modifier = internalModifier,
-            bitmap = imageModel.bitmap!!.asImageBitmap(),
+            model = imageModel.bitmap,
             contentDescription = contentDescription,
             contentScale = contentScale,
-            colorFilter = colorFilter,
+            colorFilter = colorFilter
         )
     } else if (!imageModel.base64.isNullOrEmpty()) {
         val bitmap = imageModel.base64?.let { base64toBitmap(it) } ?: run {

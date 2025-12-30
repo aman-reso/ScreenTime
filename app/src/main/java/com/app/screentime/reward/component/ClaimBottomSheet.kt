@@ -58,7 +58,7 @@ fun ClaimBottomSheet(
         titleSlot = {
             ODSText(
                 text = "Claim Reward",
-                style = DSTextStyles.titleS,
+                style = DSTextStyles.bodyL,
                 color = scheme.basicText
             )
         },
@@ -128,6 +128,19 @@ fun ClaimBottomSheet(
         }
     )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

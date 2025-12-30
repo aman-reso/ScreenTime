@@ -87,7 +87,7 @@ fun NetworkCard(
                 ) {
                     ODSText(
                         text = stringResource(R.string.network_card_title),
-                        style = DSTextStyles.bodyL,
+                        style = DSTextStyles.bodyMRegular,
                         color = scheme.basicText
                     )
 

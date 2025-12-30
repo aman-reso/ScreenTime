@@ -1,12 +1,8 @@
 package com.app.screentime.consent.repository
 
 import com.app.screentime.consent.service.ConsentService
-import com.app.screentime.network.model.ApiConsentItem
-import com.app.screentime.network.model.ApiResponse
-import com.app.screentime.network.model.ConsentRequest
-import com.app.screentime.network.model.ConsentResponse
-import com.app.screentime.network.model.ConsentSubmissionRequest
-import com.app.screentime.network.model.ConsentSubmissionResponseItem
+import com.app.screentime.core.network.model.*
+import com.app.screentime.network.model.*
 import javax.inject.Inject
 
 /**

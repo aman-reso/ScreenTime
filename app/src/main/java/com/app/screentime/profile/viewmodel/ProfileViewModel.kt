@@ -2,7 +2,7 @@ package com.app.screentime.profile.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.screentime.preferences.PreferencesManager
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.profile.model.ProfileUiProps
 import com.app.screentime.profile.model.SettingsItemClickResult
 import com.app.screentime.profile.usecase.ProfileUseCase
@@ -44,7 +44,6 @@ class ProfileViewModel @Inject constructor(
                 val props = profileUseCase.getProfileUiProps(isLoading = true)
                 _uiProps.value = props
 
-                // Update again without loading state
                 val updatedProps = profileUseCase.getProfileUiProps(isLoading = false)
                 _uiProps.value = updatedProps
             } catch (e: Exception) {
@@ -60,7 +59,7 @@ class ProfileViewModel @Inject constructor(
      * Periodically update VPN status and blocked sites count
      */
     private fun startPeriodicUpdate() {
-        viewModelScope.launch(Dispatchers.Default){
+        viewModelScope.launch(Dispatchers.Default) {
             while (true) {
                 delay(2000) // Check every 2 seconds
                 val currentProps = _uiProps.value

@@ -1,12 +1,12 @@
 package com.app.screentime.network.di
 
-import com.app.screentime.challenge.service.ChallengeService
-import com.app.screentime.challenge.service.ChallengeServiceImpl
-import com.app.screentime.consent.service.ConsentService
-import com.app.screentime.consent.service.ConsentServiceImpl
+import com.app.screentime.core.network.NetworkClient
 import com.app.screentime.login.service.LoginService
 import com.app.screentime.login.service.LoginServiceImpl
-import com.app.screentime.network.NetworkClient
+import com.app.screentime.consent.service.ConsentService
+import com.app.screentime.consent.service.ConsentServiceImpl
+import com.app.screentime.challenge.service.ChallengeService
+import com.app.screentime.challenge.service.ChallengeServiceImpl
 import com.app.screentime.network.service.notification.NotificationService
 import com.app.screentime.network.service.notification.NotificationServiceImpl
 import com.app.screentime.network.service.screentime.ScreenTimeService
@@ -28,6 +28,8 @@ import com.app.screentime.network.service.urlsearch.URLSearchService
 import com.app.screentime.network.service.urlsearch.URLSearchServiceImpl
 import com.app.screentime.reward.service.RewardService
 import com.app.screentime.reward.service.RewardServiceImpl
+import com.app.screentime.network.service.user.UserService
+import com.app.screentime.network.service.user.UserServiceImpl
 import com.app.screentime.search.service.SearchService
 import com.app.screentime.search.service.SearchServiceImpl
 import dagger.Binds
@@ -61,6 +63,13 @@ abstract class NetworkModule {
     @Binds
     @Singleton
     abstract fun bindLoginService(loginServiceImpl: LoginServiceImpl): LoginService
+
+    /**
+     * Bind UserService implementation
+     */
+    @Binds
+    @Singleton
+    abstract fun bindUserService(userServiceImpl: UserServiceImpl): UserService
 
     /**
      * Bind SearchService implementation
@@ -154,17 +163,6 @@ abstract class NetworkModule {
     abstract fun bindRewardService(rewardServiceImpl: RewardServiceImpl): RewardService
 
     companion object {
-        /**
-         * Provide NetworkClient
-         * Uses @Provides because NetworkClient is a concrete class that needs instantiation
-         * Creates PreferencesManager directly instead of injecting it
-         */
-        @Provides
-        @Singleton
-        fun provideNetworkClient(
-            @ApplicationContext context: android.content.Context
-        ): NetworkClient = NetworkClient(context)
-
         /**
          * Provide NetworkUtils
          * Uses @Provides because it needs Context parameter

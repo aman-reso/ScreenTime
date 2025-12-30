@@ -4,26 +4,37 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.app.screentime.appdetail.screen.SingleAppUsageDetailScreen
+import com.app.screentime.applock.screen.AppLockScreen
 import com.app.screentime.blocking.screen.AppBlockingScreen
+import com.app.screentime.blocking.screen.BlockedLinksScreen
 import com.app.screentime.challenge.screen.ChallengeDetailScreen
 import com.app.screentime.challenge.screen.ChallengeListScreen
 import com.app.screentime.landing.screen.AdaptiveLandingScreen
+import com.app.screentime.leaderboard.screen.LeaderboardScreen
+import com.app.screentime.notifications.screen.CapturedNotificationsScreen
 import com.app.screentime.permission.AppPermissionScreen
 import com.app.screentime.profile.screen.ProfileScreen
 import com.app.screentime.record.screen.RecordDetailScreen
@@ -32,6 +43,14 @@ import com.app.screentime.reward.screen.RewardScreen
 import com.app.screentime.reward.screen.RewardTransactionScreen
 import com.app.screentime.search.screen.SearchScreen
 import com.app.screentime.statistics.screen.StatisticsScreen
+import com.app.screentime.wallpaper.screen.WallpaperScreen
+import com.telekom.odsystem.DSVariables
+import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButton
+import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButtonProps
+import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButtonSize
+import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButtonType
+import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButtonVariant
+import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigation
 import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigationItemProps
@@ -53,7 +72,9 @@ fun ScreenTimeNavigation(
     style: ScreenTimeNavigationStyle = ScreenTimeNavigationStyle().getStyle(scheme),
     deeplinkUri: android.net.Uri? = null
 ) {
-    val backStack = remember { mutableStateListOf<Screen>(Screen.Permission) }
+    val backStack = retain {
+        mutableStateListOf<Screen>(Screen.Permission)
+    }
     var selectedIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(backStack.toList()) {
@@ -87,6 +108,8 @@ fun ScreenTimeNavigation(
         }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    
     val navigationHandlers = remember {
         object {
             fun onIndexChanged(index: Int) {
@@ -105,8 +128,36 @@ fun ScreenTimeNavigation(
         }
     }
     Scaffold(
+        floatingActionButton = {
+            val currentScreen = backStack.lastOrNull()
+            if (currentScreen == Screen.Landing || currentScreen == Screen.Challenges || currentScreen is Screen.ChallengeDetail || currentScreen == Screen.Profile) {
+                ODSFloatingActionButton(
+                    modifier = Modifier
+                        .padding(
+                            end = DSVariables.spacingComponent4,
+                            bottom = DSVariables.spacingComponent4
+                        )
+                        .navigationBarsPadding(),
+                    scheme = scheme,
+                    props = ODSFloatingActionButtonProps(
+                        icon = ODSIconModel(
+                            imageVector = Icons.Outlined.CardGiftcard,
+                            contentDescription = "Reward"
+                        ),
+                        size = ODSFloatingActionButtonSize.SMALL,
+                        type = ODSFloatingActionButtonType.STANDARD,
+                        variant = ODSFloatingActionButtonVariant.PRIMARY
+                    ),
+                    onClick = {
+                        backStack.add(Screen.Reward)
+                    }
+                )
+            }
+        },
         containerColor = style.scaffoldBackground?.firstOrNull()?.hexColor?.getColor()
-            ?: scheme.basicBackground.getColor(), topBar = {}, bottomBar = {
+            ?: scheme.basicBackground.getColor(), 
+        topBar = {}, 
+        bottomBar = {
             val currentScreen = backStack.lastOrNull()
             if (
                 props.showBottomNavigation &&
@@ -120,7 +171,22 @@ fun ScreenTimeNavigation(
                     onIndexChanged = navigationHandlers::onIndexChanged
                 )
             }
-        }, modifier = Modifier.fillMaxSize()
+        },
+        snackbarHost = {
+            ToastSnackbarHost(
+                snackbarHostState = snackbarHostState,
+                scheme = scheme,
+                modifier = Modifier.padding(bottom = if (props.showBottomNavigation && backStack.lastOrNull() in tokens.bottomNavigationRoutes) {
+                    // Add padding to avoid overlap with bottom navigation
+                    DSVariables.spacingComponent8
+                } else {
+                    DSVariables.spacingComponent4
+                })
+            )
+        },
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
     ) { paddingValues ->
         NavigationHost(
             scheme = scheme, paddingValues = paddingValues, backStack, tokens
@@ -189,6 +255,7 @@ private fun NavigationHost(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(bottom = paddingValues.calculateBottomPadding()),
+                onNavigateToLeaderboard = { backStack.add(Screen.Leaderboard) },
                 onNavigateToReward = { backStack.add(Screen.Reward) },
                 onNavigateToSearch = { backStack.add(Screen.Search) },
                 onNavigateToStatistics = { backStack.add(Screen.Statistics) },
@@ -224,8 +291,21 @@ private fun NavigationHost(
                     .fillMaxSize()
                     .padding(bottom = paddingValues.calculateBottomPadding()),
                 onNavigateToAppBlocking = { backStack.add(Screen.AppBlocking) },
+                onNavigateToAppLock = { backStack.add(Screen.AppLock) },
                 onNavigateToBlockedLinks = { backStack.add(Screen.BlockedLinks) },
-                scheme = scheme
+                scheme = scheme,
+                onNavigateToCapturedNotifications = { backStack.add(Screen.CapturedNotifications) },
+                onNavigateToWallpaper = { backStack.add(Screen.Wallpaper) }
+            )
+        }
+
+        entry<Screen.CapturedNotifications> {
+            CapturedNotificationsScreen(
+                onBackClick = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                }
             )
         }
 
@@ -249,7 +329,7 @@ private fun NavigationHost(
             AppBlockingScreen(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = paddingValues.calculateBottomPadding()), onBackClick = {
+                    .padding(top = paddingValues.calculateBottomPadding()), onBackClick = {
                     if (backStack.size > 1) {
                         backStack.removeLastOrNull()
                     }
@@ -257,19 +337,31 @@ private fun NavigationHost(
             )
         }
 
-        entry<Screen.Leaderboard> {
-            RewardScreen(
+        entry<Screen.AppLock> {
+            AppLockScreen(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = paddingValues.calculateBottomPadding()), onBackClick = {
+                    .padding(top = paddingValues.calculateBottomPadding()),
+                onBackClick = {
                     if (backStack.size > 1) {
                         backStack.removeLastOrNull()
                     }
-                }, onNavigateToCoinHistory = {
-                    backStack.add(Screen.CoinHistory)
-                }, onNavigateToRewardHistory = { transactionId ->
-                    backStack.add(Screen.RewardTransaction(transactionId))
-                }, scheme = scheme
+                },
+                scheme = scheme
+            )
+        }
+
+        entry<Screen.Leaderboard> {
+            LeaderboardScreen(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = paddingValues.calculateBottomPadding()),
+                onBackClick = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                scheme = scheme
             )
         }
 
@@ -302,20 +394,21 @@ private fun NavigationHost(
                 }, onNavigateToCoinHistory = {
                     backStack.add(Screen.CoinHistory)
                 }, onNavigateToRewardHistory = { transactionId ->
-                    backStack.add(Screen.RewardTransaction(transactionId))
+                    backStack.add(Screen.RewardTransaction(transactionId = transactionId))
                 }, scheme = scheme
             )
         }
 
         entry<Screen.CoinHistory> {
             CoinHistoryScreen(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = paddingValues.calculateBottomPadding()), onBackClick = {
+                onBackClick = {
                     if (backStack.size > 1) {
                         backStack.removeLastOrNull()
                     }
-                }, scheme = scheme
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = paddingValues.calculateBottomPadding()), scheme = scheme
             )
         }
 
@@ -323,14 +416,11 @@ private fun NavigationHost(
             RewardTransactionScreen(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = paddingValues.calculateBottomPadding()),
-                onBackClick = {
+                    .padding(top = paddingValues.calculateBottomPadding()), onBackClick = {
                     if (backStack.size > 1) {
                         backStack.removeLastOrNull()
                     }
-                },
-                transactionId = screen.transactionId,
-                scheme = scheme
+                }, scheme = scheme
             )
         }
 
@@ -338,7 +428,7 @@ private fun NavigationHost(
             SearchScreen(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = paddingValues.calculateBottomPadding()), onBackClick = {
+                    .padding(top = paddingValues.calculateBottomPadding()), onBackClick = {
                     if (backStack.size > 1) {
                         backStack.removeLastOrNull()
                     }
@@ -352,8 +442,7 @@ private fun NavigationHost(
             key.params?.challengeId?.let {
                 ChallengeDetailScreen(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = paddingValues.calculateBottomPadding()),
+                        .fillMaxSize(),
                     challengeId = it,
                     onBackClick = {
                         if (backStack.size > 1) {
@@ -370,7 +459,7 @@ private fun NavigationHost(
                 RecordDetailScreen(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(bottom = paddingValues.calculateBottomPadding()),
+                        .padding(top = paddingValues.calculateBottomPadding()),
                     username = it,
                     onBackClick = {
                         if (backStack.size > 1) {
@@ -401,12 +490,36 @@ private fun NavigationHost(
             }
         }
 
+        entry<Screen.BlockedLinks> {
+            BlockedLinksScreen(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = paddingValues.calculateBottomPadding()),
+                onBackClick = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                scheme = scheme
+            )
+        }
+
+        entry<Screen.Wallpaper> {
+            WallpaperScreen(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = paddingValues.calculateBottomPadding()),
+                onBackClick = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                }
+            )
+        }
+
+
         // entry<Screen.FocusMode> {
         //     // TODO: Implement FocusModeScreen
-        // }
-
-        // entry<Screen.BlockedLinks> {
-        //     // TODO: Implement BlockedLinksScreen
         // }
     })
 }

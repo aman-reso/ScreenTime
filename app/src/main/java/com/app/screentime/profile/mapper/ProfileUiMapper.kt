@@ -25,11 +25,11 @@ class ProfileUiMapper @Inject constructor() {
         isUpdating: Boolean = false,
         error: String? = null
     ): ProfileUiProps {
-        // Update VPN service setting text based on VPN status
+        // Update VPN service setting text - always show "Manage VPN"
         val updatedSettingsList = settingsList.map { item ->
             if (item.key == ProfileSettingsKey.VPN_SERVICE) {
                 ProfileSettingsUi.Other(
-                    text = if (isVpnRunning) R.string.disable_vpn else R.string.enable_vpn,
+                    text = R.string.manage_vpn,
                     url = "",
                     key = ProfileSettingsKey.VPN_SERVICE
                 )

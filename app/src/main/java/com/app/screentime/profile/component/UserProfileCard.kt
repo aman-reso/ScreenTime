@@ -42,6 +42,7 @@ fun UserProfileCard(
     modifier: Modifier = Modifier,
     username: String? = null,
     userId: String? = null,
+    joinedOn: String? = null,
     onUsernameClick: (() -> Unit) = {},
     scheme: ODSTheme = neutralScheme
 ) {
@@ -51,12 +52,9 @@ fun UserProfileCard(
         Spacer(modifier = Modifier.height(24.dp))
 
         val displayName = username ?: userId ?: "User"
-        val initials = displayName.split(" ")
-            .take(2)
-            .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-            .joinToString("")
-            .take(2)
-            .ifEmpty { "U" }
+        val initials =
+            displayName.split(" ").take(2).mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                .joinToString("").take(2).ifEmpty { "U" }
 
         ODSAvatar(
             modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -98,13 +96,15 @@ fun UserProfileCard(
                 ), width = DSVariables.spacingComponent6, height = DSVariables.spacingComponent6
             )
         }
-        ODSText(
-            text = "Joined On Nov 10, 2024",
-            style = DSTextStyles.bodySRegular,
-            modifier = Modifier.wrapContentWidth(),
-            textAlign = TextAlign.Center,
-            color = scheme.basicTextRecessive
-        )
-        Spacer(modifier = Modifier.height(24.dp))
+        joinedOn?.takeIf { it.isNotEmpty() }?.let {
+            ODSText(
+                text = "Joined On $it",
+                style = DSTextStyles.bodySRegular,
+                modifier = Modifier.wrapContentWidth(),
+                textAlign = TextAlign.Center,
+                color = scheme.basicTextRecessive
+            )
+        }
+        Spacer(modifier = Modifier.height(DSVariables.spacingComponent5))
     }
 }
