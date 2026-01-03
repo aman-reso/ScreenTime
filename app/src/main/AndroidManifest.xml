@@ -31,7 +31,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <!-- <uses-permission android:name="android.permission.BIND_VPN_SERVICE" /> -->
+    <uses-permission android:name="android.permission.BIND_VPN_SERVICE" />
 
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -67,7 +67,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            
+
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -143,15 +143,15 @@
             android:exported="false" />
 
         <!-- Focus Mode Service -->
-<!--        <service-->
-<!--            android:name=".focus.FocusModeService"-->
-<!--            android:enabled="true"-->
-<!--            android:exported="false"-->
-<!--            android:foregroundServiceType="specialUse">-->
-<!--            <property-->
-<!--                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"-->
-<!--                android:value="focus_mode" />-->
-<!--        </service>-->
+        <!--        <service-->
+        <!--            android:name=".focus.FocusModeService"-->
+        <!--            android:enabled="true"-->
+        <!--            android:exported="false"-->
+        <!--            android:foregroundServiceType="specialUse">-->
+        <!--            <property-->
+        <!--                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"-->
+        <!--                android:value="focus_mode" />-->
+        <!--        </service>-->
 
         <!-- VPN Service -->
 
@@ -174,7 +174,7 @@
             </intent-filter>
         </service>
 
-        <!-- VPN Service - Commented out
+
         <service
             android:name=".service.ScreenTimeVpnService"
             android:enabled="true"
@@ -185,15 +185,14 @@
                 <action android:name="android.net.VpnService" />
             </intent-filter>
         </service>
-        -->
 
 
         <service
             android:name=".service.ListenerService"
-            android:foregroundServiceType="specialUse"
-            android:label="My Listener"
             android:enabled="true"
             android:exported="true"
+            android:foregroundServiceType="specialUse"
+            android:label="My Listener"
             android:stopWithTask="false"
             tools:ignore="ForegroundServicePermission" />
 

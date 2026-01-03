@@ -55,7 +55,7 @@ import com.app.screentime.profile.model.ProfileUiProps
 import com.app.screentime.profile.model.SettingsItemClickResult
 import com.app.screentime.profile.viewmodel.ProfileViewModel
 import com.app.screentime.service.NotificationHistoryListener
-// import com.app.screentime.service.ScreenTimeVpnService
+ import com.app.screentime.service.ScreenTimeVpnService
 import com.app.screentime.ui.language.LanguageViewModel
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ui.theme.ThemeViewModel

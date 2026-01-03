@@ -49,16 +49,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-// import android.content.Intent
-// import android.net.VpnService
+import android.content.Intent
+import android.net.VpnService
 import androidx.compose.ui.res.stringResource
-// import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat
 import com.app.screentime.R
-// import com.app.screentime.service.ScreenTimeVpnService
-// import com.app.screentime.service.VpnPermissionManager
+import com.app.screentime.service.ScreenTimeVpnService
+import com.app.screentime.service.VpnPermissionManager
 import com.app.screentime.blocking.viewmodel.BlockedLinksViewModel
-// import com.app.screentime.blocking.component.VpnPermissionScreenContent
-// import com.app.screentime.blocking.component.PermissionCard
+import com.app.screentime.blocking.component.VpnPermissionScreenContent
+import com.app.screentime.blocking.component.PermissionCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.app.screentime.ui.theme.LocalThemeMode
@@ -112,10 +112,9 @@ fun BlockedLinksScreen(
     var websiteUrl by remember { mutableStateOf("") }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Check VPN permission - VPN feature disabled
-    // val vpnPermissionManager = remember { VpnPermissionManager(context) }
-    // var hasVpnPermission by remember { mutableStateOf(vpnPermissionManager.hasVpnPermission()) }
-    var hasVpnPermission by remember { mutableStateOf(false) }
+    // Check VPN permission
+    val vpnPermissionManager = remember { VpnPermissionManager(context) }
+    var hasVpnPermission by remember { mutableStateOf(vpnPermissionManager.hasVpnPermission()) }
 
     SideEffect {
         if (activity is ComponentActivity) {
@@ -136,8 +135,7 @@ fun BlockedLinksScreen(
         }
     }
 
-    // VPN Permission Launcher - VPN feature disabled
-    /*
+    // VPN Permission Launcher
     val vpnLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
@@ -151,22 +149,18 @@ fun BlockedLinksScreen(
             viewModel.checkVpnStatus(context)
         }
     }
-    */
 
     LaunchedEffect(Unit) {
         viewModel.loadBlockedLinks()
-        // VPN feature disabled
-        // hasVpnPermission = vpnPermissionManager.hasVpnPermission()
-        // while (true) {
-        //     hasVpnPermission = vpnPermissionManager.hasVpnPermission()
-        //     viewModel.checkVpnStatus(context)
-        //     delay(2000)
-        // }
-        viewModel.checkVpnStatus(context)
+        hasVpnPermission = vpnPermissionManager.hasVpnPermission()
+        while (true) {
+            hasVpnPermission = vpnPermissionManager.hasVpnPermission()
+            viewModel.checkVpnStatus(context)
+            delay(2000)
+        }
     }
 
-    // Re-check permission when screen resumes - VPN feature disabled
-    /*
+    // Re-check permission when screen resumes
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -180,10 +174,8 @@ fun BlockedLinksScreen(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    */
 
-    // Show permission screen if VPN permission is not granted - VPN feature disabled
-    /*
+    // Show permission screen if VPN permission is not granted
     if (!hasVpnPermission) {
         VpnPermissionScreenContent(
             modifier = modifier,
@@ -199,7 +191,6 @@ fun BlockedLinksScreen(
         )
         return
     }
-    */
 
     ODSColumn(
         modifier = modifier.fillMaxSize(),
@@ -239,8 +230,8 @@ fun BlockedLinksScreen(
                 textAlign = TextAlign.Center
             )
 
-            // Show add button - VPN feature disabled, always show
-            // if (hasVpnPermission) {
+            // Show add button only when VPN permission is granted
+            if (hasVpnPermission) {
                 IconButton(
                     onClick = { showAddBottomSheet = true },
                     modifier = Modifier.size(44.dp)
@@ -255,7 +246,7 @@ fun BlockedLinksScreen(
                         height = 24.dp
                     )
                 }
-            // }
+            }
         }
 
         ODSLazyColumn(
@@ -263,8 +254,6 @@ fun BlockedLinksScreen(
             padding = ODSPadding(horizontal = DSVariables.spacingComponent4),
             gap = DSVariables.spacingComponent2
         ) {
-            // VPN permission UI - Commented out VPN feature
-            /*
             if (!hasVpnPermission) {
                 item {
                     ODSBox(
@@ -360,10 +349,8 @@ fun BlockedLinksScreen(
                     }
                 }
             }
-            */
 
-            // VPN Toggle - Commented out VPN feature
-            /*
+            // VPN Toggle - Only show if permission is granted
             if (hasVpnPermission) {
                 item {
                     ODSBox(
@@ -387,27 +374,26 @@ fun BlockedLinksScreen(
                                     size = ODSSwitchSize.SMALL
                                 ),
                                 onCheckedChange = { isChecked ->
-                                    // VPN feature disabled
-                                    // if (isChecked) {
-                                    //     val intent = VpnService.prepare(context)
-                                    //     if (intent != null) {
-                                    //         vpnLauncher.launch(intent)
-                                    //     } else {
-                                    //         val serviceIntent =
-                                    //             Intent(context, ScreenTimeVpnService::class.java)
-                                    //         ContextCompat.startForegroundService(
-                                    //             context,
-                                    //             serviceIntent
-                                    //         )
-                                    //         viewModel.checkVpnStatus(context)
-                                    //     }
-                                    // } else {
-                                    //     val stopIntent =
-                                    //         Intent(context, ScreenTimeVpnService::class.java)
-                                    //     stopIntent.putExtra("stop", true)
-                                    //     ContextCompat.startForegroundService(context, stopIntent)
-                                    //     viewModel.checkVpnStatus(context)
-                                    // }
+                                    if (isChecked) {
+                                        val intent = VpnService.prepare(context)
+                                        if (intent != null) {
+                                            vpnLauncher.launch(intent)
+                                        } else {
+                                            val serviceIntent =
+                                                Intent(context, ScreenTimeVpnService::class.java)
+                                            ContextCompat.startForegroundService(
+                                                context,
+                                                serviceIntent
+                                            )
+                                            viewModel.checkVpnStatus(context)
+                                        }
+                                    } else {
+                                        val stopIntent =
+                                            Intent(context, ScreenTimeVpnService::class.java)
+                                        stopIntent.putExtra("stop", true)
+                                        ContextCompat.startForegroundService(context, stopIntent)
+                                        viewModel.checkVpnStatus(context)
+                                    }
                                 }
                             )
                         }
@@ -419,7 +405,6 @@ fun BlockedLinksScreen(
                     )
                 }
             }
-            */
 
             // Content
             if (uiState.isLoading) {
@@ -476,8 +461,8 @@ fun BlockedLinksScreen(
                     Spacer(modifier = Modifier.height(200.dp))
                 }
 
-                // Bottom button - "Add URL or Domain" - VPN feature disabled, always show
-                // if (hasVpnPermission) {
+                // Bottom button - "Add URL or Domain"
+                if (hasVpnPermission) {
                     item {
                         ODSButton(
                             modifier = Modifier
@@ -497,7 +482,7 @@ fun BlockedLinksScreen(
                             }
                         )
                     }
-                // }
+                }
             } else {
                 item {
                     ODSBox(
