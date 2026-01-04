@@ -87,8 +87,7 @@ class ProfileViewModel @Inject constructor(
         url: String
     ): SettingsItemClickResult {
         val currentProps = _uiProps.value
-        val isVpnRunning = currentProps?.isVpnRunning ?: false
-        return profileUseCase.handleSettingsItemClick(key, url, isVpnRunning)
+        return profileUseCase.handleSettingsItemClick(key, url)
     }
 
     /**

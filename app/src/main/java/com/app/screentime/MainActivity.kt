@@ -84,7 +84,6 @@ class MainActivity : ComponentActivity() {
             // Track deeplink URI from intent
             var deeplinkUri by remember { mutableStateOf(intent.data) }
 
-            // Update deeplink when intent changes
             LaunchedEffect(intent) {
                 deeplinkUri = intent.data
             }
@@ -94,9 +93,6 @@ class MainActivity : ComponentActivity() {
                 val scheme = neutralScheme
 
                 SideEffect {
-                    // Set status bar and navigation bar icons based on theme
-                    // Dark theme: light icons (SystemBarStyle.dark)
-                    // Light theme: dark icons (SystemBarStyle.light)
                     enableEdgeToEdge(
                         statusBarStyle = if (useDarkTheme) {
                             SystemBarStyle.dark(scheme.basicBackground.getIntColor())

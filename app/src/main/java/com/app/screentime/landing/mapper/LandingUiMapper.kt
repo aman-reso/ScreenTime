@@ -52,7 +52,8 @@ class LandingUiMapper @Inject constructor() {
             shouldShowConsent = shouldShowConsent,
             percentageChangeFromYesterday = percentageChangeFromYesterday,
             categoryUsage = todayUsageData.categoryUsage,
-            joinedChallenges = joinedChallenges
+            joinedChallenges = joinedChallenges,
+            totalNotificationCount = todayUsageData.notificationCount
         )
     }
 
@@ -130,7 +131,9 @@ class LandingUiMapper @Inject constructor() {
 
         // Use muted color from palette for "Others"
         val othersColor =
-            if (chartColors.size > 4) chartColors[4] else chartColors.lastOrNull() ?: HexColor(0xFF9E9E9E)
+            if (chartColors.size > 4) chartColors[4] else chartColors.lastOrNull() ?: HexColor(
+                0xFF9E9E9E
+            )
         val withOthers = if (othersTime > 0) {
             topSegments + UsageSegment(
                 name = "Others",

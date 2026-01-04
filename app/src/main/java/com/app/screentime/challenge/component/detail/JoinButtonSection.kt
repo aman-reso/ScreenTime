@@ -35,9 +35,9 @@ fun JoinButtonSection(
             scheme = scheme,
             props = ODSButtonProps(
                 label = "Join Challenge",
-                variant = ODSButtonVariant.PRIMARY,
+                variant = ODSButtonVariant.SECONDARY,
                 disabled = isJoining,
-                size = ODSButtonSize.LARGE,
+                size = ODSButtonSize.SMALL,
                 buttonIcon = if (isJoining) null else ODSIconModel(
                     imageVector = Icons.Default.EmojiEvents,
                     tint = scheme.basicTextOnAccent,

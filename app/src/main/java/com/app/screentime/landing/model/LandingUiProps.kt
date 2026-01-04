@@ -23,6 +23,7 @@ data class LandingUiProps(
     val shouldShowConsent: Boolean = false,
     val percentageChangeFromYesterday: Float? = null, // Percentage change from yesterday (null if no data)
     val categoryUsage: List<CategoryUsage> = emptyList(), // Category-wise usage data
-    val joinedChallenges: List<UserChallenge> = emptyList() // User's joined challenges for notification
+    val joinedChallenges: List<UserChallenge> = emptyList(),
+    val totalNotificationCount: Int = 0
 )
 

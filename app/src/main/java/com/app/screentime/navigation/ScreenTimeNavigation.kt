@@ -23,19 +23,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.app.screentime.appdetail.screen.SingleAppUsageDetailScreen
-import com.app.screentime.applock.screen.AppLockScreen
-import com.app.screentime.blocking.screen.AppBlockingScreen
-import com.app.screentime.blocking.screen.BlockedLinksScreen
 import com.app.screentime.challenge.screen.ChallengeDetailScreen
 import com.app.screentime.challenge.screen.ChallengeListScreen
+// import com.app.screentime.challenge.screen.ChallengeDetailScreen // Removed - Challenge feature disabled
+// import com.app.screentime.challenge.screen.ChallengeListScreen // Removed - Challenge feature disabled
 import com.app.screentime.landing.screen.AdaptiveLandingScreen
 import com.app.screentime.leaderboard.screen.LeaderboardScreen
 import com.app.screentime.notifications.screen.CapturedNotificationsScreen
 import com.app.screentime.permission.AppPermissionScreen
+import com.app.screentime.permission.checkUsageStatsPermission
 import com.app.screentime.profile.screen.ProfileScreen
 import com.app.screentime.record.screen.RecordDetailScreen
 import com.app.screentime.reward.screen.CoinHistoryScreen
@@ -44,6 +45,7 @@ import com.app.screentime.reward.screen.RewardTransactionScreen
 import com.app.screentime.search.screen.SearchScreen
 import com.app.screentime.statistics.screen.StatisticsScreen
 import com.app.screentime.wallpaper.screen.WallpaperScreen
+// import com.app.screentime.wallpaper.screen.WallpaperScreen // Removed - Wallpaper feature disabled
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButton
 import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButtonProps
@@ -72,8 +74,16 @@ fun ScreenTimeNavigation(
     style: ScreenTimeNavigationStyle = ScreenTimeNavigationStyle().getStyle(scheme),
     deeplinkUri: android.net.Uri? = null
 ) {
+    val context = LocalContext.current
+    val isUsagePermission = checkUsageStatsPermission(context)
     val backStack = retain {
-        mutableStateListOf<Screen>(Screen.Permission)
+        mutableStateListOf(
+            if (isUsagePermission) {
+                Screen.Landing
+            } else {
+                Screen.Permission
+            }
+        )
     }
     var selectedIndex by remember { mutableIntStateOf(0) }
 
@@ -83,7 +93,6 @@ fun ScreenTimeNavigation(
         selectedIndex = if (newIndex >= 0) newIndex else -1
     }
 
-    // Handle deep links
     LaunchedEffect(deeplinkUri) {
         if (deeplinkUri != null) {
             val deeplinkScreen = DeeplinkParser.parseDeeplink(deeplinkUri)
@@ -109,7 +118,7 @@ fun ScreenTimeNavigation(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    
+
     val navigationHandlers = remember {
         object {
             fun onIndexChanged(index: Int) {
@@ -146,7 +155,7 @@ fun ScreenTimeNavigation(
                         ),
                         size = ODSFloatingActionButtonSize.SMALL,
                         type = ODSFloatingActionButtonType.STANDARD,
-                        variant = ODSFloatingActionButtonVariant.PRIMARY
+                        variant = ODSFloatingActionButtonVariant.SECONDARY
                     ),
                     onClick = {
                         backStack.add(Screen.Reward)
@@ -155,8 +164,8 @@ fun ScreenTimeNavigation(
             }
         },
         containerColor = style.scaffoldBackground?.firstOrNull()?.hexColor?.getColor()
-            ?: scheme.basicBackground.getColor(), 
-        topBar = {}, 
+            ?: scheme.basicBackground.getColor(),
+        topBar = {},
         bottomBar = {
             val currentScreen = backStack.lastOrNull()
             if (
@@ -176,12 +185,14 @@ fun ScreenTimeNavigation(
             ToastSnackbarHost(
                 snackbarHostState = snackbarHostState,
                 scheme = scheme,
-                modifier = Modifier.padding(bottom = if (props.showBottomNavigation && backStack.lastOrNull() in tokens.bottomNavigationRoutes) {
-                    // Add padding to avoid overlap with bottom navigation
-                    DSVariables.spacingComponent8
-                } else {
-                    DSVariables.spacingComponent4
-                })
+                modifier = Modifier.padding(
+                    bottom = if (props.showBottomNavigation && backStack.lastOrNull() in tokens.bottomNavigationRoutes) {
+                        // Add padding to avoid overlap with bottom navigation
+                        DSVariables.spacingComponent8
+                    } else {
+                        DSVariables.spacingComponent4
+                    }
+                )
             )
         },
         modifier = Modifier
@@ -290,12 +301,11 @@ private fun NavigationHost(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(bottom = paddingValues.calculateBottomPadding()),
-                onNavigateToAppBlocking = { backStack.add(Screen.AppBlocking) },
                 onNavigateToAppLock = { backStack.add(Screen.AppLock) },
-                onNavigateToBlockedLinks = { backStack.add(Screen.BlockedLinks) },
                 scheme = scheme,
                 onNavigateToCapturedNotifications = { backStack.add(Screen.CapturedNotifications) },
-                onNavigateToWallpaper = { backStack.add(Screen.Wallpaper) }
+                onNavigateToWallpaper = { backStack.add(Screen.Wallpaper) },
+                onNavigateToRecoverNotification = { backStack.add(Screen.CapturedNotifications) }
             )
         }
 
@@ -320,32 +330,6 @@ private fun NavigationHost(
                             )
                         )
                     )
-                },
-                scheme = scheme
-            )
-        }
-
-        entry<Screen.AppBlocking> {
-            AppBlockingScreen(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = paddingValues.calculateBottomPadding()), onBackClick = {
-                    if (backStack.size > 1) {
-                        backStack.removeLastOrNull()
-                    }
-                }, scheme = scheme
-            )
-        }
-
-        entry<Screen.AppLock> {
-            AppLockScreen(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = paddingValues.calculateBottomPadding()),
-                onBackClick = {
-                    if (backStack.size > 1) {
-                        backStack.removeLastOrNull()
-                    }
                 },
                 scheme = scheme
             )
@@ -490,6 +474,8 @@ private fun NavigationHost(
             }
         }
 
+        // BlockedLinks feature disabled
+        /*
         entry<Screen.BlockedLinks> {
             BlockedLinksScreen(
                 modifier = Modifier
@@ -503,6 +489,7 @@ private fun NavigationHost(
                 scheme = scheme
             )
         }
+        */
 
         entry<Screen.Wallpaper> {
             WallpaperScreen(
@@ -516,10 +503,5 @@ private fun NavigationHost(
                 }
             )
         }
-
-
-        // entry<Screen.FocusMode> {
-        //     // TODO: Implement FocusModeScreen
-        // }
     })
 }

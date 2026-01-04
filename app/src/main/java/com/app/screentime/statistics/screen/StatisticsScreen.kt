@@ -187,8 +187,7 @@ fun StatisticsScreen(
             else -> {
                 ODSLazyColumn(
                     modifier = modifier.fillMaxSize(),
-                    background = listOf(ODSColorModel(scheme.basicBackground)),
-                    padding = ODSPadding(all = DSVariables.spacingComponent3),
+                    padding = ODSPadding(horizontal = DSVariables.spacingComponent3, bottom = DSVariables.spacingComponent3),
                     gap = DSVariables.spacingComponent3
                 ) {
                     item {
@@ -362,7 +361,7 @@ private fun SelectedDayInfoCard(
                             )
                             ODSText(
                                 text = selectedDay.displayScreenTime ?: "N/A",
-                                style = DSTextStyles.linkSBold,
+                                style = DSTextStyles.bodyMBold,
                                 color = scheme.basicText
                             )
                         }
@@ -378,7 +377,25 @@ private fun SelectedDayInfoCard(
                                 )
                                 ODSText(
                                     text = selectedDay.displayTotalDataUsage,
-                                    style = DSTextStyles.linkSBold,
+                                    style = DSTextStyles.bodyMBold,
+                                    color = scheme.basicText
+                                )
+                            }
+                        }
+                        if (selectedDay.totalNotificationCount > 0) {
+                            ODSColumn(
+                                modifier = Modifier.weight(1f),
+                                gap = DSVariables.spacingComponent1,
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                ODSText(
+                                    text = "Notifications",
+                                    style = DSTextStyles.bodySRegular,
+                                    color = scheme.basicTextRecessive
+                                )
+                                ODSText(
+                                    text = selectedDay.totalNotificationCount.toString(),
+                                    style = DSTextStyles.bodyMBold,
                                     color = scheme.basicText
                                 )
                             }

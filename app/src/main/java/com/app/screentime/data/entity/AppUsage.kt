@@ -15,7 +15,8 @@ data class AppUsage(
     val appScreenTime: Long,
     val mobileDataUsage: Long = 0L,
     val wifiDataUsage: Long = 0L,
-    val launchCount: Int = -1
+    val launchCount: Int = -1,
+    val notificationCount: Int = -1
 ) {
     @Ignore
     var applicationInfo: ApplicationInfo? = null

@@ -1,8 +1,6 @@
 package com.app.screentime.profile.usecase
 
 import android.content.Context
-// import android.content.Intent
-// import android.net.VpnService
 import com.app.screentime.R
 import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.network.model.UsernameUpdateRequest
@@ -15,9 +13,6 @@ import com.app.screentime.profile.model.ProfileUiModel
 import com.app.screentime.profile.model.ProfileUiProps
 import com.app.screentime.profile.model.SettingsItemClickResult
 import com.app.screentime.profile.repository.ProfileRepository
-import com.app.screentime.service.VpnPermissionManager
-// import com.app.screentime.service.ScreenTimeVpnService
-// import com.app.screentime.service.VpnPermissionManager
 import com.app.screentime.widget.WidgetSetupHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -31,7 +26,7 @@ class ProfileUseCase @Inject constructor(
     private val profileMapper: ProfileMapper,
     private val profileUiMapper: ProfileUiMapper,
     private val profileRepository: ProfileRepository,
-    private val blockedSitesUseCase: BlockedSitesUseCase,
+    // private val blockedSitesUseCase: BlockedSitesUseCase, // Removed - BlockedSites feature disabled
     @ApplicationContext private val context: Context
 ) {
     /**
@@ -93,48 +88,24 @@ class ProfileUseCase @Inject constructor(
             // Profile Section
             add(ProfileSettingsUi.ProfileData(R.string.profile))
 
-            // App Restrictions Section
-            add(ProfileSettingsUi.SectionTitle(R.string.app_restrictions))
+            // App Restrictions Section - Removed
+            // add(ProfileSettingsUi.SectionTitle(R.string.app_restrictions))
+
+            // Features Section
+            add(ProfileSettingsUi.SectionTitle(R.string.features))
             add(
                 ProfileSettingsUi.Other(
-                    R.string.block_app,
+                    R.string.recover_deleted_notifications,
                     url = "",
-                    key = ProfileSettingsKey.BLOCK_APP
+                    key = ProfileSettingsKey.RECOVER_NOTIFICATION
                 )
             )
+            // Wallpaper feature disabled
             add(
                 ProfileSettingsUi.Other(
-                    R.string.set_app_limit,
+                    R.string.set_wallpaper,
                     url = "",
-                    key = ProfileSettingsKey.SET_APP_LIMIT
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    R.string.set_app_launch_limit,
-                    url = "",
-                    key = ProfileSettingsKey.SET_APP_LAUNCH_LIMIT
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    R.string.manage_vpn,
-                    url = "",
-                    key = ProfileSettingsKey.VPN_SERVICE
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    text = R.string.recover_deleted_notifications,
-                    url = "",
-                    key = ProfileSettingsKey.NOTIFICATION_HISTORY
-                )
-            )
-            add(
-                ProfileSettingsUi.Other(
-                    text = R.string.app_lock,
-                    url = "",
-                    key = ProfileSettingsKey.APP_LOCK
+                    key = ProfileSettingsKey.WALLPAPER
                 )
             )
 
@@ -155,14 +126,6 @@ class ProfileUseCase @Inject constructor(
                     key = ProfileSettingsKey.WIDGET
                 )
             )
-            add(
-                ProfileSettingsUi.Other(
-                    R.string.set_wallpaper,
-                    url = "",
-                    key = ProfileSettingsKey.WALLPAPER
-                )
-            )
-
             // About App Section
             add(ProfileSettingsUi.SectionTitle(R.string.about_app))
             add(
@@ -181,6 +144,13 @@ class ProfileUseCase @Inject constructor(
             )
             add(
                 ProfileSettingsUi.Other(
+                    R.string.share_app,
+                    url = "",
+                    key = ProfileSettingsKey.SHARE_APP
+                )
+            )
+            add(
+                ProfileSettingsUi.Other(
                     R.string.help_support,
                     url = "",
                     key = ProfileSettingsKey.HELP_SUPPORT
@@ -193,44 +163,6 @@ class ProfileUseCase @Inject constructor(
         }
     }
 
-    /**
-     * Check if VPN service is currently running
-     */
-    // Commented out VPN feature
-    /*
-    fun isVpnServiceRunning(): Boolean {
-        val activityManager =
-            context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-        return activityManager.getRunningServices(Integer.MAX_VALUE)
-            .any { it.service.className == ScreenTimeVpnService::class.java.name }
-    }
-
-    /**
-     * Check if VPN is running (has permission and service is running)
-     */
-    fun isVpnRunning(): Boolean {
-        val vpnPermissionManager = VpnPermissionManager(context)
-        return vpnPermissionManager.hasVpnPermission() && isVpnServiceRunning()
-    }
-    */
-    
-    // VPN feature disabled - return false
-    fun isVpnServiceRunning(): Boolean = false
-    fun isVpnRunning(): Boolean = false
-
-    /**
-     * Get blocked sites count
-     * Returns 0 if VPN is not running
-     */
-    // VPN feature disabled - always return 0
-    suspend fun getBlockedSitesCount(): Int {
-        // return if (isVpnRunning()) {
-        //     blockedSitesUseCase.getBlockedSitesCount()
-        // } else {
-        //     0
-        // }
-        return 0
-    }
 
     /**
      * Get Profile UI Props
@@ -243,14 +175,10 @@ class ProfileUseCase @Inject constructor(
     ): ProfileUiProps {
         val profile = getProfile()
         val settingsList = createProfileSettingsList()
-        val isVpnRunning = isVpnRunning()
-        val blockedSitesCount = getBlockedSitesCount()
 
         return profileUiMapper.toUiProps(
             profile = profile,
             settingsList = settingsList,
-            isVpnRunning = isVpnRunning,
-            blockedSitesCount = blockedSitesCount,
             isLoading = isLoading,
             isUpdating = isUpdating,
             error = error
@@ -263,29 +191,19 @@ class ProfileUseCase @Inject constructor(
      */
     fun handleSettingsItemClick(
         key: ProfileSettingsKey,
-        url: String,
-        isVpnRunning: Boolean
+        url: String
     ): SettingsItemClickResult {
-        val vpnPermissionManager = VpnPermissionManager(context)
 
         return when (key) {
             ProfileSettingsKey.THEME -> SettingsItemClickResult.ShowDialog(DialogType.THEME)
             ProfileSettingsKey.LANGUAGE -> SettingsItemClickResult.ShowDialog(DialogType.LANGUAGE)
             ProfileSettingsKey.WIDGET -> SettingsItemClickResult.RequestWidgetSetup
+            ProfileSettingsKey.SHARE_APP -> SettingsItemClickResult.ShareApp
             ProfileSettingsKey.HELP_SUPPORT -> SettingsItemClickResult.ShowDialog(DialogType.HELP_SUPPORT)
-            ProfileSettingsKey.BLOCK_APP,
-            ProfileSettingsKey.SET_APP_LIMIT,
-            ProfileSettingsKey.SET_APP_LAUNCH_LIMIT,
-            ProfileSettingsKey.AD_BLOCKING -> SettingsItemClickResult.NavigateToScreen("app_blocking")
+            ProfileSettingsKey.RECOVER_NOTIFICATION -> SettingsItemClickResult.NavigateToScreen("recover_notification")
 
-            ProfileSettingsKey.NOTIFICATION_HISTORY -> SettingsItemClickResult.NavigateToScreen("captured_notifications")
-            ProfileSettingsKey.APP_LOCK -> SettingsItemClickResult.NavigateToScreen("app_lock")
-            ProfileSettingsKey.WALLPAPER -> SettingsItemClickResult.NavigateToScreen("wallpaper")
-            // Device Admin removed - not suitable for consumer apps
-
-            ProfileSettingsKey.VPN_SERVICE -> {
-                SettingsItemClickResult.NavigateToScreen("blocked_links")
-            }
+            // ProfileSettingsKey.APP_LOCK -> SettingsItemClickResult.NavigateToScreen("app_lock") // Removed - App Lock feature disabled
+            ProfileSettingsKey.WALLPAPER -> SettingsItemClickResult.NavigateToScreen("wallpaper") // Removed - Wallpaper feature disabled
 
             else -> {
                 if (url.isNotEmpty()) {
@@ -297,43 +215,6 @@ class ProfileUseCase @Inject constructor(
         }
     }
 
-    /**
-     * Handle VPN service click - returns the appropriate action
-     */
-    // VPN feature disabled - commented out
-    /*
-    private fun handleVpnServiceClick(
-        isVpnRunning: Boolean,
-        vpnPermissionManager: VpnPermissionManager
-    ): SettingsItemClickResult {
-        return if (isVpnRunning) {
-            // Stop VPN
-            val stopIntent = Intent(context, ScreenTimeVpnService::class.java)
-            stopIntent.putExtra("stop", true)
-            SettingsItemClickResult.StopVpnService(stopIntent)
-        } else {
-            // Start VPN
-            if (vpnPermissionManager.hasVpnPermission()) {
-                val intent = Intent(context, ScreenTimeVpnService::class.java)
-                SettingsItemClickResult.StartVpnService(intent)
-            } else {
-                // Request permission
-                val intent = VpnService.prepare(context)
-                if (intent != null) {
-                    SettingsItemClickResult.RequestVpnPermission(intent)
-                } else {
-                    // Permission already granted, start service
-                    val serviceIntent = Intent(context, ScreenTimeVpnService::class.java)
-                    SettingsItemClickResult.StartVpnService(serviceIntent)
-                }
-            }
-        }
-    }
-    */
-
-    /**
-     * Request widget setup
-     */
     suspend fun requestWidgetSetup() {
         WidgetSetupHelper.requestWidgetSetup(context)
     }

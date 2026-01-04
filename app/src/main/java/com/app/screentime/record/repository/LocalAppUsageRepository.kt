@@ -49,7 +49,6 @@ class LocalAppUsageRepository(
             Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0
         )
 
-        // Lazy processing using Sequence for better performance
         val appsUsageList = launchableApps.asSequence().mapNotNull { info ->
             val pkg = info.activityInfo.packageName
             val name =
@@ -168,6 +167,9 @@ class LocalAppUsageRepository(
 
             val dailyUsage = getAppsUsageForInterval(startOfDay, endOfDay)
             val totalScreenTime = dailyUsage.sumOf { it.appScreenTime }
+            val totalNotificationCount = dailyUsage.sumOf { 
+                if (it.notificationCount > 0) it.notificationCount else 0 
+            }
             val report = WeeklyDataReport(
                 dayName = SimpleDateFormat(
                     "EEEE",
@@ -185,7 +187,9 @@ class LocalAppUsageRepository(
                 displayMobileDataUsage = dailyUsage.sumOf { it.mobileDataUsage }
                     .toReadableDataSize(),
                 displayTotalDataUsage = dailyUsage.sumOf { it.wifiDataUsage + it.mobileDataUsage }
-                    .toReadableDataSize())
+                    .toReadableDataSize(),
+                totalNotificationCount = totalNotificationCount
+            )
 
             weeklyReports.add(report)
         }

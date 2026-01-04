@@ -30,10 +30,11 @@ object DatabaseModule {
         return database.focusTimeDao()
     }
     
-    @Provides
-    fun provideBlockedLinkDao(database: ScreenTimeDatabase): BlockedLinkDao {
-        return database.blockedLinkDao()
-    }
+    // BlockedLinkDao kept for future use - currently not providing it to avoid dependency issues
+    // @Provides
+    // fun provideBlockedLinkDao(database: ScreenTimeDatabase): BlockedLinkDao {
+    //     return database.blockedLinkDao()
+    // }
     
     @Provides
     fun provideNotificationDao(database: ScreenTimeDatabase): NotificationDao {

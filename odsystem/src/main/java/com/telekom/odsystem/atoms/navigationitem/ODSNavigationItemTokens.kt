@@ -50,7 +50,6 @@ val defaultODSNavigationItemTokens = ODSNavigationItemTokens(
     gap = DSVariables.spacingComponent2,
     padding = ODSPadding(
         top = DSVariables.spacingComponent4,
-        bottom = DSVariables.spacingComponent5,
         left = DSVariables.spacingComponent2,
         right = DSVariables.spacingComponent2
     ),

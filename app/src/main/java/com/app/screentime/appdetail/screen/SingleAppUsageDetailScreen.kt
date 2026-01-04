@@ -27,7 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Block
+// import androidx.compose.material.icons.filled.Block // Removed - App Blocking feature disabled
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.EditNotifications
 import androidx.compose.material.icons.filled.Error
@@ -63,8 +63,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.R
 import com.app.screentime.appdetail.viewmodel.SingleAppUsageDetailViewModel
-import com.app.screentime.blocking.component.AddBlockingRuleBottomSheet
-import com.app.screentime.blocking.manager.AppBlockManager
+// import com.app.screentime.blocking.component.AddBlockingRuleBottomSheet // Removed - App Blocking feature disabled
+// import com.app.screentime.blocking.manager.AppBlockManager // Removed - App Blocking feature disabled
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.data.uiModel.WeeklyDataReport
 import com.app.screentime.landing.component.NetworkCard
@@ -164,6 +164,15 @@ fun SingleAppUsageDetailScreen(
     val todayUsageFormatted = remember(todayUsage) {
         formatDuration(todayUsage)
     }
+    
+    // Calculate today's notification count
+    val todayNotificationCount = remember(uiState.weeklyUsageData) {
+        if (uiState.weeklyUsageData.isNotEmpty()) {
+            uiState.weeklyUsageData.lastOrNull()?.notificationCount ?: 0
+        } else {
+            0
+        }
+    }
 
     // Calculate percentage change (compare today with previous day)
     val percentageChange = remember(uiState.weeklyUsageData) {
@@ -195,7 +204,8 @@ fun SingleAppUsageDetailScreen(
                         appName = uiState.appName,
                         appScreenTime = dayData.screenTime,
                         wifiDataUsage = dayData.wifiDataUsage,
-                        mobileDataUsage = dayData.mobileDataUsage
+                        mobileDataUsage = dayData.mobileDataUsage,
+                        notificationCount = dayData.notificationCount
                     ).apply {
                         applicationInfo = appInfo
                     }),
@@ -205,7 +215,8 @@ fun SingleAppUsageDetailScreen(
                 totalMobileDataUsage = dayData.mobileDataUsage,
                 displayWifiDataUsage = dayData.displayWifiDataUsage,
                 displayMobileDataUsage = dayData.displayMobileDataUsage,
-                displayTotalDataUsage = dayData.displayTotalDataUsage
+                displayTotalDataUsage = dayData.displayTotalDataUsage,
+                totalNotificationCount = dayData.notificationCount
             )
         }
     }
@@ -259,7 +270,7 @@ fun SingleAppUsageDetailScreen(
     val totalDataDisplay = totalData.toReadableDataSize()
 
     // Bottom sheet states
-    var showBlockBottomSheet by remember { mutableStateOf(false) }
+    // var showBlockBottomSheet by remember { mutableStateOf(false) } // Removed - App Blocking feature disabled
     var showTimerBottomSheet by remember { mutableStateOf(false) }
 
     ODSColumn(
@@ -363,7 +374,7 @@ fun SingleAppUsageDetailScreen(
                                 QuickActionsCard(
                                     onLaunchClick = { launchApp(context, packageName) },
                                     onSetTimerClick = { showTimerBottomSheet = true },
-                                    onBlockClick = { showBlockBottomSheet = true },
+                                    // onBlockClick = { showBlockBottomSheet = true }, // Removed - App Blocking feature disabled
                                     onSettingsClick = { openAppSettings(context, packageName) },
                                     scheme = scheme,
                                     packageName = packageName
@@ -394,6 +405,7 @@ fun SingleAppUsageDetailScreen(
                                 UsageSummaryCard(
                                     todayTotal = todayUsageFormatted,
                                     dailyGoal = "6h",
+                                    notificationCount = todayNotificationCount.takeIf { it > 0 },
                                     percentageChange = percentageChange,
                                     onClick = {},
                                     scheme = headerTheme.current
@@ -493,6 +505,7 @@ fun SingleAppUsageDetailScreen(
                             UsageSummaryCard(
                                 todayTotal = todayUsageFormatted,
                                 dailyGoal = "6h",
+                                notificationCount = todayNotificationCount.takeIf { it > 0 },
                                 percentageChange = percentageChange,
                                 onClick = {},
                                 scheme = frogSecondaryScheme
@@ -533,7 +546,7 @@ fun SingleAppUsageDetailScreen(
                             QuickActionsCard(
                                 onLaunchClick = { launchApp(context, packageName) },
                                 onSetTimerClick = { showTimerBottomSheet = true },
-                                onBlockClick = { showBlockBottomSheet = true },
+                                // onBlockClick = { showBlockBottomSheet = true }, // Removed - App Blocking feature disabled
                                 onSettingsClick = { openAppSettings(context, packageName) },
                                 scheme = scheme,
                                 packageName
@@ -547,7 +560,8 @@ fun SingleAppUsageDetailScreen(
             }
         }
 
-        // Block App Bottom Sheet
+        // Block App Bottom Sheet - Removed - App Blocking feature disabled
+        /*
         if (showBlockBottomSheet) {
             AddBlockingRuleBottomSheet(
                 selectedAppName = uiState.appName.ifEmpty { packageName },
@@ -574,6 +588,7 @@ fun SingleAppUsageDetailScreen(
                 scheme = neutralScheme
             )
         }
+        */
 
         // Timer Bottom Sheet
         if (showTimerBottomSheet) {
@@ -627,7 +642,7 @@ private fun HeaderSection(
 private fun QuickActionsCard(
     onLaunchClick: () -> Unit,
     onSetTimerClick: () -> Unit,
-    onBlockClick: () -> Unit,
+    // onBlockClick: () -> Unit, // Removed - App Blocking feature disabled
     onSettingsClick: () -> Unit,
     scheme: ODSTheme,
     packageName: String
@@ -657,7 +672,8 @@ private fun QuickActionsCard(
                 scheme = scheme
             )
 
-            // Block
+            // Block - Removed - App Blocking feature disabled
+            /*
             ActionCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Block,
@@ -665,6 +681,7 @@ private fun QuickActionsCard(
                 onClick = onBlockClick,
                 scheme = scheme
             )
+            */
 
         }
         ActionCard(
@@ -675,6 +692,8 @@ private fun QuickActionsCard(
             scheme = scheme
         )
 
+        // Recover Notification - Removed - Notification recovery feature disabled
+        /*
         ActionCard(
             modifier = Modifier.weight(1f),
             icon = Icons.Default.EditNotifications,
@@ -682,6 +701,7 @@ private fun QuickActionsCard(
             onClick = onBlockClick,
             scheme = scheme
         )
+        */
     }
 }
 

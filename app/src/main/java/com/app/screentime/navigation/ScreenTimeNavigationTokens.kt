@@ -24,7 +24,7 @@ val defaultScreenTimeNavigationTokens = ScreenTimeNavigationTokens(
     bottomNavigationRoutes = listOf(
         Screen.Landing,
         Screen.Statistics,
-        Screen.Challenges,
+         Screen.Challenges,
         Screen.Profile
     )
 )

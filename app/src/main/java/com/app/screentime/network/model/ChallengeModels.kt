@@ -102,7 +102,8 @@ data class Challenge(
     val participantCount: Int = 0,
     val hasJoined: Boolean = false,
     val tag: String? = null,
-    val scheme: String? = null
+    val scheme: String? = null,
+    val variant: String? = null // variant1, variant2, variant3, variant4, variant5, variant6
 ) {
     /**
      * Get the ODSTheme for this challenge.
@@ -153,7 +154,8 @@ data class ChallengeDetails(
     val createdAt: String? = null, // ISO 8601 format
     val packageNames: String? = null,
     val hasJoined: Boolean = false,
-    val scheme: String? = null // ODS theme scheme name
+    val scheme: String? = null,
+    val variant: String? = null
 ) {
     /**
      * Get the ODSTheme for this challenge detail.
@@ -161,6 +163,10 @@ data class ChallengeDetails(
      */
     fun getTheme(): ODSTheme {
         return getThemeFromScheme(scheme)
+    }
+    
+    fun getVariant(){
+        "variant2"
     }
 }
 

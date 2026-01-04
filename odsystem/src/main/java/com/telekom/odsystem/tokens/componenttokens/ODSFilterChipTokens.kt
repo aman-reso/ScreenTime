@@ -66,7 +66,7 @@ val defaultODSFilterChipTokens = ODSFilterChipTokens(
         left = DSVariables.spacingComponent6,
         right = DSVariables.spacingComponent5
     ),
-    filterChipCornerRadius = ODSCorners(all = DSVariables.radiusFull),
+    filterChipCornerRadius = ODSCorners(all = DSVariables.radiusSmall),
     filterChipBorder = DSVariables.strokes1,
     filterChipMinHeight = DSVariables.sizingComponent13,
     filterChipMinWidth = DSVariables.sizingComponent15,

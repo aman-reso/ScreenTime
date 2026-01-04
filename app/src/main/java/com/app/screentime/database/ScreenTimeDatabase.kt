@@ -22,18 +22,18 @@ import com.app.screentime.database.entity.NotificationEntity
 @Database(
     entities = [
         FocusTimeEntity::class,
-        BlockedLinkEntity::class,
+        BlockedLinkEntity::class, // Kept for future use - currently not in use
         NotificationEntity::class,
         JoinedChallengeEntity::class,
         CapturedNotificationEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class ScreenTimeDatabase : RoomDatabase() {
     
     abstract fun focusTimeDao(): FocusTimeDao
-    abstract fun blockedLinkDao(): BlockedLinkDao
+    abstract fun blockedLinkDao(): BlockedLinkDao // Kept for future use - currently not in use
     abstract fun notificationDao(): NotificationDao
     abstract fun joinedChallengeDao(): JoinedChallengeDao
     abstract fun capturedNotificationDao(): CapturedNotificationDao

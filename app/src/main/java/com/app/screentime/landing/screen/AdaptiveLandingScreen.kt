@@ -10,13 +10,10 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.app.screentime.statistics.screen.StatisticsScreen
 import com.app.screentime.statistics.viewmodel.StatisticsViewModel
-import com.app.screentime.landing.screen.LandingScreenV2
 import com.app.screentime.landing.viewmodel.LandingViewModel
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.telekom.odsystem.atoms.ODSBox
@@ -24,7 +21,6 @@ import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
-import com.telekom.odsystem.tokens.tokens.whiteScheme
 
 /**
  * Adaptive landing screen that shows:
@@ -95,7 +91,6 @@ fun AdaptiveLandingScreen(
                     onNavigateToChallengeDetail = onNavigateToChallengeDetail,
                     onNavigateToChallenges = onNavigateToChallenges,
                     viewModel = landingViewModel,
-                    openSearchScreen = openSearchScreen,
                     scheme = scheme
                 )
             }
@@ -132,7 +127,6 @@ fun AdaptiveLandingScreen(
             onNavigateToChallengeDetail = onNavigateToChallengeDetail,
             onNavigateToChallenges = onNavigateToChallenges,
             viewModel = landingViewModel,
-            openSearchScreen = openSearchScreen,
             scheme = scheme
         )
     }

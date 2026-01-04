@@ -116,7 +116,7 @@ object NotificationHelper {
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         val notificationBuilder = NotificationCompat.Builder(context, getChannelId(type))
-            .setSmallIcon(R.drawable.app_icon_vertical)
+            .setSmallIcon(R.mipmap.app_icon_round)
             .setContentTitle(title)
             .setContentText(message)
             .setAutoCancel(true)
@@ -152,14 +152,18 @@ object NotificationHelper {
                             notificationManager.notify(notificationId, notificationBuilder.build())
                         } else {
                             // Fallback to BigTextStyle if image fails to load
-                            notificationBuilder.setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                            notificationBuilder.setStyle(
+                                NotificationCompat.BigTextStyle().bigText(message)
+                            )
                             notificationManager.notify(notificationId, notificationBuilder.build())
                         }
                     }
                 } catch (e: Exception) {
                     // Fallback to BigTextStyle if image loading fails
                     withContext(Dispatchers.Main) {
-                        notificationBuilder.setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                        notificationBuilder.setStyle(
+                            NotificationCompat.BigTextStyle().bigText(message)
+                        )
                         notificationManager.notify(notificationId, notificationBuilder.build())
                     }
                 }
@@ -191,7 +195,7 @@ object NotificationHelper {
             !deeplink.isNullOrEmpty() -> {
                 // Parse deeplink and add navigation route
                 intent.putExtra("deeplink", deeplink)
-                
+
                 // Parse deeplink format: apptime://screen/route?param1=value1&param2=value2
                 // or simple route format: challenges, challenge_detail/123, etc.
                 when {
@@ -200,7 +204,7 @@ object NotificationHelper {
                         val uri = deeplink.toUri()
                         val route = uri.host ?: ""
                         intent.putExtra("route", route)
-                        
+
                         // Add query parameters
                         uri.queryParameterNames.forEach { key ->
                             uri.getQueryParameter(key)?.let { value ->
@@ -208,6 +212,7 @@ object NotificationHelper {
                             }
                         }
                     }
+
                     deeplink.contains("/") -> {
                         // Route with parameters: challenge_detail/123
                         val parts = deeplink.split("/")
@@ -223,12 +228,14 @@ object NotificationHelper {
                             intent.putExtra(paramName, parts[1])
                         }
                     }
+
                     else -> {
                         // Simple route: challenges, statistics, etc.
                         intent.putExtra("route", deeplink)
                     }
                 }
             }
+
             data?.containsKey("deeplink") == true -> {
                 // Deeplink in data payload
                 val link = data["deeplink"] ?: ""

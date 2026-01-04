@@ -22,7 +22,9 @@ import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
 import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.textfield.ODSTextField
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldMode
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldProps
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldSize
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldSupportMessageProps
@@ -39,8 +41,14 @@ fun EditUsernameBottomSheetContent(
     scheme: ODSTheme = neutralScheme
 ) {
     var usernameText by remember { mutableStateOf(currentUsername ?: "") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     val uiProps by viewModel.uiProps.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val minLengthError = stringResource(R.string.username_min_length_error)
+    
+    // Validate username length (minimum 3 characters)
+    val trimmedUsername = usernameText.trim()
+    val isValidUsername = trimmedUsername.length >= 3
 
     LaunchedEffect(uiProps?.error) {
         if (uiProps?.error != null) {
@@ -59,12 +67,15 @@ fun EditUsernameBottomSheetContent(
                 ODSButton(
                     modifier = Modifier.fillMaxWidth(), scheme = scheme, props = ODSButtonProps(
                         size = ODSButtonSize.SMALL,
+                        variant = ODSButtonVariant.SECONDARY,
                         label = stringResource(R.string.save),
                         disabled = (uiProps?.isUpdating
-                            ?: false) || usernameText.isBlank() || usernameText == currentUsername
+                            ?: false) || trimmedUsername.isBlank() || trimmedUsername == currentUsername || !isValidUsername
                     ), onClick = {
-                        viewModel.updateUsername(usernameText.trim()) {
-                            onDismiss()
+                        if (isValidUsername) {
+                            viewModel.updateUsername(trimmedUsername) {
+                                onDismiss()
+                            }
                         }
                     })
             }
@@ -96,10 +107,22 @@ fun EditUsernameBottomSheetContent(
                         size = ODSTextFieldSize.SMALL,
                         placeholderText = stringResource(R.string.enter_username),
                         disabled = uiProps?.isUpdating ?: false,
-                        supportMessageProps = ODSTextFieldSupportMessageProps(message = null)
+                        mode = if (errorMessage != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
+                        supportMessageProps = if (errorMessage != null) {
+                            ODSTextFieldSupportMessageProps(message = errorMessage)
+                        } else {
+                            null
+                        }
                     ), onValueChange = {
                         usernameText = it
-                        // Clear error when user starts typing
+                        // Validate minimum 3 characters
+                        val trimmed = it.trim()
+                        errorMessage = if (trimmed.isNotEmpty() && trimmed.length < 3) {
+                            minLengthError
+                        } else {
+                            null
+                        }
+                        // Clear API error when user starts typing
                         if (uiProps?.error != null) {
                             viewModel.clearError()
                         }

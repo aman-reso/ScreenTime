@@ -72,7 +72,7 @@ fun BottomBar(
                 scheme = scheme,
                 props = ODSButtonProps(
                     label = props.buttonLabel,
-                    variant = ODSButtonVariant.PRIMARY, size = ODSButtonSize.SMALL
+                    variant = ODSButtonVariant.SECONDARY, size = ODSButtonSize.SMALL
                 ),
                 onClick = onAllowClick
             )

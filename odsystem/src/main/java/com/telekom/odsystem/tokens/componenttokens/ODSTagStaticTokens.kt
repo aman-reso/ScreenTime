@@ -39,7 +39,7 @@ val defaultODSTagStaticTokens = ODSTagStaticTokens(
     horizontalArrangement = Arrangement.Center,
     iconWidth = DSVariables.sizingComponent7,
     iconHeight = DSVariables.sizingComponent7,
-    labelTextStyle = DSTextStyles.bodyMBold,
+    labelTextStyle = DSTextStyles.microcopyBold,
     labelTextAlign = TextAlign.Left,
     labelTextOverflow = TextOverflow.Ellipsis
 )

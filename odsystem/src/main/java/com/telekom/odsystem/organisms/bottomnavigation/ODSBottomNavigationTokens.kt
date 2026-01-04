@@ -25,7 +25,7 @@ data class ODSBottomNavigationTokens(
 )
 
 val defaultODSBottomNavigationTokens = ODSBottomNavigationTokens(
-    minHeight = DSVariables.sizingMinimumTappableArea,
+    minHeight = DSVariables.spacingComponent7,
     verticalAlignment = Alignment.Top,
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.Top,

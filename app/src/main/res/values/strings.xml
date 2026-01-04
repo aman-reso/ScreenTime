@@ -31,12 +31,15 @@
     <string name="language">Language</string>
     <string name="profile">Profile</string>
     <string name="edit_profile">Edit Profile</string>
+    <string name="username_min_length_error">Username must be at least 3 characters</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="terms_of_service">Terms of Service</string>
     <string name="about">About</string>
     <string name="about_app">About App</string>
+    <string name="share_app">Share App</string>
     <string name="help_support">Help &amp; Support</string>
     <string name="appearance">Appearance</string>
+    <string name="features">Features</string>
     <string name="set_wallpaper">Set Wallpaper</string>
     <string name="restriction">Restriction</string>
     <string name="admin">Admin</string>
@@ -64,17 +67,6 @@
     <string name="usage_access_title">Usage Access</string>
     <string name="usage_access_description">Required to detect which app is currently in use.</string>
     <string name="app_restrictions">App Restrictions</string>
-    <string name="vpn_service">VPN Service</string>
-    <string name="enable_vpn">Enable VPN</string>
-    <string name="disable_vpn">Disable VPN</string>
-    <string name="vpn_service_description">Block websites and filter network traffic</string>
-    <string name="tap_to_stop_vpn">Tap to stop VPN service</string>
-    <string name="manage_vpn">Manage VPN (Block Distracting Sites)</string>
-    <string name="vpn_feature_explanation">Block distracting websites to stay focused. Enable the VPN service to filter traffic and block the sites listed below.</string>
-    <string name="blocked_sites_count">%1$d blocked site(s)</string>
-    <string name="see_all_sites">See all sites</string>
-    <string name="blocked_sites">Blocked Sites</string>
-    <string name="no_blocked_sites">No sites blocked yet</string>
     
     <!-- Focus Mode -->
     <string name="all_day_focus_mode">All Day Focus Mode</string>
@@ -153,9 +145,6 @@
     <string name="permission_notifications_title">Notifications</string>
     <string name="permission_notifications_description">Show usage alerts and reminders</string>
 
-    <!-- Permission Item: VPN -->
-    <string name="permission_vpn_title">VPN</string>
-    <string name="permission_vpn_description">Use VPN to block websites and apps</string>
 
     <!-- General Actions -->
     <string name="action_grant">Grant</string>

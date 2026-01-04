@@ -1,8 +1,10 @@
 package com.app.screentime.permission
 
 import android.app.AppOpsManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -99,15 +101,23 @@ fun AppPermissionScreen(
     val handleAllowClick = {
         if (!hasUsageStatsPermission) {
             val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-            intent.data = "package:${context.packageName}".toUri()
-            usageStatsPermissionLauncher.launch(intent)
+            if (intent.resolveActivity(context.packageManager) != null) {
+                usageStatsPermissionLauncher.launch(intent)
+            } else {
+                val fallback = Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    "package:${context.packageName}".toUri()
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                usageStatsPermissionLauncher.launch(fallback)
+            }
         } else {
             onAllPermissionsGranted()
         }
     }
 
+
     val scrollState = rememberScrollState()
-    println("ScrollValue-->" + scrollState.value)
     ODSBox(modifier = modifier, clipContent = true) {
         ODSBox(modifier = Modifier) {
             Column(
@@ -157,8 +167,8 @@ fun AppPermissionScreen(
 /**
  * Helper function to check usage stats permission
  */
-private fun checkUsageStatsPermission(context: android.content.Context): Boolean {
-    val appOps = context.getSystemService(android.content.Context.APP_OPS_SERVICE) as AppOpsManager
+fun checkUsageStatsPermission(context: Context): Boolean {
+    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
     val mode = appOps.checkOpNoThrow(
         AppOpsManager.OPSTR_GET_USAGE_STATS,
         android.os.Process.myUid(),

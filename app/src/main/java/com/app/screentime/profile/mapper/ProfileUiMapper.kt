@@ -14,35 +14,18 @@ import javax.inject.Inject
 class ProfileUiMapper @Inject constructor() {
 
     /**
-     * Map profile data, settings list, VPN status, and blocked sites count to UI Props
+     * Map profile data and settings list to UI Props
      */
     fun toUiProps(
         profile: ProfileUiModel?,
         settingsList: List<ProfileSettingsUi>,
-        isVpnRunning: Boolean,
-        blockedSitesCount: Int,
         isLoading: Boolean = false,
         isUpdating: Boolean = false,
         error: String? = null
     ): ProfileUiProps {
-        // Update VPN service setting text - always show "Manage VPN"
-        val updatedSettingsList = settingsList.map { item ->
-            if (item.key == ProfileSettingsKey.VPN_SERVICE) {
-                ProfileSettingsUi.Other(
-                    text = R.string.manage_vpn,
-                    url = "",
-                    key = ProfileSettingsKey.VPN_SERVICE
-                )
-            } else {
-                item
-            }
-        }
-
         return ProfileUiProps(
-            settingsList = updatedSettingsList,
+            settingsList = settingsList,
             profile = profile,
-            isVpnRunning = isVpnRunning,
-            blockedSitesCount = blockedSitesCount,
             isLoading = isLoading,
             isUpdating = isUpdating,
             error = error

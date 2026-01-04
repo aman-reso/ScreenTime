@@ -23,6 +23,7 @@ data class DailyAppUsageData(
     val mobileDataUsage: Long,
     val displayWifiDataUsage: String,
     val displayMobileDataUsage: String,
-    val displayTotalDataUsage: String
+    val displayTotalDataUsage: String,
+    val notificationCount: Int = 0
 )
 

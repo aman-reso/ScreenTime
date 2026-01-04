@@ -26,8 +26,8 @@ android {
         applicationId = "com.app.screentime"
         minSdk = 24
         targetSdk = 36
-        versionCode = 44
-        versionName = "4.4"
+        versionCode = 53
+        versionName = "5.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -71,12 +71,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlin {
-        jvmToolchain(11)
+        jvmToolchain(17)
         compilerOptions {
             freeCompilerArgs.add("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
         }
@@ -133,7 +133,6 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.work.runtime.ktx)
-    implementation(libs.androidx.recyclerview)
     ksp(libs.hilt.compiler)
 
     // Room dependencies
@@ -178,7 +177,7 @@ dependencies {
 
     // Coil for image loading
     implementation(libs.coil.compose)
-    
+
     // Google Play In-App Updates
     implementation(libs.play.app.update)
     implementation(libs.play.app.update.ktx)
@@ -207,4 +206,7 @@ dependencies {
 
     // ConstraintLayout Compose
     implementation(libs.androidx.constraintlayout.compose)
+
+    // Google Mobile Ads
+    implementation(libs.play.services.ads)
 }

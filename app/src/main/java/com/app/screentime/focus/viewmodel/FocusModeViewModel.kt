@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.database.ScreenTimeDatabase
 import com.app.screentime.database.repository.FocusTimeRepository
-import com.app.screentime.focus.FocusModeService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,58 +46,58 @@ class FocusModeViewModel @Inject constructor() : ViewModel() {
     }
 
     fun checkServiceStatus(context: Context) {
-        viewModelScope.launch {
-            // Check if service is running
-            val isRunning = isServiceRunning(context)
-
-            // Load history from Room database
-            val history = loadHistoryFromRoom(context)
-
-            if (isRunning) {
-                // Load state from preferences
-                val prefs = context.getSharedPreferences("focus_mode_prefs", Context.MODE_PRIVATE)
-                val lastResetTime = prefs.getLong("focus_last_reset_time", 0L)
-                val startTime = prefs.getLong("focus_start_time", 0L)
-                val totalDayTime = prefs.getLong("focus_total_day_time", 0L)
-
-                if (lastResetTime > 0 && startTime > 0) {
-                    val currentTime = System.currentTimeMillis()
-                    val elapsed = currentTime - lastResetTime
-
-                    _uiState.value = _uiState.value.copy(
-                        isRunning = true,
-                        startTime = lastResetTime,
-                        elapsedTime = elapsed,
-                        totalDayTime = totalDayTime,
-                        history = history
-                    )
-                    startTimer()
-                } else {
-                    // If no saved state, start fresh
-                    _uiState.value = _uiState.value.copy(
-                        isRunning = true,
-                        startTime = System.currentTimeMillis(),
-                        elapsedTime = 0L,
-                        totalDayTime = totalDayTime,
-                        history = history
-                    )
-                    startTimer()
-                }
-            } else {
-                // If service is not running, reset session but keep total day time
-                val prefs = context.getSharedPreferences("focus_mode_prefs", Context.MODE_PRIVATE)
-                val totalDayTime = prefs.getLong("focus_total_day_time", 0L)
-
-                _uiState.value = _uiState.value.copy(
-                    isRunning = false,
-                    elapsedTime = 0L,
-                    startTime = 0L,
-                    totalDayTime = totalDayTime,
-                    history = history
-                )
-                stopTimer()
-            }
-        }
+//        viewModelScope.launch {
+//            // Check if service is running
+//            val isRunning = isServiceRunning(context)
+//
+//            // Load history from Room database
+//            val history = loadHistoryFromRoom(context)
+//
+//            if (isRunning) {
+//                // Load state from preferences
+//                val prefs = context.getSharedPreferences("focus_mode_prefs", Context.MODE_PRIVATE)
+//                val lastResetTime = prefs.getLong("focus_last_reset_time", 0L)
+//                val startTime = prefs.getLong("focus_start_time", 0L)
+//                val totalDayTime = prefs.getLong("focus_total_day_time", 0L)
+//
+//                if (lastResetTime > 0 && startTime > 0) {
+//                    val currentTime = System.currentTimeMillis()
+//                    val elapsed = currentTime - lastResetTime
+//
+//                    _uiState.value = _uiState.value.copy(
+//                        isRunning = true,
+//                        startTime = lastResetTime,
+//                        elapsedTime = elapsed,
+//                        totalDayTime = totalDayTime,
+//                        history = history
+//                    )
+//                    startTimer()
+//                } else {
+//                    // If no saved state, start fresh
+//                    _uiState.value = _uiState.value.copy(
+//                        isRunning = true,
+//                        startTime = System.currentTimeMillis(),
+//                        elapsedTime = 0L,
+//                        totalDayTime = totalDayTime,
+//                        history = history
+//                    )
+//                    startTimer()
+//                }
+//            } else {
+//                // If service is not running, reset session but keep total day time
+//                val prefs = context.getSharedPreferences("focus_mode_prefs", Context.MODE_PRIVATE)
+//                val totalDayTime = prefs.getLong("focus_total_day_time", 0L)
+//
+//                _uiState.value = _uiState.value.copy(
+//                    isRunning = false,
+//                    elapsedTime = 0L,
+//                    startTime = 0L,
+//                    totalDayTime = totalDayTime,
+//                    history = history
+//                )
+//                stopTimer()
+//            }
+//        }
     }
 
     fun startFocusMode() {
@@ -269,12 +268,12 @@ class FocusModeViewModel @Inject constructor() : ViewModel() {
         timerJob = null
     }
 
-    private fun isServiceRunning(context: Context): Boolean {
-        val activityManager =
-            context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
-        return activityManager.getRunningServices(Integer.MAX_VALUE)
-            .any { it.service.className == FocusModeService::class.java.name }
-    }
+//    private fun isServiceRunning(context: Context): Boolean {
+//        val activityManager =
+//            context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+//        return activityManager.getRunningServices(Integer.MAX_VALUE)
+//            .any { it.service.className == FocusModeService::class.java.name }
+//    }
 
     override fun onCleared() {
         super.onCleared()

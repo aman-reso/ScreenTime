@@ -40,25 +40,8 @@ object DeeplinkParser {
             "landing", "home" -> Screen.Landing
             "profile" -> Screen.Profile
             "statistics" -> Screen.Statistics
-            "challenges", "challenge_list" -> Screen.Challenges
-            "leaderboard" -> Screen.Leaderboard
-            "search" -> Screen.Search
-            "app_blocking" -> Screen.AppBlocking
-            "blocked_links" -> Screen.BlockedLinks
             "focus_mode" -> Screen.FocusMode
             "permission" -> Screen.Permission
-            "reward" -> Screen.Reward
-
-            // Parametrized routes
-            "challenge_detail" -> {
-                val challengeId = pathSegments.getOrNull(1)
-                if (challengeId != null) {
-                    Screen.ChallengeDetail(ChallengeDetailParams(challengeId))
-                } else {
-                    Log.w(TAG, "Missing challengeId for challenge_detail route")
-                    null
-                }
-            }
 
             "app_usage_detail", "app_details" -> {
                 val packageName = pathSegments.getOrNull(1)

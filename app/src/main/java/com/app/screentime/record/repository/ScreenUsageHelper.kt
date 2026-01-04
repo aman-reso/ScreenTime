@@ -16,7 +16,8 @@ import javax.inject.Inject
 data class AppUsageStats(
     val totalTimeMs: Long,
     val launchCount: Int,
-    val pkgName: String
+    val pkgName: String,
+    val notificationCount: Int
 )
 
 @Serializable
@@ -51,9 +52,11 @@ class ScreenUsageHelper constructor(private val context: Context) {
         start: Long,
         end: Long
     ): Map<String, AppUsageStats> {
+
         val usageMap = mutableMapOf<String, Long>()
         val launchCountMap = mutableMapOf<String, Int>()
         val lastResumedEvents = mutableMapOf<String, UsageEvents.Event>()
+        val notificationCountMap = mutableMapOf<String, Int>()
 
         runCatching {
             val usageEvents = usageStatsManager.queryEvents(start, end)
@@ -84,6 +87,11 @@ class ScreenUsageHelper constructor(private val context: Context) {
                         }
                     }
 
+                    12 -> {
+                        val pkg = event.packageName ?: continue
+                        notificationCountMap[pkg] = (notificationCountMap[pkg] ?: 0) + 1
+                    }
+
                     else -> {}
                 }
             }
@@ -95,11 +103,11 @@ class ScreenUsageHelper constructor(private val context: Context) {
             usageMap[packageName] = usageMap.getOrDefault(packageName, 0L) + (end - event.timeStamp)
         }
 
-        // Combine usage duration and launch count
         return usageMap.mapValues { (pkg, duration) ->
             AppUsageStats(
                 pkgName = pkg,
                 totalTimeMs = duration,
+                notificationCount = notificationCountMap.getOrDefault(pkg, 0),
                 launchCount = launchCountMap.getOrDefault(pkg, 0)
             )
         }.filterValues { it.totalTimeMs > 0L }
@@ -239,6 +247,11 @@ class ScreenUsageHelper constructor(private val context: Context) {
 
             val pkg = event.packageName ?: continue
 
+            // Ignore system apps
+            if (isSystemApp(pkg)) {
+                continue
+            }
+
             // Ignore launchers or apps without activities
             if (isLauncherApp(pkg) || !hasLaunchableActivity(pkg))
                 continue
@@ -313,7 +326,7 @@ class ScreenUsageHelper constructor(private val context: Context) {
             }
         }
 
-        return sessionList.sortedBy { it.timestamp }
+        return sessionList.distinctBy { it.timestamp }.sortedBy { it.timestamp }
     }
 
 
@@ -329,6 +342,15 @@ class ScreenUsageHelper constructor(private val context: Context) {
         val pm = context.packageManager
         val intent = pm.getLaunchIntentForPackage(packageName)
         return intent != null
+    }
+
+    private fun isSystemApp(packageName: String): Boolean {
+        return try {
+            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
+            (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+        } catch (e: PackageManager.NameNotFoundException) {
+            false // If we can't find the app info, assume it's not a system app
+        }
     }
 
 }

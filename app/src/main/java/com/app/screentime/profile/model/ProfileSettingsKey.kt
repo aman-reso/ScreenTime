@@ -7,7 +7,6 @@ enum class ProfileSettingsKey {
     BLOCK_APP,
     SET_APP_LIMIT,
     SET_APP_LAUNCH_LIMIT,
-    VPN_SERVICE,
     THEME,
     LANGUAGE,
     WIDGET,
@@ -18,6 +17,8 @@ enum class ProfileSettingsKey {
     AD_BLOCKING,
     NOTIFICATION_HISTORY,
     APP_LOCK,
-    WALLPAPER
+    WALLPAPER,
+    SHARE_APP,
+    RECOVER_NOTIFICATION
 }
 

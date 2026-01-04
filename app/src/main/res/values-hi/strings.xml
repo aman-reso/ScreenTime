@@ -89,9 +89,6 @@
     <string name="permission_notifications_title">सूचनाएं</string>
     <string name="permission_notifications_description">उपयोग अलर्ट और रिमाइंडर दिखाएं</string>
 
-    <!-- Permission Item: VPN -->
-    <string name="permission_vpn_title">VPN</string>
-    <string name="permission_vpn_description">ब्लॉक वेबसाइटों और ऐप्स के लिए वीपीएन का उपयोग करें</string>
 
     <!-- General Actions -->
     <string name="action_grant">अनुमति दें</string>

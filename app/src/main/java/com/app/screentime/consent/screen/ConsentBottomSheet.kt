@@ -148,7 +148,8 @@ fun ConsentBottomSheetContent(
                     size = ODSButtonSize.SMALL,
                     label = if (uiState.isSubmitting) stringResource(R.string.submitting) else stringResource(
                         R.string.action_allow
-                    ), disabled = uiState.isSubmitting
+                    ),
+                    disabled = uiState.isSubmitting, variant = ODSButtonVariant.SECONDARY,
                 ),
                 mainActionProps = ODSButtonProps(
                     label = stringResource(R.string.deny),

@@ -116,8 +116,8 @@ fun ClaimBottomSheet(
                 scheme = scheme,
                 props = ODSButtonProps(
                     label = "Proceed next",
-                    variant = ODSButtonVariant.PRIMARY,
-                    size = ODSButtonSize.LARGE,
+                    variant = ODSButtonVariant.SECONDARY,
+                    size = ODSButtonSize.SMALL,
                     disabled = name.isBlank() || phoneNumber.isBlank() || address.isBlank()
                 ),
                 onClick = {
@@ -128,6 +128,7 @@ fun ClaimBottomSheet(
         }
     )
 }
+
 
 
 

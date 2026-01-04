@@ -82,11 +82,7 @@ class LandingUsecase @Inject constructor(
                 midNightCal[Calendar.SECOND] = 0
                 midNightCal[Calendar.MILLISECOND] = 0
 
-                val allEvents = localAppUsageRepository.collectEventsForSync(
-                    startMsEpoch = midNightCal.timeInMillis, endMsEpoch = currentTime
-                )
-                val size = allEvents.filter { it.duration != null }.sumOf { it.duration ?: 0 }
-                System.out.println("time-->$size")
+                // Data collection disabled - no events collected for sync
                 val todayReport = localAppUsageRepository.fetchAppUsageTodayTillNow()
 
                 // Calculate totals once and reuse
@@ -94,6 +90,7 @@ class LandingUsecase @Inject constructor(
                 val totalWifiData = todayReport.sumOf { it.wifiDataUsage }
                 val totalMobileData = todayReport.sumOf { it.mobileDataUsage }
                 val totalData = totalWifiData + totalMobileData
+                val totalNotificationCount = todayReport.sumOf { it.notificationCount }
 
                 val topUsedApps = todayReport.asSequence()
                     .sortedByDescending { it.appScreenTime }
@@ -134,7 +131,13 @@ class LandingUsecase @Inject constructor(
                     displayWifiDataUsage = totalWifiData.toReadableDataSize(),
                     displayMobileDataUsage = totalMobileData.toReadableDataSize(),
                     displayTotalDataUsage = totalData.toReadableDataSize(),
-                    categoryUsage = categoryUsage
+                    categoryUsage = categoryUsage,
+                    notificationCount = if (totalNotificationCount <= 0) {
+                        0
+                    } else {
+                        totalNotificationCount
+
+                    }
                 )
 
                 Result.success(todayUsageData)
@@ -175,7 +178,6 @@ class LandingUsecase @Inject constructor(
 
         return getTodayUsageData().fold(
             onSuccess = { todayUsageData ->
-                // Get yesterday's total screen time and calculate percentage change
                 val yesterdayTotal = getYesterdayTotalScreenTime()
                 val percentageChange = yesterdayTotal?.let { yesterday ->
                     if (yesterday > 0) {

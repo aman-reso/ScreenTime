@@ -347,7 +347,7 @@ fun LeaderboardPage(
                     ODSButton(
                         scheme = scheme, props = ODSButtonProps(
                             label = "Retry",
-                            variant = ODSButtonVariant.PRIMARY,
+                            variant = ODSButtonVariant.SECONDARY,
                             size = ODSButtonSize.SMALL
                         ), onClick = { viewModel.refresh() })
                 }
@@ -590,7 +590,7 @@ private fun TopPlayerCard(
 }
 
 @Composable
-private fun LeaderboardItem(
+fun LeaderboardItem(
     entry: LeaderboardEntry,
     isCurrentUser: Boolean,
     scheme: ODSTheme,
@@ -636,7 +636,7 @@ private fun LeaderboardItem(
                 ODSTagStatic(
                     props = ODSTagStaticProps(
                         label = formatDuration(entry.totalScreenTime ?: 0),
-                        type = ODSTagStaticType.PROMOTION
+                        type = ODSTagStaticType.STRONG
                     )
                 )
             }

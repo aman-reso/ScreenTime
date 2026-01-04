@@ -40,6 +40,7 @@ val defaultNavigationItems = listOf(
 //        icon = ODSIconModel(imageVector = Icons.Default.Timer),
 //        iconActive = ODSIconModel(imageVector = Icons.Default.Timer)
 //    ),
+    // Challenge feature disabled
     ODSBottomNavigationItemProps(
         text = "Challenges",
         icon = ODSIconModel(imageVector = Icons.Default.Flag),

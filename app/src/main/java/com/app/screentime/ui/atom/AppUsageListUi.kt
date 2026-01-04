@@ -63,7 +63,10 @@ fun LazyListScope.appUsageListUi(
             modifier = Modifier.fillMaxWidth(),
             background = listOf(ODSColorModel(scheme.basicBackgroundCard)),
             cornerRadius = ODSCorners(all = DSVariables.radiusSmall),
-            padding = ODSPadding(horizontal = DSVariables.spacingComponent4, vertical = DSVariables.spacingComponent3)
+            padding = ODSPadding(
+                horizontal = DSVariables.spacingComponent4,
+                vertical = DSVariables.spacingComponent3
+            )
         ) {
             AppUsageItem(
                 appUsage = appUsage,
@@ -82,28 +85,44 @@ private fun AppUsageItem(
 ) {
     // Get app icon bitmap
     val appIconBitmap = AppImageIcon(appInfo = appUsage.applicationInfo)
-    // Build description text
-    // Determine variant and image/icon
-    val (variant, image, icon) = if (appIconBitmap != null && appUsage.applicationInfo?.icon != 0) {
-        Triple(
-            ODSListRowStandardVariant.IMAGE,
-            second = appIconBitmap,
-            null
-        )
+
+    // Pre-compute formatted strings to use as keys for remember
+    val screenTimeText = appUsage.displayFormatScreenTime
+        ?: formatDuration(appUsage.appScreenTime)
+    val appNameText = appUsage.appName ?: appUsage.packageName ?: "Unknown App"
+    val dataUsageText = if ((appUsage.wifiDataUsage + appUsage.mobileDataUsage) > 0) {
+        appUsage.wifiDataUsage.plus(appUsage.mobileDataUsage).toReadableDataSize()
     } else {
-        val fallbackIcon = when {
-            appUsage.applicationInfo == null -> Icons.AutoMirrored.Filled.Help
-            appUsage.applicationInfo?.icon == 0 -> Icons.Filled.Help
-            else -> Icons.Filled.Android
-        }
-        Triple(
-            ODSListRowStandardVariant.ICON,
-            null,
-            ODSIconModel(
-                imageVector = fallbackIcon,
-                contentDescription = appUsage.appName
+        "0 B"
+    }
+
+    // Determine variant and image/icon - remember to avoid recreation
+    val (variant, image, icon) = remember(
+        appIconBitmap,
+        appUsage.applicationInfo?.icon,
+        appUsage.appName
+    ) {
+        if (appIconBitmap != null && appUsage.applicationInfo?.icon != 0) {
+            Triple(
+                ODSListRowStandardVariant.IMAGE,
+                appIconBitmap,
+                null
             )
-        )
+        } else {
+            val fallbackIcon = when {
+                appUsage.applicationInfo == null -> Icons.AutoMirrored.Filled.Help
+                appUsage.applicationInfo?.icon == 0 -> Icons.Filled.Help
+                else -> Icons.Filled.Android
+            }
+            Triple(
+                ODSListRowStandardVariant.ICON,
+                null,
+                ODSIconModel(
+                    imageVector = fallbackIcon,
+                    contentDescription = appUsage.appName
+                )
+            )
+        }
     }
 
     ODSListRowStandard(
@@ -113,14 +132,9 @@ private fun AppUsageItem(
         scheme = scheme,
         props = ODSListRowStandardProps(
             variant = variant,
-            descriptionTitle = appUsage.displayFormatScreenTime
-                ?: formatDuration(appUsage.appScreenTime),
-            labelText = appUsage.appName ?: appUsage.packageName ?: "Unknown App",
-            descriptionText = if ((appUsage.wifiDataUsage + appUsage.mobileDataUsage) > 0) {
-                appUsage.wifiDataUsage.plus(appUsage.mobileDataUsage).toReadableDataSize()
-            } else {
-                "0 B"
-            },
+            descriptionTitle = screenTimeText,
+            labelText = appNameText,
+            descriptionText = dataUsageText,
             image = image,
             icon = icon,
             showDescriptionTitle = true

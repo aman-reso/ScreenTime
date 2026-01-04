@@ -36,6 +36,11 @@ class GetSingleAppUsageUseCase @Inject constructor(
                         val wifiData = appUsage?.wifiDataUsage ?: 0L
                         val mobileData = appUsage?.mobileDataUsage ?: 0L
                         val totalData = wifiData + mobileData
+                        val notificationCount = if (appUsage?.notificationCount != null && appUsage.notificationCount > 0) {
+                            appUsage.notificationCount
+                        } else {
+                            0
+                        }
                         
                         DailyAppUsageData(
                             dayName = report.dayName ?: "",
@@ -46,7 +51,8 @@ class GetSingleAppUsageUseCase @Inject constructor(
                             mobileDataUsage = mobileData,
                             displayWifiDataUsage = wifiData.toReadableDataSize() ?: "0 B",
                             displayMobileDataUsage = mobileData.toReadableDataSize() ?: "0 B",
-                            displayTotalDataUsage = totalData.toReadableDataSize() ?: "0 B"
+                            displayTotalDataUsage = totalData.toReadableDataSize() ?: "0 B",
+                            notificationCount = notificationCount
                         )
                     }
                     .toList()

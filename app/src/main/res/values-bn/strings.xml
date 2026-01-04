@@ -89,9 +89,6 @@
     <string name="permission_notifications_title">বিজ্ঞপ্তি</string>
     <string name="permission_notifications_description">ব্যবহারের সতর্কতা এবং অনুস্মারক দেখান</string>
 
-    <!-- Permission Item: VPN -->
-    <string name="permission_vpn_title">VPN</string>
-    <string name="permission_vpn_description">ওয়েবসাইট এবং অ্যাপ ব্লক করতে VPN ব্যবহার করুন</string>
 
     <!-- General Actions -->
     <string name="action_grant">অনুমতি দিন</string>

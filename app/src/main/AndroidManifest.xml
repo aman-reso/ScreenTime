@@ -3,47 +3,25 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
-    <!-- Permission to access usage statistics -->
-    <uses-permission
-        android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions" />
-
-    <!-- Permission for notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-
-    <uses-permission
-        android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
-
-    <!-- Network permissions for data sync -->
-    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <!-- <uses-permission android:name="android.permission.BIND_VPN_SERVICE" /> -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
+
     <uses-permission
         android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission
-        android:name="android.permission.BIND_QUICK_SETTINGS_TILE"
         tools:ignore="ProtectedPermissions" />
 
     <application
@@ -52,11 +30,16 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/app_icon_vertical"
+        android:icon="@mipmap/app_icon_round"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/app_icon_vertical"
+        android:roundIcon="@mipmap/app_icon_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ScreenTime">
+        
+        <!-- Google Mobile Ads App ID -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-5847819400812479~1194871943"/>
 
         <activity
             android:name=".MainActivity"
@@ -67,7 +50,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            
+
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -137,33 +120,10 @@
             </intent-filter>
         </receiver>
 
-        <!-- Widget Pin Result Receiver -->
         <receiver
             android:name=".widget.WidgetPinResultReceiver"
             android:exported="false" />
 
-        <!-- Focus Mode Service -->
-<!--        <service-->
-<!--            android:name=".focus.FocusModeService"-->
-<!--            android:enabled="true"-->
-<!--            android:exported="false"-->
-<!--            android:foregroundServiceType="specialUse">-->
-<!--            <property-->
-<!--                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"-->
-<!--                android:value="focus_mode" />-->
-<!--        </service>-->
-
-        <!-- VPN Service -->
-
-        <service
-            android:name=".service.NotificationHistoryListener"
-            android:exported="false"
-            android:label="@string/recover_deleted_notifications"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
-            <intent-filter>
-                <action android:name="android.service.notification.NotificationListenerService" />
-            </intent-filter>
-        </service>
 
         <!-- Firebase Cloud Messaging Service -->
         <service
@@ -174,29 +134,6 @@
             </intent-filter>
         </service>
 
-        <!-- VPN Service - Commented out
-        <service
-            android:name=".service.ScreenTimeVpnService"
-            android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="specialUse"
-            android:permission="android.permission.BIND_VPN_SERVICE">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-        </service>
-        -->
-
-
-        <service
-            android:name=".service.ListenerService"
-            android:foregroundServiceType="specialUse"
-            android:label="My Listener"
-            android:enabled="true"
-            android:exported="true"
-            android:stopWithTask="false"
-            tools:ignore="ForegroundServicePermission" />
-
         <receiver
             android:name=".service.BootCompletedReceiver"
             android:exported="true">
@@ -204,7 +141,16 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <!-- Device Admin removed - not suitable for consumer apps -->
+
+        <service
+            android:name=".service.NotificationHistoryListener"
+            android:exported="false"
+            android:label="@string/recover_deleted_notifications"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
     </application>
 

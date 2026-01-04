@@ -13,9 +13,9 @@ import com.app.screentime.core.network.ApiEndpoints
 import com.app.screentime.network.repository.user.UserRepository
 import com.app.screentime.sync.ChallengeSyncWorker
 import com.app.screentime.sync.DataSyncWorker
-import com.app.screentime.sync.FocusSyncWorker
 import com.app.screentime.utils.Logger
 import com.app.screentime.widget.WidgetUpdateWorker
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.telekom.odsystem.ODSThemeType
@@ -73,6 +73,11 @@ class ScreenTimeApplication : Application(), Configuration.Provider {
         }
         ODSystem.init(this, ODSThemeType.SYSTEM);
         ODSystem.setTheme(this, ODSThemeType.SYSTEM);
+        
+        // Initialize Google Mobile Ads
+        MobileAds.initialize(this) { initializationStatus ->
+            Log.d("ScreenTimeApplication", "MobileAds initialized: ${initializationStatus.adapterStatusMap}")
+        }
         // Enqueue one-time work request for immediate sync on app start
         WorkManager.getInstance(this).enqueue(DataSyncWorker.oneTimeWorkRequest())
         DataSyncWorker.schedule(this)

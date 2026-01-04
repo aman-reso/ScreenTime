@@ -81,7 +81,7 @@ fun LanguageSelectionDialog(
                     scheme = scheme,
                     props = ODSButtonProps(
                         label = stringResource(R.string.close),
-                        variant = ODSButtonVariant.PRIMARY,
+                        variant = ODSButtonVariant.SECONDARY,
                         size = ODSButtonSize.SMALL
                     ),
                     onClick = onDismiss

@@ -10,8 +10,6 @@ import androidx.annotation.StringRes
 data class ProfileUiProps(
     val settingsList: List<ProfileSettingsUi>,
     val profile: ProfileUiModel?,
-    val isVpnRunning: Boolean,
-    val blockedSitesCount: Int,
     val isLoading: Boolean = false,
     val isUpdating: Boolean = false,
     val error: String? = null
@@ -22,9 +20,7 @@ data class ProfileUiProps(
  */
 data class SettingsItemClickProps(
     val key: ProfileSettingsKey,
-    val url: String,
-    val isVpnRunning: Boolean,
-    val hasVpnPermission: Boolean
+    val url: String
 )
 
 /**
@@ -33,11 +29,9 @@ data class SettingsItemClickProps(
 sealed class SettingsItemClickResult {
     data class NavigateToScreen(val route: String) : SettingsItemClickResult()
     data class ShowDialog(val type: DialogType) : SettingsItemClickResult()
-    data class RequestVpnPermission(val intent: android.content.Intent) : SettingsItemClickResult()
-    data class StartVpnService(val intent: android.content.Intent) : SettingsItemClickResult()
-    data class StopVpnService(val intent: android.content.Intent) : SettingsItemClickResult()
     data class OpenUrl(val url: String) : SettingsItemClickResult()
     object RequestWidgetSetup : SettingsItemClickResult()
+    object ShareApp : SettingsItemClickResult()
     object None : SettingsItemClickResult()
 }
 

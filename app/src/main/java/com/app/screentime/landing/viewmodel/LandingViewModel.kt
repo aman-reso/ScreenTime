@@ -29,6 +29,9 @@ class LandingViewModel @Inject constructor(
     private val _uiProps = MutableStateFlow<LandingUiProps?>(null)
     val uiProps: StateFlow<LandingUiProps?> = _uiProps.asStateFlow()
 
+    private val _dailyGoalHours = MutableStateFlow(preferences.getDailyGoalHours())
+    val dailyGoalHours: StateFlow<Int> = _dailyGoalHours.asStateFlow()
+
     init {
         loadLandingData()
     }
@@ -91,5 +94,21 @@ class LandingViewModel @Inject constructor(
 
     fun markUsageStatsPermissionRequested() {
         preferences.markUsageStatsPermissionRequested()
+    }
+
+    /**
+     * Get formatted daily goal string (e.g., "6h")
+     */
+    fun getFormattedDailyGoal(): String {
+        val hours = _dailyGoalHours.value
+        return "${hours}h"
+    }
+
+    /**
+     * Save daily goal and update state
+     */
+    fun saveDailyGoal(hours: Int) {
+        preferences.setDailyGoalHours(hours)
+        _dailyGoalHours.value = hours
     }
 }

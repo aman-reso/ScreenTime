@@ -28,10 +28,12 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun ODSListRowStandard(
     modifier: Modifier = Modifier,
     scheme: ODSTheme = neutralScheme,
-    props: ODSListRowStandardProps = ODSListRowStandardProps()
+    props: ODSListRowStandardProps = ODSListRowStandardProps(),
+    style: ODSListRowStandardStyle = ODSListRowStandardStyle().getStyle(
+        scheme = scheme,
+        props = props
+    )
 ) {
-    val style = ODSListRowStandardStyle().getStyle(scheme = scheme, props = props)
-
     ODSRow(
         modifier = modifier
             .fillMaxWidth()
@@ -88,9 +90,9 @@ fun ODSListRowStandard(
             horizontalAlignment = style.textContentHorizontalAlignment,
             verticalAlignment = style.textContentVerticalAlignment
         ) {
-            val hasDescription = props.showDescriptionTitle && 
-                (!props.descriptionTitle.isNullOrEmpty() || !props.descriptionText.isNullOrEmpty())
-            
+            val hasDescription = props.showDescriptionTitle &&
+                    (!props.descriptionTitle.isNullOrEmpty() || !props.descriptionText.isNullOrEmpty())
+
             ODSColumn(
                 modifier = Modifier
                     .then(if (hasDescription) Modifier.weight(1f) else Modifier)

@@ -163,10 +163,7 @@ val defaultODSPageHeaderTokens = ODSPageHeaderTokens(
     dividerContainerHorizontalAlignment = Alignment.Start,
     dividerContainerVerticalArrangement = Arrangement.Top,
     subPageHeaderTopSectionPaddingTypeSubPageHeader = ODSPadding(
-        top = DSVariables.spacingComponent5,
-        bottom = DSVariables.spacingComponent5,
-        left = DSVariables.spacingComponent5,
-        right = DSVariables.spacingComponent7
+
     ),
     subPageHeaderTopSectionHeightTypeSubPageHeader = DSVariables.sizingComponent17,
     subPageHeaderTopSectionVerticalAlignmentTypeSubPageHeader = Alignment.CenterVertically,

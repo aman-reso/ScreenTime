@@ -93,7 +93,7 @@ class DataSyncWorker(
             val minutesGap = Minutes.minutesBetween(lastSyncIst, nowIst).minutes
             Log.d(TAG, "Gap since last sync: $minutesGap minutes (IST)")
 
-            if (minutesGap < 15) {
+            if (minutesGap < 1) {
                 Log.d(TAG, "Skipping sync because last sync < 15 min ago")
                 return Result.success()
             }

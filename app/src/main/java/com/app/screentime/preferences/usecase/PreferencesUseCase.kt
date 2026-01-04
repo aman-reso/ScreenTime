@@ -55,5 +55,19 @@ class PreferencesUseCase @Inject constructor(
     fun markUsageStatsPermissionRequested() {
         preferencesManager.setUsageStatsPermissionRequested(true)
     }
+
+    /**
+     * Get daily goal in hours (default: 6 hours)
+     */
+    fun getDailyGoalHours(): Int {
+        return preferencesManager.getDailyGoalHours()
+    }
+
+    /**
+     * Save daily goal in hours
+     */
+    fun setDailyGoalHours(hours: Int) {
+        preferencesManager.setDailyGoalHours(hours)
+    }
 }
 

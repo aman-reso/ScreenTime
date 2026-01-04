@@ -43,6 +43,7 @@ import com.telekom.odsystem.tokens.tokens.magentaScheme
 import androidx.compose.ui.semantics.Role
 import com.telekom.odsystem.R
 import com.telekom.odsystem.foundations.ODSAspectRatio
+import com.telekom.odsystem.invertedScheme
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.organisms.cardimage.ODSCardImage
 import com.telekom.odsystem.organisms.cardimage.ODSCardImageImagePosition
@@ -62,7 +63,7 @@ fun SpecialEventCardV(
     challenge: Challenge,
     modifier: Modifier = Modifier,
     onView: () -> Unit,
-    scheme: ODSTheme = magentaScheme
+    scheme: ODSTheme = invertedScheme
 ) {
     ODSCardImage(
         modifier = modifier.fillMaxWidth(),
@@ -79,12 +80,10 @@ fun SpecialEventCardV(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
             ) {
-
                 ODSColumn(
                     modifier = Modifier.weight(1f, fill = false),
                     gap = DSVariables.spacingComponent3
                 ) {
-                    // Title
                     ODSText(
                         text = challenge.title,
                         style = DSTextStyles.bodyMBold,
@@ -93,7 +92,6 @@ fun SpecialEventCardV(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    // Subtitle / description
                     ODSText(
                         text = challenge.description,
                         style = DSTextStyles.bodySRegular,

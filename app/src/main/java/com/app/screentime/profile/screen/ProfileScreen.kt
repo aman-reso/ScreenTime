@@ -10,10 +10,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
-// import androidx.activity.compose.rememberLauncherForActivityResult // VPN feature disabled
 import androidx.activity.enableEdgeToEdge
-// import androidx.activity.result.ActivityResultLauncher // VPN feature disabled
-// import androidx.activity.result.contract.ActivityResultContracts // VPN feature disabled
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,14 +33,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.R
-import com.app.screentime.profile.component.ProfileTotpSection
+import com.app.screentime.profile.component.ProfileTotpSection // Removed - TOTP feature disabled
 import com.app.screentime.profile.component.SettingsItemCard
 import com.app.screentime.profile.component.UserProfileCard
 import com.app.screentime.profile.dialog.LanguageSelectionDialog
@@ -55,7 +54,7 @@ import com.app.screentime.profile.model.ProfileUiProps
 import com.app.screentime.profile.model.SettingsItemClickResult
 import com.app.screentime.profile.viewmodel.ProfileViewModel
 import com.app.screentime.service.NotificationHistoryListener
-// import com.app.screentime.service.ScreenTimeVpnService
+// import com.app.screentime.service.NotificationHistoryListener // Removed - Notification History feature disabled
 import com.app.screentime.ui.language.LanguageViewModel
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ui.theme.ThemeViewModel
@@ -77,15 +76,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
-    onNavigateToAppBlocking: () -> Unit = {},
+    // onNavigateToAppBlocking: () -> Unit = {}, // Removed - App Blocking feature disabled
     onNavigateToAppLock: () -> Unit = {},
-    onNavigateToBlockedLinks: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
     languageViewModel: LanguageViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme,
     onNavigateToCapturedNotifications: () -> Unit = {},
-    onNavigateToWallpaper: () -> Unit = {}
+    onNavigateToWallpaper: () -> Unit = {},
+    onNavigateToRecoverNotification: () -> Unit = {}
     // Device Admin removed - not suitable for consumer apps
 ) {
     val activity = LocalActivity.current
@@ -121,24 +120,6 @@ fun ProfileScreen(
     var showEditUsernameBottomSheet by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
-
-    // VPN feature disabled - commented out
-    /*
-    val vpnLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            // VPN permission granted, start service
-            val intent = Intent(context, ScreenTimeVpnService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
-            viewModel.loadProfile() // Reload to update VPN status
-        }
-    }
-    */
 
     if (showThemeDialog) {
         ThemeSelectionDialog(
@@ -220,25 +201,58 @@ fun ProfileScreen(
                         scheme = scheme,
                         uiProps = props,
                         viewModel = viewModel,
-                        onNavigateToAppBlocking = onNavigateToAppBlocking,
+                        // onNavigateToAppBlocking = onNavigateToAppBlocking, // Removed - App Blocking feature disabled
                         onNavigateToAppLock = onNavigateToAppLock,
-                        onNavigateToBlockedLinks = onNavigateToBlockedLinks,
                         context = context,
-                        // vpnLauncher = vpnLauncher, // VPN feature disabled
                         coroutineScope = coroutineScope,
                         onThemeDialogShow = { showThemeDialog = true },
                         onLanguageDialogShow = { showLanguageDialog = true },
                         onHelpSupportShow = { showHelpSupportBottomSheet = true },
                         onUsernameClick = { showEditUsernameBottomSheet = true },
                         onNavigateToCapturedNotifications = onNavigateToCapturedNotifications,
-                        onNavigateToWallpaper = onNavigateToWallpaper
+                        onNavigateToWallpaper = onNavigateToWallpaper,
                     )
                 }
                 item {
                     Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                 }
+                item {
+                    CraftedWithLoveSection(scheme = scheme)
+                }
             }
         }
+    }
+}
+
+/**
+ * "Crafted with love from Patna" section at the bottom of profile
+ */
+@Composable
+fun CraftedWithLoveSection(
+    scheme: ODSTheme = neutralScheme
+) {
+    ODSColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                top = DSVariables.spacingComponent5,
+                bottom = DSVariables.spacingComponent4
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        gap = DSVariables.spacingComponent1
+    ) {
+        ODSText(
+            text = "Made with ❤️ in India",
+            style = DSTextStyles.oxSubtitle,
+            color = scheme.basicText,
+            textAlign = TextAlign.Center
+        )
+        ODSText(
+            text = "& Crafted in Patna",
+            style = DSTextStyles.oxBodySRegular,
+            color = scheme.basicTextRecessive,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -252,18 +266,16 @@ private fun ProfileSettingsItem(
     scheme: ODSTheme,
     uiProps: ProfileUiProps,
     viewModel: ProfileViewModel,
-    onNavigateToAppBlocking: () -> Unit,
+    // onNavigateToAppBlocking: () -> Unit, // Removed - App Blocking feature disabled
     onNavigateToAppLock: () -> Unit,
-    onNavigateToBlockedLinks: () -> Unit,
     context: Context,
-    // vpnLauncher: ActivityResultLauncher<Intent>, // VPN feature disabled
     coroutineScope: kotlinx.coroutines.CoroutineScope,
     onThemeDialogShow: () -> Unit,
     onLanguageDialogShow: () -> Unit,
     onHelpSupportShow: () -> Unit,
     onUsernameClick: () -> Unit,
     onNavigateToCapturedNotifications: () -> Unit,
-    onNavigateToWallpaper: () -> Unit
+    onNavigateToWallpaper: () -> Unit,
 ) {
     when (data) {
         is ProfileSettingsUi.ProfileData -> {
@@ -294,44 +306,19 @@ private fun ProfileSettingsItem(
                             key = key,
                             url = data.url,
                             viewModel = viewModel,
-                            onNavigateToAppBlocking = onNavigateToAppBlocking,
-                            onNavigateToAppLock = onNavigateToAppLock,
                             context = context,
-                            // vpnLauncher = vpnLauncher, // VPN feature disabled
                             coroutineScope = coroutineScope,
                             onThemeDialogShow = onThemeDialogShow,
                             onLanguageDialogShow = onLanguageDialogShow,
                             onHelpSupportShow = onHelpSupportShow,
                             onNavigateToCapturedNotifications = onNavigateToCapturedNotifications,
                             onNavigateToWallpaper = onNavigateToWallpaper,
-                            onNavigateToBlockedLinks = onNavigateToBlockedLinks
-                        )
-                    }
-                }
-
-                // Show VPN status and blocked sites when VPN is running - VPN feature disabled
-                // if (data.key == ProfileSettingsKey.VPN_SERVICE && uiProps.isVpnRunning) {
-                if (false) { // VPN feature disabled
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (uiProps.blockedSitesCount > 0) {
-                        ODSListRowStandard(
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onNavigateToBlockedLinks()
-                                },
-                            scheme = scheme,
-                            props = ODSListRowStandardProps(
-                                labelText = stringResource(
-                                    R.string.blocked_sites_count,
-                                    uiProps.blockedSitesCount
-                                ), descriptionText = "See all sites"
-                            )
                         )
                     }
                 }
             }
         }
+
 
         is ProfileSettingsUi.Restriction -> {
             Column {
@@ -359,38 +346,27 @@ private fun handleSettingsItemClick(
     key: ProfileSettingsKey,
     url: String,
     viewModel: ProfileViewModel,
-    onNavigateToAppBlocking: () -> Unit,
-    onNavigateToAppLock: () -> Unit,
-    context: android.content.Context,
-    // vpnLauncher: ActivityResultLauncher<Intent>, // VPN feature disabled
+    context: Context,
     coroutineScope: kotlinx.coroutines.CoroutineScope,
     onThemeDialogShow: () -> Unit,
     onLanguageDialogShow: () -> Unit,
     onHelpSupportShow: () -> Unit,
     onNavigateToCapturedNotifications: () -> Unit,
     onNavigateToWallpaper: () -> Unit,
-    onNavigateToBlockedLinks: () -> Unit
 ) {
     val result = viewModel.handleSettingsItemClick(key, url)
 
     when (result) {
         is SettingsItemClickResult.NavigateToScreen -> {
             when (result.route) {
-                "app_blocking" -> onNavigateToAppBlocking()
-                "app_lock" -> onNavigateToAppLock()
-                "captured_notifications" -> {
+                "wallpaper" -> onNavigateToWallpaper() // Removed - Wallpaper feature disabled
+                "recover_notification" ->{
                     if (isNotificationListenerEnabled(context)) {
                         onNavigateToCapturedNotifications()
                     } else {
                         openNotificationAccessSettings(context)
                     }
                 }
-
-                "wallpaper" -> onNavigateToWallpaper()
-                "blocked_links" -> {
-                    onNavigateToBlockedLinks()
-                }
-
                 // Add other routes as needed
             }
         }
@@ -410,27 +386,6 @@ private fun handleSettingsItemClick(
             }
         }
 
-        // VPN feature disabled - commented out
-        /*
-        is SettingsItemClickResult.RequestVpnPermission -> {
-            vpnLauncher.launch(result.intent)
-        }
-
-        is SettingsItemClickResult.StartVpnService -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(result.intent)
-            } else {
-                context.startService(result.intent)
-            }
-            viewModel.loadProfile() // Reload to update VPN status
-        }
-
-        is SettingsItemClickResult.StopVpnService -> {
-            context.startService(result.intent)
-            viewModel.loadProfile() // Reload to update VPN status
-        }
-        */
-
         is SettingsItemClickResult.OpenUrl -> {
             try {
                 val intent = Intent(Intent.ACTION_VIEW, result.url.toUri())
@@ -447,16 +402,44 @@ private fun handleSettingsItemClick(
             }
         }
 
+        is SettingsItemClickResult.ShareApp -> {
+            shareApp(context)
+        }
+
         is SettingsItemClickResult.None -> {
             // No action needed
         }
+
         else -> {}
     }
 }
 
 /**
- * Check if notification listener service is enabled
+ * Share app with text and Play Store link
  */
+private fun shareApp(context: Context) {
+    try {
+        val appName = context.getString(R.string.app_name)
+        val packageName = context.packageName
+        val playStoreLink = "https://play.google.com/store/apps/details?id=$packageName"
+        val shareText =
+            "Check out $appName - Track your screen time and manage your app usage!\n\n$playStoreLink"
+
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, shareText)
+            putExtra(Intent.EXTRA_SUBJECT, "Check out $appName")
+        }
+
+        val chooserIntent = Intent.createChooser(shareIntent, "Share App")
+        chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(chooserIntent)
+    } catch (e: Exception) {
+        Log.e("ProfileScreen", "Error sharing app", e)
+    }
+}
+
+
 private fun isNotificationListenerEnabled(context: Context): Boolean {
     val packageName = context.packageName
     val flat = Settings.Secure.getString(
@@ -501,5 +484,4 @@ fun openNotificationAccessSettings(context: Context) {
         )
     }
 }
-
 

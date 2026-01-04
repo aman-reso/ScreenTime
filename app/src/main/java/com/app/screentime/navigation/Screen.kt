@@ -4,7 +4,8 @@ package com.app.screentime.navigation
 sealed class Screen {
     object Landing : Screen()
     object Profile : Screen()
-    object Search : Screen()
+
+    object Search : Screen() // Removed - Search feature disabled
     data class RecordDetail(val params: RecordDetailParams? = null) : Screen() {
     }
 
@@ -14,17 +15,22 @@ sealed class Screen {
 
     object Permission : Screen()
     object FocusMode : Screen()
-    object AppBlocking : Screen()
+
+    // object AppBlocking : Screen() // Removed - App Blocking feature disabled
     object AppLock : Screen()
     object Leaderboard : Screen()
-    object BlockedLinks : Screen()
-    object Challenges : Screen()
-    data class ChallengeDetail(val params: ChallengeDetailParams? = null) : Screen() {
+
+    // object BlockedLinks : Screen() // Removed - VPN/BlockedLinks feature disabled
+    object Challenges : Screen() // Removed - Challenge feature disabled
+    data class ChallengeDetail(val params: ChallengeDetailParams? = null) :
+        Screen() { // Removed - Challenge feature disabled
     }
 
-    object Reward : Screen()
-    object CoinHistory : Screen()
-    data class RewardTransaction(val transactionId: Int? = null) : Screen()
-    object Wallpaper : Screen()
+    object Reward : Screen() // Removed - Reward feature disabled
+    object CoinHistory : Screen() // Removed - Reward feature disabled
+    data class RewardTransaction(val transactionId: Int? = null) :
+        Screen() // Removed - Reward feature disabled
+
+    object Wallpaper : Screen() // Removed - Wallpaper feature disabled
     object CapturedNotifications : Screen()
 }

@@ -12,5 +12,6 @@ data class WeeklyDataReport(
     val totalMobileDataUsage: Long? = null,
     val displayWifiDataUsage: String? = null,
     val displayMobileDataUsage: String? = null,
-    val displayTotalDataUsage: String? = null
+    val displayTotalDataUsage: String? = null,
+    val totalNotificationCount: Int = 0
 )

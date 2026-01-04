@@ -49,7 +49,7 @@ fun QuickJoinCard(
                         tint = scheme.basicAccent,
                         contentDescription = null
                     ),
-                    type = ODSTagStaticType.PROMOTION
+                    type = ODSTagStaticType.STRONG
                 )
             } else null
         ),
