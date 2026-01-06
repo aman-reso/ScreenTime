@@ -98,7 +98,6 @@ class ScreenTimeApplication : Application(), Configuration.Provider {
 
     private fun initAds() {
         val requestConfig = RequestConfiguration.Builder()
-            .setTestDeviceIds(listOf("A07F51EE923FAFD06D2B957DFE6AF83E"))
             .build()
 
         MobileAds.setRequestConfiguration(requestConfig)
