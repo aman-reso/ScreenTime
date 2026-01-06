@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
+import com.app.screentime.ads.RewardedAdManager
+import com.google.android.gms.ads.rewarded.RewardItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -130,6 +132,8 @@ fun RewardScreen(
     var isClaimingReward by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isMenuExpanded by remember { mutableStateOf(false) }
+    var showAdRewardSuccess by remember { mutableStateOf(false) }
+    var earnedCoinsFromAd by remember { mutableStateOf(0) }
     val listState = rememberLazyListState()
     val density = LocalDensity.current
     var expandedHeaderHeightPx by remember { mutableIntStateOf(0) }
@@ -362,6 +366,59 @@ fun RewardScreen(
                                 ),
                                 gap = DSVariables.spacingComponent3
                             ) {
+
+//                                // Watch Ad to Earn Coins Section
+//                                item {
+//                                    ODSBox(
+//                                        modifier = Modifier.fillMaxWidth(),
+//                                        background = listOf(ODSColorModel(scheme.basicBackgroundCard)),
+//                                        cornerRadius = ODSCorners(all = DSVariables.radiusMedium),
+//                                        padding = ODSPadding(all = DSVariables.spacingComponent4)
+//                                    ) {
+//                                        ODSColumn(
+//                                            modifier = Modifier.fillMaxWidth(),
+//                                            gap = DSVariables.spacingComponent3
+//                                        ) {
+//                                            ODSText(
+//                                                text = "Watch Ad to Earn Coins",
+//                                                style = DSTextStyles.bodyMBold,
+//                                                color = scheme.basicText
+//                                            )
+//                                            ODSText(
+//                                                text = "Watch a short video ad to earn bonus coins",
+//                                                style = DSTextStyles.bodySRegular,
+//                                                color = scheme.basicTextRecessive
+//                                            )
+//                                            ODSButton(
+//                                                scheme = scheme,
+//                                                props = ODSButtonProps(
+//                                                    label = if (RewardedAdManager.isAdLoaded()) "Watch Ad Now" else "Loading Ad...",
+//                                                    buttonType = ODSButtonButtonType.STANDARD,
+//                                                    variant = ODSButtonVariant.PRIMARY,
+//                                                    size = ODSButtonSize.SMALL
+//                                                ),
+//                                                onClick = {
+//                                                    activity?.let {
+//                                                        RewardedAdManager.showRewardedAd(
+//                                                            activity = it,
+//                                                            onRewardEarned = { rewardItem ->
+//                                                                earnedCoinsFromAd = rewardItem.amount
+//                                                                showAdRewardSuccess = true
+//                                                                // Reload coins after earning reward
+//                                                                viewModel.loadTotalCoins()
+//                                                            },
+//                                                            onAdDismissed = {
+//                                                                // Ad dismissed, next ad will be loaded lazily when needed
+//                                                            }
+//                                                        )
+//                                                    }
+//                                                },
+//                                                modifier = Modifier.fillMaxWidth()
+//                                            )
+//                                        }
+//                                    }
+//                                }
+
                                 item {
                                     ODSText(
                                         text = "Available rewards",
@@ -451,6 +508,22 @@ fun RewardScreen(
             onNavigateToRewardHistory(claimTransactionId)
             claimTransactionId = null
         }, scheme = scheme
+    )
+
+    // Ad Reward Success Dialog
+    RewardClaimSuccessDialog(
+        showDialog = showAdRewardSuccess,
+        onDismiss = {
+            showAdRewardSuccess = false
+            earnedCoinsFromAd = 0
+        },
+        title = "Coins Earned!",
+        description = "You earned ${earnedCoinsFromAd} coins for watching the ad!",
+        onKeepTradingClick = {
+            showAdRewardSuccess = false
+            earnedCoinsFromAd = 0
+        },
+        scheme = scheme
     )
 
     // Reload saved details when bottom sheet opens

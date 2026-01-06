@@ -5,8 +5,8 @@ import android.app.usage.NetworkStatsManager
 import android.content.Context
 import android.net.ConnectivityManager
 import android.util.Log
+import com.app.screentime.utils.DateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.util.Calendar
 import javax.inject.Inject
 
 /**
@@ -61,14 +61,9 @@ class NetworkUsageHelper constructor(val context: Context) {
         networkStatsManager: NetworkStatsManager,
         networkType: Int,
     ): Map<Int, Long> {
-        val midNightCal = Calendar.getInstance()
-        midNightCal[Calendar.HOUR_OF_DAY] = 0
-        midNightCal[Calendar.MINUTE] = 0
-        midNightCal[Calendar.SECOND] = 0
-        midNightCal[Calendar.MILLISECOND] = 0
-
-        val start = midNightCal.timeInMillis
-        val end = System.currentTimeMillis()
+        val startOfToday = DateUtils.startOfToday()
+        val start = startOfToday.millis
+        val end = DateUtils.nowMillis()
 
         return fetchNetworkUsageForInterval(networkType, start, end)
     }

@@ -1,17 +1,13 @@
 package com.app.screentime.record.repository
 
-import android.annotation.SuppressLint
 import android.app.usage.NetworkStats
 import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.data.uiModel.WeeklyDataReport
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.app.screentime.utils.DateUtils
 import java.text.NumberFormat
-import java.text.SimpleDateFormat
-import javax.inject.Inject
-import java.util.*
 
 /**
  * Helper class to access and manage app usage statistics.
@@ -118,14 +114,9 @@ class LocalAppUsageRepository(
         asSequence().sortedByDescending { it.mobileDataUsage + it.wifiDataUsage }.toList()
 
     suspend fun fetchAppUsageTodayTillNow(): List<AppUsage> {
-        val midNightCal = Calendar.getInstance()
-        midNightCal[Calendar.HOUR_OF_DAY] = 0
-        midNightCal[Calendar.MINUTE] = 0
-        midNightCal[Calendar.SECOND] = 0
-        midNightCal[Calendar.MILLISECOND] = 0
-
-        val start = midNightCal.timeInMillis
-        val end = System.currentTimeMillis()
+        val startOfToday = DateUtils.startOfToday()
+        val start = startOfToday.millis
+        val end = DateUtils.nowMillis()
         return getAppsUsageForInterval(start, end)
     }
 
@@ -133,51 +124,38 @@ class LocalAppUsageRepository(
     fun getOneWeekReport(): List<WeeklyDataReport> {
         val weeklyReports = mutableListOf<WeeklyDataReport>()
 
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            add(Calendar.DAY_OF_MONTH, -6) // start 6 days ago
-        }
-
-        val todayCal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val now = System.currentTimeMillis()
+        // Start 6 days ago from today
+        val startDate = DateUtils.minusDays(DateUtils.startOfToday(), 6)
+        val todayStart = DateUtils.startOfToday()
+        val now = DateUtils.nowMillis()
 
         // Loop 7 days
         for (i in 0 until 7) {
-            val startOfDay = cal.timeInMillis
+            val currentDay = DateUtils.addDays(startDate, i)
+            val startOfDay = DateUtils.startOfDay(currentDay)
+            val startOfDayMillis = startOfDay.millis
 
-            cal.add(Calendar.DAY_OF_MONTH, 1)
-            var endOfDay = cal.timeInMillis
+            val nextDay = DateUtils.addDays(startDate, i + 1)
+            val endOfDayStart = DateUtils.startOfDay(nextDay)
+            var endOfDayMillis = endOfDayStart.millis
 
             // If this day is today, use current time
-            if (startOfDay >= todayCal.timeInMillis) {
-                endOfDay = now
+            if (startOfDayMillis >= todayStart.millis) {
+                endOfDayMillis = now
             }
 
             Log.d(
-                "WeeklyReport", "Fetching day ${i + 1}: $startOfDay → $endOfDay"
+                "WeeklyReport", "Fetching day ${i + 1}: $startOfDayMillis → $endOfDayMillis"
             )
 
-            val dailyUsage = getAppsUsageForInterval(startOfDay, endOfDay)
+            val dailyUsage = getAppsUsageForInterval(startOfDayMillis, endOfDayMillis)
             val totalScreenTime = dailyUsage.sumOf { it.appScreenTime }
-            val totalNotificationCount = dailyUsage.sumOf { 
-                if (it.notificationCount > 0) it.notificationCount else 0 
+            val totalNotificationCount = dailyUsage.sumOf {
+                if (it.notificationCount > 0) it.notificationCount else 0
             }
             val report = WeeklyDataReport(
-                dayName = SimpleDateFormat(
-                    "EEEE",
-                    Locale.getDefault()
-                ).format(Date(startOfDay)),
-                date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(
-                    Date(startOfDay)
-                ),
+                dayName = DateUtils.format(startOfDay, "EEEE"),
+                date = DateUtils.format(startOfDay, "dd/MM/yyyy"),
                 appUsage = dailyUsage,
                 totalScreenTime = totalScreenTime,
                 displayScreenTime = formatDuration(totalScreenTime),
@@ -201,6 +179,7 @@ class LocalAppUsageRepository(
         startMsEpoch: Long,
         endMsEpoch: Long,
     ) = screenUsageHelper.collectEvents(startMsEpoch, endMsEpoch)
+
 }
 
 fun Long?.toReadableDataSize(): String? {

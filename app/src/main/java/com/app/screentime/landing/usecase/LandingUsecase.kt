@@ -2,18 +2,14 @@ package com.app.screentime.landing.usecase
 
 import android.content.Context
 import com.app.screentime.R
-import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.challenge.repository.ChallengeRepository
 import com.app.screentime.landing.mapper.LandingUiMapper
 import com.app.screentime.landing.model.CategoryUsage
 import com.app.screentime.landing.model.LandingUiProps
 import com.app.screentime.landing.model.TodayUsageData
 import com.app.screentime.landing.util.AppCategoryUtils
-import com.app.screentime.network.model.BatchUsageEventsRequest
-import com.app.screentime.network.model.UsageEvent
 import com.app.screentime.network.model.UserChallenge
 import com.app.screentime.network.sync.DataSyncService
-import com.app.screentime.core.network.model.DeviceRegistrationResponse
 import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.record.repository.LocalAppUsageRepository
@@ -23,7 +19,6 @@ import com.telekom.odsystem.foundations.HexColor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.Calendar
 import javax.inject.Inject
 
 /**
@@ -46,19 +41,11 @@ class LandingUsecase @Inject constructor(
     private suspend fun getYesterdayTotalScreenTime(): Long? {
         return withContext(Dispatchers.IO) {
             try {
-                val calendar = Calendar.getInstance()
-                calendar[Calendar.HOUR_OF_DAY] = 0
-                calendar[Calendar.MINUTE] = 0
-                calendar[Calendar.SECOND] = 0
-                calendar[Calendar.MILLISECOND] = 0
-                calendar.add(Calendar.DAY_OF_MONTH, -1) // Go to yesterday
-
-                val yesterdayStart = calendar.timeInMillis
-                calendar.add(Calendar.DAY_OF_MONTH, 1) // End of yesterday
-                val yesterdayEnd = calendar.timeInMillis
+                val todayStart = DateUtils.startOfToday()
+                val yesterdayStart = DateUtils.minusDays(todayStart, 1)
 
                 val yesterdayReport = localAppUsageRepository.getAppsUsageForInterval(
-                    yesterdayStart, yesterdayEnd
+                    yesterdayStart.millis, todayStart.millis
                 )
                 val yesterdayTotal = yesterdayReport.sumOf { it.appScreenTime }
                 if (yesterdayTotal > 0) yesterdayTotal else null
@@ -75,13 +62,6 @@ class LandingUsecase @Inject constructor(
     suspend fun getTodayUsageData(): Result<TodayUsageData> {
         return withContext(Dispatchers.IO) {
             try {
-                val currentTime = System.currentTimeMillis()
-                val midNightCal = Calendar.getInstance()
-                midNightCal[Calendar.HOUR_OF_DAY] = 0
-                midNightCal[Calendar.MINUTE] = 0
-                midNightCal[Calendar.SECOND] = 0
-                midNightCal[Calendar.MILLISECOND] = 0
-
                 // Data collection disabled - no events collected for sync
                 val todayReport = localAppUsageRepository.fetchAppUsageTodayTillNow()
 

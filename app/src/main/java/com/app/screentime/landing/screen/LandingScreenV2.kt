@@ -2,7 +2,14 @@ package com.app.screentime.landing.screen
 
 import android.Manifest
 import android.content.Context
-import androidx.core.app.ActivityCompat
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -10,49 +17,43 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.statusBars
-import com.app.screentime.ui.atom.PullToRefreshBox
-import com.app.screentime.ads.BannerAd
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
-import android.os.Build
-import android.provider.Settings
-import android.content.Intent
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.R
-import com.app.screentime.permission.PermissionUtils
-import com.app.screentime.consent.screen.ConsentBottomSheetContent
+import com.app.screentime.ads.AdConfig
+import com.app.screentime.ads.BannerAd
 import com.app.screentime.battery.component.BatteryHealthSection
-import com.app.screentime.network.component.NetworkHealthSection
+import com.app.screentime.consent.screen.ConsentBottomSheetContent
 import com.app.screentime.landing.component.CategoryUsageSection
+import com.app.screentime.landing.component.DailyGoalBottomSheet
 import com.app.screentime.landing.component.GreetingUi
 import com.app.screentime.landing.component.JoinedChallengesCardStack
 import com.app.screentime.landing.component.NetworkCard
 import com.app.screentime.landing.component.UsageSummaryCard
-import com.app.screentime.landing.component.DailyGoalBottomSheet
 import com.app.screentime.landing.viewmodel.LandingViewModel
-import com.app.screentime.ui.atom.appUsageListUi
+import com.app.screentime.network.component.NetworkHealthSection
 import com.app.screentime.ntoificationstack.OAServiceNotificationSingleProps
 import com.app.screentime.ntoificationstack.ODSCardNotificationModel
+import com.app.screentime.permission.PermissionUtils
 import com.app.screentime.permission.createPermissionManager
 import com.app.screentime.profile.screen.CraftedWithLoveSection
+import com.app.screentime.ui.atom.AppScreenShimmer
+import com.app.screentime.ui.atom.PullToRefreshBox
+import com.app.screentime.ui.atom.appUsageListUi
 import com.app.screentime.ui.theme.headerTheme
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
@@ -61,11 +62,6 @@ import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSLazyColumn
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.link.ODSLinkProps
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerLabelAlignment
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerVariant
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
@@ -73,6 +69,7 @@ import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMo
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import com.telekom.odsystem.tokens.tokens.jacuzziSecondaryScheme
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,6 +89,7 @@ fun LandingScreenV2(
     val dailyGoalHours by viewModel.dailyGoalHours.collectAsState()
     val formattedDailyGoal = viewModel.getFormattedDailyGoal()
     val activity = LocalActivity.current ?: return
+    var isAppListExpanded by remember { mutableStateOf(false) }
 
     // Pull to refresh state
     val isRefreshing = uiProps?.isLoading ?: false
@@ -291,22 +289,13 @@ fun LandingScreenV2(
                     when {
                         uiProps == null || uiProps!!.isLoading -> {
                             item {
-                                Spacer(modifier = Modifier.height(20.dp))
-                                ODSBox(
-                                    modifier = Modifier
-                                        .height(40.dp)
-                                        .fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    ODSLoadingSpinner(
-                                        scheme = scheme, props = ODSLoadingSpinnerProps(
-                                            labelText = stringResource(R.string.loading),
-                                            size = ODSLoadingSpinnerSize.SMALL,
-                                            variant = ODSLoadingSpinnerVariant.STANDARD,
-                                            labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
-                                        )
-                                    )
-                                }
+                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                            }
+                            item {
+                                AppScreenShimmer(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    scheme = scheme
+                                )
                             }
                         }
 
@@ -434,13 +423,14 @@ fun LandingScreenV2(
                             item {
                                 Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                             }
-                            item {
-                                BannerAd(
-                                    adUnitId = "ca-app-pub-5847819400812479/1063828240",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
+                            if (AdConfig.areAdsEnabled()) {
+                                item {
+                                    BannerAd(
+                                        adUnitId = AdConfig.getBannerAdUnitId(),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
                             }
-
                             // Show notification permission warning if denied
                             if (showNotificationWarning) {
                                 item("notification_warning") {
@@ -481,12 +471,20 @@ fun LandingScreenV2(
                                     color = scheme.basicText
                                 )
                             }
+
                             appUsageListUi(
-                                uiProps!!.topUsedApps, scheme = scheme, onClick = { data ->
+                                appUsageList = uiProps!!.topUsedApps,
+                                scheme = scheme,
+                                onClick = { data ->
                                     data.packageName?.let { packageName ->
                                         onNavigateToSingleAppUsageDetail(packageName)
                                     }
-                                })
+                                },
+                                showExpandCollapse = true,
+                                initialItemCount = 10,
+                                isExpanded = isAppListExpanded,
+                                onExpandCollapseToggle = { isAppListExpanded = !isAppListExpanded }
+                            )
 
                             item {
                                 Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))

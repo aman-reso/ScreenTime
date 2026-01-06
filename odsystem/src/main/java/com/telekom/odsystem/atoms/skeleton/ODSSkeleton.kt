@@ -86,11 +86,7 @@ fun ODSSkeleton(
             ) { target ->
                 ODSBox(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .sharedBounds(
-                            sharedContentState = rememberSharedContentState(SHARED_CONTENT_KEY),
-                            animatedVisibilityScope = this,
-                        ),
+                        .fillMaxSize(),
                     background = shimmerBackground(target = target, style = style)
                 ) {
                 }

@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.LocalActivity
+import com.app.screentime.ads.InterstitialAdManager
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.app.screentime.appdetail.screen.SingleAppUsageDetailScreen
@@ -75,6 +77,7 @@ fun ScreenTimeNavigation(
     deeplinkUri: android.net.Uri? = null
 ) {
     val context = LocalContext.current
+    val activity = LocalActivity.current
     val isUsagePermission = checkUsageStatsPermission(context)
     val backStack = retain {
         mutableStateListOf(
@@ -236,6 +239,7 @@ private fun NavigationHost(
     backStack: SnapshotStateList<Screen>,
     tokens: ScreenTimeNavigationTokens
 ) {
+    val activity = LocalActivity.current
     NavDisplay(backStack = backStack, onBack = {
         val top = backStack.lastOrNull()
         if (top in tokens.bottomNavigationRoutes && top != Screen.Landing) {
@@ -266,10 +270,26 @@ private fun NavigationHost(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(bottom = paddingValues.calculateBottomPadding()),
-                onNavigateToLeaderboard = { backStack.add(Screen.Leaderboard) },
+                onNavigateToLeaderboard = {
+                    activity?.let {
+                        InterstitialAdManager.showInterstitialAd(it) {
+                            backStack.add(Screen.Leaderboard)
+                        }
+                    } ?: run {
+                        backStack.add(Screen.Leaderboard)
+                    }
+                },
                 onNavigateToReward = { backStack.add(Screen.Reward) },
                 onNavigateToSearch = { backStack.add(Screen.Search) },
-                onNavigateToStatistics = { backStack.add(Screen.Statistics) },
+                onNavigateToStatistics = {
+                    activity?.let {
+                        InterstitialAdManager.showInterstitialAd(it) {
+                            backStack.add(Screen.Statistics)
+                        }
+                    } ?: run {
+                        backStack.add(Screen.Statistics)
+                    }
+                },
                 onNavigateToSingleAppUsageDetail = { packageName ->
                     backStack.add(
                         Screen.SingleAppUsageDetail(
@@ -288,7 +308,15 @@ private fun NavigationHost(
                         )
                     )
                 },
-                onNavigateToChallenges = { backStack.add(Screen.Challenges) },
+                onNavigateToChallenges = {
+                    activity?.let {
+                        InterstitialAdManager.showInterstitialAd(it) {
+                            backStack.add(Screen.Challenges)
+                        }
+                    } ?: run {
+                        backStack.add(Screen.Challenges)
+                    }
+                },
                 openSearchScreen = {
                     backStack.add(Screen.Search)
                 },

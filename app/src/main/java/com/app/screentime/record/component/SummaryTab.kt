@@ -109,7 +109,7 @@ fun SummaryTab(
                 padding = ODSPadding(horizontal = DSVariables.spacingComponent3),
                 gap = DSVariables.spacingComponent3
             ) {
-                summaryTabUiProps!!.usageDonutData?.let { donutData ->
+                summaryTabUiProps?.usageDonutData?.let { donutData ->
                     item {
                         UsageDonutComponent(
                             usageDonutData = donutData,
@@ -129,12 +129,16 @@ fun SummaryTab(
                 }
 
                 appUsageListUi(
-                    appUsageList = summaryTabUiProps!!.appUsageList, scheme = scheme
-                ) { appUsage ->
-                    if (!appUsage.packageName.isNullOrEmpty()) {
-                        onNavigateToAppDetails(appUsage.packageName)
+                    appUsageList = summaryTabUiProps!!.appUsageList,
+                    scheme = scheme,
+                    onClick = { appUsage ->
+                        if (!appUsage.packageName.isNullOrEmpty()) {
+                            onNavigateToAppDetails(appUsage.packageName)
+                        }
+                    }, onExpandCollapseToggle = {
+
                     }
-                }
+                )
             }
         }
     }

@@ -25,6 +25,8 @@ enum class ODSListRowStandardVariant {
  * @property icon Optional icon used in the icon variant.
  * @property label Primary label text. If `labelText` is set, it will be used as the label.
  * @property showDescriptionTitle Indicates whether to display the description title.
+ * @property labelTextHtml HTML string for label text. If set, will be used instead of labelText.
+ * @property descriptionTextHtml HTML string for description text. If set, will be used instead of descriptionText.
  *
  */
 data class ODSListRowStandardProps(
@@ -35,5 +37,7 @@ data class ODSListRowStandardProps(
     var icon: ODSIconModel? = null,
     var showDescriptionTitle: Boolean = true,
     var variant: ODSListRowStandardVariant = ODSListRowStandardVariant.STANDARD,
-    var image: ODSImageModel? = null // Not exported from the plugin
+    var image: ODSImageModel? = null, // Not exported from the plugin
+    var labelTextHtml: String? = null,
+    var descriptionTextHtml: String? = null
 )

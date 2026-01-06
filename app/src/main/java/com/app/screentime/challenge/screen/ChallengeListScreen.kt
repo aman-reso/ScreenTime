@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.items
@@ -40,7 +41,10 @@ import com.app.screentime.challenge.viewmodel.ChallengeViewModel
 import com.app.screentime.challenge.viewmodel.ChallengesUiState
 import com.app.screentime.challenge.viewmodel.JoinedChallengeViewModel
 import com.app.screentime.ui.atom.PullToRefreshBox
+import com.app.screentime.ui.atom.AppScreenShimmer
 import com.app.screentime.ui.theme.LocalThemeMode
+import com.app.screentime.ads.NativeAdvancedAd
+import com.app.screentime.ads.AdConfig
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -215,19 +219,20 @@ private fun ChallengesTab(
     ) {
         when {
             uiState.isLoading -> {
-                ODSBox(
+                ODSLazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    padding = ODSPadding(horizontal = DSVariables.spacingComponent4),
+                    gap = DSVariables.spacingComponent3
                 ) {
-                    ODSLoadingSpinner(
-                        scheme = scheme,
-                        props = ODSLoadingSpinnerProps(
-                            size = ODSLoadingSpinnerSize.SMALL,
-                            variant = ODSLoadingSpinnerVariant.STANDARD,
-                            labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL,
-                            labelText = stringResource(R.string.loading)
+                    item {
+                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                    }
+                    item {
+                        AppScreenShimmer(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme
                         )
-                    )
+                    }
                 }
             }
 
@@ -279,6 +284,14 @@ private fun ChallengesTab(
                                     ), onToggle = { if (it) selectedFilter = index })
                             }
                         }
+                    }
+
+                    // Native Advanced Ad
+                    item {
+                        NativeAdvancedAd(
+                            adUnitId = AdConfig.getNativeAdvancedAdUnitId(),
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
 
                     groupedChallenges?.featuredChallenge?.let { featuredChallenge ->
@@ -401,19 +414,20 @@ private fun JoinedChallengesTab(
     ) {
         when {
             uiState.isLoading -> {
-                ODSBox(
+                ODSLazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    padding = ODSPadding(horizontal = DSVariables.spacingComponent4),
+                    gap = DSVariables.spacingComponent3
                 ) {
-                    ODSLoadingSpinner(
-                        scheme = scheme,
-                        props = ODSLoadingSpinnerProps(
-                            size = ODSLoadingSpinnerSize.SMALL,
-                            variant = ODSLoadingSpinnerVariant.STANDARD,
-                            labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL,
-                            labelText = stringResource(R.string.loading)
+                    item {
+                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                    }
+                    item {
+                        AppScreenShimmer(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme
                         )
-                    )
+                    }
                 }
             }
 

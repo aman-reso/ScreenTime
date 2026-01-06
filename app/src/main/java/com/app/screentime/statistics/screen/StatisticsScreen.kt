@@ -31,6 +31,8 @@ import com.app.screentime.statistics.model.ChartFormatterProps
 import com.app.screentime.statistics.viewmodel.StatisticsViewModel
 import com.app.screentime.ui.atom.appUsageListUi
 import com.app.screentime.ui.theme.LocalThemeMode
+import com.app.screentime.ads.NativeAdvancedAd
+import com.app.screentime.ads.AdConfig
 import com.app.screentime.ui.theme.headerTheme
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.DSTextStyles
@@ -233,6 +235,18 @@ fun StatisticsScreen(
                                 viewModel.selectDay(dayIndex)
                             },
                             scheme = scheme
+                        )
+                    }
+
+                    item {
+                        ODSBox(height = DSVariables.spacingComponent5) {}
+                    }
+
+                    // Native Advanced Ad
+                    item {
+                        NativeAdvancedAd(
+                            adUnitId = AdConfig.getNativeAdvancedAdUnitId(),
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
 

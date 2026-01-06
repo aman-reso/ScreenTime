@@ -111,7 +111,7 @@ fun SpecialEventCardV(
                                     scheme = scheme,
                                     props = ODSTagStaticProps(
                                         label = tag,
-                                        type = ODSTagStaticType.PROMOTION
+                                        type = ODSTagStaticType.STRONG
                                     )
                                 )
                             }
@@ -120,7 +120,7 @@ fun SpecialEventCardV(
                                     scheme = scheme,
                                     props = ODSTagStaticProps(
                                         label = challenge.tag,
-                                        type = ODSTagStaticType.PROMOTION
+                                        type = ODSTagStaticType.STRONG
                                     )
                                 )
                             }
@@ -254,7 +254,7 @@ fun SpecialEventCardV1(
                                 scheme = scheme,
                                 props = ODSTagStaticProps(
                                     label = challenge.tags[0],
-                                    type = ODSTagStaticType.PROMOTION
+                                    type = ODSTagStaticType.STRONG
                                 )
                             )
                         }
@@ -263,7 +263,7 @@ fun SpecialEventCardV1(
                                 scheme = scheme,
                                 props = ODSTagStaticProps(
                                     label = challenge.tag,
-                                    type = ODSTagStaticType.PROMOTION
+                                    type = ODSTagStaticType.STRONG
                                 )
                             )
                         }

@@ -6,6 +6,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.Dp
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSImage
@@ -91,7 +93,7 @@ fun ODSListRowStandard(
             verticalAlignment = style.textContentVerticalAlignment
         ) {
             val hasDescription = props.showDescriptionTitle &&
-                    (!props.descriptionTitle.isNullOrEmpty() || !props.descriptionText.isNullOrEmpty())
+                    (!props.descriptionTitle.isNullOrEmpty() || !props.descriptionText.isNullOrEmpty() || !props.descriptionTextHtml.isNullOrEmpty())
 
             ODSColumn(
                 modifier = Modifier
@@ -114,7 +116,15 @@ fun ODSListRowStandard(
                         textAlign = style.labelTextAlign
                     )
                 }
-                if (!props.labelText.isNullOrEmpty()) {
+                if (!props.labelTextHtml.isNullOrEmpty()) {
+                    ODSText(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = AnnotatedString.fromHtml(props.labelTextHtml!!),
+                        style = style.labelTextStyle,
+                        color = style.labelTextColor,
+                        textAlign = style.labelTextTextAlign
+                    )
+                } else if (!props.labelText.isNullOrEmpty()) {
                     ODSText(
                         modifier = Modifier.fillMaxWidth(),
                         text = props.labelText,
@@ -146,7 +156,15 @@ fun ODSListRowStandard(
                             textAlign = style.descriptionTextAlign
                         )
                     }
-                    if (!props.descriptionText.isNullOrEmpty()) {
+                    if (!props.descriptionTextHtml.isNullOrEmpty()) {
+                        ODSText(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = AnnotatedString.fromHtml(props.descriptionTextHtml!!),
+                            style = style.descriptionTextStyle,
+                            color = style.descriptionTextColor,
+                            textAlign = style.descriptionTextTextAlign
+                        )
+                    } else if (!props.descriptionText.isNullOrEmpty()) {
                         ODSText(
                             modifier = Modifier.fillMaxWidth(),
                             text = props.descriptionText,

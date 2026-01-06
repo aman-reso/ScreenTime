@@ -41,11 +41,7 @@ class RecordDetailViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-
-            // Use today's date if not provided
             val selectedDate = date ?: getTodayDate()
-
-            // Get raw stats data first
             val rawStatsResult = recordUseCase.getRawDailyStats(selectedDate, targetUserId)
             val stats = rawStatsResult.getOrNull() ?: emptyList()
 

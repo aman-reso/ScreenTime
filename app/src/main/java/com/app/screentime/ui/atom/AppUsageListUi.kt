@@ -2,31 +2,21 @@ package com.app.screentime.ui.atom
 
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Help
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.record.repository.formatDuration
@@ -35,6 +25,10 @@ import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.atoms.link.ODSLink
+import com.telekom.odsystem.atoms.link.ODSLinkAlignment
+import com.telekom.odsystem.atoms.link.ODSLinkProps
+import com.telekom.odsystem.atoms.link.ODSLinkType
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
@@ -49,13 +43,25 @@ import kotlinx.coroutines.withContext
 fun LazyListScope.appUsageListUi(
     appUsageList: List<AppUsage>,
     scheme: ODSTheme = neutralScheme,
-    onClick: (AppUsage) -> Unit = {}
+    onClick: (AppUsage) -> Unit = {},
+    showExpandCollapse: Boolean = true,
+    initialItemCount: Int = 10,
+    isExpanded: Boolean = false,
+    onExpandCollapseToggle: (() -> Unit)? = null
 ) {
     if (appUsageList.isEmpty()) {
         return
     }
+
+    val displayList =
+        if (showExpandCollapse && !isExpanded && appUsageList.size > initialItemCount) {
+            appUsageList.take(initialItemCount)
+        } else {
+            appUsageList
+        }
+
     itemsIndexed(
-        items = appUsageList,
+        items = displayList,
         key = { _, appUsage -> appUsage.packageName ?: appUsage.id.toString() },
         contentType = { _, _ -> "app_usage_item" }
     ) { index, appUsage ->
@@ -73,6 +79,29 @@ fun LazyListScope.appUsageListUi(
                 scheme = scheme,
                 onClick = { onClick(appUsage) }
             )
+        }
+    }
+
+    if (showExpandCollapse && appUsageList.size > initialItemCount && onExpandCollapseToggle != null) {
+        item {
+            ODSBox(
+                modifier = Modifier.fillMaxWidth(),
+                padding = ODSPadding(
+                    horizontal = DSVariables.spacingComponent4
+                ),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                ODSLink(
+                    modifier = Modifier.wrapContentWidth(),
+                    scheme = scheme,
+                    props = ODSLinkProps(
+                        type = ODSLinkType.SECONDARY,
+                        alignment = ODSLinkAlignment.RIGHT,
+                        label = if (isExpanded) "Collapse All" else "Show All",
+                    ),
+                    onClick = onExpandCollapseToggle
+                )
+            }
         }
     }
 }

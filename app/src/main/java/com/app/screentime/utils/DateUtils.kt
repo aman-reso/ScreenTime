@@ -23,6 +23,13 @@ object DateUtils {
     }
 
     /**
+     * Get current time in milliseconds using Joda Time (IST timezone)
+     */
+    fun nowMillis(): Long {
+        return DateTime.now(IST_ZONE).millis
+    }
+
+    /**
      * Get current LocalDate in IST timezone
      */
     fun today(): LocalDate {

@@ -85,10 +85,10 @@ class ODSTabItemStyle {
         }
         style.labelTextAlign = DSTabItemTokens.labelTextAlign
         if (props.selected) {
-            style.labelColor = scheme.basicTextDominant
+            style.labelColor = scheme.basicAccentSecondary
         }
         if (!props.selected) {
-            style.labelColor = scheme.basicText
+            style.labelColor = scheme.basicTextRecessive
         }
         if (state == ODSActions.HOVERED) {
             style.labelColor = scheme.interactionStatesHoverTextDominantHover
@@ -110,7 +110,7 @@ class ODSTabItemStyle {
             DSTabItemTokens.lineContainerHorizontalArrangement
         if (props.selected) {
             style.lineContainerBackgroundColor =
-                listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary))
         }
         if (state == ODSActions.HOVERED && props.selected) {
             style.lineContainerBackgroundColor =

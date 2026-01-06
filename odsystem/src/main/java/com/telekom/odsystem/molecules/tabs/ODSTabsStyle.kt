@@ -8,6 +8,7 @@ import com.telekom.odsystem.foundations.ODSActions
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSOffset
+import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 class ODSTabsStyle {
@@ -36,7 +37,7 @@ class ODSTabsStyle {
     var lineContainerBackgroundColor: List<ODSColorModel>? = null // Not exported from plugin
 
     fun getStyle(
-        scheme: ODSTheme,
+        scheme: ODSTheme = neutralScheme,
         props: ODSTabsProps,
         tabSelected: Boolean,
         state: ODSActions,
@@ -73,7 +74,7 @@ class ODSTabsStyle {
         style.lineContainerHorizontalArrangement =
             DSTabsTokens.lineContainerHorizontalArrangement
         style.lineContainerBackgroundColor =
-            listOf(ODSColorModel(hexColor = scheme.basicAccent))
+            listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary))
         if (state == ODSActions.HOVERED && tabSelected) {
             style.lineContainerBackgroundColor =
                 listOf(ODSColorModel(hexColor = scheme.interactionStatesHoverAccentHover))

@@ -7,9 +7,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import com.app.screentime.data.entity.AppUsage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.Serializable
-import java.util.Calendar
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @Serializable
@@ -26,7 +27,9 @@ data class AppEvent(
     val appName: String,      // Example: WhatsApp
     val packageName: String,  // com.whatsapp
     val timestamp: Long,
-    val duration: Long? = null
+    val duration: Long? = null,
+    val startTime: Long? = null,
+    val endTime: Long? = null
 )
 
 
@@ -239,35 +242,22 @@ class ScreenUsageHelper constructor(private val context: Context) {
         val sessions = mutableMapOf<String, Session>()
         val sessionList = mutableListOf<AppEvent>()
 
-
         val event = UsageEvents.Event()
 
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-
             val pkg = event.packageName ?: continue
-
-            // Ignore system apps
-            if (isSystemApp(pkg)) {
-                continue
-            }
-
-            // Ignore launchers or apps without activities
             if (isLauncherApp(pkg) || !hasLaunchableActivity(pkg))
                 continue
 
             when (event.eventType) {
-
                 UsageEvents.Event.ACTIVITY_RESUMED -> {
-                    // If this app has no active session → new session
                     if (!sessions.containsKey(pkg) || !sessions[pkg]!!.isOpen) {
                         sessions[pkg] = Session(
                             packageName = pkg,
                             startTime = event.timeStamp,
                             lastResume = event.timeStamp
                         )
-
-                        // Log OPEN event
                         sessionList.add(
                             AppEvent(
                                 event = "MOVE_TO_FOREGROUND",
@@ -278,7 +268,6 @@ class ScreenUsageHelper constructor(private val context: Context) {
                             )
                         )
                     } else {
-                        // App reopened after pause
                         sessions[pkg]!!.lastResume = event.timeStamp
                         sessions[pkg]!!.isOpen = true
                     }
@@ -294,7 +283,6 @@ class ScreenUsageHelper constructor(private val context: Context) {
                         session.duration += duration
                         session.isOpen = false
 
-                        // Log CLOSE event
                         sessionList.add(
                             AppEvent(
                                 event = "APP_CLOSED",
@@ -326,7 +314,47 @@ class ScreenUsageHelper constructor(private val context: Context) {
             }
         }
 
-        return sessionList.distinctBy { it.timestamp }.sortedBy { it.timestamp }
+        return sessionList.distinctBy { it.timestamp }.sortedBy { it.timestamp }.let {
+            buildSessions(it)
+        }
+    }
+
+    private fun buildSessions(events: List<AppEvent>): List<AppEvent> {
+
+        val result = mutableListOf<AppEvent>()
+
+        val openEvents = mutableMapOf<String, AppEvent>()
+        for (event in events) {
+            when (event.event) {
+
+                "MOVE_TO_FOREGROUND" -> {
+                    openEvents[event.packageName] = event
+                }
+
+                "APP_CLOSED" -> {
+                    val open = openEvents[event.packageName] ?: continue
+                    if (event.timestamp > open.timestamp) {
+                        if (event.duration != null &&
+                            event.duration >= TimeUnit.SECONDS.toMillis(5)
+                        ) {
+                            result.add(
+                                AppEvent(
+                                    packageName = event.packageName,
+                                    appName = event.appName,
+                                    event = "APP_CLOSED",
+                                    timestamp = event.timestamp,
+                                    duration = event.duration,
+                                    startTime = open.timestamp,
+                                    endTime = event.timestamp
+                                )
+                            )
+                        }
+                        openEvents.remove(event.packageName)
+                    }
+                }
+            }
+        }
+        return result
     }
 
 
@@ -352,5 +380,6 @@ class ScreenUsageHelper constructor(private val context: Context) {
             false // If we can't find the app info, assume it's not a system app
         }
     }
+
 
 }

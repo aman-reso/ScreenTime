@@ -64,6 +64,7 @@ import com.app.screentime.challenge.component.detail.ChallengeImageSection
 import com.app.screentime.challenge.component.detail.JoinButtonSection
 import com.app.screentime.challenge.model.ChallengeDetailUiProps
 import com.app.screentime.challenge.viewmodel.ChallengeDetailViewModel
+import com.app.screentime.ui.atom.AppScreenShimmer
 import com.app.screentime.leaderboard.screen.LeaderboardItem
 import com.app.screentime.reward.component.RewardCardV2
 import com.app.screentime.ui.theme.ColorPalette
@@ -180,17 +181,20 @@ fun ChallengeDetailScreen(
 
         when {
             uiState.isLoading -> {
-                ODSBox(
-                    modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+                ODSLazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    padding = ODSPadding(horizontal = DSVariables.spacingComponent4),
+                    gap = DSVariables.spacingComponent3
                 ) {
-                    ODSLoadingSpinner(
-                        scheme = scheme, props = ODSLoadingSpinnerProps(
-                            size = ODSLoadingSpinnerSize.SMALL,
-                            variant = ODSLoadingSpinnerVariant.STANDARD,
-                            labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL,
-                            labelText = stringResource(R.string.loading)
+                    item {
+                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                    }
+                    item {
+                        AppScreenShimmer(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme
                         )
-                    )
+                    }
                 }
             }
 
@@ -288,31 +292,38 @@ internal fun ChallengeContent(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    ODSColumn(
+    ODSBox(
         modifier = Modifier.fillMaxSize()
     ) {
+        ODSColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            ChallengeHeaderAndImageSection(
+                uiProps = uiProps, onBackClick = onBackClick, onShareClick = {
+                    coroutineScope.launch {
+                        viewModel.shareChallenge(
+                            challengeId = uiProps.id,
+                            title = uiProps.title,
+                            prize = uiProps.displayPrize,
+                            imageUrl = uiProps.thumbnail,
+                            context = context
+                        )
+                    }
+                }, headerScheme = headerScheme
+            )
 
-        ChallengeHeaderAndImageSection(
-            uiProps = uiProps, onBackClick = onBackClick, onShareClick = {
-                coroutineScope.launch {
-                    viewModel.shareChallenge(
-                        challengeId = uiProps.id,
-                        title = uiProps.title,
-                        prize = uiProps.displayPrize,
-                        imageUrl = uiProps.thumbnail,
-                        context = context
-                    )
-                }
-            }, headerScheme = headerScheme
-        )
-
-        AboutTab(
-            uiProps = uiProps, scheme = scheme
-        )
+            AboutTab(
+                uiProps = uiProps, 
+                scheme = scheme,
+                bottomPadding = if (uiProps.showJoinButton) DSVariables.spacingLayout10 else 0.dp
+            )
+        }
 
         if (uiProps.showJoinButton) {
             ODSBox(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
                 background = listOf(ODSColorModel(scheme.basicBackground))
             ) {
                 JoinButtonSection(
@@ -327,6 +338,7 @@ internal fun ChallengeContent(
 private fun AboutTab(
     uiProps: ChallengeDetailUiProps,
     scheme: ODSTheme,
+    bottomPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     val listState = rememberLazyListState()
     val density = LocalDensity.current
@@ -334,8 +346,12 @@ private fun AboutTab(
     val headerScheme = headerTheme.current
 
     ODSLazyColumn(
-        state = listState, modifier = Modifier.fillMaxSize(), padding = ODSPadding(
-            horizontal = DSVariables.spacingComponent4, vertical = DSVariables.spacingComponent3
+        state = listState, 
+        modifier = Modifier.fillMaxSize(), 
+        padding = ODSPadding(
+            horizontal = DSVariables.spacingComponent4, 
+            vertical = DSVariables.spacingComponent3,
+            bottom = bottomPadding
         )
     ) {
         item {
@@ -367,7 +383,7 @@ private fun AboutTab(
                     uiProps.tags.forEach { tag ->
                         ODSTagStatic(
                             scheme = scheme, props = ODSTagStaticProps(
-                                label = tag, type = ODSTagStaticType.PROMOTION
+                                label = tag, type = ODSTagStaticType.STRONG
                             )
                         )
                     }

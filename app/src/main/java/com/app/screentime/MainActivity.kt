@@ -52,6 +52,8 @@ import com.app.screentime.ui.theme.ScreenTimeTheme
 import com.app.screentime.ui.theme.ThemeViewModel
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
+import com.app.screentime.ads.AdConfig
+import com.app.screentime.ads.InterstitialAdManager
 import com.app.screentime.ui.theme.ColorPalette
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -101,23 +103,19 @@ class MainActivity : ComponentActivity() {
                                 scheme.basicBackground.getIntColor(),
                                 darkScrim = scheme.basicBackground.getIntColor()
                             )
-                        },
-                        navigationBarStyle = SystemBarStyle.auto(
-                            Color.TRANSPARENT,
-                            Color.TRANSPARENT
+                        }, navigationBarStyle = SystemBarStyle.auto(
+                            Color.TRANSPARENT, Color.TRANSPARENT
                         )
                     )
                 }
 
                 ODSColumn(
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     background = listOf(ODSColorModel(scheme.basicBackground)),
                     verticalArrangement = Arrangement.Top
                 ) {
                     ScreenTimeNavigation(
-                        scheme = scheme,
-                        deeplinkUri = deeplinkUri
+                        scheme = scheme, deeplinkUri = deeplinkUri
                     )
                 }
             }
@@ -134,6 +132,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             inAppUpdateManager.checkForUpdate(this@MainActivity)
         }
+        // Ads are loaded lazily when needed, no preloading required
     }
 
 

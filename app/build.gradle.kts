@@ -26,8 +26,8 @@ android {
         applicationId = "com.app.screentime"
         minSdk = 24
         targetSdk = 36
-        versionCode = 53
-        versionName = "5.3"
+        versionCode = 56
+        versionName = "5.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

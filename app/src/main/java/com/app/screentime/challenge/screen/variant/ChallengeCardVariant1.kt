@@ -133,7 +133,7 @@ fun CurvedCryptoCard(
                                 scheme = scheme,
                                 props = ODSTagStaticProps(
                                     label = tag,
-                                    type = ODSTagStaticType.PROMOTION
+                                    type = ODSTagStaticType.STRONG
                                 )
                             )
                         }

@@ -64,46 +64,35 @@ class ChallengeSyncWorker(
 
     override suspend fun doWork(): Result {
         return try {
-            // Google Play Compliance: Only send data if user has accepted consent
             if (!preferencesManager.isConsentScreenShown()) {
                 Log.d(TAG, "ChallengeSyncWorker: Consent not given, skipping challenge stats sync")
-                return Result.success() // Don't retry, just skip
+                return Result.success()
             }
-            
             Log.d(TAG, "ChallengeSyncWorker: Starting sync")
-
-            // Get all active challenges
             val activeChallenges = joinedChallengeRepository.getActiveChallenges()
-            
             if (activeChallenges.isEmpty()) {
                 Log.d(TAG, "ChallengeSyncWorker: No active challenges found")
                 return Result.success()
             }
 
-            val currentTime = System.currentTimeMillis()
+            val currentTime = DateUtils.nowMillis()
             var hasErrors = false
 
             for (challenge in activeChallenges) {
                 try {
-                    // Parse challenge times
                     val startTime = parseISO8601(challenge.startTime)
                     val endTime = parseISO8601(challenge.endTime)
-
-                    // Check if challenge has ended
                     if (currentTime > endTime) {
                         Log.d(TAG, "ChallengeSyncWorker: Challenge ${challenge.challengeId} has ended, marking as inactive")
                         joinedChallengeRepository.updateSyncScheduled(challenge.challengeId, false)
                         cancelChallengeWork(applicationContext, challenge.challengeId)
                         continue
                     }
-
-                    // Check if challenge has started
                     if (currentTime < startTime) {
                         Log.d(TAG, "ChallengeSyncWorker: Challenge ${challenge.challengeId} hasn't started yet")
                         continue
                     }
 
-                    // Fetch last sync time from server
                     var serverLastSyncTime: Long? = null
                     try {
                         val lastSyncResult = challengeRepository.getChallengeLastSyncTime(challenge.challengeId)
@@ -127,15 +116,12 @@ class ChallengeSyncWorker(
                         Log.w(TAG, "ChallengeSyncWorker: Error fetching last sync time from server for challenge ${challenge.challengeId}, using local value", e)
                     }
 
-                    // Determine sync time range - use the maximum of server last sync, local last sync, and challenge start time
                     val localLastSyncTime = if (challenge.lastSyncTime > 0) challenge.lastSyncTime else 0L
                     val effectiveLastSyncTime = when {
-                        serverLastSyncTime != null -> maxOf(serverLastSyncTime!!, localLastSyncTime, startTime)
+                        serverLastSyncTime != null -> maxOf(serverLastSyncTime, localLastSyncTime, startTime)
                         localLastSyncTime > 0 -> maxOf(localLastSyncTime, startTime)
                         else -> startTime
                     }
-
-                    // Sync from last sync time to now (or end time, whichever is earlier)
                     val syncEndTime = minOf(currentTime, endTime)
 
                     if (syncEndTime <= effectiveLastSyncTime) {
@@ -145,7 +131,6 @@ class ChallengeSyncWorker(
 
                     Log.d(TAG, "ChallengeSyncWorker: Syncing challenge ${challenge.challengeId} from $effectiveLastSyncTime to $syncEndTime")
 
-                    // Get allowed package names for this challenge
                     val allowedPackageNames = if (challenge.packageNames.isNullOrBlank()) {
                         emptySet()
                     } else {
@@ -162,7 +147,6 @@ class ChallengeSyncWorker(
 
                     Log.d(TAG, "ChallengeSyncWorker: Allowed package names for challenge ${challenge.challengeId}: $allowedPackageNames")
 
-                    // Collect app usage data
                     val appUsageList = localAppUsageRepository.getAppsUsageForInterval(
                         effectiveLastSyncTime,
                         syncEndTime
@@ -170,12 +154,9 @@ class ChallengeSyncWorker(
 
                     if (appUsageList.isEmpty()) {
                         Log.d(TAG, "ChallengeSyncWorker: No app usage data found for challenge ${challenge.challengeId}")
-                        // Update last sync time even if no data
                         joinedChallengeRepository.updateLastSyncTime(challenge.challengeId, syncEndTime)
                         continue
                     }
-
-                    // Filter app usage to only include allowed package names
                     val filteredAppUsage = appUsageList.filter { appUsage ->
                         val packageName = appUsage.packageName?.trim() ?: ""
                         packageName.isNotEmpty() && allowedPackageNames.contains(packageName)
@@ -183,14 +164,12 @@ class ChallengeSyncWorker(
 
                     if (filteredAppUsage.isEmpty()) {
                         Log.d(TAG, "ChallengeSyncWorker: No matching app usage found for challenge ${challenge.challengeId} with allowed package names")
-                        // Update last sync time even if no matching data
                         joinedChallengeRepository.updateLastSyncTime(challenge.challengeId, syncEndTime)
                         continue
                     }
 
                     Log.d(TAG, "ChallengeSyncWorker: Filtered ${filteredAppUsage.size} app usage entries from ${appUsageList.size} total for challenge ${challenge.challengeId}")
 
-                    // Group app usage by package name and aggregate durations
                     val groupedByPackage = filteredAppUsage.groupBy { it.packageName ?: "" }
                         .mapValues { (_, usages) ->
                             usages.sumOf { it.appScreenTime }
@@ -205,12 +184,8 @@ class ChallengeSyncWorker(
                         continue
                     }
 
-                    // Create a single request with comma-separated package names
-                    // Aggregate all durations for the combined request
                     val allPackageNames = groupedByPackage.keys.sorted().joinToString(",")
                     val totalDuration = groupedByPackage.values.sum()
-                    
-                    // Get app names - use first app name or combine if needed
                     val firstPackageName = groupedByPackage.keys.first()
                     val firstUsage = filteredAppUsage.firstOrNull { it.packageName == firstPackageName }
                     val appName = firstUsage?.appName ?: "Unknown"
@@ -236,7 +211,6 @@ class ChallengeSyncWorker(
                         continue
                     }
 
-                    // Submit batch stats
                     val batchRequest = BatchChallengeStatsRequest(
                         challengeId = challenge.challengeId,
                         stats = statsRequests
@@ -305,7 +279,7 @@ class ChallengeSyncWorker(
             try {
                 val startTimeMs = parseISO8601(startTime)
                 val endTimeMs = parseISO8601(endTime)
-                val currentTime = System.currentTimeMillis()
+                val currentTime = DateUtils.nowMillis()
 
                 // If challenge has already ended, don't schedule
                 if (currentTime > endTimeMs) {
@@ -364,7 +338,7 @@ class ChallengeSyncWorker(
                         NetworkClient(context, PreferencesManager(context))
                     )
                 )
-                
+
                 // Use a coroutine scope to access suspend function
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
@@ -375,21 +349,21 @@ class ChallengeSyncWorker(
                                 if (response.success == true && response.data != null) {
                                     val serverChallenges = response.data!!.challenges
                                     Log.d(TAG, "Fetched ${serverChallenges.size} user challenges from server")
-                                    
+
                                     // Get existing challenges from database
                                     val existingChallenges = repository.getAllJoinedChallengesSync()
                                     val existingIds = existingChallenges.map { it.challengeId }.toSet()
-                                    
+
                                     var syncedCount = 0
                                     var scheduledCount = 0
-                                    
+
                                     // Process each server challenge
                                     for (userChallenge in serverChallenges) {
                                         // Only sync active challenges (not past ones)
                                         if (!userChallenge.isActive) {
                                             continue
                                         }
-                                        
+
                                         // Fetch challenge details to get package names
                                         var packageNames: String? = null
                                         try {
@@ -407,7 +381,7 @@ class ChallengeSyncWorker(
                                         } catch (e: Exception) {
                                             Log.w(TAG, "Error fetching challenge details for ${userChallenge.id}", e)
                                         }
-                                        
+
                                         // Check if already in database
                                         if (existingIds.contains(userChallenge.id)) {
                                             // Already exists, update package names if needed and ensure sync is scheduled
@@ -420,7 +394,7 @@ class ChallengeSyncWorker(
                                                     repository.updateJoinedChallenge(updated)
                                                     Log.d(TAG, "Updated package names for challenge ${userChallenge.id}: '$packageNames'")
                                                 }
-                                                
+
                                                 if (!existing.syncScheduled) {
                                                     scheduleChallengeSync(
                                                         context,
@@ -434,7 +408,7 @@ class ChallengeSyncWorker(
                                             }
                                             continue
                                         }
-                                        
+
                                         // New challenge, save to database
                                         val joinedAt = userChallenge.joinedAt ?: DateUtils.formatISO8601(DateUtils.now())
                                         val entity = com.app.screentime.database.entity.JoinedChallengeEntity(
@@ -450,9 +424,9 @@ class ChallengeSyncWorker(
                                             syncScheduled = true,
                                             packageNames = packageNames
                                         )
-                                        
+
                                         repository.insertJoinedChallenge(entity)
-                                        
+
                                         // Schedule sync
                                         scheduleChallengeSync(
                                             context,
@@ -460,11 +434,11 @@ class ChallengeSyncWorker(
                                             userChallenge.startTime,
                                             userChallenge.endTime
                                         )
-                                        
+
                                         syncedCount++
                                         Log.d(TAG, "Synced pre-existing challenge: ${userChallenge.id} - ${userChallenge.title} with package names: $packageNames")
                                     }
-                                    
+
                                     Log.d(TAG, "Sync complete: $syncedCount new challenges synced, $scheduledCount syncs rescheduled")
                                 } else {
                                     Log.w(TAG, "Failed to fetch user challenges: ${response.message}")
@@ -491,7 +465,7 @@ class ChallengeSyncWorker(
             try {
                 val database = ScreenTimeDatabase.getDatabase(context)
                 val repository = JoinedChallengeRepository(database.joinedChallengeDao())
-                
+
                 CoroutineScope(Dispatchers.IO).launch {
                     val activeChallenges = repository.getActiveChallenges()
                     for (challenge in activeChallenges) {
