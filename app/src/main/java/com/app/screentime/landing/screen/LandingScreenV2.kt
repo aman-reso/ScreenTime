@@ -36,6 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.R
 import com.app.screentime.ads.AdConfig
 import com.app.screentime.ads.BannerAd
+import com.app.screentime.ads.rememberBannerAd
 import com.app.screentime.battery.component.BatteryHealthSection
 import com.app.screentime.consent.screen.ConsentBottomSheetContent
 import com.app.screentime.landing.component.CategoryUsageSection
@@ -91,10 +92,9 @@ fun LandingScreenV2(
     val activity = LocalActivity.current ?: return
     var isAppListExpanded by remember { mutableStateOf(false) }
 
-    // Pull to refresh state
-    val isRefreshing = uiProps?.isLoading ?: false
-
-    // Daily goal bottom sheet state
+    val bannerAd = rememberBannerAd(
+        adUnitId = AdConfig.getBannerAdUnitId(),
+    )
     var showDailyGoalBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     // Check if notification permission is denied (reactive)
@@ -266,7 +266,7 @@ fun LandingScreenV2(
             ) {}
 
             PullToRefreshBox(
-                isRefreshing = isRefreshing,
+                isRefreshing = uiProps?.isLoading == true,
                 onRefresh = {
                     viewModel.loadLandingData()
                 },
@@ -356,7 +356,7 @@ fun LandingScreenV2(
                             // Show joined challenges CardStack notification if available
                             uiProps?.joinedChallenges?.takeIf { it.isNotEmpty() }
                                 ?.let { challenges ->
-                                    item {
+                                    item("joined_challenge") {
                                         JoinedChallengesCardStack(
                                             joinedChallenges = challenges,
                                             modifier = Modifier.fillMaxWidth(),
@@ -371,7 +371,7 @@ fun LandingScreenV2(
                                     }
                                 }
 
-                            item {
+                            item("usage_card") {
                                 uiProps?.usageDonutData?.let { donutData ->
                                     UsageSummaryCard(
                                         todayTotal = donutData.formattedTotalTime,
@@ -387,7 +387,7 @@ fun LandingScreenV2(
                             }
 
                             uiProps?.let { it ->
-                                item {
+                                item("network_card") {
                                     NetworkCard(
                                         modifier = Modifier.fillMaxWidth(),
                                         wifiDataUsage = it.todayTotalWifiDataUsage,
@@ -424,11 +424,13 @@ fun LandingScreenV2(
                                 Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                             }
                             if (AdConfig.areAdsEnabled()) {
-                                item {
-                                    BannerAd(
-                                        adUnitId = AdConfig.getBannerAdUnitId(),
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                bannerAd?.let { (adView, adState) ->
+                                    item(key = "banner_ad") {
+                                        BannerAd(
+                                            adView = adView,
+                                            adState = adState
+                                        )
+                                    }
                                 }
                             }
                             // Show notification permission warning if denied

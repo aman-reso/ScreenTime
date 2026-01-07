@@ -92,7 +92,7 @@ private fun ODSCardNotificationStackContainer(
         ODSCardContainers(style = style, props = props)
         if (props.show2ndCard) {
             ODSViewAll(
-                scheme = scheme,
+                scheme = neutralScheme,
                 style = style,
                 props = props,
                 onViewAllClick = onViewAllClick

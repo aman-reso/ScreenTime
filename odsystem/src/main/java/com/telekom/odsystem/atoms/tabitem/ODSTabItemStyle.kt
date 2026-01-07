@@ -64,10 +64,10 @@ class ODSTabItemStyle {
             style.contentFrameGap = DSTabItemTokens.contentFrameGapSizeSmall
         }
         if (props.selected) {
-            style.iconColor = scheme.basicAccent
+            style.iconColor = scheme.basicText
         }
         if (!props.selected) {
-            style.iconColor = scheme.basicAccentSecondary
+            style.iconColor = scheme.basicTextRecessive
         }
         if (state == ODSActions.HOVERED) {
             style.iconColor = scheme.interactionStatesHoverAccentHover
@@ -85,7 +85,7 @@ class ODSTabItemStyle {
         }
         style.labelTextAlign = DSTabItemTokens.labelTextAlign
         if (props.selected) {
-            style.labelColor = scheme.basicAccentSecondary
+            style.labelColor = scheme.basicText
         }
         if (!props.selected) {
             style.labelColor = scheme.basicTextRecessive

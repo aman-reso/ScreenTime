@@ -18,6 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -33,6 +36,7 @@ import com.app.screentime.ui.atom.appUsageListUi
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ads.NativeAdvancedAd
 import com.app.screentime.ads.AdConfig
+import com.app.screentime.ads.rememberNativeAd
 import com.app.screentime.ui.theme.headerTheme
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.DSTextStyles
@@ -76,6 +80,8 @@ fun StatisticsScreen(
     scheme: ODSTheme = neutralScheme
 ) {
 
+    val nativeAdState = rememberNativeAd(AdConfig.getNativeAdvancedAdUnitId())
+
     val activity = LocalActivity.current
     // Get theme mode for status bar styling
     val useDarkTheme = LocalThemeMode.current
@@ -100,6 +106,7 @@ fun StatisticsScreen(
 
     val uiProps by viewModel.uiProps.collectAsState()
     val chartFormatterProps = viewModel.getChartFormatterProps()
+    var isAppListExpanded by remember { mutableStateOf(false) }
 
     ODSColumn(modifier = Modifier.fillMaxSize()) {
         // Status bar padding
@@ -189,7 +196,10 @@ fun StatisticsScreen(
             else -> {
                 ODSLazyColumn(
                     modifier = modifier.fillMaxSize(),
-                    padding = ODSPadding(horizontal = DSVariables.spacingComponent3, bottom = DSVariables.spacingComponent3),
+                    padding = ODSPadding(
+                        horizontal = DSVariables.spacingComponent3,
+                        bottom = DSVariables.spacingComponent3
+                    ),
                     gap = DSVariables.spacingComponent3
                 ) {
                     item {
@@ -242,12 +252,11 @@ fun StatisticsScreen(
                         ODSBox(height = DSVariables.spacingComponent5) {}
                     }
 
-                    // Native Advanced Ad
-                    item {
-                        NativeAdvancedAd(
-                            adUnitId = AdConfig.getNativeAdvancedAdUnitId(),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+
+                    nativeAdState?.let {
+                        item("ad_key") {
+                            NativeAdvancedAd(adState = it)
+                        }
                     }
 
                     item {
@@ -255,13 +264,26 @@ fun StatisticsScreen(
                     }
 
                     if (uiProps!!.selectedDayAppUsageList.isNotEmpty()) {
+                        item {
+                            ODSText(
+                                text = stringResource(R.string.app_wise),
+                                style = DSTextStyles.bodyMBold,
+                                color = scheme.basicText
+                            )
+                        }
+
                         appUsageListUi(
                             appUsageList = uiProps!!.selectedDayAppUsageList,
                             onClick = { appUsage ->
                                 appUsage.packageName?.let { packageName ->
                                     onNavigateToSingleAppUsageDetail(packageName)
                                 }
-                            }
+                            },
+                            showExpandCollapse = true,
+                            initialItemCount = 10,
+                            isExpanded = isAppListExpanded,
+                            onExpandCollapseToggle = { isAppListExpanded = !isAppListExpanded },
+                            scheme = scheme
                         )
                     }
                 }

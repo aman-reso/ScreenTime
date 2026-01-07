@@ -12,7 +12,7 @@ data class ScreenTimeNavigationTokens(
 )
 
 /**
- * Default navigation tokens for ScreenTime app.
+ * Default navigation tokens for ScreenTime app (phone).
  */
 val defaultScreenTimeNavigationTokens = ScreenTimeNavigationTokens(
     routeToIndexMap = mapOf(
@@ -24,6 +24,24 @@ val defaultScreenTimeNavigationTokens = ScreenTimeNavigationTokens(
     bottomNavigationRoutes = listOf(
         Screen.Landing,
         Screen.Statistics,
+         Screen.Challenges,
+        Screen.Profile
+    )
+)
+
+/**
+ * Navigation tokens for tablet devices (shows Leaderboard instead of Statistics).
+ */
+val tabletScreenTimeNavigationTokens = ScreenTimeNavigationTokens(
+    routeToIndexMap = mapOf(
+        Screen.Landing to 0,
+        Screen.Leaderboard to 1,
+        Screen.Challenges to 2,
+        Screen.Profile to 3
+    ),
+    bottomNavigationRoutes = listOf(
+        Screen.Landing,
+        Screen.Leaderboard,
          Screen.Challenges,
         Screen.Profile
     )

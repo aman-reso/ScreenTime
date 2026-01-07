@@ -30,14 +30,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +48,7 @@ import com.app.screentime.R
 import com.app.screentime.leaderboard.viewmodel.LeaderboardViewModel
 import com.app.screentime.network.model.LeaderboardEntry
 import com.app.screentime.record.repository.formatDuration
+import com.app.screentime.ui.atom.PullToRefreshBox
 import com.app.screentime.ui.theme.ColorPalette
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ui.theme.headerTheme
@@ -89,6 +88,7 @@ import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import com.telekom.odsystem.tokens.tokens.lightMode
 import kotlinx.coroutines.launch
 
 /**
@@ -107,11 +107,6 @@ fun LeaderboardScreen(
     // Get theme mode for status bar styling
     val useDarkTheme = LocalThemeMode.current
     val uiState by viewModel.uiState.collectAsState()
-
-    // Calculate ColorPalette schemes for top 3 (rank 1, 2, 3)
-    val rank1Scheme = ColorPalette.schemeGet(headerScheme)
-    val rank2Scheme = ColorPalette.schemeGet(rank1Scheme)
-    val rank3Scheme = ColorPalette.schemeGet(rank2Scheme)
 
     SideEffect {
         if (activity is ComponentActivity) {
@@ -208,6 +203,7 @@ fun LeaderboardScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaderboardPage(
     modifier: Modifier = Modifier,
@@ -242,13 +238,15 @@ fun LeaderboardPage(
         ) {
             ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
-                gap = DSVariables.spacingComponent2
+                gap = DSVariables.spacingComponent3
             ) {
                 ODSTabs(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = DSVariables.spacingComponent3),
-                    scheme = headerScheme,
+                        .padding(
+                            horizontal = DSVariables.spacingComponent3
+                        ),
+                    scheme = lightMode,
                     props = ODSTabsProps(
                         tabElements = listOf(
                             ODSTabItemModel(label = "Daily"),
@@ -265,9 +263,6 @@ fun LeaderboardPage(
                         }
                     }
                 )
-
-                // Add spacing between tabs and top 3 section
-                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
 
                 if (!uiState.isLoading && uiState.error == null) {
                     val entries =
@@ -354,21 +349,39 @@ fun LeaderboardPage(
             }
 
             else -> {
+                val isRefreshing = uiState.isLoading
+
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier.weight(1f),
                     userScrollEnabled = true
                 ) { pageIndex ->
-                    val entries =
-                        if (pageIndex == 0) uiState.dailyEntries else uiState.weeklyEntries
-                    LeaderboardContent(
-                        entries = entries,
-                        currentUserId = uiState.currentUserId,
-                        scheme = scheme,
-                        rank1Scheme = rank1Scheme,
-                        rank2Scheme = rank2Scheme,
-                        rank3Scheme = rank3Scheme
-                    )
+                    PullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            viewModel.refresh()
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        val entries =
+                            if (pageIndex == 0) uiState.dailyEntries else uiState.weeklyEntries
+                        val userRank =
+                            if (pageIndex == 0) uiState.userDailyRank else uiState.userWeeklyRank
+                        val userDuration =
+                            if (pageIndex == 0) uiState.userDailyDuration else uiState.userWeeklyDuration
+                        LeaderboardContent(
+                            entries = entries,
+                            currentUserId = uiState.currentUserId,
+                            currentUsername = uiState.currentUsername,
+                            userRank = userRank,
+                            userDuration = userDuration,
+                            onSyncClick = { viewModel.refresh() },
+                            scheme = scheme,
+                            rank1Scheme = rank1Scheme,
+                            rank2Scheme = rank2Scheme,
+                            rank3Scheme = rank3Scheme
+                        )
+                    }
                 }
             }
         }
@@ -379,6 +392,10 @@ fun LeaderboardPage(
 fun LeaderboardContent(
     entries: List<LeaderboardEntry>,
     currentUserId: String?,
+    currentUsername: String?,
+    userRank: Int?,
+    userDuration: Long?,
+    onSyncClick: () -> Unit = {},
     scheme: ODSTheme,
     rank1Scheme: ODSTheme,
     rank2Scheme: ODSTheme,
@@ -395,6 +412,17 @@ fun LeaderboardContent(
             horizontal = DSVariables.spacingComponent4
         )
     ) {
+        // Show current user rank card if user has a rank
+        if (userRank != null && currentUserId != null) {
+            CurrentUserRankCard(
+                rank = userRank,
+                duration = userDuration,
+                scheme = scheme,
+                onSyncClick = onSyncClick
+            )
+            Spacer(modifier = Modifier.height(DSVariables.spacingComponent4))
+        }
+
         if (entries.isNotEmpty()) {
             entries.forEachIndexed { index, entry ->
                 val itemScheme = when (entry.rank) {
@@ -644,22 +672,28 @@ fun LeaderboardItem(
 }
 
 /**
- * User rank notification card
+ * Current user rank card using ODSInlineNotification (information type)
  */
 @Composable
-private fun UserRankNotificationCard(
-    rank: Int, duration: String, scheme: ODSTheme
+private fun CurrentUserRankCard(
+    rank: Int,
+    duration: Long?,
+    scheme: ODSTheme,
+    onSyncClick: () -> Unit = {}
 ) {
+    val durationText = duration?.let { formatDuration(it) } ?: "N/A"
     ODSInlineNotification(
         modifier = Modifier.fillMaxWidth(),
         scheme = scheme,
         props = ODSInlineNotificationProps(
-            title = "Your Rank",
-            text = "You are ranked #$rank with $duration screen time",
+            title = "You’re ranked #$rank",
+            text = "Screen time: $durationText",
             mode = ODSInlineNotificationMode.INFORMATIVE,
             showCloseButton = false
         ),
-        onDismiss = {})
+        onFirstLinkClicked = onSyncClick,
+        onDismiss = {}
+    )
 }
 
 /**

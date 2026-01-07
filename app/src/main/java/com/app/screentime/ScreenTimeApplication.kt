@@ -98,9 +98,11 @@ class ScreenTimeApplication : Application(), Configuration.Provider {
 
     private fun initAds() {
         val requestConfig = RequestConfiguration.Builder()
-            .build()
+        if (BuildConfig.DEBUG) {
+            requestConfig.setTestDeviceIds(listOf("A07F51EE923FAFD06D2B957DFE6AF83E"))
+        }
 
-        MobileAds.setRequestConfiguration(requestConfig)
+        MobileAds.setRequestConfiguration(requestConfig.build())
         MobileAds.initialize(this)
     }
 
@@ -111,8 +113,7 @@ class ScreenTimeApplication : Application(), Configuration.Provider {
     private fun scheduleWorkers() {
         DataSyncWorker.schedule(this)
         WidgetUpdateWorker.schedule(this)
-        ChallengeSyncWorker.syncPreExistingChallenges(this)
-        ChallengeSyncWorker.rescheduleActiveChallenges(this)
+        ChallengeSyncWorker.schedule(this)
     }
 
     private fun initFirebase() {

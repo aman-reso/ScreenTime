@@ -24,6 +24,8 @@ class ChallengeDetailUseCase @Inject constructor() {
         isJoining: Boolean
     ): ChallengeDetailUiProps {
         // Determine hasJoined from API response (userRank in rankings indicates user has joined)
+        // Check both hasJoined flag and userRank presence
+        val hasJoined = challengeDetails.hasJoined || challengeRankings?.userRank != null
 
         // Check if challenge is completed
         val isCompleted = DateUtils.isAfter(challengeDetails.endTime)
@@ -54,7 +56,7 @@ class ChallengeDetailUseCase @Inject constructor() {
         val userRank = challengeRankings?.userRank
         val showLeaderboard = challengeRankings != null && challengeRankings.rankings.isNotEmpty()
 
-        val showJoinButton = !challengeDetails.hasJoined && !isCompleted
+        val showJoinButton = !hasJoined && !isCompleted
 
         // Get available rewards (for now, using dummy data - can be replaced with API data later)
         val availableRewards = listOf(
@@ -99,7 +101,7 @@ class ChallengeDetailUseCase @Inject constructor() {
             prize = challengeDetails.prize,
             displayPrize = displayPrize,
             participantCount = participantCount,
-            hasJoined = challengeDetails.hasJoined,
+            hasJoined = hasJoined,
             isCompleted = isCompleted,
             topRankings = topRankings,
             userRank = userRank,

@@ -72,13 +72,15 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun ScreenTimeNavigation(
     scheme: ODSTheme = neutralScheme,
     props: ScreenTimeNavigationProps = ScreenTimeNavigationProps(),
-    tokens: ScreenTimeNavigationTokens = defaultScreenTimeNavigationTokens,
+    tokens: ScreenTimeNavigationTokens = getNavigationTokens(),
     style: ScreenTimeNavigationStyle = ScreenTimeNavigationStyle().getStyle(scheme),
     deeplinkUri: android.net.Uri? = null
 ) {
     val context = LocalContext.current
     val activity = LocalActivity.current
     val isUsagePermission = checkUsageStatsPermission(context)
+    val navigationItems = getNavigationItems()
+    val navigationTokens = getNavigationTokens()
     val backStack = retain {
         mutableStateListOf(
             if (isUsagePermission) {
@@ -90,9 +92,9 @@ fun ScreenTimeNavigation(
     }
     var selectedIndex by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(backStack.toList()) {
+    LaunchedEffect(backStack.toList(), navigationTokens) {
         val top = backStack.lastOrNull()
-        val newIndex = tokens.bottomNavigationRoutes.indexOf(top)
+        val newIndex = navigationTokens.bottomNavigationRoutes.indexOf(top)
         selectedIndex = if (newIndex >= 0) newIndex else -1
     }
 
@@ -122,10 +124,10 @@ fun ScreenTimeNavigation(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val navigationHandlers = remember {
+    val navigationHandlers = remember(navigationTokens) {
         object {
             fun onIndexChanged(index: Int) {
-                val route = tokens.bottomNavigationRoutes.getOrNull(index)
+                val route = navigationTokens.bottomNavigationRoutes.getOrNull(index)
                 if (route != null) {
                     val currentScreen = backStack.lastOrNull()
                     if (currentScreen == Screen.Landing && route != Screen.Landing) {
@@ -174,11 +176,11 @@ fun ScreenTimeNavigation(
             if (
                 props.showBottomNavigation &&
                 currentScreen != null &&
-                currentScreen in tokens.bottomNavigationRoutes
+                currentScreen in navigationTokens.bottomNavigationRoutes
             ) {
                 BottomNavigationBar(
                     scheme = scheme,
-                    navigationItems = props.navigationItems,
+                    navigationItems = navigationItems,
                     selectedIndex = selectedIndex,
                     onIndexChanged = navigationHandlers::onIndexChanged
                 )
@@ -189,7 +191,7 @@ fun ScreenTimeNavigation(
                 snackbarHostState = snackbarHostState,
                 scheme = scheme,
                 modifier = Modifier.padding(
-                    bottom = if (props.showBottomNavigation && backStack.lastOrNull() in tokens.bottomNavigationRoutes) {
+                    bottom = if (props.showBottomNavigation && backStack.lastOrNull() in navigationTokens.bottomNavigationRoutes) {
                         // Add padding to avoid overlap with bottom navigation
                         DSVariables.spacingComponent8
                     } else {
@@ -203,7 +205,7 @@ fun ScreenTimeNavigation(
             .navigationBarsPadding()
     ) { paddingValues ->
         NavigationHost(
-            scheme = scheme, paddingValues = paddingValues, backStack, tokens
+            scheme = scheme, paddingValues = paddingValues, backStack, navigationTokens
         )
     }
 }

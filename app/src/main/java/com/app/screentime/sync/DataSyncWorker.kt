@@ -162,13 +162,12 @@ class DataSyncWorker(
         if (events.isEmpty()) return Result.success()
 
         val usageEvents = events.map {
-            val eventDateTime = DateUtils.fromMillis(it.timestamp)
             UsageEvent(
                 packageName = it.packageName,
                 appName = it.appName,
-                isSystemApp = false,
-                eventType = it.event,
-                eventTimestamp = DateUtils.formatISO8601(eventDateTime),
+                event = it.event,
+                startTime = it.startTime,
+                endTime = it.endTime,
                 duration = it.duration
             )
         }

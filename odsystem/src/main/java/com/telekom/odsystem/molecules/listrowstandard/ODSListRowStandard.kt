@@ -93,7 +93,8 @@ fun ODSListRowStandard(
             verticalAlignment = style.textContentVerticalAlignment
         ) {
             val hasDescription = props.showDescriptionTitle &&
-                    (!props.descriptionTitle.isNullOrEmpty() || !props.descriptionText.isNullOrEmpty() || !props.descriptionTextHtml.isNullOrEmpty())
+                    (!props.descriptionTitle.isNullOrEmpty() || !props.descriptionTitleHtml.isNullOrEmpty() || 
+                     !props.descriptionText.isNullOrEmpty() || !props.descriptionTextHtml.isNullOrEmpty())
 
             ODSColumn(
                 modifier = Modifier
@@ -107,7 +108,15 @@ fun ODSListRowStandard(
                 verticalAlignment = style.labelTextContentVerticalAlignment,
                 horizontalAlignment = style.labelTextContentHorizontalAlignment
             ) {
-                if (!props.label.isNullOrEmpty()) {
+                if (!props.labelHtml.isNullOrEmpty()) {
+                    ODSText(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = AnnotatedString.fromHtml(props.labelHtml!!),
+                        style = style.labelStyle,
+                        color = style.labelColor,
+                        textAlign = style.labelTextAlign
+                    )
+                } else if (!props.label.isNullOrEmpty()) {
                     ODSText(
                         modifier = Modifier.fillMaxWidth(),
                         text = props.label,
@@ -147,7 +156,15 @@ fun ODSListRowStandard(
                     verticalAlignment = style.descriptionTextContentVerticalAlignment,
                     horizontalAlignment = style.descriptionTextContentHorizontalAlignment
                 ) {
-                    if (!props.descriptionTitle.isNullOrEmpty()) {
+                    if (!props.descriptionTitleHtml.isNullOrEmpty()) {
+                        ODSText(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = AnnotatedString.fromHtml(props.descriptionTitleHtml!!),
+                            style = style.descriptionStyle,
+                            color = style.descriptionColor,
+                            textAlign = style.descriptionTextAlign
+                        )
+                    } else if (!props.descriptionTitle.isNullOrEmpty()) {
                         ODSText(
                             modifier = Modifier.fillMaxWidth(),
                             text = props.descriptionTitle,

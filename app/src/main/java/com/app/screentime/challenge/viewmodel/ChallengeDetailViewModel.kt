@@ -12,6 +12,11 @@ import com.app.screentime.database.entity.JoinedChallengeEntity
 import com.app.screentime.database.repository.JoinedChallengeRepository
 import com.app.screentime.network.model.Challenge
 import com.app.screentime.network.model.ChallengeDetails
+import com.app.screentime.network.model.BatchChallengeStatsRequest
+import com.app.screentime.network.model.ChallengeStatsRequest
+import com.app.screentime.record.repository.LocalAppUsageRepository
+import com.app.screentime.record.repository.ScreenUsageHelper
+import com.app.screentime.record.repository.NetworkUsageHelper
 import com.app.screentime.sync.ChallengeSyncWorker
 import com.app.screentime.utils.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +36,9 @@ data class ChallengeDetailUiState(
     val challengeDetails: ChallengeDetails? = null,
     val challengeRankings: com.app.screentime.network.model.ChallengeRankingsResponse? = null,
     val isJoining: Boolean = false,
-    val uiProps: ChallengeDetailUiProps? = null
+    val uiProps: ChallengeDetailUiProps? = null,
+    val lastSyncTime: String? = null, // Formatted last sync time, null if never synced
+    val isSyncing: Boolean = false
 )
 
 /**
@@ -44,9 +51,18 @@ class ChallengeDetailViewModel @Inject constructor(
     private val joinedChallengeRepository: JoinedChallengeRepository,
     private val challengeDetailUseCase: ChallengeDetailUseCase,
     private val shareUtil: ChallengeShareUtil,
+    private val preferencesUseCase: com.app.screentime.preferences.usecase.PreferencesUseCase,
     @ApplicationContext
     private val context: Context
 ) : ViewModel() {
+
+    private val localAppUsageRepository by lazy {
+        LocalAppUsageRepository(
+            context,
+            ScreenUsageHelper(context),
+            NetworkUsageHelper(context)
+        )
+    }
 
     private val _uiState = MutableStateFlow(ChallengeDetailUiState())
     val uiState: StateFlow<ChallengeDetailUiState> = _uiState.asStateFlow()
@@ -63,6 +79,9 @@ class ChallengeDetailViewModel @Inject constructor(
                 challengeRankings = null,
                 uiProps = null
             )
+
+            // Load last sync time (non-blocking)
+            loadLastSyncTime(challengeId)
 
             // Load challenge details
             challengeRepository.getChallengeDetails(challengeId).fold(
@@ -164,6 +183,13 @@ class ChallengeDetailViewModel @Inject constructor(
     }
 
     /**
+     * Check if user has granted consent
+     */
+    fun hasConsent(): Boolean {
+        return preferencesUseCase.isConsentScreenShown()
+    }
+
+    /**
      * Share challenge
      */
     suspend fun shareChallenge(
@@ -179,6 +205,226 @@ class ChallengeDetailViewModel @Inject constructor(
             imageUrl = imageUrl,
             context
         )
+    }
+
+    /**
+     * Load last sync time for the challenge
+     */
+    fun loadLastSyncTime(challengeId: String) {
+        viewModelScope.launch {
+            challengeRepository.getChallengeLastSyncTime(challengeId).fold(
+                onSuccess = { response ->
+                    if (response.success == true && response.data != null) {
+                        val lastSyncTimeStr = response.data!!.lastSyncTime
+                        val formattedTime = if (lastSyncTimeStr != null) {
+                            try {
+                                DateUtils.format(lastSyncTimeStr, "MMM dd, yyyy 'at' HH:mm")
+                            } catch (e: Exception) {
+                                null
+                            }
+                        } else {
+                            null
+                        }
+                        _uiState.value = _uiState.value.copy(lastSyncTime = formattedTime)
+                    }
+                },
+                onFailure = {
+                    // Failure is not critical, just log it
+                    Log.w("ChallengeDetailViewModel", "Failed to load last sync time", it)
+                }
+            )
+        }
+    }
+
+    /**
+     * Manually sync challenge stats
+     */
+    fun syncChallenge(challengeId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        if (_uiState.value.isSyncing) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSyncing = true)
+
+            try {
+                // Get challenge details
+                val challengeDetails = _uiState.value.challengeDetails
+                    ?: challengeRepository.getChallengeDetails(challengeId).fold(
+                        onSuccess = { response ->
+                            if (response.success == true && response.data != null) {
+                                response.data
+                            } else {
+                                null
+                            }
+                        },
+                        onFailure = { null }
+                    )
+
+                if (challengeDetails == null) {
+                    _uiState.value = _uiState.value.copy(
+                        isSyncing = false,
+                        error = "Failed to load challenge details"
+                    )
+                    onError("Failed to load challenge details")
+                    return@launch
+                }
+
+                val startTime = DateUtils.toMillis(challengeDetails.startTime)
+                val endTime = DateUtils.toMillis(challengeDetails.endTime)
+                val currentTime = DateUtils.nowMillis()
+
+                // Check if challenge is active
+                if (currentTime < startTime || currentTime > endTime) {
+                    _uiState.value = _uiState.value.copy(isSyncing = false)
+                    onError("Challenge is not active")
+                    return@launch
+                }
+
+                // Get last sync time from server
+                var serverLastSyncTime: Long? = null
+                challengeRepository.getChallengeLastSyncTime(challengeId).fold(
+                    onSuccess = { response ->
+                        if (response.success == true && response.data != null) {
+                            val lastSyncTimeStr = response.data!!.lastSyncTime
+                            if (lastSyncTimeStr != null) {
+                                serverLastSyncTime = DateUtils.toMillis(lastSyncTimeStr)
+                            }
+                        }
+                    },
+                    onFailure = {
+                        Log.w("ChallengeDetailViewModel", "Failed to get last sync time", it)
+                    }
+                )
+
+                // Calculate effective last sync time
+                val effectiveLastSyncTime = if (serverLastSyncTime != null) {
+                    maxOf(serverLastSyncTime, startTime)
+                } else {
+                    startTime
+                }
+                val syncEndTime = minOf(currentTime, endTime)
+
+                if (syncEndTime <= effectiveLastSyncTime) {
+                    _uiState.value = _uiState.value.copy(isSyncing = false)
+                    onSuccess()
+                    loadLastSyncTime(challengeId) // Refresh last sync time display
+                    return@launch
+                }
+
+                // Get package names
+                val packageNames = challengeDetails.packageNames
+                val allowedPackageNames = if (packageNames.isNullOrBlank()) {
+                    emptySet()
+                } else {
+                    packageNames.split(",")
+                        .map { it.trim() }
+                        .filter { it.isNotEmpty() }
+                        .toSet()
+                }
+
+                if (allowedPackageNames.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(isSyncing = false)
+                    onError("No apps specified for this challenge")
+                    return@launch
+                }
+
+                // Get app usage data
+                val appUsageList = localAppUsageRepository.getAppsUsageForInterval(
+                    effectiveLastSyncTime,
+                    syncEndTime
+                )
+
+                if (appUsageList.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(isSyncing = false)
+                    onSuccess()
+                    loadLastSyncTime(challengeId)
+                    return@launch
+                }
+
+                // Filter by allowed package names
+                val filteredAppUsage = appUsageList.filter { appUsage ->
+                    val packageName = appUsage.packageName?.trim() ?: ""
+                    packageName.isNotEmpty() && allowedPackageNames.contains(packageName)
+                }
+
+                if (filteredAppUsage.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(isSyncing = false)
+                    onSuccess()
+                    loadLastSyncTime(challengeId)
+                    return@launch
+                }
+
+                // Group by package and calculate totals
+                val groupedByPackage = filteredAppUsage.groupBy { it.packageName ?: "" }
+                    .mapValues { (_, usages) ->
+                        usages.sumOf { it.appScreenTime }
+                    }
+                    .filter { (packageName, duration) ->
+                        packageName.isNotEmpty() && duration > 0
+                    }
+
+                if (groupedByPackage.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(isSyncing = false)
+                    onSuccess()
+                    loadLastSyncTime(challengeId)
+                    return@launch
+                }
+
+                val allPackageNames = groupedByPackage.keys.sorted().joinToString(",")
+                val totalDuration = groupedByPackage.values.sum()
+                val firstPackageName = groupedByPackage.keys.first()
+                val firstUsage = filteredAppUsage.firstOrNull { it.packageName == firstPackageName }
+                val appName = firstUsage?.appName ?: "Unknown"
+
+                // Submit stats
+                val statsRequests = listOf(
+                    ChallengeStatsRequest(
+                        challengeId = challengeId,
+                        appName = appName,
+                        packageName = allPackageNames,
+                        startSyncTime = DateUtils.formatISO8601(DateUtils.fromMillis(effectiveLastSyncTime)),
+                        endSyncTime = DateUtils.formatISO8601(DateUtils.fromMillis(syncEndTime)),
+                        duration = totalDuration
+                    )
+                )
+
+                val batchRequest = BatchChallengeStatsRequest(
+                    challengeId = challengeId,
+                    stats = statsRequests
+                )
+
+                challengeRepository.submitBatchChallengeStats(batchRequest).fold(
+                    onSuccess = { response ->
+                        if (response.success == true) {
+                            _uiState.value = _uiState.value.copy(isSyncing = false)
+                            loadLastSyncTime(challengeId)
+                            onSuccess()
+                        } else {
+                            _uiState.value = _uiState.value.copy(
+                                isSyncing = false,
+                                error = response.message ?: "Failed to sync challenge"
+                            )
+                            onError(response.message ?: "Failed to sync challenge")
+                        }
+                    },
+                    onFailure = { throwable ->
+                        _uiState.value = _uiState.value.copy(
+                            isSyncing = false,
+                            error = throwable.message ?: "Failed to sync challenge"
+                        )
+                        onError(throwable.message ?: "Failed to sync challenge")
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e("ChallengeDetailViewModel", "Error syncing challenge", e)
+                _uiState.value = _uiState.value.copy(
+                    isSyncing = false,
+                    error = e.message ?: "Failed to sync challenge"
+                )
+                onError(e.message ?: "Failed to sync challenge")
+            }
+        }
     }
 
     /**
@@ -254,13 +500,6 @@ class ChallengeDetailViewModel @Inject constructor(
                 Log.d(
                     "ChallengeDetailViewModel",
                     "Saved new joined challenge ${challengeDetails.id} to database"
-                )
-
-                ChallengeSyncWorker.scheduleChallengeSync(
-                    context = context,
-                    challengeId = challengeDetails.id,
-                    startTime = challengeDetails.startTime,
-                    endTime = challengeDetails.endTime
                 )
             }
         } catch (e: Exception) {

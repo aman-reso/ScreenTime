@@ -59,7 +59,6 @@ class ChallengeViewModel @Inject constructor(
                             error = null
                         )
 
-                        // Update local DB for joined challenges based on hasJoined flag
                         updateJoinedChallengesFromActiveList(challenges)
                     } else {
                         val errorMsg = response.message ?: "Failed to load challenges"
@@ -154,14 +153,6 @@ class ChallengeViewModel @Inject constructor(
                     )
                     joinedChallengeRepository.insertJoinedChallenge(entity)
 
-                    // Schedule sync worker
-                    ChallengeSyncWorker.scheduleChallengeSync(
-                        context = context,
-                        challengeId = challenge.id,
-                        startTime = challenge.startTime,
-                        endTime = challenge.endTime
-                    )
-
                     // Fetch package names
                     fetchAndUpdatePackageNames(challenge.id)
                     Log.d(
@@ -178,7 +169,6 @@ class ChallengeViewModel @Inject constructor(
                 val existing = localJoinedChallenges.find { it.challengeId == challengeId }
                 if (existing != null && existing.syncScheduled) {
                     joinedChallengeRepository.updateSyncScheduled(challengeId, false)
-                    ChallengeSyncWorker.cancelChallengeSync(context, challengeId)
                     Log.d("ChallengeViewModel", "Marked challenge $challengeId as not joined")
                 }
             }
@@ -355,13 +345,6 @@ class ChallengeViewModel @Inject constructor(
                 "Saved new joined challenge ${challenge.id} to database"
             )
 
-            // Schedule sync worker
-            ChallengeSyncWorker.scheduleChallengeSync(
-                context = context,
-                challengeId = challenge.id,
-                startTime = challenge.startTime,
-                endTime = challenge.endTime
-            )
 
             // If package names are missing, fetch them
             if (challenge.packageNames.isNullOrBlank()) {

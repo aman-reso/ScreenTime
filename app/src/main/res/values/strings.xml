@@ -267,7 +267,9 @@
     <string name="see_detail">See Detail</string>
     <string name="search">Search</string>
     <string name="usage_detail_insight">Usage Detail Insight</string>
+    <string name="app_wise">AppWise</string>
     <string name="recover_deleted_notifications">Recover Deleted Notifications</string>
+    <string name="please_allow_consents">Please allow app usage permissions and consents to join challenges</string>
     <string name="enable_notification_access_recovery">Please enable Notification Access to recover deleted notifications</string>
     
     <!-- Device Admin Policy -->
@@ -293,4 +295,10 @@
     <string name="disable_camera_confirmation">This will disable the camera on your device. You can enable it again later.</string>
     <string name="enable_camera_confirmation">This will enable the camera on your device.</string>
     <string name="unfortunately_this_content_is_blocked_please_take_a_break_or_try_again_later">Unfortunately, this content is blocked. Please take a break or try again later.</string>
+
+    <!-- Challenge Sync -->
+    <string name="last_sync">Last Sync</string>
+    <string name="never_synced">Never synced</string>
+    <string name="sync_now">Sync Now</string>
+    <string name="syncing">Syncing…</string>
 </resources>

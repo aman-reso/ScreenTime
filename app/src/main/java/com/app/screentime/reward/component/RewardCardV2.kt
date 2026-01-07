@@ -92,7 +92,7 @@ fun RewardCardV2(
                     scheme = scheme,
                     props = ODSButtonProps(
                         label = "Claim",
-                        variant = ODSButtonVariant.PRIMARY,
+                        variant = ODSButtonVariant.SECONDARY,
                         size = ODSButtonSize.SMALL
                     ),
                     onClick = onClaimClick

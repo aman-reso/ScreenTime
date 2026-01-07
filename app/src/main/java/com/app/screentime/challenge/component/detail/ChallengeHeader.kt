@@ -27,7 +27,7 @@ import com.telekom.odsystem.neutralScheme
 fun ChallengeHeader(
     title: String,
     onBackClick: () -> Unit,
-    onShareClick: () -> Unit,
+    onShareClick: (() -> Unit)?,
     scheme: ODSTheme = neutralScheme
 ) {
     ODSRow(
@@ -57,20 +57,22 @@ fun ChallengeHeader(
             modifier = Modifier.weight(1f)
         )
 
-        ODSButton(
-            scheme = scheme,
-            props = ODSButtonProps(
-                buttonIcon = ODSIconModel(
-                    drawableRes = drawable.share_type_standard_size_standard,
-                    tint = scheme.basicText,
-                    contentDescription = "Share"
+        if (onShareClick != null) {
+            ODSButton(
+                scheme = scheme,
+                props = ODSButtonProps(
+                    buttonIcon = ODSIconModel(
+                        drawableRes = drawable.share_type_standard_size_standard,
+                        tint = scheme.basicText,
+                        contentDescription = "Share"
+                    ),
+                    buttonType = ODSButtonButtonType.ICON_ONLY,
+                    variant = ODSButtonVariant.GHOST,
+                    size = ODSButtonSize.SMALL
                 ),
-                buttonType = ODSButtonButtonType.ICON_ONLY,
-                variant = ODSButtonVariant.GHOST,
-                size = ODSButtonSize.SMALL
-            ),
-            onClick = onShareClick
-        )
+                onClick = onShareClick
+            )
+        }
     }
 }
 

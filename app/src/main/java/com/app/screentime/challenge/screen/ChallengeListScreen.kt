@@ -45,6 +45,7 @@ import com.app.screentime.ui.atom.AppScreenShimmer
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ads.NativeAdvancedAd
 import com.app.screentime.ads.AdConfig
+import com.app.screentime.ads.rememberNativeAd
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -84,6 +85,7 @@ fun ChallengeListScreen(
 ) {
     val activity = LocalActivity.current
     val useDarkTheme = LocalThemeMode.current
+
     SideEffect {
         if (activity is ComponentActivity) {
             activity.enableEdgeToEdge(
@@ -166,11 +168,11 @@ fun ChallengeListScreen(
             })
 
         HorizontalPager(
-            state = pagerState, modifier = Modifier.fillMaxSize()
+            state = pagerState, modifier = Modifier.fillMaxSize(),
+            beyondViewportPageCount = 2 // 👈 CACHE 2 pages on each side
         ) { page ->
             when (page) {
                 0 -> {
-                    // All Challenges Tab
                     ChallengesTab(
                         uiState = uiState,
                         onNavigateToChallengeDetail = onNavigateToChallengeDetail,
@@ -200,6 +202,7 @@ private fun ChallengesTab(
     scheme: ODSTheme = neutralScheme
 ) {
     val groupedChallenges = uiState.groupedChallenges
+    val nativeAdState = rememberNativeAd(AdConfig.getNativeAdvancedAdUnitId())
 
     var selectedFilter by remember { mutableIntStateOf(0) }
     val filters = listOf(
@@ -220,13 +223,8 @@ private fun ChallengesTab(
         when {
             uiState.isLoading -> {
                 ODSLazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    padding = ODSPadding(horizontal = DSVariables.spacingComponent4),
-                    gap = DSVariables.spacingComponent3
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    item {
-                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                    }
                     item {
                         AppScreenShimmer(
                             modifier = Modifier.fillMaxWidth(),
@@ -286,12 +284,11 @@ private fun ChallengesTab(
                         }
                     }
 
-                    // Native Advanced Ad
-                    item {
-                        NativeAdvancedAd(
-                            adUnitId = AdConfig.getNativeAdvancedAdUnitId(),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+
+                    nativeAdState?.let {
+                        item("ad_key_challenge_list") {
+                            NativeAdvancedAd(adState = it)
+                        }
                     }
 
                     groupedChallenges?.featuredChallenge?.let { featuredChallenge ->

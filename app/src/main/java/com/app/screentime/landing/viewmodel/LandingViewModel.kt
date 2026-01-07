@@ -85,7 +85,7 @@ class LandingViewModel @Inject constructor(
 
     fun markConsentShown() {
         landingUsecase.markConsentShown()
-        loadLandingData()
+        // Don't refresh home page when consent is accepted
     }
 
     fun shouldAskForUsageStatsPermission(): Boolean {

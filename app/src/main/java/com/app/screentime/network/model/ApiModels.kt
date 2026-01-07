@@ -556,10 +556,10 @@ data class NotificationData(
 data class UsageEvent(
     val packageName: String,
     val appName: String,
-    val isSystemApp: Boolean,
-    val eventType: String, // MOVE_TO_FOREGROUND or MOVE_TO_BACKGROUND
-    val eventTimestamp: String, // ISO 8601 format
-    val duration: Long? = null // Duration in milliseconds (only for MOVE_TO_BACKGROUND events)
+    val duration: Long? = null,
+    val event: String,
+    val startTime: Long? = null,
+    val endTime: Long? = null
 )
 
 /**

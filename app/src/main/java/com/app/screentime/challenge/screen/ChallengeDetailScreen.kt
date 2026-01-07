@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Rule
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -66,10 +67,17 @@ import com.app.screentime.challenge.model.ChallengeDetailUiProps
 import com.app.screentime.challenge.viewmodel.ChallengeDetailViewModel
 import com.app.screentime.ui.atom.AppScreenShimmer
 import com.app.screentime.leaderboard.screen.LeaderboardItem
+import com.app.screentime.consent.screen.ConsentBottomSheetContent
+import com.app.screentime.permission.AppPermissionScreen
+import com.app.screentime.permission.checkUsageStatsPermission
+import com.app.screentime.permission.createPermissionManager
+import com.app.screentime.navigation.ToastSnackbarManager
+import kotlinx.coroutines.launch
 import com.app.screentime.reward.component.RewardCardV2
 import com.app.screentime.ui.theme.ColorPalette
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ui.theme.headerTheme
+import com.app.screentime.ui.atom.PullToRefreshBox
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -132,6 +140,7 @@ private fun formatParticipantCount(count: Int): String {
  * @param viewModel ViewModel for challenge data
  * @param scheme ODS theme scheme
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChallengeDetailScreen(
     challengeId: String,
@@ -143,6 +152,21 @@ fun ChallengeDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val activity = LocalActivity.current
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Permission and consent state
+    var showPermissionScreen by remember { mutableStateOf(false) }
+    var showConsentSheet by remember { mutableStateOf(false) }
+    var pendingJoinChallengeId by remember { mutableStateOf<String?>(null) }
+
+    // Permission manager
+    val permissionManager = remember {
+        if (activity is ComponentActivity) {
+            activity.createPermissionManager()
+        } else null
+    }
+
     // Load challenge details when screen opens
     LaunchedEffect(challengeId) {
         viewModel.loadChallengeDetails(challengeId)
@@ -179,58 +203,151 @@ fun ChallengeDetailScreen(
             background = listOf(ODSColorModel(headerScheme.basicBackgroundCard))
         ) {}
 
-        when {
-            uiState.isLoading -> {
-                ODSLazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    padding = ODSPadding(horizontal = DSVariables.spacingComponent4),
-                    gap = DSVariables.spacingComponent3
-                ) {
-                    item {
-                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                    }
-                    item {
-                        AppScreenShimmer(
-                            modifier = Modifier.fillMaxWidth(),
-                            scheme = scheme
+        // Always show header, even when loading
+        ChallengeHeaderAndImageSection(
+            uiProps = uiState.uiProps,
+            challengeId = challengeId,
+            onBackClick = onBackClick,
+            onShareClick = {
+                uiState.uiProps?.let { props ->
+                    coroutineScope.launch {
+                        viewModel.shareChallenge(
+                            challengeId = props.id,
+                            title = props.title,
+                            prize = props.displayPrize,
+                            imageUrl = props.thumbnail,
+                            context = context
                         )
                     }
                 }
-            }
+            },
+            headerScheme = headerScheme
+        )
 
-            uiState.error != null -> {
-                ChallengeErrorState(
-                    message = uiState.error ?: "Failed to load challenge details.", onRetry = {
-                        viewModel.loadChallengeDetails(challengeId)
-                    }, scheme = scheme
-                )
-            }
+        val isRefreshing = uiState.isLoading
 
-            uiState.uiProps == null -> {
-                ChallengeErrorState(
-                    message = "Challenge not found.", onRetry = {
-                        viewModel.loadChallengeDetails(challengeId)
-                    }, scheme = scheme
-                )
-            }
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                viewModel.loadChallengeDetails(challengeId)
+            },
+            modifier = Modifier.fillMaxSize()
+        ) {
+            when {
+                uiState.isLoading -> {
+                    ODSLazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        padding = ODSPadding(horizontal = DSVariables.spacingComponent4),
+                        gap = DSVariables.spacingComponent3
+                    ) {
+                        item {
+                            Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                        }
+                        item {
+                            AppScreenShimmer(
+                                modifier = Modifier.fillMaxWidth(),
+                                scheme = scheme
+                            )
+                        }
+                    }
+                }
 
-            else -> {
-                ChallengeContent(
-                    uiProps = uiState.uiProps!!,
-                    isJoining = uiState.isJoining,
-                    onRefresh = {
-                        viewModel.loadChallengeDetails(challengeId)
-                    },
-                    onJoinChallenge = {
-                        viewModel.joinChallenge(challengeId, onSuccess = {
+                uiState.error != null -> {
+                    ChallengeErrorState(
+                        message = uiState.error ?: "Failed to load challenge details.", onRetry = {
                             viewModel.loadChallengeDetails(challengeId)
-                        })
-                    },
-                    onBackClick = onBackClick,
-                    viewModel = viewModel,
-                    scheme = scheme,
-                    headerScheme = headerScheme
-                )
+                        }, scheme = scheme
+                    )
+                }
+
+                uiState.uiProps == null -> {
+                    ChallengeErrorState(
+                        message = "Challenge not found.", onRetry = {
+                            viewModel.loadChallengeDetails(challengeId)
+                        }, scheme = scheme
+                    )
+                }
+
+                else -> {
+                    if (showPermissionScreen) {
+                        AppPermissionScreen(
+                            onAllPermissionsGranted = {
+                                showPermissionScreen = false
+                                // After permission granted, check consent
+                                if (!viewModel.hasConsent()) {
+                                    showConsentSheet = true
+                                } else if (pendingJoinChallengeId != null) {
+                                    // All checks passed, proceed with join challenge
+                                    viewModel.joinChallenge(pendingJoinChallengeId!!, onSuccess = {
+                                        viewModel.loadChallengeDetails(pendingJoinChallengeId!!)
+                                        pendingJoinChallengeId = null
+                                    })
+                                }
+                            },
+                            scheme = scheme
+                        )
+                    }
+
+                    if (showConsentSheet) {
+                        val warning = stringResource(R.string.please_allow_consents)
+                        ConsentBottomSheetContent(
+                            onDismiss = {
+                                showConsentSheet = false
+                                pendingJoinChallengeId = null
+                                coroutineScope.launch {
+                                    ToastSnackbarManager.showError(warning)
+                                }
+                            },
+                            onAccept = {
+                                showConsentSheet = false
+                                if (pendingJoinChallengeId != null) {
+                                    viewModel.joinChallenge(pendingJoinChallengeId!!, onSuccess = {
+                                        viewModel.loadChallengeDetails(pendingJoinChallengeId!!)
+                                        pendingJoinChallengeId = null
+                                    })
+                                }
+                            }
+                        )
+                    }
+
+                    ChallengeContent(
+                        uiProps = uiState.uiProps!!,
+                        isJoining = uiState.isJoining,
+                        lastSyncTime = uiState.lastSyncTime,
+                        isSyncing = uiState.isSyncing,
+                        onRefresh = {
+                            viewModel.loadChallengeDetails(challengeId)
+                        },
+                        onJoinChallenge = {
+                            // Check permissions and consent before joining
+                            val hasUsageStatsPermission =
+                                permissionManager?.hasUsageStatsPermission() ?: false
+                            val hasConsent = viewModel.hasConsent()
+
+                            if (!hasUsageStatsPermission) {
+                                pendingJoinChallengeId = challengeId
+                                showPermissionScreen = true
+                            } else if (!hasConsent) {
+                                pendingJoinChallengeId = challengeId
+                                showConsentSheet = true
+                            } else {
+                                // All checks passed, proceed with join
+                                viewModel.joinChallenge(challengeId, onSuccess = {
+                                    viewModel.loadChallengeDetails(challengeId)
+                                })
+                            }
+                        },
+                        onSyncChallenge = {
+                            viewModel.syncChallenge(challengeId, onSuccess = {
+                                viewModel.loadChallengeDetails(challengeId)
+                            })
+                        },
+                        onBackClick = onBackClick,
+                        viewModel = viewModel,
+                        scheme = scheme,
+                        headerScheme = headerScheme
+                    )
+                }
             }
         }
     }
@@ -239,10 +356,12 @@ fun ChallengeDetailScreen(
 
 /**
  * Header and Image section using header scheme.
+ * Always visible, even when data is loading.
  */
 @Composable
 private fun ChallengeHeaderAndImageSection(
-    uiProps: ChallengeDetailUiProps,
+    uiProps: ChallengeDetailUiProps?,
+    challengeId: String,
     onBackClick: () -> Unit,
     onShareClick: () -> Unit,
     headerScheme: ODSTheme
@@ -264,9 +383,9 @@ private fun ChallengeHeaderAndImageSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ChallengeHeader(
-                    title = uiProps.title,
+                    title = uiProps?.title ?: "Challenge",
                     onBackClick = onBackClick,
-                    onShareClick = onShareClick,
+                    onShareClick = if (uiProps != null) onShareClick else null,
                     scheme = headerScheme
                 )
             }
@@ -282,8 +401,11 @@ private fun ChallengeHeaderAndImageSection(
 internal fun ChallengeContent(
     uiProps: ChallengeDetailUiProps,
     isJoining: Boolean,
+    lastSyncTime: String?,
+    isSyncing: Boolean,
     onRefresh: () -> Unit,
     onJoinChallenge: () -> Unit,
+    onSyncChallenge: () -> Unit,
     onBackClick: () -> Unit,
     viewModel: ChallengeDetailViewModel,
     scheme: ODSTheme = neutralScheme,
@@ -298,22 +420,11 @@ internal fun ChallengeContent(
         ODSColumn(
             modifier = Modifier.fillMaxSize()
         ) {
-            ChallengeHeaderAndImageSection(
-                uiProps = uiProps, onBackClick = onBackClick, onShareClick = {
-                    coroutineScope.launch {
-                        viewModel.shareChallenge(
-                            challengeId = uiProps.id,
-                            title = uiProps.title,
-                            prize = uiProps.displayPrize,
-                            imageUrl = uiProps.thumbnail,
-                            context = context
-                        )
-                    }
-                }, headerScheme = headerScheme
-            )
-
             AboutTab(
-                uiProps = uiProps, 
+                uiProps = uiProps,
+                lastSyncTime = lastSyncTime,
+                isSyncing = isSyncing,
+                onSyncChallenge = onSyncChallenge,
                 scheme = scheme,
                 bottomPadding = if (uiProps.showJoinButton) DSVariables.spacingLayout10 else 0.dp
             )
@@ -337,6 +448,9 @@ internal fun ChallengeContent(
 @Composable
 private fun AboutTab(
     uiProps: ChallengeDetailUiProps,
+    lastSyncTime: String?,
+    isSyncing: Boolean,
+    onSyncChallenge: () -> Unit,
     scheme: ODSTheme,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
@@ -346,10 +460,10 @@ private fun AboutTab(
     val headerScheme = headerTheme.current
 
     ODSLazyColumn(
-        state = listState, 
-        modifier = Modifier.fillMaxSize(), 
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
         padding = ODSPadding(
-            horizontal = DSVariables.spacingComponent4, 
+            horizontal = DSVariables.spacingComponent4,
             vertical = DSVariables.spacingComponent3,
             bottom = bottomPadding
         )
@@ -406,7 +520,7 @@ private fun AboutTab(
                     scheme = scheme,
                     props = ODSListRowStandardProps(
                         label = "Total Prize Pool",
-                        labelText = uiProps.prize,
+                        labelTextHtml = uiProps.prize,
                         showDescriptionTitle = false,
                         variant = ODSListRowStandardVariant.STANDARD
                     ),
@@ -476,6 +590,45 @@ private fun AboutTab(
                     inset = true, spacing = false, variant = ODSDividerVariant.HORIZONTAL
                 )
             )
+        }
+
+        // Last Sync section - only show if user has joined
+        if (uiProps.hasJoined) {
+            item {
+                ODSRow(
+                    modifier = Modifier.fillMaxWidth(), padding = ODSPadding(
+                        vertical = DSVariables.spacingComponent5
+                    )
+                ) {
+                    ODSListRowStandard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (!isSyncing) onSyncChallenge.invoke() else null
+                            }
+                            .padding(horizontal = DSVariables.spacingComponent5)
+                            .semantics(mergeDescendants = true) {},
+                        scheme = scheme,
+                        props = ODSListRowStandardProps(
+                            label = stringResource(R.string.last_sync),
+                            labelText = if (isSyncing) stringResource(R.string.syncing) else (lastSyncTime
+                                ?: stringResource(R.string.never_synced)),
+                            showDescriptionTitle = false,
+                            variant = ODSListRowStandardVariant.ICON,
+                            icon = ODSIconModel(
+                                imageVector = Icons.Default.Refresh,
+                                tint = if (isSyncing) scheme.basicTextRecessive else scheme.basicText,
+                                contentDescription = "Sync"
+                            ),
+                        )
+                    )
+                }
+                ODSDivider(
+                    scheme = scheme, props = ODSDividerProps(
+                        inset = true, spacing = false, variant = ODSDividerVariant.HORIZONTAL
+                    )
+                )
+            }
         }
 
         item {
