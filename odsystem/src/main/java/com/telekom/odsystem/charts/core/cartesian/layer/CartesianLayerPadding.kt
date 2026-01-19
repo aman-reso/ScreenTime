@@ -11,11 +11,11 @@ import androidx.compose.runtime.Immutable
  * @property unscalableEndDp the size of the unscalable end padding (in dp).
  */
 @Immutable
-public class CartesianLayerPadding(
-  public val scalableStartDp: Float = 0f,
-  public val scalableEndDp: Float = 0f,
-  public val unscalableStartDp: Float = 0f,
-  public val unscalableEndDp: Float = 0f,
+class CartesianLayerPadding(
+  val scalableStartDp: Float = 0f,
+  val scalableEndDp: Float = 0f,
+  val unscalableStartDp: Float = 0f,
+  val unscalableEndDp: Float = 0f,
 ) {
   override fun equals(other: Any?): Boolean =
     this === other ||

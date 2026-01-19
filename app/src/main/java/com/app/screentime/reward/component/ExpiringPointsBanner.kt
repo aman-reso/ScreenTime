@@ -53,7 +53,7 @@ fun ExpiringPointsBanner(
                     ),
                     showDescriptionTitle = false,
                     variant = ODSListRowStandardVariant.ICON,
-                    labelText = "$expiringPoints points will expire soon, please use as soon as possible."
+                    labelText = "$expiringPoints coins will expire soon, please use as soon as possible."
                 )
             )
         }

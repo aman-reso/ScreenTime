@@ -6,7 +6,5 @@ import com.app.screentime.network.model.*
 /**
  * Service interface for URL Search (VPN tracking) related API operations
  */
-interface URLSearchService {
-
-}
+interface URLSearchService
 

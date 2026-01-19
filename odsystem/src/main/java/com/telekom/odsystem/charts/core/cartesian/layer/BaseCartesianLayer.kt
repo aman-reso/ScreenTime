@@ -5,7 +5,7 @@ import com.telekom.odsystem.charts.core.common.inClip
 import com.telekom.odsystem.charts.core.cartesian.data.CartesianLayerModel
 
 /** A base [CartesianLayer] implementation. */
-public abstract class BaseCartesianLayer<T : CartesianLayerModel> : CartesianLayer<T> {
+abstract class BaseCartesianLayer<T : CartesianLayerModel> : CartesianLayer<T> {
     private val margins: CartesianLayerMargins = CartesianLayerMargins()
 
     protected abstract fun drawInternal(context: CartesianDrawingContext, model: T)

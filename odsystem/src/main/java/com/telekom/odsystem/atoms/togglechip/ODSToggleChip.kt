@@ -2,6 +2,7 @@ package com.telekom.odsystem.atoms.togglechip
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,7 @@ import com.telekom.odsystem.foundations.customClickable
 import com.telekom.odsystem.foundations.sizeWithinBounds
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import androidx.compose.ui.res.stringResource
 
 /**
  * ODSToggleChip composable.
@@ -140,7 +142,7 @@ private fun ODSToggleChipContainer(
         )
         if (!props.label.isNullOrEmpty()) {
             ODSText(
-                modifier = Modifier.weight(1f, fill = true),
+                modifier = Modifier.wrapContentWidth(),
                 text = props.label,
                 style = style.chipStyle,
                 color = style.chipColor,
@@ -154,7 +156,7 @@ private fun ODSToggleChipContainer(
             ODSIcon(
                 iconModel = ODSIconModel(
                     drawableRes = R.drawable.checkmark_type_bold,
-                    contentDescription = LocalContext.current.getString(R.string.semantic_checkmark_icon)
+                    contentDescription = stringResource(R.string.semantic_checkmark_icon)
                 ),
                 width = style.checkmarkWidth,
                 height = style.checkmarkHeight,

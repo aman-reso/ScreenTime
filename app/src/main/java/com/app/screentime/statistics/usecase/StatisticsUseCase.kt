@@ -1,7 +1,7 @@
 package com.app.screentime.statistics.usecase
 
 import android.content.Context
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.data.uiModel.WeeklyDataReport
 import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.statistics.mapper.StatisticsUiMapper

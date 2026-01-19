@@ -136,7 +136,7 @@ fun OAServiceNotificationSingle(
 //                                R.string.service__manage_service__landing_dismiss_icon_ax_label
 //                            )
 //                        }, props = ODSButtonProps(
-//                            buttonIcon = ODSIconModel(drawableRes = R.drawable.close_type_bold_size_standard),
+//                            buttonIcon = ODSIconModel(drawableRes = com.app.screentime.config.R.drawable.close_type_bold_size_standard),
 //                            buttonType = ODSButtonButtonType.ICON_ONLY,
 //                            size = ODSButtonSize.SMALL,
 //                            variant = ODSButtonVariant.GHOST,

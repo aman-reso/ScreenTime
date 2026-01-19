@@ -1,6 +1,8 @@
 package com.app.screentime.reward.service
 
 import com.app.screentime.core.network.model.ApiResponse
+import com.app.screentime.reward.model.AddCoinsRequest
+import com.app.screentime.reward.model.AddCoinsResponse
 import com.app.screentime.reward.model.CoinHistoryResponse
 import com.app.screentime.reward.model.RewardCatalogResponse
 import com.app.screentime.reward.model.RewardClaimRequest
@@ -30,5 +32,10 @@ interface RewardService {
      * Get user's reward transactions
      */
     suspend fun getRewardTransactions(): Result<ApiResponse<RewardTransactionResponse>>
+
+    /**
+     * Add coins to user's account (e.g., when watching ad)
+     */
+    suspend fun addCoins(request: AddCoinsRequest): Result<ApiResponse<AddCoinsResponse>>
 }
 

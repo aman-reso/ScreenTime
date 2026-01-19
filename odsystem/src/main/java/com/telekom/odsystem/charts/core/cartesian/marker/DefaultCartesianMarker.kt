@@ -38,7 +38,7 @@ import kotlin.math.min
  * @property indicatorSizeDp the indicator size (in dp).
  * @property guideline drawn vertically through the marked points.
  */
-public open class DefaultCartesianMarker(
+open class DefaultCartesianMarker(
     protected val label: TextComponent,
     protected val valueFormatter: ValueFormatter = ValueFormatter.default(),
     protected val labelPosition: LabelPosition = LabelPosition.Top,
@@ -295,7 +295,7 @@ public open class DefaultCartesianMarker(
     }
 
     /** Specifies the position of a [DefaultCartesianMarker]’s label. */
-    public enum class LabelPosition {
+    enum class LabelPosition {
         /** Positions the label at the top of the [CartesianChart]. Sufficient room is made. */
         Top,
 
@@ -321,21 +321,21 @@ public open class DefaultCartesianMarker(
     }
 
     /** Formats [CartesianMarker] values for display. */
-    public fun interface ValueFormatter {
+    fun interface ValueFormatter {
         /** Returns a label for the given [CartesianMarker.Target]s. */
-        public fun format(
+        fun format(
             context: CartesianDrawingContext,
             targets: List<CartesianMarker.Target>,
         ): CharSequence
 
         /** Houses a [ValueFormatter] factory function. */
-        public companion object {
+        companion object {
             /**
              * Creates an instance of the default [ValueFormatter] implementation. The labels produced
              * include the [CartesianLayerModel.Entry] _y_ values, which are formatted via [decimalFormat]
              * and, if [colorCode] is true, color-coded.
              */
-            public fun default(
+            fun default(
                 decimalFormat: DecimalFormat = DecimalFormat("#.##;−#.##"),
                 colorCode: Boolean = true,
             ): ValueFormatter = DefaultValueFormatter(decimalFormat, colorCode)
@@ -343,7 +343,7 @@ public open class DefaultCartesianMarker(
     }
 
     protected companion object {
-        public val keyNamespace: CacheStore.KeyNamespace = CacheStore.KeyNamespace()
+        val keyNamespace: CacheStore.KeyNamespace = CacheStore.KeyNamespace()
     }
 }
 

@@ -17,6 +17,10 @@ import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material.icons.outlined.Widgets
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.RateReview
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.app.screentime.profile.model.ProfileSettingsKey
 
@@ -36,7 +40,11 @@ object SettingsIconMapper {
         ProfileSettingsKey.TERMS_OF_SERVICE to Icons.Outlined.Description,
         ProfileSettingsKey.SHARE_APP to Icons.Outlined.Share,
         ProfileSettingsKey.RECOVER_NOTIFICATION to Icons.Outlined.Notifications,
-        ProfileSettingsKey.WALLPAPER to Icons.Outlined.Wallpaper
+        ProfileSettingsKey.WALLPAPER to Icons.Outlined.Wallpaper,
+        ProfileSettingsKey.CONTROL_CENTER to Icons.Outlined.Settings,
+        ProfileSettingsKey.MANAGE_LOCATION to Icons.Outlined.LocationOn,
+        ProfileSettingsKey.FILE_MANAGER to Icons.Outlined.Folder,
+        ProfileSettingsKey.FEEDBACK to Icons.Outlined.RateReview
 
     )
 

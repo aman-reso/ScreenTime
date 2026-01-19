@@ -19,7 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.foundations.HexColor
@@ -54,7 +56,7 @@ fun VoucherBottomDrawer(
         onCloseClicked = onDismiss,
         titleSlot = {
             ODSText(
-                text = "Voucher Details",
+                text = stringResource(R.string.voucher_details),
                 style = com.telekom.odsystem.DSTextStyles.titleL,
                 color = scheme.basicText
             )
@@ -127,6 +129,7 @@ fun VoucherBottomDrawer(
         }
     )
 }
+
 
 
 

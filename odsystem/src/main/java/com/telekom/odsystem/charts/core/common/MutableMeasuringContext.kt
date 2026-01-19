@@ -7,7 +7,7 @@ import com.telekom.odsystem.charts.core.common.data.ExtraStore
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public open class MutableMeasuringContext(
+open class MutableMeasuringContext(
   override val canvasBounds: RectF,
   override var density: Float,
   override val extraStore: ExtraStore,

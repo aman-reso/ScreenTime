@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.atoms.ODSColumn
@@ -52,14 +52,14 @@ fun ClaimConfirmationDialog(
                     gap = DSVariables.spacingComponent4
                 ) {
                     ODSText(
-                        text = "Confirm Claim",
+                        text = stringResource(R.string.confirm_claim),
                         style = DSTextStyles.subtitle,
                         color = scheme.basicText,
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     ODSText(
-                        text = "Are you sure you want to proceed with this claim?",
+                        text = stringResource(R.string.confirm_claim_message),
                         style = DSTextStyles.bodyMRegular,
                         color = scheme.basicTextRecessive,
                         modifier = Modifier.fillMaxWidth()
@@ -71,7 +71,7 @@ fun ClaimConfirmationDialog(
                     modifier = Modifier,
                     scheme = scheme,
                     props = ODSButtonProps(
-                        label = "Confirm",
+                        label = stringResource(R.string.confirm),
                         variant = ODSButtonVariant.SECONDARY,
                         size = ODSButtonSize.SMALL
                     ),
@@ -84,6 +84,7 @@ fun ClaimConfirmationDialog(
         )
     }
 }
+
 
 
 

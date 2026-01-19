@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.R.*

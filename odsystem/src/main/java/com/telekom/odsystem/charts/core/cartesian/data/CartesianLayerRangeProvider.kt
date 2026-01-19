@@ -13,22 +13,22 @@ import kotlin.math.sign
 
 /** Defines a [CartesianLayer]’s _x_ and _y_ ranges. */
 @Immutable
-public interface CartesianLayerRangeProvider {
+interface CartesianLayerRangeProvider {
     /** Returns the minimum _x_ value. */
-    public fun getMinX(minX: Double, maxX: Double, extraStore: ExtraStore): Double = minX
+    fun getMinX(minX: Double, maxX: Double, extraStore: ExtraStore): Double = minX
 
     /** Returns the maximum _x_ value. */
-    public fun getMaxX(minX: Double, maxX: Double, extraStore: ExtraStore): Double = maxX
+    fun getMaxX(minX: Double, maxX: Double, extraStore: ExtraStore): Double = maxX
 
     /** Returns the minimum _y_ value. */
-    public fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore): Double =
+    fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore): Double =
         minY.coerceAtMost(0.0)
 
     /** Returns the maximum _y_ value. */
-    public fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore): Double =
+    fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore): Double =
         if (minY == 0.0 && maxY == 0.0) 1.0 else maxY.coerceAtLeast(0.0)
 
-    public companion object {
+    companion object {
         private object Auto : CartesianLayerRangeProvider {
             override fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore) =
                 if (minY == 0.0 && maxY == 0.0 || minY >= 0.0) 0.0 else minY.round(maxY)
@@ -67,10 +67,10 @@ public interface CartesianLayerRangeProvider {
         }
 
         /** Uses dynamic rounding. */
-        public fun auto(): CartesianLayerRangeProvider = Auto
+        fun auto(): CartesianLayerRangeProvider = Auto
 
         /** Overrides the defaults with the provided values. */
-        public fun fixed(
+        fun fixed(
             minX: Double? = null,
             maxX: Double? = null,
             minY: Double? = null,

@@ -16,7 +16,7 @@ import com.telekom.odsystem.charts.core.common.data.ExtraStore
 
 /** Creates and remembers a [VerticalLegend]. */
 @Composable
-public fun <M : MeasuringContext, D : DrawingContext> rememberVerticalLegend(
+fun <M : MeasuringContext, D : DrawingContext> rememberVerticalLegend(
     items: AdditionScope<LegendItem>.(ExtraStore) -> Unit,
     iconSize: Dp = Defaults.LEGEND_ICON_SIZE.dp,
     iconLabelSpacing: Dp = Defaults.LEGEND_ICON_LABEL_SPACING.dp,
@@ -29,7 +29,7 @@ public fun <M : MeasuringContext, D : DrawingContext> rememberVerticalLegend(
 
 /** Creates and remembers a [HorizontalLegend]. */
 @Composable
-public fun <M : MeasuringContext, D : DrawingContext> rememberHorizontalLegend(
+fun <M : MeasuringContext, D : DrawingContext> rememberHorizontalLegend(
     items: AdditionScope<LegendItem>.(ExtraStore) -> Unit,
     iconSize: Dp = Defaults.LEGEND_ICON_SIZE.dp,
     iconLabelSpacing: Dp = Defaults.LEGEND_ICON_LABEL_SPACING.dp,

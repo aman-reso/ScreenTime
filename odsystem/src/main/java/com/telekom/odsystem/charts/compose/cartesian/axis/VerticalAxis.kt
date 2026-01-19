@@ -15,7 +15,7 @@ import com.telekom.odsystem.charts.core.common.component.TextComponent
 
 /** Creates and remembers a start [VerticalAxis]. */
 @Composable
-public fun VerticalAxis.Companion.rememberStart(
+fun VerticalAxis.Companion.rememberStart(
     line: LineComponent? = rememberAxisLineComponent(),
     label: TextComponent? = rememberAxisLabelComponent(),
     labelRotationDegrees: Float = Defaults.AXIS_LABEL_ROTATION_DEGREES,
@@ -65,7 +65,7 @@ public fun VerticalAxis.Companion.rememberStart(
 
 /** Creates and remembers an end [VerticalAxis]. */
 @Composable
-public fun VerticalAxis.Companion.rememberEnd(
+fun VerticalAxis.Companion.rememberEnd(
     line: LineComponent? = rememberAxisLineComponent(),
     label: TextComponent? = rememberAxisLabelComponent(),
     labelRotationDegrees: Float = Defaults.AXIS_LABEL_ROTATION_DEGREES,

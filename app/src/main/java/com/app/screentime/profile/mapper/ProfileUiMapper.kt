@@ -1,6 +1,6 @@
 package com.app.screentime.profile.mapper
 
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.profile.model.ProfileSettingsKey
 import com.app.screentime.profile.model.ProfileSettingsUi
 import com.app.screentime.profile.model.ProfileUiModel

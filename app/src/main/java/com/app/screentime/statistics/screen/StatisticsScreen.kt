@@ -27,7 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.app.screentime.R
+import com.app.screentime.config.R
+import com.app.screentime.config.data.Feature
+import com.app.screentime.config.featureflag.FeatureFlagHelper
 import com.app.screentime.data.uiModel.WeeklyDataReport
 import com.app.screentime.navigation.Screen
 import com.app.screentime.statistics.model.ChartFormatterProps
@@ -38,6 +40,7 @@ import com.app.screentime.ads.NativeAdvancedAd
 import com.app.screentime.ads.AdConfig
 import com.app.screentime.ads.rememberNativeAd
 import com.app.screentime.ui.theme.headerTheme
+import com.app.screentime.landing.component.CategoryUsageSection
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
@@ -127,7 +130,7 @@ fun StatisticsScreen(
                         modifier = Modifier.wrapContentHeight(),
                         scheme = scheme,
                         props = ODSLoadingSpinnerProps(
-                            labelText = "Please wait...",
+                            labelText = stringResource(R.string.please_wait),
                             size = ODSLoadingSpinnerSize.SMALL,
                             variant = ODSLoadingSpinnerVariant.STANDARD,
                             labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
@@ -210,7 +213,7 @@ fun StatisticsScreen(
                         ) {
                             ODSText(
                                 text = stringResource(R.string.activity),
-                                style = DSTextStyles.subtitle,
+                                style = DSTextStyles.bodyMBold,
                                 color = scheme.basicText
                             )
                             ODSButton(
@@ -263,7 +266,20 @@ fun StatisticsScreen(
                         ODSBox(height = DSVariables.spacingComponent5) {}
                     }
 
+                    if (uiProps!!.categoryUsage.isNotEmpty()) {
+                        item("category_usage") {
+                            CategoryUsageSection(
+                                categoryUsage = uiProps!!.categoryUsage,
+                                scheme = scheme
+                            )
+                        }
+                    }
+
                     if (uiProps!!.selectedDayAppUsageList.isNotEmpty()) {
+                        item {
+                            ODSBox(height = DSVariables.spacingComponent3) {}
+                        }
+
                         item {
                             ODSText(
                                 text = stringResource(R.string.app_wise),
@@ -425,7 +441,7 @@ private fun SelectedDayInfoCard(
                                 horizontalAlignment = Alignment.End
                             ) {
                                 ODSText(
-                                    text = "Notifications",
+                                    text = stringResource(R.string.notifications),
                                     style = DSTextStyles.bodySRegular,
                                     color = scheme.basicTextRecessive
                                 )

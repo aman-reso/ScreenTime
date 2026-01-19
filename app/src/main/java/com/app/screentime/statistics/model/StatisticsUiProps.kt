@@ -2,6 +2,7 @@ package com.app.screentime.statistics.model
 
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.data.uiModel.WeeklyDataReport
+import com.app.screentime.landing.model.CategoryUsage
 import com.telekom.odsystem.organisms.barchart.ODSBarItemDirection
 import com.telekom.odsystem.organisms.barchart.ODSBarItemProps
 
@@ -15,6 +16,7 @@ data class StatisticsUiProps(
     val selectedDayIndex: Int?,
     val selectedDayReport: WeeklyDataReport?,
     val weeklyReports: List<WeeklyDataReport>,
+    val categoryUsage: List<CategoryUsage> = emptyList(),
     val chartOrientation: ODSBarItemDirection = ODSBarItemDirection.VERTICAL,
     val isLoading: Boolean = false,
     val error: String? = null

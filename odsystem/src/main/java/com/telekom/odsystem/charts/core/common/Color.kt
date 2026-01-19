@@ -11,7 +11,7 @@ internal const val MAX_HEX_VALUE = 255f
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun Int.copyColor(
+fun Int.copyColor(
   alpha: Int = this.extractColorChannel(ALPHA_BIT_SHIFT),
   red: Int = this.extractColorChannel(RED_BIT_SHIFT),
   green: Int = this.extractColorChannel(GREEN_BIT_SHIFT),
@@ -25,7 +25,7 @@ public fun Int.copyColor(
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun Int.copyColor(
+fun Int.copyColor(
   alpha: Float = this.extractColorChannel(ALPHA_BIT_SHIFT) / MAX_HEX_VALUE,
   red: Float = this.extractColorChannel(RED_BIT_SHIFT) / MAX_HEX_VALUE,
   green: Float = this.extractColorChannel(GREEN_BIT_SHIFT) / MAX_HEX_VALUE,

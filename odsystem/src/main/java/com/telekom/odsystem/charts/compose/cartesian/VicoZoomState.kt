@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 /** Houses information on a [CartesianChart]’s zoom factor. Allows for zoom customization. */
-public class VicoZoomState {
+class VicoZoomState {
     private val initialZoom: Zoom
     private val minZoom: Zoom
     private val maxZoom: Zoom
@@ -35,14 +35,14 @@ public class VicoZoomState {
     internal val pendingScroll = _pendingScroll.asSharedFlow()
 
     /** The current zoom factor. */
-    public var value: Float
+    var value: Float
         get() = _value.floatValue
         private set(newValue) {
             _value.floatValue = newValue.coerceIn(valueRange)
         }
 
     /** The range of zoom factors. */
-    public var valueRange: ClosedFloatingPointRange<Float>
+    var valueRange: ClosedFloatingPointRange<Float>
         get() = _valueRange.value
         private set(newValueRange) {
             if (newValueRange == valueRange) return
@@ -74,7 +74,7 @@ public class VicoZoomState {
      * @param minZoom represents the minimum zoom factor.
      * @param maxZoom represents the maximum zoom factor.
      */
-    public constructor(
+    constructor(
         zoomEnabled: Boolean,
         initialZoom: Zoom,
         minZoom: Zoom,
@@ -89,7 +89,7 @@ public class VicoZoomState {
     )
 
     /** Triggers a zoom. */
-    public suspend fun zoom(zoom: Zoom) {
+    suspend fun zoom(zoom: Zoom) {
         withUpdated { context, layerDimensions, bounds ->
             val newValue = zoom.getValue(context, layerDimensions, bounds)
             if (newValue != value) {
@@ -151,7 +151,7 @@ public class VicoZoomState {
 
 /** Creates and remembers a [VicoZoomState] instance. */
 @Composable
-public fun rememberVicoZoomState(
+fun rememberVicoZoomState(
     zoomEnabled: Boolean = true,
     initialZoom: Zoom = remember { Zoom.max(Zoom.fixed(), Zoom.Content) },
     minZoom: Zoom = Zoom.Content,

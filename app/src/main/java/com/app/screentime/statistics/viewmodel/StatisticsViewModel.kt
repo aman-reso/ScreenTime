@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.statistics.model.StatisticsUiProps
 import com.app.screentime.statistics.usecase.StatisticsUseCase
+import com.app.screentime.analytics.AnalyticsUseCase
 import com.telekom.odsystem.organisms.barchart.ODSBarItemDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,13 +15,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
-    private val statisticsUseCase: StatisticsUseCase
+    private val statisticsUseCase: StatisticsUseCase,
+    private val analyticsUseCase: AnalyticsUseCase
 ) : ViewModel() {
 
     private val _uiProps = MutableStateFlow<StatisticsUiProps?>(null)
     val uiProps: StateFlow<StatisticsUiProps?> = _uiProps.asStateFlow()
 
     init {
+        analyticsUseCase.trackStatisticsScreen()
         loadWeeklyData()
     }
 

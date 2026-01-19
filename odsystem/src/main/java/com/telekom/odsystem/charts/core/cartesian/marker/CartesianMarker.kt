@@ -9,19 +9,19 @@ import com.telekom.odsystem.charts.core.cartesian.layer.CartesianLayerMarginUpda
 
 /** Marks [CartesianChart] objects. */
 @Immutable
-public interface CartesianMarker : CartesianLayerMarginUpdater<CartesianChartModel> {
+interface CartesianMarker : CartesianLayerMarginUpdater<CartesianChartModel> {
     /** Draws content under the [CartesianLayer]s. */
-    public fun drawUnderLayers(context: CartesianDrawingContext, targets: List<Target>) {}
+    fun drawUnderLayers(context: CartesianDrawingContext, targets: List<Target>) {}
 
     /** Draws content over the [CartesianLayer]s. */
-    public fun drawOverLayers(context: CartesianDrawingContext, targets: List<Target>) {}
+    fun drawOverLayers(context: CartesianDrawingContext, targets: List<Target>) {}
 
     /** Houses information on an object to be marked. */
-    public interface Target {
+    interface Target {
         /** The _x_ value. */
-        public val x: Double
+        val x: Double
 
         /** The pixel _x_ coordinate. */
-        public val canvasX: Float
+        val canvasX: Float
     }
 }

@@ -14,7 +14,7 @@ import com.telekom.odsystem.charts.core.common.component.TextComponent
 
 /** Creates and remembers a top [HorizontalAxis]. */
 @Composable
-public fun HorizontalAxis.Companion.rememberTop(
+fun HorizontalAxis.Companion.rememberTop(
     line: LineComponent? = rememberAxisLineComponent(),
     label: TextComponent? = rememberAxisLabelComponent(),
     labelRotationDegrees: Float = Defaults.AXIS_LABEL_ROTATION_DEGREES,
@@ -57,7 +57,7 @@ public fun HorizontalAxis.Companion.rememberTop(
 
 /** Creates and remembers a bottom [HorizontalAxis]. */
 @Composable
-public fun HorizontalAxis.Companion.rememberBottom(
+fun HorizontalAxis.Companion.rememberBottom(
     line: LineComponent? = rememberAxisLineComponent(),
     label: TextComponent? = rememberAxisLabelComponent(),
     labelRotationDegrees: Float = Defaults.AXIS_LABEL_ROTATION_DEGREES,

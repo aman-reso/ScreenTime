@@ -7,7 +7,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /** A [CartesianChartRanges] implementation whose every property is mutable. */
-public class MutableCartesianChartRanges : CartesianChartRanges {
+class MutableCartesianChartRanges : CartesianChartRanges {
     private var _minX: Double? = null
 
     private var _maxX: Double? = null
@@ -29,7 +29,7 @@ public class MutableCartesianChartRanges : CartesianChartRanges {
      * Tries to update the stored values. A minimum value can only be decreased. A maximum value can
      * only be increased.
      */
-    public fun tryUpdate(
+    fun tryUpdate(
         minX: Double,
         maxX: Double,
         minY: Double,
@@ -46,7 +46,7 @@ public class MutableCartesianChartRanges : CartesianChartRanges {
     }
 
     /** Clears all values. */
-    public fun reset() {
+    fun reset() {
         _minX = null
         _maxX = null
         yRanges = mutableMapOf()
@@ -54,7 +54,7 @@ public class MutableCartesianChartRanges : CartesianChartRanges {
     }
 
     /** A mutable implementation of [CartesianChartRanges.YRange]. */
-    public class MutableYRange(override var minY: Double, override var maxY: Double) :
+    class MutableYRange(override var minY: Double, override var maxY: Double) :
         CartesianChartRanges.YRange {
         override val length: Double
             get() = maxY - minY
@@ -63,7 +63,7 @@ public class MutableCartesianChartRanges : CartesianChartRanges {
          * Tries to update [MutableYRange.minY] and [MutableYRange.maxY]. [MutableYRange.minY] can only
          * be decreased. [MutableYRange.maxY] can only be increased.
          */
-        public fun tryUpdate(minY: Double, maxY: Double) {
+        fun tryUpdate(minY: Double, maxY: Double) {
             this.minY = min(this.minY, minY)
             this.maxY = max(this.maxY, maxY)
         }
@@ -72,7 +72,7 @@ public class MutableCartesianChartRanges : CartesianChartRanges {
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun MutableCartesianChartRanges.toImmutable(): CartesianChartRanges =
+fun MutableCartesianChartRanges.toImmutable(): CartesianChartRanges =
     object : CartesianChartRanges {
         private val yRanges = this@toImmutable.yRanges
         override val minX: Double = this@toImmutable.minX

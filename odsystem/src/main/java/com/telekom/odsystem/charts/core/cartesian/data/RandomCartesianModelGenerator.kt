@@ -9,13 +9,13 @@ import kotlin.random.Random
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public object RandomCartesianModelGenerator {
-    public val defaultX: IntProgression = 0..96
-    public val defaultY: ClosedFloatingPointRange<Double> = 2.0..20.0
-    public val defaultOpeningClosingRange: ClosedFloatingPointRange<Double> = 5.0..15.0
-    public val defaultLowHighRange: ClosedFloatingPointRange<Double> = 0.5..5.0
+object RandomCartesianModelGenerator {
+    val defaultX: IntProgression = 0..96
+    val defaultY: ClosedFloatingPointRange<Double> = 2.0..20.0
+    val defaultOpeningClosingRange: ClosedFloatingPointRange<Double> = 5.0..15.0
+    val defaultLowHighRange: ClosedFloatingPointRange<Double> = 0.5..5.0
 
-    public fun getRandomColumnLayerModelPartial(
+    fun getRandomColumnLayerModelPartial(
         seriesCount: Int = 1,
         x: IntProgression = defaultX,
         y: ClosedFloatingPointRange<Double> = defaultY,
@@ -24,7 +24,7 @@ public object RandomCartesianModelGenerator {
             repeat(seriesCount) { series(x.toList(), x.map { y.random() }) }
         }
 
-    public fun getRandomLineLayerModelPartial(
+    fun getRandomLineLayerModelPartial(
         seriesCount: Int = 1,
         x: IntProgression = defaultX,
         y: ClosedFloatingPointRange<Double> = defaultY,
@@ -33,7 +33,7 @@ public object RandomCartesianModelGenerator {
             repeat(seriesCount) { series(x.toList(), x.map { y.random() }) }
         }
 
-    public fun getRandomCandlestickLayerModelPartial(
+    fun getRandomCandlestickLayerModelPartial(
         x: IntProgression = defaultX,
         openingClosingRange: ClosedFloatingPointRange<Double> = defaultOpeningClosingRange,
         lowHighRange: ClosedFloatingPointRange<Double> = defaultLowHighRange,
@@ -88,7 +88,7 @@ public object RandomCartesianModelGenerator {
         return CandlestickCartesianLayerModel.partial(x.toList(), opening, closing, low, high)
     }
 
-    public fun getRandomModel(
+    fun getRandomModel(
         columnSeriesCount: Int = 1,
         lineSeriesCount: Int = 1,
         x: IntProgression = defaultX,

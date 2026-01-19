@@ -2,6 +2,8 @@ package com.app.screentime.statistics.mapper
 
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.data.uiModel.WeeklyDataReport
+import com.app.screentime.landing.model.CategoryUsage
+import com.app.screentime.landing.util.AppCategoryUtils
 import com.app.screentime.statistics.model.ChartFormatterProps
 import com.app.screentime.statistics.model.StatisticsUiProps
 import com.telekom.odsystem.organisms.barchart.ODSBarItemDirection
@@ -63,12 +65,45 @@ class StatisticsUiMapper @Inject constructor() {
 
         val selectedDayAppUsageList = selectedDayReport?.appUsage?.sortedByDescending { it.appScreenTime } ?: emptyList()
 
+        // Calculate category usage for selected day
+        val categoryUsage = if (selectedDayAppUsageList.isNotEmpty()) {
+            val totalScreenTime = selectedDayAppUsageList.sumOf { it.appScreenTime }
+            val categoryMap = AppCategoryUtils.groupByCategory(selectedDayAppUsageList)
+            categoryMap.map { (category, time) ->
+                val percentage = if (totalScreenTime > 0) {
+                    (time.toFloat() / totalScreenTime.toFloat()) * 100f
+                } else {
+                    0f
+                }
+                // Format duration
+                val totalMinutes = time / (1000 * 60)
+                val hours = totalMinutes / 60
+                val minutes = totalMinutes % 60
+                val formattedTime = if (hours > 0) {
+                    if (minutes > 0) "$hours h $minutes m" else "$hours hr"
+                } else if (minutes > 0) {
+                    "$minutes min"
+                } else {
+                    "${time / 1000} sec"
+                }
+                CategoryUsage(
+                    category = category,
+                    totalScreenTime = time,
+                    formattedTime = formattedTime,
+                    percentage = percentage
+                )
+            }.sortedByDescending { it.totalScreenTime }
+        } else {
+            emptyList()
+        }
+
         return StatisticsUiProps(
             barChartData = barChartData,
             selectedDayAppUsageList = selectedDayAppUsageList,
             selectedDayIndex = selectedDayIndex,
             selectedDayReport = selectedDayReport,
             weeklyReports = weeklyReports,
+            categoryUsage = categoryUsage,
             chartOrientation = chartOrientation,
             isLoading = isLoading,
             error = error

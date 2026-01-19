@@ -40,6 +40,7 @@ enum class DialogType {
     LANGUAGE,
     HELP_SUPPORT,
     BLOCKED_SITES,
-    EDIT_USERNAME
+    EDIT_USERNAME,
+    FEEDBACK
 }
 

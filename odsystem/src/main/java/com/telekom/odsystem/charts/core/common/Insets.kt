@@ -11,35 +11,35 @@ import androidx.compose.runtime.Immutable
  * @param bottomDp the bottom inset’s size (in dp).
  */
 @Immutable
-public class Insets(
-  public val startDp: Float = 0f,
-  public val topDp: Float = 0f,
-  public val endDp: Float = 0f,
-  public val bottomDp: Float = 0f,
+class Insets(
+  val startDp: Float = 0f,
+  val topDp: Float = 0f,
+  val endDp: Float = 0f,
+  val bottomDp: Float = 0f,
 ) {
   /** The sum of [startDp] and [endDp]. */
-  public val horizontalDp: Float
+  val horizontalDp: Float
     get() = startDp + endDp
 
   /** The sum of [topDp] and [bottomDp]. */
-  public val verticalDp: Float
+  val verticalDp: Float
     get() = topDp + bottomDp
 
   /** Creates an [Insets] instance with [startDp] = [endDp] and [topDp] = [bottomDp]. */
-  public constructor(
+  constructor(
     horizontalDp: Float = 0f,
     verticalDp: Float = 0f,
   ) : this(horizontalDp, verticalDp, horizontalDp, verticalDp)
 
   /** Creates an [Insets] instance with a common size for all four insets. */
-  public constructor(allDp: Float = 0f) : this(allDp, allDp, allDp, allDp)
+  constructor(allDp: Float = 0f) : this(allDp, allDp, allDp, allDp)
 
   /** Returns the left inset’s size. */
-  public fun getLeft(context: MeasuringContext): Float =
+  fun getLeft(context: MeasuringContext): Float =
     with(context) { (if (isLtr) startDp else endDp).pixels }
 
   /** Returns the right inset’s size. */
-  public fun getRight(context: MeasuringContext): Float =
+  fun getRight(context: MeasuringContext): Float =
     with(context) { (if (isLtr) endDp else startDp).pixels }
 
   override fun equals(other: Any?): Boolean =
@@ -59,8 +59,8 @@ public class Insets(
   }
 
   /** Houses an [Insets] singleton. */
-  public companion object {
+  companion object {
     /** An [Insets] instance with a size of zero for all four insets. */
-    public val Zero: Insets = Insets(0f, 0f, 0f, 0f)
+    val Zero: Insets = Insets(0f, 0f, 0f, 0f)
   }
 }

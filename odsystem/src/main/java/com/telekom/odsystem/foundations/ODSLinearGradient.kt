@@ -23,7 +23,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 @Immutable
-class ODSLinearGradient constructor(
+class ODSLinearGradient(
     private val colors: List<Color>,
     private val stops: List<Float>? = null,
     private val opacity: Float = 1f,

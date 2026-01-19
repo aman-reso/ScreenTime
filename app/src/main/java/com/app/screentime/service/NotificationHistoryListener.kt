@@ -6,6 +6,7 @@ package com.app.screentime.service
  */
 
 import android.app.Notification
+import android.content.ComponentName
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -71,8 +72,6 @@ class NotificationHistoryListener : NotificationListenerService() {
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
-
-        // Best-effort removal marking (latest notification of that app)
         serviceScope.launch {
             try {
 //                database.capturedNotificationDao()
@@ -88,6 +87,13 @@ class NotificationHistoryListener : NotificationListenerService() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        requestRebind(
+            ComponentName(this, NotificationHistoryListener::class.java)
+        )
     }
 
     companion object {

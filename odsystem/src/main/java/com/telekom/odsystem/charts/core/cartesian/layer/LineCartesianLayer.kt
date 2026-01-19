@@ -60,7 +60,7 @@ import kotlin.math.roundToInt
  * @property drawingModelInterpolator interpolates the [LineCartesianLayerDrawingModel]s.
  */
 @Stable
-public open class LineCartesianLayer
+open class LineCartesianLayer
 protected constructor(
     protected val lineProvider: LineProvider,
     protected val pointSpacingDp: Float = Defaults.POINT_SPACING,
@@ -87,22 +87,22 @@ protected constructor(
      * @property dataLabelValueFormatter formats the data-label values.
      * @property dataLabelRotationDegrees the data-label rotation (in degrees).
      */
-    public open class Line(
+    open class Line(
         protected val fill: LineFill,
-        public val stroke: LineStroke = LineStroke.Continuous(),
+        val stroke: LineStroke = LineStroke.Continuous(),
         protected val areaFill: AreaFill? = null,
-        public val pointProvider: PointProvider? = null,
-        public val pointConnector: PointConnector = PointConnector.Sharp,
-        public val dataLabel: TextComponent? = null,
-        public val dataLabelPosition: Position.Vertical = Position.Vertical.Top,
-        public val dataLabelValueFormatter: CartesianValueFormatter = CartesianValueFormatter.decimal(),
-        public val dataLabelRotationDegrees: Float = 0f,
+        val pointProvider: PointProvider? = null,
+        val pointConnector: PointConnector = PointConnector.Sharp,
+        val dataLabel: TextComponent? = null,
+        val dataLabelPosition: Position.Vertical = Position.Vertical.Top,
+        val dataLabelValueFormatter: CartesianValueFormatter = CartesianValueFormatter.decimal(),
+        val dataLabelRotationDegrees: Float = 0f,
     ) {
         protected val linePaint: Paint =
             Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
 
         /** Draws the line. */
-        public fun draw(
+        fun draw(
             context: CartesianDrawingContext,
             path: Path,
             lineCanvas: Canvas,
@@ -120,25 +120,25 @@ protected constructor(
     }
 
     /** Draws a [LineCartesianLayer] line’s fill. */
-    public interface LineFill {
+    interface LineFill {
         /** Draws the line fill. */
-        public fun draw(
+        fun draw(
             context: CartesianDrawingContext,
             halfLineThickness: Float,
             verticalAxisPosition: Axis.Position.Vertical?,
         )
 
         /** Houses [LineFill] factory functions. */
-        public companion object {
+        companion object {
             /** Uses a single [Fill]. */
-            public fun single(fill: Fill): LineFill = SingleLineFill(fill)
+            fun single(fill: Fill): LineFill = SingleLineFill(fill)
 
             /**
              * Uses [topFill] for the portions of the line that are above the [splitY] line, and
              * analogously for [bottomFill]. (The [splitY] line is an imaginary horizontal line whose _y_
              * value is determined by [splitY].)
              */
-            public fun double(
+            fun double(
                 topFill: Fill,
                 bottomFill: Fill,
                 splitY: (ExtraStore) -> Number = { 0 },
@@ -148,22 +148,22 @@ protected constructor(
 
     /** Defines the style of a [LineCartesianLayer] line’s stroke. */
     @Immutable
-    public sealed interface LineStroke {
+    sealed interface LineStroke {
 
         /** The stroke thickness (in dp). */
-        public val thicknessDp: Float
+        val thicknessDp: Float
 
         /** Applies the stroke style to [paint]. */
-        public fun apply(context: CartesianDrawingContext, paint: Paint)
+        fun apply(context: CartesianDrawingContext, paint: Paint)
 
         /**
          * Produces a continuous stroke.
          *
          * @property cap the stroke cap.
          */
-        public data class Continuous(
+        data class Continuous(
             override val thicknessDp: Float = Defaults.LINE_SPEC_THICKNESS_DP,
-            public val cap: Paint.Cap = Paint.Cap.BUTT,
+            val cap: Paint.Cap = Paint.Cap.BUTT,
         ) : LineStroke {
             override fun apply(context: CartesianDrawingContext, paint: Paint) {
                 with(context) {
@@ -181,11 +181,11 @@ protected constructor(
          * @property dashLengthDp the dash length (in dp).
          * @property gapLengthDp the gap length (in dp).
          */
-        public data class Dashed(
-            public override val thicknessDp: Float = Defaults.LINE_SPEC_THICKNESS_DP,
-            public val cap: Paint.Cap = Paint.Cap.BUTT,
-            public val dashLengthDp: Float = Defaults.LINE_DASH_LENGTH,
-            public val gapLengthDp: Float = Defaults.LINE_GAP_LENGTH,
+        data class Dashed(
+            override val thicknessDp: Float = Defaults.LINE_SPEC_THICKNESS_DP,
+            val cap: Paint.Cap = Paint.Cap.BUTT,
+            val dashLengthDp: Float = Defaults.LINE_DASH_LENGTH,
+            val gapLengthDp: Float = Defaults.LINE_GAP_LENGTH,
         ) : LineStroke {
             override fun apply(context: CartesianDrawingContext, paint: Paint) {
                 with(context) {
@@ -198,13 +198,13 @@ protected constructor(
         }
 
         /** Provides access to [LineStroke] factory functions. */
-        public companion object
+        companion object
     }
 
     /** Draws a [LineCartesianLayer] line’s area fill. */
-    public interface AreaFill {
+    interface AreaFill {
         /** Draws the area fill. */
-        public fun draw(
+        fun draw(
             context: CartesianDrawingContext,
             linePath: Path,
             halfLineThickness: Float,
@@ -212,13 +212,13 @@ protected constructor(
         )
 
         /** Houses [AreaFill] factory functions. */
-        public companion object {
+        companion object {
             /**
              * Uses [fill] for the areas bounded by the [LineCartesianLayer] line and the [splitY] line.
              * (The [splitY] line is an imaginary horizontal line whose _y_ value is determined by
              * [splitY].)
              */
-            public fun single(fill: Fill, splitY: (ExtraStore) -> Number = { 0 }): AreaFill =
+            fun single(fill: Fill, splitY: (ExtraStore) -> Number = { 0 }): AreaFill =
                 SingleAreaFill(fill, splitY)
 
             /**
@@ -226,7 +226,7 @@ protected constructor(
              * line that are above the [splitY] line, and analogously for [bottomFill]. (The [splitY] line
              * is an imaginary horizontal line whose _y_ value is determined by [splitY].)
              */
-            public fun double(
+            fun double(
                 topFill: Fill,
                 bottomFill: Fill,
                 splitY: (ExtraStore) -> Number = { 0 },
@@ -235,9 +235,9 @@ protected constructor(
     }
 
     /** Connects a [LineCartesianLayer] line’s points, thus defining its shape. */
-    public fun interface PointConnector {
+    fun interface PointConnector {
         /** Connects ([x1], [y2]) and ([x2], [y2]). */
-        public fun connect(
+        fun connect(
             context: CartesianDrawingContext,
             path: Path,
             x1: Float,
@@ -247,28 +247,28 @@ protected constructor(
         )
 
         /** Houses a [PointConnector] factory function. */
-        public companion object {
+        companion object {
             /** Uses line segments. */
-            public val Sharp: PointConnector = PointConnector { _, path, _, _, x2, y2 ->
+            val Sharp: PointConnector = PointConnector { _, path, _, _, x2, y2 ->
                 path.lineTo(x2, y2)
             }
 
             /**
              * Uses cubic Bézier curves. [curvature], which must be in ([0, 1]], defines their strength.
              */
-            public fun cubic(
+            fun cubic(
                 @FloatRange(from = 0.0, to = 1.0, fromInclusive = false) curvature: Float = 0.5f,
             ): PointConnector = CubicPointConnector(curvature)
         }
     }
 
     /** Provides [Line]s to [LineCartesianLayer]s. */
-    public fun interface LineProvider {
+    fun interface LineProvider {
         /** Returns the [Line] for the specified series. */
-        public fun getLine(seriesIndex: Int, extraStore: ExtraStore): Line
+        fun getLine(seriesIndex: Int, extraStore: ExtraStore): Line
 
         /** Houses [LineProvider] factory functions. */
-        public companion object {
+        companion object {
             private data class Series(private val lines: List<Line>) : LineProvider {
                 override fun getLine(seriesIndex: Int, extraStore: ExtraStore) =
                     lines.getRepeating(seriesIndex)
@@ -278,13 +278,13 @@ protected constructor(
              * Uses the provided [Line]s. The [Line]s and series are associated by index. If there are
              * more series than [Line]s, [lines] is iterated multiple times.
              */
-            public fun series(lines: List<Line>): LineProvider = Series(lines)
+            fun series(lines: List<Line>): LineProvider = Series(lines)
 
             /**
              * Uses the provided [Line]s. The [Line]s and series are associated by index. If there are
              * more series than [Line]s, the [Line] list is iterated multiple times.
              */
-            public fun series(vararg lines: Line): LineProvider = series(lines.toList())
+            fun series(vararg lines: Line): LineProvider = series(lines.toList())
         }
     }
 
@@ -295,12 +295,12 @@ protected constructor(
      * @property sizeDp the point size (in dp).
      */
     @Immutable
-    public data class Point(
+    data class Point(
         private val component: Component,
-        public val sizeDp: Float = Defaults.POINT_SIZE,
+        val sizeDp: Float = Defaults.POINT_SIZE,
     ) {
         /** Draws a point at ([x], [y]). */
-        public fun draw(context: CartesianDrawingContext, x: Float, y: Float) {
+        fun draw(context: CartesianDrawingContext, x: Float, y: Float) {
             val halfSize = context.run { sizeDp.half.pixels }
             component.draw(
                 context = context,
@@ -314,19 +314,19 @@ protected constructor(
 
     /** Provides [Point]s to [LineCartesianLayer]s. */
     @Immutable
-    public interface PointProvider {
+    interface PointProvider {
         /** Returns the [Point] for the point with the given properties. */
-        public fun getPoint(
+        fun getPoint(
             entry: LineCartesianLayerModel.Entry,
             seriesIndex: Int,
             extraStore: ExtraStore,
         ): Point?
 
         /** Returns the largest [Point]. */
-        public fun getLargestPoint(extraStore: ExtraStore): Point?
+        fun getLargestPoint(extraStore: ExtraStore): Point?
 
         /** Houses a [PointProvider] factory function. */
-        public companion object {
+        companion object {
             private data class Single(private val point: Point) : PointProvider {
                 override fun getPoint(
                     entry: LineCartesianLayerModel.Entry,
@@ -338,7 +338,7 @@ protected constructor(
             }
 
             /** Uses [point] for each point. */
-            public fun single(point: Point): PointProvider = Single(point)
+            fun single(point: Point): PointProvider = Single(point)
         }
     }
 
@@ -358,7 +358,7 @@ protected constructor(
     override val markerTargets: Map<Double, List<CartesianMarker.Target>> = _markerTargets
 
     /** Creates a [LineCartesianLayer]. */
-    public constructor(
+    constructor(
         lineProvider: LineProvider,
         pointSpacingDp: Float = Defaults.POINT_SPACING,
         rangeProvider: CartesianLayerRangeProvider = CartesianLayerRangeProvider.auto(),
@@ -707,7 +707,7 @@ protected constructor(
     }
 
     /** Creates a new [LineCartesianLayer] based on this one. */
-    public fun copy(
+    fun copy(
         lineProvider: LineProvider = this.lineProvider,
         pointSpacingDp: Float = this.pointSpacingDp,
         rangeProvider: CartesianLayerRangeProvider = this.rangeProvider,
@@ -747,7 +747,7 @@ protected constructor(
         )
 
     /** Provides access to [Line] and [Point] factory functions. */
-    public companion object
+    companion object
 }
 
 internal fun CartesianDrawingContext.getCanvasSplitY(

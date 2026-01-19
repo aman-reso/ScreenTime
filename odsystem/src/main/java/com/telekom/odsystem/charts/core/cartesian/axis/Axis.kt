@@ -14,44 +14,44 @@ import com.telekom.odsystem.charts.core.cartesian.data.CartesianChartModel
 
 /** Draws an axis. */
 @Immutable
-public interface Axis<P : Axis.Position> :
+interface Axis<P : Axis.Position> :
     Bounded, CartesianLayerMarginUpdater<CartesianChartModel> {
     /** The position of the [Axis]. */
-    public val position: P
+    val position: P
 
     /** Draws content under the [CartesianLayer]s. */
-    public fun drawUnderLayers(context: CartesianDrawingContext)
+    fun drawUnderLayers(context: CartesianDrawingContext)
 
     /** Draws content over the [CartesianLayer]s. */
-    public fun drawOverLayers(context: CartesianDrawingContext)
+    fun drawOverLayers(context: CartesianDrawingContext)
 
     /** The bounds ([RectF]) passed here define the area where the [Axis] shouldn’t draw anything. */
-    public fun setRestrictedBounds(vararg bounds: RectF?)
+    fun setRestrictedBounds(vararg bounds: RectF?)
 
     /** Updates the chart’s [MutableCartesianLayerDimensions] instance. */
-    public fun updateLayerDimensions(
+    fun updateLayerDimensions(
         context: CartesianMeasuringContext,
         layerDimensions: MutableCartesianLayerDimensions,
     )
 
     /** Specifies the position of an [Axis]. */
-    public sealed interface Position {
+    sealed interface Position {
         /** Specifies the position of a horizontal [Axis]. */
-        public sealed interface Horizontal : Position {
+        sealed interface Horizontal : Position {
             /** Denotes that a horizontal [Axis] is at the top of its [CartesianChart]. */
-            public data object Top : Horizontal
+            data object Top : Horizontal
 
             /** Denotes that a horizontal [Axis] is at the bottom of its [CartesianChart]. */
-            public data object Bottom : Horizontal
+            data object Bottom : Horizontal
         }
 
         /** Specifies the position of a vertical [Axis]. */
-        public sealed interface Vertical : Position {
+        sealed interface Vertical : Position {
             /** Denotes that a vertical [Axis] is at the start of its [CartesianChart]. */
-            public data object Start : Vertical
+            data object Start : Vertical
 
             /** Denotes that a vertical [Axis] is at the end of its [CartesianChart]. */
-            public data object End : Vertical
+            data object End : Vertical
         }
     }
 }

@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
@@ -38,7 +38,7 @@ import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.R.*
 import com.telekom.odsystem.neutralScheme
-import java.util.Calendar
+import com.app.screentime.utils.DateUtils
 
 @Preview(showBackground = true)
 @Composable
@@ -83,7 +83,6 @@ fun GreetingUi(
                 )
             )
 
-
             ODSIcon(
                 modifier = Modifier
                     .size(24.dp)
@@ -93,13 +92,14 @@ fun GreetingUi(
                     tint = scheme.basicAccentSecondary
                 )
             )
+            
         }
     }
 }
 
 @Composable
 fun getGreetingBasedOnTime(): String {
-    val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
+    val hour = remember { DateUtils.now().hourOfDay }
 
     return when (hour) {
         in 5..11 -> stringResource(R.string.good_morning)

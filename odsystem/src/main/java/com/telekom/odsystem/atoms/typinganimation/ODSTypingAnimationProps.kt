@@ -24,5 +24,5 @@ enum class ODSTypingAnimationPosition {
  * @property position The current position of the typing animation. Defaults to [ODSTypingAnimationPosition.ONE].
  */
 data class ODSTypingAnimationProps(
-    var position: ODSTypingAnimationPosition = ODSTypingAnimationPosition.ONE,
+    var position: ODSTypingAnimationPosition = ONE,
 )

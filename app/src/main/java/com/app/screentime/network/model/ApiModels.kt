@@ -2,6 +2,7 @@ package com.app.screentime.network.model
 
 import com.app.screentime.record.repository.AppEvent
 import com.app.screentime.core.network.utils.DeviceInfoUtils
+import com.app.screentime.data.entity.AppUsage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -91,6 +92,53 @@ data class DailyUsage(
     val totalUsage: Long,
     val appCount: Int,
     val topApps: List<AppUsageData>
+)
+
+/**
+ * App stats request for /api/app-stats endpoint
+ */
+@Serializable
+data class AppStatsRequest(
+    val date: String, // YYYY-MM-DD format
+    val stats: List<AppStatItem>
+)
+
+/**
+ * Individual app stat item
+ */
+@Serializable
+data class AppStatItem(
+    @SerialName("appname")
+    val appName: String? = null,
+    @SerialName("packagename")
+    val packageName: String? = null,
+    val duration: Long? = null // Duration in milliseconds as string
+) {
+    fun mapToAppUsage(): AppUsage {
+        return AppUsage(
+            appName = appName,
+            packageName = packageName,
+            appScreenTime = duration ?: 0L
+        )
+    }
+}
+
+/**
+ * App stats response (for POST)
+ */
+@Serializable
+data class AppStatsResponse(
+    val success: Boolean? = null,
+    val message: String? = null
+)
+
+/**
+ * App stats GET response (same format as request)
+ */
+@Serializable
+data class AppStatsGetResponse(
+    val date: String? = null, // YYYY-MM-DD format
+    val stats: List<AppStatItem>? = null
 )
 
 /**
@@ -231,6 +279,64 @@ data class TOTPVerifyResponse(
 )
 
 /**
+ * TOTP status response model
+ */
+@Serializable
+data class TOTPStatusResponse(
+    val hasAccess: Boolean,
+    val message: String? = null,
+    val verifiedAt: String? = null, // ISO 8601 format
+    val expiresAt: String? = null, // ISO 8601 format
+    val remainingSeconds: Int? = null,
+    val targetUsername: String? = null
+)
+
+/**
+ * Active session model for control panel
+ */
+@Serializable
+data class ActiveSession(
+    val requestingUsername: String,
+    val verifiedAt: String, // ISO 8601 format
+    val expiresAt: String, // ISO 8601 format
+    val remainingSeconds: Int,
+    val accessType: String // e.g., "TOTP"
+)
+
+/**
+ * Control panel response model
+ */
+@Serializable
+data class ControlPanelResponse(
+    val activeSessions: List<ActiveSession> = emptyList()
+)
+
+/**
+ * Grant access request model
+ */
+@Serializable
+data class GrantAccessRequest(
+    val username: String
+)
+
+/**
+ * Revoke access request model
+ */
+@Serializable
+data class RevokeAccessRequest(
+    val username: String
+)
+
+/**
+ * Extend access request model
+ */
+@Serializable
+data class ExtendAccessRequest(
+    val username: String,
+    val additionalSeconds: Long
+)
+
+/**
  * App Usage Submission Request
  * For submitting app usage data (appname, package name, opened at, duration, isSystemApp, total screentime)
  */
@@ -281,6 +387,119 @@ data class GetAppUsageResponse(
 data class CompleteAppHistoryRequest(
     val page: Int = 1,
     val pageSize: Int = 50
+)
+
+/**
+ * Allowed user for timeline privacy
+ */
+@Serializable
+data class AllowedUser(
+    val username: String,
+    val addedAt: String? = null,
+    val expiresAt: String? = null, // ISO 8601 format timestamp
+    val duration: Long? = null // Duration in milliseconds (null for permanent)
+)
+
+/**
+ * Allowed users response
+ */
+@Serializable
+data class AllowedUsersResponse(
+    val allowedUsers: List<AllowedUser> = emptyList()
+)
+
+/**
+ * Add allowed user request
+ */
+@Serializable
+data class AddAllowedUserRequest(
+    val username: String,
+    val duration: Long? = null // Duration in milliseconds (null for permanent)
+)
+
+/**
+ * Update allowed user duration request
+ */
+@Serializable
+data class UpdateAllowedUserRequest(
+    val duration: Long? = null // Duration in milliseconds (null for permanent)
+)
+
+/**
+ * Location data model
+ */
+@Serializable
+data class LocationData(
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val address: String? = null,
+    val lastUpdated: String? = null,
+    val shareLocation: Boolean = false
+)
+
+/**
+ * Location response
+ */
+@Serializable
+data class LocationResponse(
+    val location: LocationData? = null
+)
+
+/**
+ * Share location request
+ */
+@Serializable
+data class ShareLocationRequest(
+    val shareLocation: Boolean,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val address: String? = null
+)
+
+/**
+ * Location sync request
+ */
+@Serializable
+data class LocationSyncRequest(
+    val latitude: Double,
+    val longitude: Double,
+    val address: String? = null,
+    val lastSyncTime: String // ISO 8601 format
+)
+
+/**
+ * Location sync response
+ */
+@Serializable
+data class LocationSyncResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val syncedAt: String? = null // ISO 8601 format
+)
+
+/**
+ * User last location data (detailed location info)
+ */
+@Serializable
+data class UserLastLocationData(
+    val id: Long? = null,
+    val userId: String? = null,
+    val latitude: Double,
+    val longitude: Double,
+    val address: String? = null,
+    val ipAddress: String? = null,
+    val timestamp: String? = null, // ISO 8601 format
+    val lastSyncTime: String? = null, // ISO 8601 format
+    val createdAt: String? = null // ISO 8601 format
+)
+
+/**
+ * User last location response wrapper
+ */
+@Serializable
+data class UserLastLocationResponse(
+    val location: UserLastLocationData? = null,
+    val message: String? = null
 )
 
 /**
@@ -579,4 +798,39 @@ data class UsageLastSyncResponse(
     val userId: String,
     val lastSyncTime: String? = null, // ISO 8601 format, null if never synced
     val hasEvents: Boolean = false
+)
+
+/**
+ * Summary ScreenTime Request - User and date pair
+ */
+@Serializable
+data class SummaryScreenTimeUserRequest(
+    val username: String,
+    val date: String // YYYY-MM-DD format
+)
+
+/**
+ * Summary ScreenTime Request
+ */
+@Serializable
+data class SummaryScreenTimeRequest(
+    val users: List<SummaryScreenTimeUserRequest>
+)
+
+/**
+ * Summary ScreenTime User Response
+ */
+@Serializable
+data class SummaryScreenTimeUserResponse(
+    val username: String,
+    val date: String,
+    val screenTime: Long // Screen time in milliseconds
+)
+
+/**
+ * Summary ScreenTime Response Data
+ */
+@Serializable
+data class SummaryScreenTimeResponseData(
+    val users: List<SummaryScreenTimeUserResponse>
 )

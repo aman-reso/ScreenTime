@@ -12,10 +12,10 @@ import com.telekom.odsystem.charts.core.cartesian.layer.CartesianLayer
  * @see [HorizontalLine]
  */
 @Immutable
-public interface Decoration {
+interface Decoration {
     /** Draws content under the [CartesianLayer]s. */
-    public fun drawUnderLayers(context: CartesianDrawingContext) {}
+    fun drawUnderLayers(context: CartesianDrawingContext) {}
 
     /** Draws content over the [CartesianLayer]s. */
-    public fun drawOverLayers(context: CartesianDrawingContext) {}
+    fun drawOverLayers(context: CartesianDrawingContext) {}
 }

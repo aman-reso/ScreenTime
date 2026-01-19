@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.reward.model.RewardCatalogItem
 import com.app.screentime.reward.model.SavedClaimDetails
 import com.telekom.odsystem.DSVariables

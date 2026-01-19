@@ -37,6 +37,23 @@ class PermissionManager(
     }
 
     /**
+     * Checks if location permission is granted (either fine or coarse)
+     */
+    fun hasLocationPermission(): Boolean {
+        val fineLocation = ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        
+        val coarseLocation = ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        
+        return fineLocation || coarseLocation
+    }
+
+    /**
      * Checks if usage stats permission is granted
      */
     fun hasUsageStatsPermission(): Boolean {
@@ -70,6 +87,7 @@ class PermissionManager(
 data class PermissionState(
     val hasUsageStats: Boolean = false,
     val hasNotification: Boolean = false,
+    val hasLocation: Boolean = false,
     val hasAllPermissions: Boolean = false
 )
 

@@ -3,7 +3,7 @@ package com.telekom.odsystem.charts.core.common.data
 import androidx.annotation.RestrictTo
 
 /** Caches data. */
-public class CacheStore @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) public constructor() {
+class CacheStore @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) constructor() {
   private var map = mutableMapOf<String, Any>()
   private var purgedMap = mutableMapOf<String, Any>()
 
@@ -11,7 +11,7 @@ public class CacheStore @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) public const
    * Retrieves the value associated with the key belonging to the specified namespace and matching
    * the given components. If there’s no such value, `null` is returned.
    */
-  public fun <T : Any> getOrNull(keyNamespace: KeyNamespace, vararg keyComponents: Any?): T? {
+  fun <T : Any> getOrNull(keyNamespace: KeyNamespace, vararg keyComponents: Any?): T? {
     val key = keyNamespace.getKey(*keyComponents)
     val value = map[key]
     if (value != null) purgedMap[key] = value
@@ -20,7 +20,7 @@ public class CacheStore @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) public const
   }
 
   /** Caches [value]. */
-  public operator fun set(keyNamespace: KeyNamespace, vararg keyComponents: Any?, value: Any) {
+  operator fun set(keyNamespace: KeyNamespace, vararg keyComponents: Any?, value: Any) {
     val key = keyNamespace.getKey(*keyComponents)
     map[key] = value
     purgedMap[key] = value
@@ -31,7 +31,7 @@ public class CacheStore @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) public const
    * the given components. If there’s no such value, [value] is called, and its result is cached and
    * returned.
    */
-  public fun <T : Any> getOrSet(
+  fun <T : Any> getOrSet(
     keyNamespace: KeyNamespace,
     vararg keyComponents: Any?,
     value: () -> T,
@@ -45,7 +45,7 @@ public class CacheStore @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) public const
   }
 
   /** Identifies a key namespace. These namespaces help prevent interscope key collisions. */
-  public class KeyNamespace {
+  class KeyNamespace {
     internal fun getKey(vararg components: Any?) =
       components.joinToString(prefix = "${hashCode()}, ")
   }

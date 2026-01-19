@@ -3,7 +3,7 @@ package com.app.screentime.appdetail.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.appdetail.model.SingleAppUsageUiState
 import com.app.screentime.appdetail.usecase.GetSingleAppUsageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel

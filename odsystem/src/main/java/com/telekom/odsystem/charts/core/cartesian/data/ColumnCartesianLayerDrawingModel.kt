@@ -6,9 +6,9 @@ import com.telekom.odsystem.charts.core.common.lerp
 import com.telekom.odsystem.charts.core.common.orZero
 
 /** Houses drawing information for a [ColumnCartesianLayer]. [opacity] is the columns’ opacity. */
-public class ColumnCartesianLayerDrawingModel(
+class ColumnCartesianLayerDrawingModel(
     private val entries: List<Map<Double, Entry>>,
-    public val opacity: Float = 1f,
+    val opacity: Float = 1f,
 ) : CartesianLayerDrawingModel<ColumnCartesianLayerDrawingModel.Entry>(entries) {
     override fun transform(
         entries: List<Map<Double, Entry>>,
@@ -31,7 +31,7 @@ public class ColumnCartesianLayerDrawingModel(
      * Houses positional information for a [ColumnCartesianLayer]’s column. [height] expresses the
      * column’s height as a fraction of the [ColumnCartesianLayer]’s height.
      */
-    public class Entry(public val height: Float) : CartesianLayerDrawingModel.Entry {
+    class Entry(val height: Float) : CartesianLayerDrawingModel.Entry {
         override fun transform(
             from: CartesianLayerDrawingModel.Entry?,
             fraction: Float,

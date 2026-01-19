@@ -6,7 +6,7 @@ import com.telekom.odsystem.charts.core.common.DrawingContext
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public abstract class CachingShaderProvider : ShaderProvider {
+abstract class CachingShaderProvider : ShaderProvider {
   private val cache = HashMap<String, Shader>(1)
 
   override fun getShader(
@@ -24,7 +24,7 @@ public abstract class CachingShaderProvider : ShaderProvider {
       }
   }
 
-  public abstract fun createShader(
+  abstract fun createShader(
     context: DrawingContext,
     left: Float,
     top: Float,

@@ -3,16 +3,16 @@ package com.telekom.odsystem.charts.core.common
 import android.graphics.RectF
 
 /** Defines the relative position of an object. */
-public object Position {
+object Position {
   /** Defines the relative horizontal position of an object. */
-  public enum class Horizontal {
+  enum class Horizontal {
     Start,
     Center,
     End,
   }
 
   /** Defines the relative vertical position of an object. */
-  public enum class Vertical {
+  enum class Vertical {
     Top,
     Center,
     Bottom,

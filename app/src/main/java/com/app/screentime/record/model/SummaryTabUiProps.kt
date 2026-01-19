@@ -10,7 +10,6 @@ import com.app.screentime.landing.model.UsageDonutData
 data class SummaryTabUiProps(
     val appUsageList: List<AppUsage>,
     val totalScreenTime: Long,
-    val usageDonutData: UsageDonutData?,
     val isLoading: Boolean = false,
     val error: String? = null
 )

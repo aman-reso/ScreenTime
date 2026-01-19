@@ -129,7 +129,18 @@ data class UserChallenge(
     val challengeType: String? = null, // "LESS_SCREENTIME" or "MORE_SCREENTIME"
     val isActive: Boolean,
     val joinedAt: String? = null, // ISO 8601 format
-    val isPast: Boolean
+    val isPast: Boolean,
+    val packageNames: String? = null,
+    val lastSyncTime: String? = null // ISO 8601 format, null if never synced
+)
+
+/**
+ * App detail model for challenge app details
+ */
+@Serializable
+data class AppDetail(
+    val appname: String,
+    val url: String
 )
 
 /**
@@ -155,7 +166,8 @@ data class ChallengeDetails(
     val packageNames: String? = null,
     val hasJoined: Boolean = false,
     val scheme: String? = null,
-    val variant: String? = null
+    val variant: String? = null,
+    val appdetail: List<AppDetail>? = null // List of app details with name and URL
 ) {
     /**
      * Get the ODSTheme for this challenge detail.

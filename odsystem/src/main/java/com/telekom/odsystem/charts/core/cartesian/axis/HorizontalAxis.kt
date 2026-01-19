@@ -35,7 +35,7 @@ import com.telekom.odsystem.charts.core.cartesian.getFullXRange as internalGetFu
  * @property itemPlacer determines for what _x_ values the [HorizontalAxis] displays labels, ticks,
  *   and guidelines.
  */
-public open class HorizontalAxis<P : Axis.Position.Horizontal>
+open class HorizontalAxis<P : Axis.Position.Horizontal>
 protected constructor(
     override val position: P,
     line: LineComponent?,
@@ -45,7 +45,7 @@ protected constructor(
     tick: LineComponent?,
     tickLengthDp: Float,
     guideline: LineComponent?,
-    public val itemPlacer: ItemPlacer,
+    val itemPlacer: ItemPlacer,
     size: Size,
     titleComponent: TextComponent?,
     title: CharSequence?,
@@ -71,7 +71,7 @@ protected constructor(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public constructor(
+    constructor(
         position: P,
         line: LineComponent?,
         label: TextComponent?,
@@ -483,7 +483,7 @@ protected constructor(
     }
 
     /** Creates a new [HorizontalAxis] based on this one. */
-    public fun copy(
+    fun copy(
         line: LineComponent? = this.line,
         label: TextComponent? = this.label,
         labelRotationDegrees: Float = this.labelRotationDegrees,
@@ -517,7 +517,7 @@ protected constructor(
     override fun hashCode(): Int = 31 * super.hashCode() + itemPlacer.hashCode()
 
     /** Determines for what _x_ values a [HorizontalAxis] displays labels, ticks, and guidelines. */
-    public interface ItemPlacer {
+    interface ItemPlacer {
         /**
          * Returns a boolean indicating whether to shift the lines whose _x_ values are bounds of the
          * effective _x_ range, if such lines are present, such that they’re immediately outside of the
@@ -525,13 +525,13 @@ protected constructor(
          * either side, if a [VerticalAxis] is present, the shifted tick will then be aligned with the
          * axis line, and the shifted guideline will be hidden.
          */
-        public fun getShiftExtremeLines(context: CartesianDrawingContext): Boolean = true
+        fun getShiftExtremeLines(context: CartesianDrawingContext): Boolean = true
 
         /**
          * If the [HorizontalAxis] is to reserve room for the first label, returns the first label’s _x_
          * value. Otherwise, returns `null`.
          */
-        public fun getFirstLabelValue(
+        fun getFirstLabelValue(
             context: CartesianMeasuringContext,
             maxLabelWidth: Float,
         ): Double? = null
@@ -540,7 +540,7 @@ protected constructor(
          * If the [HorizontalAxis] is to reserve room for the last label, returns the last label’s _x_
          * value. Otherwise, returns `null`.
          */
-        public fun getLastLabelValue(
+        fun getLastLabelValue(
             context: CartesianMeasuringContext,
             maxLabelWidth: Float,
         ): Double? = null
@@ -549,7 +549,7 @@ protected constructor(
          * Returns, as a list, the _x_ values for which labels are to be displayed, restricted to
          * [visibleXRange] and with two extra values on either side (if applicable).
          */
-        public fun getLabelValues(
+        fun getLabelValues(
             context: CartesianDrawingContext,
             visibleXRange: ClosedFloatingPointRange<Double>,
             fullXRange: ClosedFloatingPointRange<Double>,
@@ -561,7 +561,7 @@ protected constructor(
          * measure their widths during the measuring phase. The width of the widest label is passed to
          * other functions.
          */
-        public fun getWidthMeasurementLabelValues(
+        fun getWidthMeasurementLabelValues(
             context: CartesianMeasuringContext,
             layerDimensions: CartesianLayerDimensions,
             fullXRange: ClosedFloatingPointRange<Double>,
@@ -572,7 +572,7 @@ protected constructor(
          * measure their heights during the measuring phase. This affects how much vertical space the
          * [HorizontalAxis] requests.
          */
-        public fun getHeightMeasurementLabelValues(
+        fun getHeightMeasurementLabelValues(
             context: CartesianMeasuringContext,
             layerDimensions: CartesianLayerDimensions,
             fullXRange: ClosedFloatingPointRange<Double>,
@@ -584,7 +584,7 @@ protected constructor(
          * restricted to [visibleXRange] and with an extra value on either side (if applicable). If
          * `null` is returned, the values returned by [getLabelValues] are used.
          */
-        public fun getLineValues(
+        fun getLineValues(
             context: CartesianDrawingContext,
             visibleXRange: ClosedFloatingPointRange<Double>,
             fullXRange: ClosedFloatingPointRange<Double>,
@@ -592,7 +592,7 @@ protected constructor(
         ): List<Double>? = null
 
         /** Returns the start [CartesianLayer]-area margin required by the [HorizontalAxis]. */
-        public fun getStartLayerMargin(
+        fun getStartLayerMargin(
             context: CartesianMeasuringContext,
             layerDimensions: CartesianLayerDimensions,
             tickThickness: Float,
@@ -600,7 +600,7 @@ protected constructor(
         ): Float
 
         /** Returns the end [CartesianLayer]-area margin required by the [HorizontalAxis]. */
-        public fun getEndLayerMargin(
+        fun getEndLayerMargin(
             context: CartesianMeasuringContext,
             layerDimensions: CartesianLayerDimensions,
             tickThickness: Float,
@@ -608,7 +608,7 @@ protected constructor(
         ): Float
 
         /** Houses [ItemPlacer] factory functions. */
-        public companion object {
+        companion object {
             /**
              * Adds a label, tick, and guideline for each _x_ value given by [CartesianChartRanges.minX] +
              * (_k_ × spacing + offset) × [CartesianChartRanges.xStep], where _k_ ∈ ℕ, with these
@@ -617,7 +617,7 @@ protected constructor(
              * specifies whether [CartesianLayer] padding should be added for the first and last labels,
              * ensuring their visibility.
              */
-            public fun aligned(
+            fun aligned(
                 spacing: (ExtraStore) -> Int = { 1 },
                 offset: (ExtraStore) -> Int = { 0 },
                 shiftExtremeLines: Boolean = true,
@@ -637,17 +637,17 @@ protected constructor(
              * by [CartesianChartRanges.minX] + _k_ × [CartesianChartRanges.xStep], where _k_ ∈ ℕ.)
              * [shiftExtremeLines] is used as the return value of [ItemPlacer.getShiftExtremeLines].
              */
-            public fun segmented(shiftExtremeLines: Boolean = true): ItemPlacer =
+            fun segmented(shiftExtremeLines: Boolean = true): ItemPlacer =
                 SegmentedHorizontalAxisItemPlacer(shiftExtremeLines)
         }
     }
 
     /** Houses [HorizontalAxis] factory functions. */
-    public companion object {
+    companion object {
         private const val MAX_HEIGHT_DIVISOR = 3f
 
         /** Creates a top [HorizontalAxis]. */
-        public fun top(
+        fun top(
             line: LineComponent? = null,
             label: TextComponent? = null,
             labelRotationDegrees: Float = 0f,
@@ -676,7 +676,7 @@ protected constructor(
             )
 
         /** Creates a bottom [HorizontalAxis]. */
-        public fun bottom(
+        fun bottom(
             line: LineComponent? = null,
             label: TextComponent? = null,
             labelRotationDegrees: Float = 0f,

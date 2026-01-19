@@ -1,5 +1,6 @@
 package com.app.screentime.permission
 
+import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
@@ -12,6 +13,18 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -20,12 +33,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import androidx.core.net.toUri
 import com.app.screentime.permission.component.bottombar.BottomBar
 import com.app.screentime.permission.component.bottombar.BottomBarProps
@@ -33,7 +41,12 @@ import com.app.screentime.permission.component.herosection.HeroSection
 import com.app.screentime.permission.component.herosection.HeroSectionProps
 import com.app.screentime.permission.component.infocard.InfoCardList
 import com.app.screentime.permission.component.infocard.InfoCardProps
+import com.app.screentime.profile.dialog.LanguageSelectionDialog
+import com.app.screentime.ui.language.LanguageViewModel
 import com.app.screentime.ui.theme.LocalThemeMode
+import com.app.screentime.permission.viewmodel.PermissionViewModel
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
@@ -42,6 +55,7 @@ import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import kotlinx.coroutines.delay
 
 /**
  * App Permission Screen - Complete permission request screen using component architecture.
@@ -75,6 +89,11 @@ fun AppPermissionScreen(
     }
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val languageViewModel: LanguageViewModel = hiltViewModel()
+    val permissionViewModel: PermissionViewModel = hiltViewModel()
+    val currentLanguage by languageViewModel.language.collectAsState()
+    var showLanguageDialog by remember { mutableStateOf(false) }
 
     // Permission state
     var hasUsageStatsPermission by remember { mutableStateOf(false) }
@@ -118,6 +137,8 @@ fun AppPermissionScreen(
 
 
     val scrollState = rememberScrollState()
+    val statusBarPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    
     ODSBox(modifier = modifier, clipContent = true) {
         ODSBox(modifier = Modifier) {
             Column(
@@ -127,7 +148,7 @@ fun AppPermissionScreen(
             ) {
                 ODSBox(
                     modifier = Modifier
-                        .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                        .height(statusBarPadding)
                         .fillMaxWidth()
                 ) {}
                 ODSColumn(
@@ -154,13 +175,51 @@ fun AppPermissionScreen(
                 }
             }
 
+            // Language icon in top right corner
+            ODSIcon(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(
+                        top = statusBarPadding + 12.dp,
+                        end = 12.dp
+                    )
+                    .clickable { 
+                        permissionViewModel.trackLanguageChangeClick()
+                        showLanguageDialog = true 
+                    },
+                iconModel = ODSIconModel(
+                    imageVector = Icons.Outlined.Language,
+                    tint = scheme.basicText
+                ),
+                width = 24.dp,
+                height = 24.dp
+            )
+
             BottomBar(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 scheme = scheme,
-                props = BottomBarProps(),
+                props = BottomBarProps.default(context),
                 onAllowClick = handleAllowClick
             )
         }
+    }
+
+    // Language selection dialog
+    if (showLanguageDialog) {
+        LanguageSelectionDialog(
+            currentLanguage = currentLanguage,
+            onDismiss = { showLanguageDialog = false },
+            onLanguageSelected = { language ->
+                showLanguageDialog = false
+                coroutineScope.launch {
+                    delay(100)
+                    if (activity is Activity) {
+                        activity.recreate()
+                    }
+                }
+            },
+            scheme = scheme
+        )
     }
 }
 

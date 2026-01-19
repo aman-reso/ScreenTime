@@ -1,12 +1,11 @@
 package com.app.screentime.challenge.screen
 
+import android.content.Intent
 import android.graphics.Color
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,60 +23,54 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Launch
+import androidx.compose.material.icons.outlined.Rule
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.outlined.Rule
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.R
 import com.app.screentime.challenge.component.detail.ChallengeErrorState
 import com.app.screentime.challenge.component.detail.ChallengeHeader
 import com.app.screentime.challenge.component.detail.ChallengeImageSection
 import com.app.screentime.challenge.component.detail.JoinButtonSection
 import com.app.screentime.challenge.model.ChallengeDetailUiProps
 import com.app.screentime.challenge.viewmodel.ChallengeDetailViewModel
-import com.app.screentime.ui.atom.AppScreenShimmer
-import com.app.screentime.leaderboard.screen.LeaderboardItem
+import com.app.screentime.config.R
+import com.app.screentime.config.data.Feature
+import com.app.screentime.config.featureflag.FeatureFlagHelper
 import com.app.screentime.consent.screen.ConsentBottomSheetContent
-import com.app.screentime.permission.AppPermissionScreen
-import com.app.screentime.permission.checkUsageStatsPermission
-import com.app.screentime.permission.createPermissionManager
+import com.app.screentime.leaderboard.screen.LeaderboardItem
 import com.app.screentime.navigation.ToastSnackbarManager
-import kotlinx.coroutines.launch
+import com.app.screentime.permission.AppPermissionScreen
+import com.app.screentime.permission.createPermissionManager
 import com.app.screentime.reward.component.RewardCardV2
+import com.app.screentime.ui.atom.AppScreenShimmer
+import com.app.screentime.ui.atom.PullToRefreshBox
 import com.app.screentime.ui.theme.ColorPalette
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ui.theme.headerTheme
-import com.app.screentime.ui.atom.PullToRefreshBox
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -92,29 +85,19 @@ import com.telekom.odsystem.atoms.divider.ODSDividerProps
 import com.telekom.odsystem.atoms.divider.ODSDividerVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
-import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheetProps
-import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandard
-import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardProps
-import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardVariant
-import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerLabelAlignment
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
-import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerVariant
 import com.telekom.odsystem.atoms.tagstatic.ODSTagStatic
 import com.telekom.odsystem.atoms.tagstatic.ODSTagStaticProps
 import com.telekom.odsystem.atoms.tagstatic.ODSTagStaticType
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
-import com.telekom.odsystem.molecules.tabs.ODSTabItemModel
-import com.telekom.odsystem.molecules.tabs.ODSTabs
-import com.telekom.odsystem.molecules.tabs.ODSTabsProps
-import com.telekom.odsystem.molecules.tabs.ODSTabsSize
-import com.telekom.odsystem.molecules.tabs.ODSTabsVariant
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheetProps
+import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandard
+import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardProps
+import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardVariant
 import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import com.telekom.odsystem.tokens.tokens.macawSecondaryScheme
 import kotlinx.coroutines.launch
@@ -150,6 +133,7 @@ fun ChallengeDetailScreen(
     scheme: ODSTheme = neutralScheme,
     headerScheme: ODSTheme = headerTheme.current
 ) {
+
     val uiState by viewModel.uiState.collectAsState()
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -169,6 +153,7 @@ fun ChallengeDetailScreen(
 
     // Load challenge details when screen opens
     LaunchedEffect(challengeId) {
+        viewModel.trackScreenView()
         viewModel.loadChallengeDetails(challengeId)
     }
     val useDarkTheme = LocalThemeMode.current
@@ -254,15 +239,18 @@ fun ChallengeDetailScreen(
 
                 uiState.error != null -> {
                     ChallengeErrorState(
-                        message = uiState.error ?: "Failed to load challenge details.", onRetry = {
+                        message = uiState.error
+                            ?: stringResource(R.string.failed_to_load_challenge_details),
+                        onRetry = {
                             viewModel.loadChallengeDetails(challengeId)
-                        }, scheme = scheme
+                        },
+                        scheme = scheme
                     )
                 }
 
                 uiState.uiProps == null -> {
                     ChallengeErrorState(
-                        message = "Challenge not found.", onRetry = {
+                        message = stringResource(R.string.challenge_not_found), onRetry = {
                             viewModel.loadChallengeDetails(challengeId)
                         }, scheme = scheme
                     )
@@ -383,7 +371,7 @@ private fun ChallengeHeaderAndImageSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ChallengeHeader(
-                    title = uiProps?.title ?: "Challenge",
+                    title = uiProps?.title ?: stringResource(R.string.challenge),
                     onBackClick = onBackClick,
                     onShareClick = if (uiProps != null) onShareClick else null,
                     scheme = headerScheme
@@ -411,8 +399,8 @@ internal fun ChallengeContent(
     scheme: ODSTheme = neutralScheme,
     headerScheme: ODSTheme = macawSecondaryScheme
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    LocalContext.current
+    rememberCoroutineScope()
 
     ODSBox(
         modifier = Modifier.fillMaxSize()
@@ -426,7 +414,9 @@ internal fun ChallengeContent(
                 isSyncing = isSyncing,
                 onSyncChallenge = onSyncChallenge,
                 scheme = scheme,
-                bottomPadding = if (uiProps.showJoinButton) DSVariables.spacingLayout10 else 0.dp
+                headerScheme = headerScheme,
+                currentUserId = viewModel.getCurrentUserId(),
+                bottomPadding = if (uiProps.showJoinButton) DSVariables.spacingLayout7 else 0.dp
             )
         }
 
@@ -452,12 +442,13 @@ private fun AboutTab(
     isSyncing: Boolean,
     onSyncChallenge: () -> Unit,
     scheme: ODSTheme,
+    headerScheme: ODSTheme,
+    currentUserId: String?,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {
+    val context = LocalContext.current
     val listState = rememberLazyListState()
-    val density = LocalDensity.current
     var showRulesBottomSheet by remember { mutableStateOf(false) }
-    val headerScheme = headerTheme.current
 
     ODSLazyColumn(
         state = listState,
@@ -519,7 +510,7 @@ private fun AboutTab(
                         .semantics(mergeDescendants = true) {},
                     scheme = scheme,
                     props = ODSListRowStandardProps(
-                        label = "Total Prize Pool",
+                        label = stringResource(R.string.total_prize_pool),
                         labelTextHtml = uiProps.prize,
                         showDescriptionTitle = false,
                         variant = ODSListRowStandardVariant.STANDARD
@@ -546,7 +537,7 @@ private fun AboutTab(
                         .semantics(mergeDescendants = true) {},
                     scheme = scheme,
                     props = ODSListRowStandardProps(
-                        label = "Reward",
+                        label = stringResource(R.string.reward),
                         labelText = uiProps.reward,
                         showDescriptionTitle = false,
                         variant = ODSListRowStandardVariant.STANDARD
@@ -573,13 +564,13 @@ private fun AboutTab(
                         .semantics(mergeDescendants = true) {},
                     scheme = scheme,
                     props = ODSListRowStandardProps(
-                        label = "Date Range",
+                        label = stringResource(R.string.date_range),
                         labelText = uiProps.dateRange,
                         showDescriptionTitle = false,
                         icon = ODSIconModel(
                             imageVector = Icons.Default.DateRange,
                             tint = scheme.basicTextRecessive,
-                            contentDescription = "Date"
+                            contentDescription = stringResource(R.string.date)
                         ),
                         variant = ODSListRowStandardVariant.STANDARD
                     ),
@@ -618,7 +609,7 @@ private fun AboutTab(
                             icon = ODSIconModel(
                                 imageVector = Icons.Default.Refresh,
                                 tint = if (isSyncing) scheme.basicTextRecessive else scheme.basicText,
-                                contentDescription = "Sync"
+                                contentDescription = stringResource(R.string.sync)
                             ),
                         )
                     )
@@ -644,7 +635,7 @@ private fun AboutTab(
                         .semantics(mergeDescendants = true) {},
                     scheme = scheme,
                     props = ODSListRowStandardProps(
-                        label = "Description",
+                        label = stringResource(R.string.description),
                         labelText = uiProps.description,
                         showDescriptionTitle = false,
                         variant = ODSListRowStandardVariant.STANDARD
@@ -671,8 +662,12 @@ private fun AboutTab(
                         .semantics(mergeDescendants = true) {},
                     scheme = scheme,
                     props = ODSListRowStandardProps(
-                        label = "Joined Member",
-                        labelText = "${formatParticipantCount(uiProps.participantCount)} Participants",
+                        label = stringResource(R.string.joined_member),
+                        labelText = "${formatParticipantCount(uiProps.participantCount)} ${
+                            stringResource(
+                                R.string.participants
+                            )
+                        }",
                         showDescriptionTitle = false,
                         variant = ODSListRowStandardVariant.STANDARD
                     ),
@@ -683,6 +678,69 @@ private fun AboutTab(
                     inset = true, spacing = false, variant = ODSDividerVariant.HORIZONTAL
                 )
             )
+        }
+
+        // App Details section
+        if (!uiProps.appDetails.isNullOrEmpty()) {
+            item {
+                ODSRow(
+                    modifier = Modifier.fillMaxWidth(), padding = ODSPadding(
+                        vertical = DSVariables.spacingComponent5
+                    )
+                ) {
+                    ODSText(
+                        text = stringResource(R.string.included_app),
+                        style = DSTextStyles.bodyMBold,
+                        color = scheme.basicText,
+                        modifier = Modifier.padding(horizontal = DSVariables.spacingComponent5)
+                    )
+                }
+            }
+
+            uiProps.appDetails.forEach { appDetail ->
+                item {
+                    ODSRow(
+                        modifier = Modifier.fillMaxWidth(), padding = ODSPadding(
+                            vertical = DSVariables.spacingComponent2
+                        )
+                    ) {
+                        ODSListRowStandard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    try {
+                                        val url =
+                                            if (appDetail.url.startsWith("http://") || appDetail.url.startsWith(
+                                                    "https://"
+                                                )
+                                            ) {
+                                                appDetail.url
+                                            } else {
+                                                "https://${appDetail.url}"
+                                            }
+                                        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        // Handle error if URL cannot be opened
+                                    }
+                                }
+                                .padding(horizontal = DSVariables.spacingComponent5)
+                                .semantics(mergeDescendants = true) {},
+                            scheme = scheme,
+                            props = ODSListRowStandardProps(
+                                label = appDetail.appname,
+                                showDescriptionTitle = false,
+                                variant = ODSListRowStandardVariant.ICON,
+                                icon = ODSIconModel(
+                                    imageVector = Icons.Outlined.Launch,
+                                    tint = scheme.basicTextRecessive,
+                                    contentDescription = stringResource(R.string.open_url)
+                                ),
+                            ),
+                        )
+                    }
+                }
+            }
         }
 
         if (!uiProps.sponsor.isNullOrEmpty()) {
@@ -699,7 +757,7 @@ private fun AboutTab(
                             .semantics(mergeDescendants = true) {},
                         scheme = scheme,
                         props = ODSListRowStandardProps(
-                            label = "Sponsor",
+                            label = stringResource(R.string.sponsor),
                             labelText = uiProps.sponsor,
                             showDescriptionTitle = false,
                             variant = ODSListRowStandardVariant.STANDARD
@@ -731,11 +789,11 @@ private fun AboutTab(
                                 scheme = scheme,
                                 props = ODSListRowStandardProps(
                                     variant = ODSListRowStandardVariant.ICON,
-                                    label = "Rules",
+                                    label = stringResource(R.string.rules),
                                     icon = ODSIconModel(
                                         imageVector = Icons.Outlined.Rule,
                                         tint = scheme.basicTextRecessive,
-                                        contentDescription = "Rules"
+                                        contentDescription = stringResource(R.string.rules)
                                     )
                                 )
                             )
@@ -743,7 +801,7 @@ private fun AboutTab(
                                 modifier = Modifier.weight(0.1f), iconModel = ODSIconModel(
                                     tint = scheme.basicText,
                                     drawableRes = com.telekom.odsystem.R.drawable.right_condensed_type_standard,
-                                    contentDescription = "View Rules"
+                                    contentDescription = stringResource(R.string.view_rules)
                                 )
                             )
                         }
@@ -759,7 +817,7 @@ private fun AboutTab(
                 )
             ) {
                 ODSText(
-                    text = "Leaderboard",
+                    text = stringResource(R.string.leaderboard),
                     style = DSTextStyles.bodyMBold,
                     color = scheme.basicText,
                     modifier = Modifier.fillMaxWidth()
@@ -768,8 +826,12 @@ private fun AboutTab(
         }
 
         leaderboardTab(
-            uiProps = uiProps, scheme = scheme, headerScheme = headerScheme
+            uiProps = uiProps,
+            scheme = scheme,
+            headerScheme = headerScheme,
+            currentUserId = currentUserId
         )
+
         item {
             Spacer(modifier = Modifier.height(DSVariables.spacingComponent5))
         }
@@ -785,10 +847,14 @@ private fun AboutTab(
             scheme = scheme
         )
     }
+
 }
 
 private fun LazyListScope.leaderboardTab(
-    uiProps: ChallengeDetailUiProps, scheme: ODSTheme, headerScheme: ODSTheme
+    uiProps: ChallengeDetailUiProps,
+    scheme: ODSTheme,
+    headerScheme: ODSTheme,
+    currentUserId: String?
 ) {
     val rank1Scheme = ColorPalette.schemeGet(headerScheme)
     val rank2Scheme = ColorPalette.schemeGet(rank1Scheme)
@@ -805,7 +871,7 @@ private fun LazyListScope.leaderboardTab(
             item {
                 LeaderboardItem(
                     entry = entry,
-                    isCurrentUser = entry.userId == "##Current User id",
+                    isCurrentUser = entry.userId == currentUserId,
                     scheme = itemScheme
                 )
                 if (index < uiProps.topRankings.size - 1) {
@@ -842,97 +908,6 @@ private fun LazyListScope.leaderboardTab(
     }
 }
 
-@Composable
-private fun RewardTab(
-    uiProps: ChallengeDetailUiProps,
-    scheme: ODSTheme,
-    onScrollChange: (Int, Boolean) -> Unit = { _, _ -> }
-) {
-    val listState = rememberLazyListState()
-
-    // Check if content is scrollable and track scroll
-    LaunchedEffect(
-        listState.firstVisibleItemScrollOffset,
-        listState.firstVisibleItemIndex,
-        listState.layoutInfo
-    ) {
-        val layoutInfo = listState.layoutInfo
-        val totalHeight = layoutInfo.visibleItemsInfo.sumOf { it.size.toLong() }
-        val viewportHeight = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
-        val isScrollable = totalHeight > viewportHeight
-
-        val scrollOffset =
-            listState.firstVisibleItemIndex * 1000 + listState.firstVisibleItemScrollOffset
-        onScrollChange(scrollOffset, isScrollable)
-    }
-
-    ODSLazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize(),
-        gap = DSVariables.spacingComponent3,
-        padding = ODSPadding(
-            horizontal = DSVariables.spacingComponent4, vertical = DSVariables.spacingComponent3
-        )
-    ) {
-        if (uiProps.availableRewards.isNotEmpty()) {
-            item {
-                ODSColumn(
-                    modifier = Modifier.fillMaxWidth(), gap = DSVariables.spacingComponent2
-                ) {
-                    ODSText(
-                        text = "Available rewards",
-                        style = DSTextStyles.subtitle,
-                        color = scheme.basicText
-                    )
-                    LazyRow(
-                        state = rememberLazyListState(),
-                        horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent3),
-                        contentPadding = PaddingValues(horizontal = 0.dp)
-                    ) {
-                        items(uiProps.availableRewards) { reward ->
-                            RewardCardV2(
-                                title = reward.title,
-                                description = reward.description,
-                                coin = reward.coin,
-                                image = reward.imageUrl?.let {
-                                    ODSImageModel(
-                                        url = it, contentDescription = reward.title
-                                    )
-                                },
-                                tag = reward.tagUrl?.let {
-                                    ODSImageModel(
-                                        url = it, contentDescription = "Reward tag"
-                                    )
-                                },
-                                onClaimClick = {
-                                    // TODO: Handle claim click
-                                },
-                                onClick = {
-                                    // TODO: Handle card click
-                                },
-                                modifier = Modifier.fillParentMaxWidth(0.6f),
-                                scheme = scheme
-                            )
-                        }
-                    }
-                }
-            }
-        } else {
-            item {
-                ODSBox(
-                    modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-                ) {
-                    ODSText(
-                        text = "No rewards available",
-                        style = DSTextStyles.bodyMRegular,
-                        color = scheme.basicTextRecessive
-                    )
-                }
-            }
-        }
-    }
-}
-
 /**
  * Bottom sheet for displaying challenge rules
  */
@@ -952,7 +927,9 @@ private fun RulesBottomSheet(
         onCloseClicked = onDismiss,
         titleSlot = {
             ODSText(
-                text = "Rules", style = DSTextStyles.titleS, color = scheme.basicText
+                text = stringResource(R.string.rules),
+                style = DSTextStyles.titleS,
+                color = scheme.basicText
             )
         },
         contentSlot = {

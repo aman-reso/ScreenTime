@@ -95,7 +95,11 @@ object DateUtils {
      * Format date and time to "MMM dd, HH:mm" pattern (e.g., "Jan 15, 14:30")
      */
     fun formatDateTime(isoString: String): String {
-        return format(isoString, "MMM dd, HH:mm")
+        return try {
+            format(isoString, "MMM dd, HH:mm")
+        } catch (e: Throwable) {
+            ""
+        }
     }
 
     /**
@@ -294,6 +298,33 @@ object DateUtils {
             }
         } catch (e: Exception) {
             "N/A"
+        }
+    }
+
+    /**
+     * Get time ago string from milliseconds
+     * @param timestampMs Timestamp in milliseconds
+     * @return Formatted string (e.g., "2 hours ago", "5 minutes ago", "3 days ago")
+     */
+    fun getTimeAgo(timestampMs: Long): String {
+        val now = nowMillis()
+        val diff = now - timestampMs
+        val duration = Duration(diff)
+        
+        return when {
+            duration.standardDays > 0 -> {
+                val days = duration.standardDays
+                if (days == 1L) "1 day ago" else "$days days ago"
+            }
+            duration.standardHours > 0 -> {
+                val hours = duration.standardHours
+                if (hours == 1L) "1 hour ago" else "$hours hours ago"
+            }
+            duration.standardMinutes > 0 -> {
+                val minutes = duration.standardMinutes
+                if (minutes == 1L) "1 minute ago" else "$minutes minutes ago"
+            }
+            else -> "Just now"
         }
     }
 }

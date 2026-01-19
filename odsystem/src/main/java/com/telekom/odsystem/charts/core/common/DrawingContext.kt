@@ -10,20 +10,20 @@ import com.telekom.odsystem.charts.core.common.data.ExtraStore
 import kotlin.math.roundToInt
 
 /** A [MeasuringContext] extension with a [Canvas] reference. */
-public interface DrawingContext : MeasuringContext {
+interface DrawingContext : MeasuringContext {
   /** The canvas to draw the chart on. */
-  public val canvas: Canvas
+  val canvas: Canvas
 
   /**
    * Updates the value of [DrawingContext.canvas] to [canvas], runs [block], and restores the
    * previous [DrawingContext.canvas] value.
    */
-  public fun withCanvas(canvas: Canvas, block: () -> Unit)
+  fun withCanvas(canvas: Canvas, block: () -> Unit)
 }
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun DrawingContext(
+fun DrawingContext(
   canvas: Canvas,
   density: Float = 1f,
   isLtr: Boolean = true,

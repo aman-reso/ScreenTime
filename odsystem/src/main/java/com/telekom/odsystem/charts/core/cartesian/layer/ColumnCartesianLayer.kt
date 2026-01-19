@@ -57,7 +57,7 @@ import kotlin.math.min
  *   [ColumnCartesianLayerDrawingModel]s.
  */
 @Stable
-public open class ColumnCartesianLayer
+open class ColumnCartesianLayer
 protected constructor(
     protected val columnProvider: ColumnProvider,
     protected val columnCollectionSpacingDp: Float = Defaults.COLUMN_COLLECTION_SPACING,
@@ -85,7 +85,7 @@ protected constructor(
     override val markerTargets: Map<Double, List<CartesianMarker.Target>> = _markerTargets
 
     /** Creates a [ColumnCartesianLayer]. */
-    public constructor(
+    constructor(
         columnProvider: ColumnProvider,
         columnCollectionSpacingDp: Float = Defaults.COLUMN_COLLECTION_SPACING,
         mergeMode: (ExtraStore) -> MergeMode = { MergeMode.Grouped() },
@@ -470,18 +470,18 @@ protected constructor(
 
     /** Defines how a [ColumnCartesianLayer] should draw columns in column collections. */
     @Immutable
-    public sealed interface MergeMode {
+    sealed interface MergeMode {
         /** Returns the minimum _y_ value. */
-        public fun getMinY(model: ColumnCartesianLayerModel): Double
+        fun getMinY(model: ColumnCartesianLayerModel): Double
 
         /** Returns the maximum _y_ value. */
-        public fun getMaxY(model: ColumnCartesianLayerModel): Double
+        fun getMaxY(model: ColumnCartesianLayerModel): Double
 
         /**
          * Groups columns with matching _x_ values horizontally, positioning them [columnSpacingDp] dp
          * apart.
          */
-        public class Grouped(internal val columnSpacingDp: Float = Defaults.GROUPED_COLUMN_SPACING) :
+        class Grouped(internal val columnSpacingDp: Float = Defaults.GROUPED_COLUMN_SPACING) :
             MergeMode {
             override fun getMinY(model: ColumnCartesianLayerModel): Double = model.minY
 
@@ -494,14 +494,14 @@ protected constructor(
         }
 
         /** Stacks columns with matching _x_ values. */
-        public data object Stacked : MergeMode {
+        data object Stacked : MergeMode {
             override fun getMinY(model: ColumnCartesianLayerModel): Double = model.minAggregateY
 
             override fun getMaxY(model: ColumnCartesianLayerModel): Double = model.maxAggregateY
         }
 
         /** Provides access to [MergeMode] factory functions. */
-        public companion object
+        companion object
     }
 
     override fun prepareForTransformation(
@@ -533,7 +533,7 @@ protected constructor(
             .let(::ColumnCartesianLayerDrawingModel)
 
     /** Creates a new [ColumnCartesianLayer] based on this one. */
-    public fun copy(
+    fun copy(
         columnProvider: ColumnProvider = this.columnProvider,
         columnCollectionSpacingDp: Float = this.columnCollectionSpacingDp,
         mergeMode: (ExtraStore) -> MergeMode = this.mergeMode,
@@ -598,7 +598,7 @@ protected constructor(
         var topHeight: Float = 0f,
         var bottomHeight: Float = 0f,
     ) {
-        public fun update(y: Double, height: Float) {
+        fun update(y: Double, height: Float) {
             if (y >= 0f) {
                 topY += y
                 topHeight += height
@@ -611,19 +611,19 @@ protected constructor(
 
     /** Provides column [LineComponent]s to [ColumnCartesianLayer]s. */
     @Immutable
-    public interface ColumnProvider {
+    interface ColumnProvider {
         /** Returns the [LineComponent] for the column with the given properties. */
-        public fun getColumn(
+        fun getColumn(
             entry: ColumnCartesianLayerModel.Entry,
             seriesIndex: Int,
             extraStore: ExtraStore,
         ): LineComponent
 
         /** Returns the widest column [LineComponent] for the specified series. */
-        public fun getWidestSeriesColumn(seriesIndex: Int, extraStore: ExtraStore): LineComponent
+        fun getWidestSeriesColumn(seriesIndex: Int, extraStore: ExtraStore): LineComponent
 
         /** Houses [ColumnProvider] factory functions. */
-        public companion object {
+        companion object {
             private data class Series(private val columns: List<LineComponent>) : ColumnProvider {
                 override fun getColumn(
                     entry: ColumnCartesianLayerModel.Entry,
@@ -640,14 +640,14 @@ protected constructor(
              * index. If there are more series than [LineComponent]s, [columns] is iterated multiple
              * times.
              */
-            public fun series(columns: List<LineComponent>): ColumnProvider = Series(columns)
+            fun series(columns: List<LineComponent>): ColumnProvider = Series(columns)
 
             /**
              * Uses one [LineComponent] per series. The [LineComponent]s and series are associated by
              * index. If there are more series than [LineComponent]s, the [LineComponent] list is iterated
              * multiple times.
              */
-            public fun series(vararg columns: LineComponent): ColumnProvider =
+            fun series(vararg columns: LineComponent): ColumnProvider =
                 series(columns.toList())
         }
     }

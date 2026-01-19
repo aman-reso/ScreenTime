@@ -1,6 +1,7 @@
 package com.app.screentime.challenge.model
 
 import androidx.compose.runtime.Stable
+import com.app.screentime.network.model.AppDetail
 import com.app.screentime.network.model.LeaderboardEntry
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
@@ -50,6 +51,9 @@ data class ChallengeDetailUiProps(
     
     // Rewards
     val availableRewards: List<ChallengeReward>,
+    
+    // App Details
+    val appDetails: List<AppDetail>? = null, // List of app details with name and URL
     
     // Actions
     val showJoinButton: Boolean

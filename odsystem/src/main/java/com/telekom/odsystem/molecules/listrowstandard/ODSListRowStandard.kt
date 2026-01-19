@@ -14,6 +14,7 @@ import com.telekom.odsystem.atoms.ODSImage
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.foundations.sizeWithinBounds
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
@@ -34,14 +35,15 @@ fun ODSListRowStandard(
     style: ODSListRowStandardStyle = ODSListRowStandardStyle().getStyle(
         scheme = scheme,
         props = props
-    )
+    ),
+    contentPadding: ODSPadding? = null
 ) {
     ODSRow(
         modifier = modifier
             .fillMaxWidth()
             .sizeWithinBounds(minHeight = style.minHeight ?: Dp.Unspecified),
         gap = style.gap,
-        padding = style.padding,
+        padding = contentPadding ?: style.padding,
         horizontalArrangement = style.horizontalArrangement,
         horizontalAlignment = style.horizontalAlignment,
         verticalAlignment = style.verticalAlignment
@@ -93,8 +95,8 @@ fun ODSListRowStandard(
             verticalAlignment = style.textContentVerticalAlignment
         ) {
             val hasDescription = props.showDescriptionTitle &&
-                    (!props.descriptionTitle.isNullOrEmpty() || !props.descriptionTitleHtml.isNullOrEmpty() || 
-                     !props.descriptionText.isNullOrEmpty() || !props.descriptionTextHtml.isNullOrEmpty())
+                    (!props.descriptionTitle.isNullOrEmpty() || !props.descriptionTitleHtml.isNullOrEmpty() ||
+                            !props.descriptionText.isNullOrEmpty() || !props.descriptionTextHtml.isNullOrEmpty())
 
             ODSColumn(
                 modifier = Modifier

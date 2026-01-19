@@ -26,7 +26,7 @@ import com.telekom.odsystem.charts.core.common.shape.Shape
 
 /** Creates and remembers a [LineComponent]. */
 @Composable
-public fun rememberLineComponent(
+fun rememberLineComponent(
     fill: Fill = Fill.Black,
     thickness: Dp = Defaults.LINE_COMPONENT_THICKNESS_DP.dp,
     shape: Shape = Shape.Rectangle,
@@ -48,7 +48,7 @@ public fun rememberLineComponent(
     }
 
 /** Creates a [ShapeComponent]. */
-public fun shapeComponent(
+fun shapeComponent(
     fill: Fill = Fill.Black,
     shape: Shape = Shape.Rectangle,
     margins: Insets = Insets.Zero,
@@ -59,7 +59,7 @@ public fun shapeComponent(
 
 /** Creates and remembers a [ShapeComponent]. */
 @Composable
-public fun rememberShapeComponent(
+fun rememberShapeComponent(
     fill: Fill = Fill.Black,
     shape: Shape = Shape.Rectangle,
     margins: Insets = Insets.Zero,
@@ -73,7 +73,7 @@ public fun rememberShapeComponent(
 
 /** Creates and remembers a [TextComponent]. */
 @Composable
-public fun rememberTextComponent(
+fun rememberTextComponent(
     color: Color = Color.Black,
     typeface: Typeface = Typeface.DEFAULT,
     textSize: TextUnit = Defaults.TEXT_COMPONENT_TEXT_SIZE.sp,
@@ -115,9 +115,9 @@ public fun rememberTextComponent(
     }
 
 /** Creates a [Shadow]. */
-public fun shadow(radius: Dp, x: Dp = 0.dp, y: Dp = 0.dp, color: Color? = null): Shadow =
+fun shadow(radius: Dp, x: Dp = 0.dp, y: Dp = 0.dp, color: Color? = null): Shadow =
     Shadow(radius.value, x.value, y.value, color?.toArgb() ?: Defaults.SHADOW_COLOR)
 
 /** A [Dp] version of [TextComponent.MinWidth.fixed]. */
-public fun TextComponent.MinWidth.Companion.fixed(value: Dp = 0.dp): TextComponent.MinWidth =
+fun TextComponent.MinWidth.Companion.fixed(value: Dp = 0.dp): TextComponent.MinWidth =
     fixed(value.value)

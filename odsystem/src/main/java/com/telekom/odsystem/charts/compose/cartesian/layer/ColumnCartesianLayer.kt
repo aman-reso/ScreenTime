@@ -24,7 +24,7 @@ import com.telekom.odsystem.charts.core.common.setValue
 
 /** Creates and remembers a [ColumnCartesianLayer]. */
 @Composable
-public fun rememberColumnCartesianLayer(
+fun rememberColumnCartesianLayer(
     columnProvider: ColumnCartesianLayer.ColumnProvider =
         ColumnCartesianLayer.ColumnProvider.series(
             vicoTheme.columnCartesianLayerColors.map { color ->
@@ -92,9 +92,9 @@ public fun rememberColumnCartesianLayer(
 }
 
 /** Creates a [MergeMode.Grouped] instance. */
-public fun MergeMode.Companion.grouped(
+fun MergeMode.Companion.grouped(
     columnSpacing: Dp = Defaults.GROUPED_COLUMN_SPACING.dp,
 ): MergeMode.Grouped = MergeMode.Grouped(columnSpacing.value)
 
 /** Returns a [MergeMode.Stacked] instance. */
-public fun MergeMode.Companion.stacked(): MergeMode.Stacked = MergeMode.Stacked
+fun MergeMode.Companion.stacked(): MergeMode.Stacked = MergeMode.Stacked

@@ -1,6 +1,7 @@
 package com.app.screentime.challenge.viewmodel
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,8 +9,6 @@ import com.app.screentime.challenge.model.ChallengeDetailUiProps
 import com.app.screentime.challenge.repository.ChallengeRepository
 import com.app.screentime.challenge.usecase.ChallengeDetailUseCase
 import com.app.screentime.challenge.util.ChallengeShareUtil
-import com.app.screentime.database.entity.JoinedChallengeEntity
-import com.app.screentime.database.repository.JoinedChallengeRepository
 import com.app.screentime.network.model.Challenge
 import com.app.screentime.network.model.ChallengeDetails
 import com.app.screentime.network.model.BatchChallengeStatsRequest
@@ -18,7 +17,10 @@ import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.record.repository.ScreenUsageHelper
 import com.app.screentime.record.repository.NetworkUsageHelper
 import com.app.screentime.sync.ChallengeSyncWorker
+import com.app.screentime.sync.ChallengeSyncManager
 import com.app.screentime.utils.DateUtils
+import com.app.screentime.analytics.AnalyticsUseCase
+import com.app.screentime.config.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -48,10 +50,11 @@ data class ChallengeDetailUiState(
 @HiltViewModel
 class ChallengeDetailViewModel @Inject constructor(
     private val challengeRepository: ChallengeRepository,
-    private val joinedChallengeRepository: JoinedChallengeRepository,
+    private val analyticsUseCase: AnalyticsUseCase,
     private val challengeDetailUseCase: ChallengeDetailUseCase,
     private val shareUtil: ChallengeShareUtil,
     private val preferencesUseCase: com.app.screentime.preferences.usecase.PreferencesUseCase,
+    private val challengeSyncManager: ChallengeSyncManager,
     @ApplicationContext
     private val context: Context
 ) : ViewModel() {
@@ -66,6 +69,13 @@ class ChallengeDetailViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(ChallengeDetailUiState())
     val uiState: StateFlow<ChallengeDetailUiState> = _uiState.asStateFlow()
+
+    /**
+     * Track screen view when challenge details are loaded
+     */
+    fun trackScreenView() {
+        analyticsUseCase.trackChallengeDetailScreen()
+    }
 
     /**
      * Load challenge details and rankings
@@ -137,6 +147,28 @@ class ChallengeDetailViewModel @Inject constructor(
         onSuccess: () -> Unit = {},
         onError: (String) -> Unit = {}
     ) {
+        // Check if any required app (from packageNames) is installed before joining
+        val packageNames = _uiState.value.challengeDetails?.packageNames
+        if (!packageNames.isNullOrBlank()) {
+            val packages = packageNames.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            if (packages.isNotEmpty()) {
+                val pm = context.packageManager
+                val anyInstalled = packages.any { pkg ->
+                    try {
+                        pm.getPackageInfo(pkg, 0)
+                        true
+                    } catch (_: PackageManager.NameNotFoundException) {
+                        false
+                    }
+                }
+                if (!anyInstalled) {
+                    val msg = context.getString(R.string.error_joining_required_app_not_installed)
+                    _uiState.value = _uiState.value.copy(error = msg)
+                    onError(msg)
+                    return
+                }
+            }
+        }
 
         if (_uiState.value.isJoining) {
             return
@@ -187,6 +219,13 @@ class ChallengeDetailViewModel @Inject constructor(
      */
     fun hasConsent(): Boolean {
         return preferencesUseCase.isConsentScreenShown()
+    }
+
+    /**
+     * Get current user ID
+     */
+    fun getCurrentUserId(): String? {
+        return preferencesUseCase.getUserId()
     }
 
     /**
@@ -248,7 +287,8 @@ class ChallengeDetailViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isSyncing = true)
 
             try {
-                // Get challenge details
+                // First, sync all challenges to ensure challenge data is up to date
+                challengeSyncManager.syncAllChallenges()
                 val challengeDetails = _uiState.value.challengeDetails
                     ?: challengeRepository.getChallengeDetails(challengeId).fold(
                         onSuccess = { response ->
@@ -445,66 +485,15 @@ class ChallengeDetailViewModel @Inject constructor(
     }
 
     /**
-     * Save challenge to local DB and schedule sync worker
-     * Always saves the challenge when user joins
+     * Save challenge when joining
+     * 
+     * MIGRATION: Removed database operations. Server is the source of truth.
+     * When user joins a challenge, server handles it via joinChallenge API.
      */
     private suspend fun saveChallengeAndScheduleSync(challengeDetails: ChallengeDetails) {
-        try {
-            val existing = joinedChallengeRepository.getJoinedChallengeById(challengeDetails.id)
-            if (existing != null) {
-                val needsUpdate = existing.title != challengeDetails.title ||
-                        existing.description != challengeDetails.description ||
-                        existing.reward != challengeDetails.reward ||
-                        existing.startTime != challengeDetails.startTime ||
-                        existing.endTime != challengeDetails.endTime ||
-                        existing.thumbnail != challengeDetails.thumbnail ||
-                        existing.packageNames != challengeDetails.packageNames
-
-                if (needsUpdate) {
-                    val updated = existing.copy(
-                        packageNames = challengeDetails.packageNames,
-                        title = challengeDetails.title,
-                        description = challengeDetails.description,
-                        reward = challengeDetails.reward,
-                        startTime = challengeDetails.startTime,
-                        endTime = challengeDetails.endTime,
-                        thumbnail = challengeDetails.thumbnail
-                    )
-                    joinedChallengeRepository.updateJoinedChallenge(updated)
-                    Log.d(
-                        "ChallengeDetailViewModel",
-                        "Updated existing joined challenge ${challengeDetails.id}"
-                    )
-                }
-            } else {
-                // Create new entity - always save when joining
-                val joinedAt = DateUtils.formatISO8601(
-                    DateUtils.now()
-                )
-                val entity = JoinedChallengeEntity(
-                    challengeId = challengeDetails.id,
-                    title = challengeDetails.title,
-                    description = challengeDetails.description,
-                    reward = challengeDetails.reward,
-                    startTime = challengeDetails.startTime,
-                    endTime = challengeDetails.endTime,
-                    thumbnail = challengeDetails.thumbnail,
-                    joinedAt = joinedAt,
-                    lastSyncTime = 0L,
-                    syncScheduled = true,
-                    packageNames = challengeDetails.packageNames
-                )
-
-                // Save to database
-                joinedChallengeRepository.insertJoinedChallenge(entity)
-                Log.d(
-                    "ChallengeDetailViewModel",
-                    "Saved new joined challenge ${challengeDetails.id} to database"
-                )
-            }
-        } catch (e: Exception) {
-            Log.e("ChallengeDetailViewModel", "Failed to save challenge or schedule sync", e)
-        }
+        // Server is the source of truth - joining is handled by server API
+        // This method is kept for compatibility but does nothing
+        Log.d("ChallengeDetailViewModel", "Challenge join is managed by server - no local DB save needed")
     }
 }
 

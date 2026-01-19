@@ -6,7 +6,5 @@ import com.app.screentime.network.model.*
 /**
  * Service interface for Blocked Domain related API operations
  */
-interface BlockedDomainService {
-
-}
+interface BlockedDomainService
 

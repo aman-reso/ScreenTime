@@ -98,7 +98,7 @@ class ODSListRowStandardStyle {
         style.labelColor = scheme.basicText
         style.labelTextAlign = DSListRowStandardTokens.labelTextAlign
         style.labelTextStyle = DSListRowStandardTokens.labelTextStyle
-        style.labelTextColor = scheme.basicTextRecessive
+        style.labelTextColor = scheme.basicText
         style.labelTextTextAlign = DSListRowStandardTokens.labelTextTextAlign
         style.descriptionTextContentGap = DSListRowStandardTokens.descriptionTextContentGap
         style.descriptionTextContentPadding = DSListRowStandardTokens.descriptionTextContentPadding

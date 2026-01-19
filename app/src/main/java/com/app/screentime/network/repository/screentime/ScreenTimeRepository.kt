@@ -28,5 +28,17 @@ class ScreenTimeRepository @Inject constructor(
     suspend fun getUsageLastSyncTime(): Result<ApiResponse<UsageLastSyncResponse>> {
         return screenTimeService.getUsageLastSyncTime()
     }
+
+    suspend fun getSummaryScreenTime(request: SummaryScreenTimeRequest): Result<ApiResponse<SummaryScreenTimeResponseData>> {
+        return screenTimeService.getSummaryScreenTime(request)
+    }
+
+    suspend fun submitAppStats(request: AppStatsRequest): Result<ApiResponse<AppStatsResponse>> {
+        return screenTimeService.submitAppStats(request)
+    }
+
+    suspend fun getAppStats(date: String, targetUserName: String): Result<ApiResponse<AppStatsGetResponse>> {
+        return screenTimeService.getAppStats(date, targetUserName)
+    }
 }
 

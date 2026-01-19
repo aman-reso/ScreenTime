@@ -3,7 +3,7 @@ package com.telekom.odsystem.charts.core.cartesian.layer
 import androidx.annotation.RestrictTo
 
 /** An implementation of [CartesianLayerDimensions] whose every property is mutable. */
-public class MutableCartesianLayerDimensions(
+class MutableCartesianLayerDimensions(
   override var xSpacing: Float = 0f,
   override var scalableStartPadding: Float = 0f,
   override var scalableEndPadding: Float = 0f,
@@ -25,7 +25,7 @@ public class MutableCartesianLayerDimensions(
   }
 
   /** Ensures that the stored values are no smaller than those provided. */
-  public fun ensureValuesAtLeast(
+  fun ensureValuesAtLeast(
     xSpacing: Float = 0f,
     scalableStartPadding: Float = 0f,
     scalableEndPadding: Float = 0f,
@@ -42,7 +42,7 @@ public class MutableCartesianLayerDimensions(
   }
 
   /** Clears the stored values. */
-  public fun clear() {
+  fun clear() {
     xSpacing = 0f
     scalableStartPadding = 0f
     scalableEndPadding = 0f
@@ -53,7 +53,7 @@ public class MutableCartesianLayerDimensions(
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun MutableCartesianLayerDimensions.scale(factor: Float) {
+fun MutableCartesianLayerDimensions.scale(factor: Float) {
   set(
     factor * xSpacing,
     factor * scalableStartPadding,

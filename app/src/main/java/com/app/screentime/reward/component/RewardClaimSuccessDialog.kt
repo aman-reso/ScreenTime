@@ -131,7 +131,7 @@ fun RewardClaimSuccessDialog(
                         props = ODSButtonProps(
                             label = "Track Order",
                             variant = ODSButtonVariant.SECONDARY,
-                            size = ODSButtonSize.LARGE
+                            size = ODSButtonSize.SMALL
                         ),
                         onClick = {
                             onKeepTradingClick()

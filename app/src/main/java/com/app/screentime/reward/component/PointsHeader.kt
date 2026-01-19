@@ -9,16 +9,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
-import com.telekom.odsystem.R
+import com.telekom.odsystem.R as ODSR
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
@@ -30,6 +26,22 @@ import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.foundations.customClickable
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import com.app.screentime.reward.util.CoinLevelCalculator
+import com.app.screentime.reward.util.ExpiringCoinsCalculator
+import com.app.screentime.reward.model.CoinHistoryItem
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerVariant
+import com.telekom.odsystem.invertedScheme
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasicProps
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 
 /**
  * Points Header Component
@@ -37,14 +49,20 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
  */
 @Composable
 fun PointsHeader(
-    points: Int? = null,
     modifier: Modifier = Modifier,
+    points: Int? = null,
+    coinHistory: List<CoinHistoryItem> = emptyList(),
     onInfoClick: () -> Unit = {},
-    onOrderHistoryClick: () -> Unit = {},
-    onCoinHistoryClick: () -> Unit = {},
-    scheme: ODSTheme
+    scheme: ODSTheme,
+    showWatchAdSection: Boolean = true,
+    isAdLoading: Boolean = false,
+    adError: String? = null,
+    onWatchAdClick: () -> Unit = {}
 ) {
-    var showMenu by remember { mutableStateOf(false) }
+    val totalCoins = points ?: 0
+    val currentLevel = CoinLevelCalculator.calculateLevel(totalCoins)
+    val progressInLevel = CoinLevelCalculator.calculateProgressInLevel(totalCoins)
+    val expiringCoins = ExpiringCoinsCalculator.getNearestExpiringCoins(coinHistory) ?: 0
 
     ODSColumn(
         modifier = modifier.fillMaxWidth(),
@@ -55,7 +73,6 @@ fun PointsHeader(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ODSRow(
-            padding = ODSPadding(vertical = DSVariables.spacingComponent4),
             modifier = Modifier.wrapContentWidth(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
@@ -78,9 +95,9 @@ fun PointsHeader(
             ) {
                 ODSIcon(
                     iconModel = ODSIconModel(
-                        drawableRes = R.drawable.information_type_standard,
+                        drawableRes = ODSR.drawable.information_type_standard,
                         tint = scheme.basicTextRecessive,
-                        contentDescription = "Info"
+                        contentDescription = stringResource(R.string.info)
                     ),
                     modifier = Modifier.size(12.dp)
                 )
@@ -88,34 +105,51 @@ fun PointsHeader(
         }
 
         ODSText(
-            text = "Points Available",
-            style = DSTextStyles.oxBodyMRegular,
+            text = stringResource(R.string.available_coin),
+            style = DSTextStyles.bodyMBold,
             color = scheme.basicText,
             modifier = Modifier.wrapContentWidth()
         )
+
         Spacer(modifier = Modifier.height(DSVariables.spacingComponent5))
 
         ODSBox(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             PointsProgressBar(
-                currentLevel = 3,
-                progressInLevel = 0.3f,
+                currentLevel = currentLevel,
+                progressInLevel = progressInLevel,
                 scheme = scheme
             )
         }
 
-        ExpiringPointsBanner(
-            expiringPoints = 20,
-            onUseClick = {
-                // Handle use click
-            },
-            modifier = Modifier.fillMaxWidth(),
-            scheme = scheme
-        )
+        if (expiringCoins > 0) {
+            ExpiringPointsBanner(
+                expiringPoints = expiringCoins,
+                onUseClick = {
+                    // Handle use click - navigate to coin history or rewards
+                },
+                modifier = Modifier.fillMaxWidth(),
+                scheme = scheme
+            )
+        }
+
+        if (showWatchAdSection) {
+            Spacer(modifier = Modifier.height(DSVariables.spacingComponent5))
+            WatchAdSection(
+                isAdLoading = isAdLoading,
+                adError = adError,
+                onWatchAdClick = onWatchAdClick,
+                scheme = invertedScheme,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(DSVariables.spacingComponent4))
     }
 }
 
 /**
  * Progress bar with 5 segments
+ * Maps 10 levels to 5 visual segments (2 levels per segment)
  */
 @Composable
 private fun PointsProgressBar(
@@ -129,14 +163,27 @@ private fun PointsProgressBar(
     ) {
         val totalBarWidth = maxWidth * 0.6f
 
+        // Map 10 levels to 5 segments (2 levels per segment)
+        // Segment 0: Levels 1-2, Segment 1: Levels 3-4, etc.
+        val segmentIndex = (currentLevel - 1) / 2
+        val isInSecondHalfOfSegment = currentLevel % 2 == 0
+        val progressInSegment = if (isInSecondHalfOfSegment) {
+            // Even level means we're in the second half of the segment (level 2, 4, 6, 8, 10)
+            // First half (0.5) is already complete, add progress in second half
+            0.5f + (progressInLevel / 2f)
+        } else {
+            // Odd level means we're in the first half of the segment (level 1, 3, 5, 7, 9)
+            progressInLevel / 2f
+        }
+
         ODSBox(modifier = Modifier.wrapContentWidth()) {
             ODSRow(
                 modifier = Modifier.width(totalBarWidth),
                 gap = 4.dp, horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 repeat(5) { index ->
-                    val isFilled = index < currentLevel
-                    val isPartiallyFilled = index == currentLevel && progressInLevel > 0f
+                    val isFilled = index < segmentIndex
+                    val isPartiallyFilled = index == segmentIndex && progressInSegment > 0f
                     ODSBox(
                         modifier = Modifier
                             .weight(1f)
@@ -152,7 +199,7 @@ private fun PointsProgressBar(
                         if (isPartiallyFilled) {
                             ODSBox(
                                 modifier = Modifier
-                                    .fillMaxWidth(progressInLevel)
+                                    .fillMaxWidth(progressInSegment)
                                     .height(8.dp),
                                 background = listOf(ODSColorModel(scheme.basicAccent)),
                                 cornerRadius = ODSCorners(all = 4.dp)
@@ -163,4 +210,74 @@ private fun PointsProgressBar(
             }
         }
     }
+}
+
+/**
+ * Watch Ad Section Component
+ * Displays a card with title, subtitle, and watch ad button
+ */
+@Composable
+private fun WatchAdSection(
+    isAdLoading: Boolean,
+    adError: String?,
+    onWatchAdClick: () -> Unit,
+    scheme: ODSTheme,
+    modifier: Modifier = Modifier
+) {
+    ODSCardBasic(
+        modifier = modifier,
+        scheme = scheme,
+        contentPadding = ODSPadding(
+            horizontal = DSVariables.spacingComponent4,
+            vertical = DSVariables.spacingComponent3
+        ),
+        props = ODSCardBasicProps(),
+        contentSlot = {
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ODSColumn(
+                    modifier = Modifier.weight(1f),
+                    gap = DSVariables.spacingComponent1
+                ) {
+                    ODSText(
+                        text = stringResource(R.string.watch_ad_to_earn_coins),
+                        style = DSTextStyles.bodyMBold,
+                        color = scheme.basicText
+                    )
+                    ODSText(
+                        text = adError ?: stringResource(R.string.watch_ad_subtitle),
+                        style = DSTextStyles.bodySRegular,
+                        color = if (adError != null) {
+                            scheme.functionalDestructiveStandard
+                        } else {
+                            scheme.basicTextRecessive
+                        }
+                    )
+                }
+
+                if (isAdLoading) {
+                    ODSLoadingSpinner(
+                        scheme = scheme,
+                        props = ODSLoadingSpinnerProps(
+                            size = ODSLoadingSpinnerSize.SMALL,
+                            variant = ODSLoadingSpinnerVariant.STANDARD
+                        )
+                    )
+                } else {
+                    ODSButton(
+                        scheme = scheme,
+                        props = ODSButtonProps(
+                            label = stringResource(R.string.watch_ad),
+                            variant = ODSButtonVariant.OUTLINE,
+                            size = ODSButtonSize.SMALL
+                        ),
+                        onClick = onWatchAdClick
+                    )
+                }
+            }
+        }
+    )
 }

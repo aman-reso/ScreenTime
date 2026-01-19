@@ -8,5 +8,5 @@ import com.telekom.odsystem.charts.core.common.DefaultColors
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 @Composable
-public fun getDefaultColors(): DefaultColors =
+fun getDefaultColors(): DefaultColors =
     if (isSystemInDarkTheme()) DefaultColors.Dark else DefaultColors.Light

@@ -8,7 +8,7 @@ import java.util.Objects
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public class LinearGradientShaderProvider(
+class LinearGradientShaderProvider(
   private val colors: IntArray,
   private val positions: FloatArray?,
   private val isHorizontal: Boolean,

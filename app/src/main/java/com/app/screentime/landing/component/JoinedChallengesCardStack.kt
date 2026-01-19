@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.navigation.Screen
 import com.app.screentime.network.model.UserChallenge
 import com.telekom.odsystem.atoms.link.ODSLink
@@ -53,7 +53,7 @@ fun JoinedChallengesCardStack(
                     showCloseButton = false
                 ),
                 viewAllButtonProps = ODSCardNotificationStackViewAllButtonProps(
-                    buttonLabel = stringResource(R.string.view_all_challenges)
+                    buttonLabel = stringResource(R.string.view_all_challenge)
                 )
             ),
             onClick = {

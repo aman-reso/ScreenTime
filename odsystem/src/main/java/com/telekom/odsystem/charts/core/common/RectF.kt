@@ -8,7 +8,7 @@ import kotlin.math.sin
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun RectF.set(left: Number, top: Number, right: Number, bottom: Number) {
+fun RectF.set(left: Number, top: Number, right: Number, bottom: Number) {
   set(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
 }
 

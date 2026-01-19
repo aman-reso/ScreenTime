@@ -6,12 +6,10 @@ sealed class Screen {
     object Profile : Screen()
 
     object Search : Screen() // Removed - Search feature disabled
-    data class RecordDetail(val params: RecordDetailParams? = null) : Screen() {
-    }
+    data class RecordDetail(val params: RecordDetailParams? = null) : Screen()
 
     object Statistics : Screen()
-    data class SingleAppUsageDetail(val params: SingleAppUsageDetailParams? = null) : Screen() {
-    }
+    data class SingleAppUsageDetail(val params: SingleAppUsageDetailParams? = null) : Screen()
 
     object Permission : Screen()
     object FocusMode : Screen()
@@ -32,5 +30,9 @@ sealed class Screen {
         Screen() // Removed - Reward feature disabled
 
     object Wallpaper : Screen() // Removed - Wallpaper feature disabled
+    data class FullScreenWallpaper(val params: FullScreenWallpaperParams? = null) : Screen()
     object CapturedNotifications : Screen()
+    object ControlCenter : Screen()
+    object ManageLocation : Screen()
+    object FileManager : Screen()
 }

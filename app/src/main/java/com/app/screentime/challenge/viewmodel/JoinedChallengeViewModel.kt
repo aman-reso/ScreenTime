@@ -45,10 +45,6 @@ class JoinedChallengeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(JoinedChallengesUiState())
     val uiState: StateFlow<JoinedChallengesUiState> = _uiState.asStateFlow()
 
-    init {
-        loadJoinedChallenges()
-    }
-
     /**
      * Load joined challenges from API
      */

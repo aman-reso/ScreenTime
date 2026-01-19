@@ -16,9 +16,9 @@ import com.telekom.odsystem.charts.core.common.shader.ShaderProvider.Companion.c
 
 /** Creates [Shader]s on demand. */
 @Immutable
-public fun interface ShaderProvider {
+fun interface ShaderProvider {
   /** Returns a [Shader] for the given bounds. */
-  public fun getShader(
+  fun getShader(
     context: DrawingContext,
     left: Float,
     top: Float,
@@ -26,9 +26,9 @@ public fun interface ShaderProvider {
     bottom: Float,
   ): Shader
 
-  public companion object {
+  companion object {
     /** Creates a [BitmapShader]-producing [ShaderProvider]. */
-    public fun bitmap(
+    fun bitmap(
       bitmap: Bitmap,
       xTileMode: Shader.TileMode = Shader.TileMode.REPEAT,
       yTileMode: Shader.TileMode = xTileMode,
@@ -36,14 +36,14 @@ public fun interface ShaderProvider {
 
     /** Creates a [ComposeShader]-producing [ShaderProvider]. */
     @RequiresApi(Build.VERSION_CODES.Q)
-    public fun compose(
+    fun compose(
       first: ShaderProvider,
       second: ShaderProvider,
       mode: BlendMode,
     ): ShaderProvider = ComposeShaderProvider(first, second, ComposeShaderProvider.Mode.Blend(mode))
 
     /** Creates a [ComposeShader]-producing [ShaderProvider]. */
-    public fun compose(
+    fun compose(
       first: ShaderProvider,
       second: ShaderProvider,
       mode: PorterDuff.Mode,
@@ -51,30 +51,30 @@ public fun interface ShaderProvider {
       ComposeShaderProvider(first, second, ComposeShaderProvider.Mode.PorterDuff(mode))
 
     /** Creates a [ShaderProvider] that produces a horizontal gradient. */
-    public fun horizontalGradient(vararg colors: Int): ShaderProvider = horizontalGradient(colors)
+    fun horizontalGradient(vararg colors: Int): ShaderProvider = horizontalGradient(colors)
 
     /**
      * Creates a [ShaderProvider] that produces a horizontal gradient. [positions] specifies the
      * color-stop offsets (between 0 and 1), with `null` giving an even distribution.
      */
-    public fun horizontalGradient(colors: IntArray, positions: FloatArray? = null): ShaderProvider =
+    fun horizontalGradient(colors: IntArray, positions: FloatArray? = null): ShaderProvider =
       LinearGradientShaderProvider(colors, positions, true)
 
     /** Creates a [ShaderProvider] that produces a vertical gradient. */
-    public fun verticalGradient(vararg colors: Int): ShaderProvider = verticalGradient(colors)
+    fun verticalGradient(vararg colors: Int): ShaderProvider = verticalGradient(colors)
 
     /**
      * Creates a [ShaderProvider] that produces a vertical gradient. [positions] specifies the
      * color-stop offsets (between 0 and 1), with `null` giving an even distribution.
      */
-    public fun verticalGradient(colors: IntArray, positions: FloatArray? = null): ShaderProvider =
+    fun verticalGradient(colors: IntArray, positions: FloatArray? = null): ShaderProvider =
       LinearGradientShaderProvider(colors, positions, false)
 
     /**
      * Creates a [ShaderProvider] that produces [Shader]s wherein [component] is repeatedly drawn in
      * a grid or checkered pattern.
      */
-    public fun component(
+    fun component(
       component: Component,
       componentSizeDp: Float,
       checker: Boolean = true,
@@ -86,7 +86,7 @@ public fun interface ShaderProvider {
 }
 
 /** Converts this [Shader] to a [ShaderProvider]. */
-public fun Shader.toShaderProvider(): ShaderProvider = ShaderProvider { _, _, _, _, _ -> this }
+fun Shader.toShaderProvider(): ShaderProvider = ShaderProvider { _, _, _, _, _ -> this }
 
 internal fun ShaderProvider.getShader(context: DrawingContext, bounds: RectF) =
   getShader(context, bounds.left, bounds.top, bounds.right, bounds.bottom)

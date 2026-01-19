@@ -13,7 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.profile.viewmodel.ProfileViewModel
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
@@ -28,6 +28,7 @@ import com.telekom.odsystem.atoms.textfield.ODSTextFieldMode
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldProps
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldSize
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldSupportMessageProps
+import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
@@ -37,6 +38,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun EditUsernameBottomSheetContent(
     currentUsername: String?,
     onDismiss: () -> Unit,
+    onEditClick: (() -> Unit)? = null,
     viewModel: ProfileViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
@@ -45,7 +47,7 @@ fun EditUsernameBottomSheetContent(
     val uiProps by viewModel.uiProps.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val minLengthError = stringResource(R.string.username_min_length_error)
-    
+
     // Validate username length (minimum 3 characters)
     val trimmedUsername = usernameText.trim()
     val isValidUsername = trimmedUsername.length >= 3
@@ -73,6 +75,7 @@ fun EditUsernameBottomSheetContent(
                             ?: false) || trimmedUsername.isBlank() || trimmedUsername == currentUsername || !isValidUsername
                     ), onClick = {
                         if (isValidUsername) {
+                            onEditClick?.invoke()
                             viewModel.updateUsername(trimmedUsername) {
                                 onDismiss()
                             }
@@ -82,7 +85,8 @@ fun EditUsernameBottomSheetContent(
         }, titleSlot = {
             ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
-                gap = DSVariables.spacingComponent2
+                gap = DSVariables.spacingComponent2,
+                padding = ODSPadding(horizontal = DSVariables.spacingComponent3)
             ) {
                 ODSText(
                     text = stringResource(R.string.edit_username),

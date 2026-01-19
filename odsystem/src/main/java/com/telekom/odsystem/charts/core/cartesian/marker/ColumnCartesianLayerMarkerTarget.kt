@@ -5,12 +5,12 @@ import com.telekom.odsystem.charts.core.cartesian.data.ColumnCartesianLayerModel
 import com.telekom.odsystem.charts.core.cartesian.layer.ColumnCartesianLayer
 
 /** Houses information on a set of [ColumnCartesianLayer] columns to be marked. */
-public interface ColumnCartesianLayerMarkerTarget : CartesianMarker.Target {
+interface ColumnCartesianLayerMarkerTarget : CartesianMarker.Target {
     /**
      * Holds [Column] instances, each of which houses information on a [ColumnCartesianLayer] column
      * to be marked.
      */
-    public val columns: List<Column>
+    val columns: List<Column>
 
     /**
      * Houses information on a [ColumnCartesianLayer] column to be marked.
@@ -20,7 +20,7 @@ public interface ColumnCartesianLayerMarkerTarget : CartesianMarker.Target {
      *   sign of [ColumnCartesianLayerModel.Entry.y]).
      * @param color the column [LineComponent]’s color.
      */
-    public data class Column(
+    data class Column(
         val entry: ColumnCartesianLayerModel.Entry,
         val canvasY: Float,
         val color: Int,

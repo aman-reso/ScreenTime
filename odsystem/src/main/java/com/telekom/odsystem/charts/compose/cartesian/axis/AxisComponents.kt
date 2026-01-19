@@ -26,7 +26,7 @@ import com.telekom.odsystem.charts.core.common.shape.Shape
 
 /** A [rememberTextComponent] alias with defaults for [Axis] labels. */
 @Composable
-public fun rememberAxisLabelComponent(
+fun rememberAxisLabelComponent(
     color: Color = vicoTheme.textColor,
     typeface: Typeface = Typeface.DEFAULT,
     textSize: TextUnit = Defaults.AXIS_LABEL_SIZE.sp,
@@ -57,7 +57,7 @@ public fun rememberAxisLabelComponent(
 
 /** A [rememberLineComponent] alias with defaults for [Axis] lines. */
 @Composable
-public fun rememberAxisLineComponent(
+fun rememberAxisLineComponent(
     fill: Fill = fill(vicoTheme.lineColor),
     thickness: Dp = Defaults.AXIS_LINE_WIDTH.dp,
     shape: Shape = Shape.Rectangle,
@@ -70,7 +70,7 @@ public fun rememberAxisLineComponent(
 
 /** A [rememberLineComponent] alias with defaults for [Axis] ticks. */
 @Composable
-public fun rememberAxisTickComponent(
+fun rememberAxisTickComponent(
     fill: Fill = fill(vicoTheme.lineColor),
     thickness: Dp = Defaults.AXIS_LINE_WIDTH.dp,
     shape: Shape = Shape.Rectangle,
@@ -83,7 +83,7 @@ public fun rememberAxisTickComponent(
 
 /** A [rememberLineComponent] alias with defaults for [Axis] guidelines. */
 @Composable
-public fun rememberAxisGuidelineComponent(
+fun rememberAxisGuidelineComponent(
     fill: Fill = fill(vicoTheme.lineColor),
     thickness: Dp = Defaults.AXIS_GUIDELINE_WIDTH.dp,
     shape: Shape = dashedShape(),

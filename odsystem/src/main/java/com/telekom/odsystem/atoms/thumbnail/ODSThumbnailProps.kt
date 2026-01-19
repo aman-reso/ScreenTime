@@ -31,6 +31,6 @@ enum class ODSThumbnailType {
  */
 data class ODSThumbnailProps(
     var icon: ODSIconModel? = null,
-    var type: ODSThumbnailType = ODSThumbnailType.IMAGE,
+    var type: ODSThumbnailType = IMAGE,
     var image: ODSImageModel? = null, // Not exported by the plugin
 )

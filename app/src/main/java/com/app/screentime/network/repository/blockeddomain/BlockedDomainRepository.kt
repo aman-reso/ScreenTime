@@ -12,7 +12,5 @@ import javax.inject.Singleton
 @Singleton
 class BlockedDomainRepository @Inject constructor(
     private val blockedDomainService: BlockedDomainService
-) {
-
-}
+)
 

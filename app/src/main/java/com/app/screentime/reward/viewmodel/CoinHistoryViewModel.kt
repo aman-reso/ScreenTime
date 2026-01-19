@@ -2,11 +2,13 @@ package com.app.screentime.reward.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.screentime.config.R
 import com.app.screentime.reward.mapper.CoinHistoryMapper
 import com.app.screentime.reward.model.CoinHistoryFilter
 import com.app.screentime.reward.model.CoinHistoryUiState
 import com.app.screentime.reward.usecase.CoinHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CoinHistoryViewModel @Inject constructor(
-    private val coinHistoryUseCase: CoinHistoryUseCase
+    private val coinHistoryUseCase: CoinHistoryUseCase,
+    @ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CoinHistoryMapper.toLoadingUiState())
@@ -39,7 +42,7 @@ class CoinHistoryViewModel @Inject constructor(
                 },
                 onFailure = { exception ->
                     _uiState.value = CoinHistoryMapper.toErrorUiState(
-                        error = exception.message ?: "Failed to load coin history"
+                        error = exception.message ?: context.getString(R.string.failed_to_load_coin_history)
                     )
                 }
             )
@@ -60,6 +63,7 @@ class CoinHistoryViewModel @Inject constructor(
         _uiState.value = currentState.copy(error = null)
     }
 }
+
 
 
 

@@ -157,10 +157,10 @@ data class ODSCardChoiceProps(
     var filled: Boolean = true,
     var readOnly: Boolean = false,
     var selected: Boolean = false,
-    var selectorAlignment: ODSCardChoiceSelectorAlignment = ODSCardChoiceSelectorAlignment.TOP,
-    var selectorPosition: ODSCardChoiceSelectorPosition = ODSCardChoiceSelectorPosition.LEFT,
+    var selectorAlignment: ODSCardChoiceSelectorAlignment = TOP,
+    var selectorPosition: ODSCardChoiceSelectorPosition = LEFT,
     var subtle: Boolean = false,
-    var type: ODSCardChoiceType = ODSCardChoiceType.RADIO_CHOICE,
+    var type: ODSCardChoiceType = RADIO_CHOICE,
     var radioIconProps: ODSCardChoiceRadioIconProps = ODSCardChoiceRadioIconProps(), // Not exported by the plugin
     var switchIconProps: ODSCardChoiceSwitchIconProps = ODSCardChoiceSwitchIconProps(), // Not exported by the plugin
     var checkboxIconProps: ODSCardChoiceCheckboxIconProps = ODSCardChoiceCheckboxIconProps(), // Not exported by the plugin

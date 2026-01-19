@@ -22,7 +22,6 @@ import androidx.core.graphics.createBitmap
 /**
  * Utility class for sharing challenge content
  */
-@Singleton
 class ChallengeShareUtil @Inject constructor() {
 
     /**

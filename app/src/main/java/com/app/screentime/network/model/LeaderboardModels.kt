@@ -33,3 +33,14 @@ data class LeaderboardResponse(
     val totalUsers: Int = 0
 )
 
+/**
+ * Request model for updating leaderboard stats
+ */
+@Serializable
+data class LeaderboardStatsUpdateRequest(
+    val period: String,
+    val periodDate: String,
+    val totalScreenTime: Long,
+    val replace: Boolean = true
+)
+

@@ -8,10 +8,10 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
+import com.app.screentime.BuildConfig
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -41,8 +41,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.R
-import com.app.screentime.profile.component.ProfileTotpSection // Removed - TOTP feature disabled
+import com.app.screentime.changeLanguage
+import com.app.screentime.config.R
+import com.app.screentime.config.data.Feature
+import com.app.screentime.config.featureflag.FeatureFlagHelper
+import com.app.screentime.profile.component.ProfileTotpSection
 import com.app.screentime.profile.component.SettingsItemCard
 import com.app.screentime.profile.component.UserProfileCard
 import com.app.screentime.profile.dialog.LanguageSelectionDialog
@@ -54,7 +57,6 @@ import com.app.screentime.profile.model.ProfileUiProps
 import com.app.screentime.profile.model.SettingsItemClickResult
 import com.app.screentime.profile.viewmodel.ProfileViewModel
 import com.app.screentime.service.NotificationHistoryListener
-// import com.app.screentime.service.NotificationHistoryListener // Removed - Notification History feature disabled
 import com.app.screentime.ui.language.LanguageViewModel
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ui.theme.ThemeViewModel
@@ -66,8 +68,6 @@ import com.telekom.odsystem.atoms.ODSLazyColumn
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSPadding
-import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandard
-import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardProps
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import kotlinx.coroutines.launch
@@ -84,9 +84,13 @@ fun ProfileScreen(
     scheme: ODSTheme = neutralScheme,
     onNavigateToCapturedNotifications: () -> Unit = {},
     onNavigateToWallpaper: () -> Unit = {},
-    onNavigateToRecoverNotification: () -> Unit = {}
+    onNavigateToRecoverNotification: () -> Unit = {},
+    onNavigateToControlCenter: () -> Unit = {},
+    onNavigateToManageLocation: () -> Unit = {},
+    onNavigateToFileManager: () -> Unit = {}
     // Device Admin removed - not suitable for consumer apps
 ) {
+
     val activity = LocalActivity.current
     // Get theme mode for status bar styling
     val useDarkTheme = LocalThemeMode.current
@@ -100,10 +104,8 @@ fun ProfileScreen(
                         scheme.basicBackground.getIntColor(),
                         darkScrim = scheme.basicBackground.getIntColor()
                     )
-                },
-                navigationBarStyle = SystemBarStyle.auto(
-                    Color.TRANSPARENT,
-                    Color.TRANSPARENT
+                }, navigationBarStyle = SystemBarStyle.auto(
+                    Color.TRANSPARENT, Color.TRANSPARENT
                 )
             )
         }
@@ -115,9 +117,16 @@ fun ProfileScreen(
     val currentLanguage by languageViewModel.language.collectAsState()
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    
+    // Refresh language when dialog opens to ensure we have the latest value
+    LaunchedEffect(showLanguageDialog) {
+        if (showLanguageDialog) {
+            languageViewModel.refreshLanguage()
+        }
+    }
     var showHelpSupportBottomSheet by remember { mutableStateOf(false) }
-    var showBlockedSitesBottomSheet by remember { mutableStateOf(false) }
     var showEditUsernameBottomSheet by remember { mutableStateOf(false) }
+    var showFeedbackBottomSheet by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -126,6 +135,7 @@ fun ProfileScreen(
             currentTheme = currentTheme,
             onDismiss = { showThemeDialog = false },
             onThemeSelected = { theme ->
+                viewModel.trackThemeChange(theme)
                 themeViewModel.setTheme(theme)
                 showThemeDialog = false
             },
@@ -138,8 +148,11 @@ fun ProfileScreen(
             currentLanguage = currentLanguage,
             onDismiss = { showLanguageDialog = false },
             onLanguageSelected = { language ->
-                languageViewModel.setLanguage(language)
+                viewModel.trackLanguageChangeClick()
                 showLanguageDialog = false
+                coroutineScope.launch {
+                    changeLanguage(activity, language)
+                }
             },
             scheme = scheme
         )
@@ -150,6 +163,11 @@ fun ProfileScreen(
             onDismiss = { showHelpSupportBottomSheet = false })
     }
 
+    if (showFeedbackBottomSheet) {
+        FeedbackBottomSheetContent(
+            onDismiss = { showFeedbackBottomSheet = false })
+    }
+
 
     if (showEditUsernameBottomSheet) {
         EditUsernameBottomSheetContent(
@@ -157,7 +175,11 @@ fun ProfileScreen(
             onDismiss = {
                 showEditUsernameBottomSheet = false
                 viewModel.loadProfile() // Reload profile after dismissing
-            })
+            },
+            onEditClick = {
+                viewModel.trackEditUsernameClick()
+            }
+        )
     }
 
     // Handle settings item clicks
@@ -173,7 +195,9 @@ fun ProfileScreen(
         // Status bar padding
         ODSBox(
             modifier = Modifier
-                .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+                .height(
+                    WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                )
                 .fillMaxWidth()
         ) {}
 
@@ -194,8 +218,7 @@ fun ProfileScreen(
                             is ProfileSettingsUi.SectionTitle -> "section_title"
                             is ProfileSettingsUi.Restriction -> "restriction"
                         }
-                    }
-                ) { data ->
+                    }) { data ->
                     ProfileSettingsItem(
                         data = data,
                         scheme = scheme,
@@ -208,16 +231,17 @@ fun ProfileScreen(
                         onThemeDialogShow = { showThemeDialog = true },
                         onLanguageDialogShow = { showLanguageDialog = true },
                         onHelpSupportShow = { showHelpSupportBottomSheet = true },
+                        onFeedbackShow = { showFeedbackBottomSheet = true },
                         onUsernameClick = { showEditUsernameBottomSheet = true },
                         onNavigateToCapturedNotifications = onNavigateToCapturedNotifications,
                         onNavigateToWallpaper = onNavigateToWallpaper,
+                        onNavigateToControlCenter,
+                        onNavigateToManageLocation,
+                        onNavigateToFileManager
                     )
                 }
                 item {
-                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                }
-                item {
-                    CraftedWithLoveSection(scheme = scheme)
+                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent4))
                 }
             }
         }
@@ -235,21 +259,20 @@ fun CraftedWithLoveSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                top = DSVariables.spacingComponent5,
-                bottom = DSVariables.spacingComponent4
+                top = DSVariables.spacingComponent5, bottom = DSVariables.spacingComponent4
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
         gap = DSVariables.spacingComponent1
     ) {
         ODSText(
-            text = "Made with ❤️ in India",
-            style = DSTextStyles.oxSubtitle,
+            text = stringResource(R.string.made_with_love_india),
+            style = DSTextStyles.oxLinkSBold,
             color = scheme.basicText,
             textAlign = TextAlign.Center
         )
         ODSText(
             text = "& Crafted in Patna",
-            style = DSTextStyles.oxBodySRegular,
+            style = DSTextStyles.oxMicrocopyRegular,
             color = scheme.basicTextRecessive,
             textAlign = TextAlign.Center
         )
@@ -273,15 +296,19 @@ private fun ProfileSettingsItem(
     onThemeDialogShow: () -> Unit,
     onLanguageDialogShow: () -> Unit,
     onHelpSupportShow: () -> Unit,
+    onFeedbackShow: () -> Unit,
     onUsernameClick: () -> Unit,
     onNavigateToCapturedNotifications: () -> Unit,
     onNavigateToWallpaper: () -> Unit,
+    onNavigateToControlCenter: () -> Unit,
+    onNavigateToManageLocation: () -> Unit,
+    onNavigateToFileManager: () -> Unit
+
 ) {
     when (data) {
         is ProfileSettingsUi.ProfileData -> {
             ODSColumn(
-                modifier = Modifier.fillMaxWidth(),
-                gap = DSVariables.spacingComponent4
+                modifier = Modifier.fillMaxWidth(), gap = DSVariables.spacingComponent4
             ) {
                 UserProfileCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -292,8 +319,7 @@ private fun ProfileSettingsItem(
                 )
 
                 ProfileTotpSection(
-                    viewModel = viewModel,
-                    scheme = scheme
+                    viewModel = viewModel, scheme = scheme
                 )
             }
         }
@@ -311,8 +337,13 @@ private fun ProfileSettingsItem(
                             onThemeDialogShow = onThemeDialogShow,
                             onLanguageDialogShow = onLanguageDialogShow,
                             onHelpSupportShow = onHelpSupportShow,
+                            onFeedbackShow = onFeedbackShow,
                             onNavigateToCapturedNotifications = onNavigateToCapturedNotifications,
                             onNavigateToWallpaper = onNavigateToWallpaper,
+                            onNavigateToControlCenter = onNavigateToControlCenter,
+                            onNavigateToManageLocation = onNavigateToManageLocation,
+                            onNavigateToAppLock = onNavigateToAppLock,
+                            onNavigateToFileManager = onNavigateToFileManager
                         )
                     }
                 }
@@ -351,22 +382,39 @@ private fun handleSettingsItemClick(
     onThemeDialogShow: () -> Unit,
     onLanguageDialogShow: () -> Unit,
     onHelpSupportShow: () -> Unit,
+    onFeedbackShow: () -> Unit,
     onNavigateToCapturedNotifications: () -> Unit,
     onNavigateToWallpaper: () -> Unit,
+    onNavigateToControlCenter: () -> Unit,
+    onNavigateToManageLocation: () -> Unit,
+    onNavigateToAppLock: () -> Unit,
+    onNavigateToFileManager: () -> Unit
 ) {
-    val result = viewModel.handleSettingsItemClick(key, url)
-
-    when (result) {
+    when (val result = viewModel.handleSettingsItemClick(key, url)) {
         is SettingsItemClickResult.NavigateToScreen -> {
             when (result.route) {
+                "control_center" -> {
+                    viewModel.trackControlCenter()
+                    onNavigateToControlCenter()
+                }
+
+                "manage_location" -> {
+                    viewModel.trackLocationScreen()
+                    onNavigateToManageLocation()
+                }
+
                 "wallpaper" -> onNavigateToWallpaper() // Removed - Wallpaper feature disabled
-                "recover_notification" ->{
+                "recover_notification" -> {
+                    viewModel.trackNotificationRecoverClick()
                     if (isNotificationListenerEnabled(context)) {
                         onNavigateToCapturedNotifications()
                     } else {
                         openNotificationAccessSettings(context)
                     }
                 }
+
+                "app_lock" -> onNavigateToAppLock()
+                "file_manager" -> onNavigateToFileManager()
                 // Add other routes as needed
             }
         }
@@ -376,6 +424,7 @@ private fun handleSettingsItemClick(
                 DialogType.THEME -> onThemeDialogShow()
                 DialogType.LANGUAGE -> onLanguageDialogShow()
                 DialogType.HELP_SUPPORT -> onHelpSupportShow()
+                DialogType.FEEDBACK -> onFeedbackShow()
                 DialogType.BLOCKED_SITES -> {
 
                 }
@@ -392,7 +441,9 @@ private fun handleSettingsItemClick(
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
             } catch (e: Exception) {
-                Log.e("ProfileScreen", "Error opening URL: ${result.url}", e)
+                if (BuildConfig.DEBUG) {
+                    Log.e("ProfileScreen", "Error opening URL: ${result.url}", e)
+                }
             }
         }
 
@@ -403,6 +454,7 @@ private fun handleSettingsItemClick(
         }
 
         is SettingsItemClickResult.ShareApp -> {
+            viewModel.trackShareApp()
             shareApp(context)
         }
 
@@ -422,29 +474,30 @@ private fun shareApp(context: Context) {
         val appName = context.getString(R.string.app_name)
         val packageName = context.packageName
         val playStoreLink = "https://play.google.com/store/apps/details?id=$packageName"
-        val shareText =
-            "Check out $appName - Track your screen time and manage your app usage!\n\n$playStoreLink"
+        val shareText = context.getString(R.string.share_app_message, appName, playStoreLink)
 
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, shareText)
-            putExtra(Intent.EXTRA_SUBJECT, "Check out $appName")
+            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.share_app_subject, appName))
         }
 
-        val chooserIntent = Intent.createChooser(shareIntent, "Share App")
+        val chooserIntent =
+            Intent.createChooser(shareIntent, context.getString(R.string.share_app_chooser))
         chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooserIntent)
     } catch (e: Exception) {
-        Log.e("ProfileScreen", "Error sharing app", e)
+        if (BuildConfig.DEBUG) {
+            Log.e("ProfileScreen", "Error sharing app", e)
+        }
     }
 }
 
 
-private fun isNotificationListenerEnabled(context: Context): Boolean {
+fun isNotificationListenerEnabled(context: Context): Boolean {
     val packageName = context.packageName
     val flat = Settings.Secure.getString(
-        context.contentResolver,
-        "enabled_notification_listeners"
+        context.contentResolver, "enabled_notification_listeners"
     )
     if (!flat.isNullOrBlank()) {
         val names = flat.split(":")
@@ -463,10 +516,8 @@ fun openNotificationAccessSettings(context: Context) {
         val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS).apply {
                 putExtra(
-                    Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
-                    ComponentName(
-                        context,
-                        NotificationHistoryListener::class.java
+                    Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, ComponentName(
+                        context, NotificationHistoryListener::class.java
                     ).flattenToString()
                 )
             }
@@ -478,9 +529,7 @@ fun openNotificationAccessSettings(context: Context) {
         context.startActivity(intent)
     } catch (e: Exception) {
         Log.e(
-            "ProfileScreen",
-            "Error opening Notification Access Settings",
-            e
+            "ProfileScreen", "Error opening Notification Access Settings", e
         )
     }
 }

@@ -27,9 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import java.time.Instant
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.reward.component.CoinHistoryItem
 import com.app.screentime.reward.model.CoinHistoryFilter
 import com.app.screentime.reward.viewmodel.CoinHistoryViewModel
@@ -162,8 +163,12 @@ fun CoinHistoryScreen(
 
             ODSText(
                 text = stringResource(R.string.coin_history_title),
-                style = com.telekom.odsystem.DSTextStyles.bodyL,
-                color = scheme.basicText
+                style = com.telekom.odsystem.DSTextStyles.bodyMBold,
+                color = scheme.basicText,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             )
         }
 

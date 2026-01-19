@@ -5,29 +5,29 @@ package com.telekom.odsystem.charts.core.cartesian.layer
  *
  * @see CartesianLayerMarginUpdater
  */
-public class CartesianLayerMargins : HorizontalCartesianLayerMargins {
+class CartesianLayerMargins : HorizontalCartesianLayerMargins {
   /** The start margin’s size. */
-  public override var start: Float = 0f
+  override var start: Float = 0f
     private set
 
   /** The top margin’s size. */
-  public var top: Float = 0f
+  var top: Float = 0f
     private set
 
   /** The end margin’s size. */
-  public override var end: Float = 0f
+  override var end: Float = 0f
     private set
 
   /** The bottom margin’s size. */
-  public var bottom: Float = 0f
+  var bottom: Float = 0f
     private set
 
   /** The sum of [top] and [bottom]. */
-  public val vertical: Float
+  val vertical: Float
     get() = top + bottom
 
   /** The largest of [start], [top], [end], and [bottom]. */
-  public val max: Float
+  val max: Float
     get() = maxOf(start, top, end, bottom)
 
   override fun ensureValuesAtLeast(start: Float, end: Float) {
@@ -36,7 +36,7 @@ public class CartesianLayerMargins : HorizontalCartesianLayerMargins {
   }
 
   /** Ensures that the stored values are no smaller than those provided. */
-  public fun ensureValuesAtLeast(
+  fun ensureValuesAtLeast(
     start: Float = this.start,
     top: Float = this.top,
     end: Float = this.end,
@@ -49,7 +49,7 @@ public class CartesianLayerMargins : HorizontalCartesianLayerMargins {
   }
 
   /** Clears the stored values. */
-  public fun clear() {
+  fun clear() {
     start = 0f
     top = 0f
     end = 0f

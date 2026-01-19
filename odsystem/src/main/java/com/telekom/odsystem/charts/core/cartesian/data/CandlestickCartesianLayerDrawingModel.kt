@@ -8,9 +8,9 @@ import com.telekom.odsystem.charts.core.common.orZero
 /**
  * Houses drawing information for a [CandlestickCartesianLayer]. [opacity] is the columns’ opacity.
  */
-public class CandlestickCartesianLayerDrawingModel(
-    public val entries: Map<Double, Entry>,
-    public val opacity: Float = 1f,
+class CandlestickCartesianLayerDrawingModel(
+    val entries: Map<Double, Entry>,
+    val opacity: Float = 1f,
 ) : CartesianLayerDrawingModel<CandlestickCartesianLayerDrawingModel.Entry>(listOf(entries)) {
     override fun transform(
         entries: List<Map<Double, Entry>>,
@@ -42,11 +42,11 @@ public class CandlestickCartesianLayerDrawingModel(
      * @property bottomWickY the position of the bottom wick’s bottom edge.
      * @property topWickY the position of the top wick’s top edge.
      */
-    public class Entry(
-        public val bodyBottomY: Float,
-        public val bodyTopY: Float,
-        public val bottomWickY: Float,
-        public val topWickY: Float,
+    class Entry(
+        val bodyBottomY: Float,
+        val bodyTopY: Float,
+        val bottomWickY: Float,
+        val topWickY: Float,
     ) : CartesianLayerDrawingModel.Entry {
         override fun transform(
             from: CartesianLayerDrawingModel.Entry?,

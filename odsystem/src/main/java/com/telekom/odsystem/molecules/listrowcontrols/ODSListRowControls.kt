@@ -33,6 +33,7 @@ import com.telekom.odsystem.atoms.radioicon.ODSRadioIconSize
 import com.telekom.odsystem.atoms.switchicon.ODSSwitchIconProps
 import com.telekom.odsystem.atoms.switchicon.ODSSwitchIconSize
 import com.telekom.odsystem.foundations.ODSActions
+import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.foundations.OPACITY_ENABLED
 import com.telekom.odsystem.foundations.customClickable
 import com.telekom.odsystem.foundations.sizeWithinBounds
@@ -57,6 +58,7 @@ fun ODSListRowControls(
     onCheckboxClick: ((Boolean) -> Unit)? = null,
     onSwitchClick: ((Boolean) -> Unit)? = null,
     onRadioClick: (() -> Unit)? = null,
+    contentPadding: ODSPadding? = null
 ) {
     var pressed by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
@@ -72,6 +74,7 @@ fun ODSListRowControls(
         state = state
     )
     ODSListRowControlsContainer(
+        contentPadding = contentPadding,
         modifier = modifier,
         scheme = scheme,
         style = style,
@@ -99,7 +102,8 @@ private fun ODSListRowControlsContainer(
     state: ODSActions,
     props: ODSListRowControlsProps,
     isPressed: (Boolean) -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    contentPadding: ODSPadding? = null
 ) {
     ODSRow(
         modifier = modifier
@@ -115,7 +119,7 @@ private fun ODSListRowControlsContainer(
             ),
         cornerRadius = style.cornerRadius,
         gap = style.gap,
-        padding = style.padding,
+        padding = contentPadding ?: style.padding,
         horizontalArrangement = style.horizontalArrangement,
         horizontalAlignment = style.horizontalAlignment,
         verticalAlignment = style.verticalAlignment,

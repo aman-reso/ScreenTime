@@ -2,7 +2,20 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <cache-path name="share_images" path="share_images/" />
     <external-cache-path name="external_share_images" path="share_images/" />
+    <!-- External storage root for file sharing -->
+    <external-path name="external_files" path="." />
+    <!-- External media for images and videos -->
+    <external-files-path name="external_media" path="." />
+    <!-- Root of external storage -->
+    <root-path name="root" path="." />
 </paths>
+
+
+
+
+
+
+
 
 
 

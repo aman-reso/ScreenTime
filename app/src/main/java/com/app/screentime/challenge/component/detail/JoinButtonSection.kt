@@ -28,7 +28,7 @@ fun JoinButtonSection(
 ) {
     ODSBox(
         modifier = Modifier.fillMaxWidth(),
-        padding = ODSPadding(all = DSVariables.spacingComponent5)
+        padding = ODSPadding(horizontal = DSVariables.spacingComponent5)
     ) {
         ODSButton(
             modifier = Modifier.fillMaxWidth(),

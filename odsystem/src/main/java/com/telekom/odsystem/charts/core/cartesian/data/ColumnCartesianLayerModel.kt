@@ -6,11 +6,11 @@ import com.telekom.odsystem.charts.core.common.rangeOf
 import com.telekom.odsystem.charts.core.common.rangeOfPair
 
 /** Stores a [ColumnCartesianLayer]’s data. */
-public class ColumnCartesianLayerModel : CartesianLayerModel {
+class ColumnCartesianLayerModel : CartesianLayerModel {
     private val entries: List<Entry>
 
     /** The series (lists of [Entry] instances). */
-    public val series: List<List<Entry>>
+    val series: List<List<Entry>>
 
     override val id: Int
 
@@ -23,14 +23,14 @@ public class ColumnCartesianLayerModel : CartesianLayerModel {
     override val maxY: Double
 
     /** The minimum sum of all _y_ values associated with a given _x_ value. */
-    public val minAggregateY: Double
+    val minAggregateY: Double
 
     /** The maximum sum of all _y_ values associated with a given _x_ value. */
-    public val maxAggregateY: Double
+    val maxAggregateY: Double
 
     override val extraStore: ExtraStore
 
-    public constructor(series: List<List<Entry>>) : this(series, ExtraStore.Empty)
+    constructor(series: List<List<Entry>>) : this(series, ExtraStore.Empty)
 
     private constructor(series: List<List<Entry>>, extraStore: ExtraStore) {
         require(series.isNotEmpty()) { "At least one series should be added." }
@@ -120,9 +120,9 @@ public class ColumnCartesianLayerModel : CartesianLayerModel {
     }
 
     /** Represents a column of height [y] at [x]. */
-    public class Entry internal constructor(override val x: Double, public val y: Double) :
+    class Entry internal constructor(override val x: Double, val y: Double) :
         CartesianLayerModel.Entry {
-        public constructor(x: Number, y: Number) : this(x.toDouble(), y.toDouble())
+        constructor(x: Number, y: Number) : this(x.toDouble(), y.toDouble())
 
         override fun equals(other: Any?): Boolean =
             this === other || other is Entry && x == other.x && y == other.y
@@ -134,7 +134,7 @@ public class ColumnCartesianLayerModel : CartesianLayerModel {
      * Stores the minimum amount of data required to create a [ColumnCartesianLayerModel] and
      * facilitates this creation.
      */
-    public class Partial(private val series: List<List<Entry>>) : CartesianLayerModel.Partial {
+    class Partial(private val series: List<List<Entry>>) : CartesianLayerModel.Partial {
         override fun complete(extraStore: ExtraStore): CartesianLayerModel =
             ColumnCartesianLayerModel(series, extraStore)
 
@@ -145,35 +145,35 @@ public class ColumnCartesianLayerModel : CartesianLayerModel {
     }
 
     /** Facilitates the creation of [ColumnCartesianLayerModel]s and [Partial]s. */
-    public class BuilderScope internal constructor() {
+    class BuilderScope internal constructor() {
         internal val series = mutableListOf<List<Entry>>()
 
         /**
          * Adds a series with the provided _x_ values ([x]) and _y_ values ([y]). [x] and [y] should
          * have the same size.
          */
-        public fun series(x: Collection<Number>, y: Collection<Number>) {
+        fun series(x: Collection<Number>, y: Collection<Number>) {
             series.add(x.zip(y, ColumnCartesianLayerModel::Entry))
         }
 
         /** Adds a series with the provided _y_ values ([y]), using their indices as the _x_ values. */
-        public fun series(y: Collection<Number>) {
+        fun series(y: Collection<Number>) {
             series(y.indices.toList(), y)
         }
 
         /** Adds a series with the provided _y_ values ([y]), using their indices as the _x_ values. */
-        public fun series(vararg y: Number) {
+        fun series(vararg y: Number) {
             series(y.toList())
         }
     }
 
-    public companion object {
+    companion object {
         /** Creates a [ColumnCartesianLayerModel]. */
-        public fun build(block: BuilderScope.() -> Unit): ColumnCartesianLayerModel =
+        fun build(block: BuilderScope.() -> Unit): ColumnCartesianLayerModel =
             ColumnCartesianLayerModel(BuilderScope().apply(block).series)
 
         /** Creates a [Partial]. */
-        public fun partial(block: BuilderScope.() -> Unit): Partial =
+        fun partial(block: BuilderScope.() -> Unit): Partial =
             Partial(BuilderScope().apply(block).series)
     }
 }
@@ -182,7 +182,7 @@ public class ColumnCartesianLayerModel : CartesianLayerModel {
  * Calls [block] to create a [ColumnCartesianLayerModel.Partial] and adds it to the
  * [CartesianChartModelProducer.Transaction]’s [CartesianLayerModel.Partial] list.
  */
-public fun CartesianChartModelProducer.Transaction.columnSeries(
+fun CartesianChartModelProducer.Transaction.columnSeries(
     block: ColumnCartesianLayerModel.BuilderScope.() -> Unit
 ) {
     add(ColumnCartesianLayerModel.partial(block))

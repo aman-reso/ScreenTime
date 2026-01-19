@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -37,7 +37,7 @@ fun HelpSupportBottomSheetContent(
 ) {
     val context = LocalContext.current
 
-    val supportEmail = "help.testmate@gmail.com"
+    val supportEmail = "support@apptime.in"
 
     ODSBottomSheet(
         showBottomSheet = true,

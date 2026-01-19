@@ -137,7 +137,7 @@ sealed class ColorPalette {
             fun pickBenefitScheme(index: Int): ODSTheme = values[index % values.size].scheme
 
             fun pickSchemeRandom() =
-                pickBenefitScheme((0..BenefitScheme.values.size).random())
+                pickBenefitScheme((0..values.size).random())
         }
     }
 

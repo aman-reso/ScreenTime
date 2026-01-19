@@ -60,7 +60,7 @@ private const val DEF_LAYOUT_SIZE = 100000
  * @property minWidth defines the minimum width.
  */
 @Immutable
-public open class TextComponent(
+open class TextComponent(
     protected val color: Int = Color.BLACK,
     protected val typeface: Typeface = Typeface.DEFAULT,
     protected val textSizeSp: Float = Defaults.TEXT_COMPONENT_TEXT_SIZE,
@@ -70,7 +70,7 @@ public open class TextComponent(
     protected val truncateAt: TextUtils.TruncateAt? = TextUtils.TruncateAt.END,
     protected val margins: Insets = Insets.Zero,
     protected val padding: Insets = Insets.Zero,
-    public val background: Component? = null,
+    val background: Component? = null,
     protected val minWidth: MinWidth = MinWidth.fixed(),
 ) {
     private val textPaint =
@@ -95,7 +95,7 @@ public open class TextComponent(
      * @param maxHeight the maximum height available for the text (in pixels).
      * @param rotationDegrees the rotation of the text (in degrees).
      */
-    public fun draw(
+    fun draw(
         context: DrawingContext,
         text: CharSequence,
         x: Float,
@@ -246,7 +246,7 @@ public open class TextComponent(
      * Returns the width of this [TextComponent] for the given text and maximum dimensions. [pad]
      * defines whether to extend [text] by such a number of blank lines that it has [lineCount] lines.
      */
-    public fun getWidth(
+    fun getWidth(
         context: MeasuringContext,
         text: CharSequence? = null,
         maxWidth: Int = DEF_LAYOUT_SIZE,
@@ -268,7 +268,7 @@ public open class TextComponent(
      * Returns the height of this [TextComponent] for the given text and maximum dimensions. [pad]
      * defines whether to extend [text] by such a number of blank lines that it has [lineCount] lines.
      */
-    public fun getHeight(
+    fun getHeight(
         context: MeasuringContext,
         text: CharSequence? = null,
         maxWidth: Int = DEF_LAYOUT_SIZE,
@@ -291,7 +291,7 @@ public open class TextComponent(
      * dimensions. [pad] defines whether to extend [text] by such a number of blank lines that it has
      * [lineCount] lines.
      */
-    public fun getBounds(
+    fun getBounds(
         context: MeasuringContext,
         text: CharSequence? = null,
         maxWidth: Int = DEF_LAYOUT_SIZE,
@@ -327,7 +327,7 @@ public open class TextComponent(
         }
 
     /** Creates a new [TextComponent] based on this one. */
-    public open fun copy(
+    open fun copy(
         color: Int = this.color,
         typeface: Typeface = this.typeface,
         textSizeSp: Float = this.textSizeSp,
@@ -480,9 +480,9 @@ public open class TextComponent(
 
     /** Defines a [TextComponent]’s minimum width. */
     @Immutable
-    public fun interface MinWidth {
+    fun interface MinWidth {
         /** Returns the minimum width. */
-        public fun getValue(
+        fun getValue(
             context: MeasuringContext,
             textComponent: TextComponent,
             maxWidth: Int,
@@ -491,7 +491,7 @@ public open class TextComponent(
         ): Float
 
         /** Houses [MinWidth] factory functions. */
-        public companion object {
+        companion object {
             internal class Fixed(private val valueDp: Float) : MinWidth {
                 override fun getValue(
                     context: MeasuringContext,
@@ -529,14 +529,14 @@ public open class TextComponent(
             }
 
             /** Sets the minimum width to [valueDp] dp. */
-            public fun fixed(valueDp: Float = 0f): MinWidth = Fixed(valueDp)
+            fun fixed(valueDp: Float = 0f): MinWidth = Fixed(valueDp)
 
             /** Sets the minimum width to the intrinsic width of the [TextComponent] for [text]. */
-            public fun text(text: CharSequence): MinWidth = Text(text)
+            fun text(text: CharSequence): MinWidth = Text(text)
         }
     }
 
     protected companion object {
-        public val cacheKeyNamespace: CacheStore.KeyNamespace = CacheStore.KeyNamespace()
+        val cacheKeyNamespace: CacheStore.KeyNamespace = CacheStore.KeyNamespace()
     }
 }

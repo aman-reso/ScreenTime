@@ -12,13 +12,13 @@ import com.telekom.odsystem.charts.core.common.shader.ShaderProvider
  * @property color the color. If [shaderProvider] is not null, this is [Color.BLACK].
  * @property shaderProvider the [ShaderProvider].
  */
-public class Fill
-private constructor(public val color: Int, public val shaderProvider: ShaderProvider?) {
+class Fill
+private constructor(val color: Int, val shaderProvider: ShaderProvider?) {
   /** Creates a color [Fill]. */
-  public constructor(color: Int) : this(color = color, shaderProvider = null)
+  constructor(color: Int) : this(color = color, shaderProvider = null)
 
   /** Creates a [ShaderProvider]&#0020;[Fill]. */
-  public constructor(shaderProvider: ShaderProvider) : this(Color.BLACK, shaderProvider)
+  constructor(shaderProvider: ShaderProvider) : this(Color.BLACK, shaderProvider)
 
   override fun equals(other: Any?): Boolean =
     this === other ||
@@ -27,12 +27,12 @@ private constructor(public val color: Int, public val shaderProvider: ShaderProv
   override fun hashCode(): Int = 31 * color + shaderProvider?.hashCode().orZero
 
   /** Houses [Fill] singletons. */
-  public companion object {
+  companion object {
     /** A black [Fill]. */
-    public val Black: Fill = Fill(Color.BLACK)
+    val Black: Fill = Fill(Color.BLACK)
 
     /** A transparent [Fill]. */
-    public val Transparent: Fill = Fill(Color.TRANSPARENT)
+    val Transparent: Fill = Fill(Color.TRANSPARENT)
   }
 }
 

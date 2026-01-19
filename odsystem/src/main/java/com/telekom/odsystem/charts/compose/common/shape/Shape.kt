@@ -48,7 +48,7 @@ private fun Path.addRoundRect(
  * Converts this [androidx.compose.ui.graphics.Shape] to an instance of
  * [Shape].
  */
-public fun androidx.compose.ui.graphics.Shape.toVicoShape(): Shape =
+fun androidx.compose.ui.graphics.Shape.toVicoShape(): Shape =
     object : Shape {
         private val radii by lazy { FloatArray(RADII_ARRAY_SIZE) }
         private val matrix: Matrix by lazy { Matrix() }
@@ -88,7 +88,7 @@ public fun androidx.compose.ui.graphics.Shape.toVicoShape(): Shape =
     }
 
 /** Converts this [CorneredShape] to an instance of [androidx.compose.ui.graphics.Shape]. */
-public fun CorneredShape.toComposeShape(): androidx.compose.ui.graphics.Shape =
+fun CorneredShape.toComposeShape(): androidx.compose.ui.graphics.Shape =
     object : androidx.compose.ui.graphics.Shape {
         override fun createOutline(
             size: Size,
@@ -110,7 +110,7 @@ public fun CorneredShape.toComposeShape(): androidx.compose.ui.graphics.Shape =
     }
 
 /** A [Dp] version of [CorneredShape.rounded]. */
-public fun CorneredShape.Companion.rounded(
+fun CorneredShape.Companion.rounded(
     topLeft: Dp = 0.dp,
     topRight: Dp = 0.dp,
     bottomRight: Dp = 0.dp,
@@ -118,10 +118,10 @@ public fun CorneredShape.Companion.rounded(
 ): CorneredShape = rounded(topLeft.value, topRight.value, bottomRight.value, bottomLeft.value)
 
 /** A [Dp] version of [CorneredShape.rounded]. */
-public fun CorneredShape.Companion.rounded(all: Dp = 0.dp): CorneredShape = rounded(all.value)
+fun CorneredShape.Companion.rounded(all: Dp = 0.dp): CorneredShape = rounded(all.value)
 
 /** A [Dp] version of [CorneredShape.cut]. */
-public fun CorneredShape.Companion.cut(
+fun CorneredShape.Companion.cut(
     topLeft: Dp = 0.dp,
     topRight: Dp = 0.dp,
     bottomRight: Dp = 0.dp,
@@ -129,10 +129,10 @@ public fun CorneredShape.Companion.cut(
 ): CorneredShape = cut(topLeft.value, topRight.value, bottomRight.value, bottomLeft.value)
 
 /** A [Dp] version of [CorneredShape.cut]. */
-public fun CorneredShape.Companion.cut(all: Dp = 0.dp): CorneredShape = cut(all.value)
+fun CorneredShape.Companion.cut(all: Dp = 0.dp): CorneredShape = cut(all.value)
 
 /** Creates a [MarkerCorneredShape]. */
-public fun markerCorneredShape(
+fun markerCorneredShape(
     topLeft: CorneredShape.Corner,
     topRight: CorneredShape.Corner,
     bottomRight: CorneredShape.Corner,
@@ -142,19 +142,19 @@ public fun markerCorneredShape(
     MarkerCorneredShape(topLeft, topRight, bottomRight, bottomLeft, tickSize.value)
 
 /** Creates a [MarkerCorneredShape]. */
-public fun markerCorneredShape(
+fun markerCorneredShape(
     all: CorneredShape.Corner,
     tickSize: Dp = MARKER_TICK_SIZE.dp,
 ): MarkerCorneredShape = MarkerCorneredShape(all, tickSize.value)
 
 /** Creates a [MarkerCorneredShape]. */
-public fun markerCorneredShape(
+fun markerCorneredShape(
     base: CorneredShape,
     tickSize: Dp = MARKER_TICK_SIZE.dp,
 ): MarkerCorneredShape = MarkerCorneredShape(base, tickSize.value)
 
 /** Creates a [DashedShape]. */
-public fun dashedShape(
+fun dashedShape(
     shape: Shape = Shape.Rectangle,
     dashLength: Dp = Defaults.DASHED_SHAPE_DASH_LENGTH.dp,
     gapLength: Dp = Defaults.DASHED_SHAPE_GAP_LENGTH.dp,

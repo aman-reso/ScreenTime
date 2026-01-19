@@ -109,6 +109,7 @@ class ChallengeDetailUseCase @Inject constructor() {
             rules = challengeDetails.rules,
             sponsor = challengeDetails.sponsor,
             availableRewards = availableRewards,
+            appDetails = challengeDetails.appdetail,
             showJoinButton = showJoinButton
         )
     }

@@ -16,7 +16,6 @@ import javax.inject.Singleton
 /**
  * Implementation of ConsentService using Ktor
  */
-@Singleton
 class ConsentServiceImpl @Inject constructor(
     private val networkClient: NetworkClient
 ) : ConsentService {

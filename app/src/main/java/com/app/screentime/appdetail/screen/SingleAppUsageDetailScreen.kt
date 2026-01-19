@@ -1,25 +1,29 @@
 package com.app.screentime.appdetail.screen
 
+// import androidx.compose.material.icons.filled.Block // Removed - App Blocking feature disabled
+// import com.app.screentime.blocking.component.AddBlockingRuleBottomSheet // Removed - App Blocking feature disabled
+// import com.app.screentime.blocking.manager.AppBlockManager // Removed - App Blocking feature disabled
+
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.provider.Settings
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,11 +31,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-// import androidx.compose.material.icons.filled.Block // Removed - App Blocking feature disabled
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.EditNotifications
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.CircularProgressIndicator
@@ -61,23 +62,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.R
 import com.app.screentime.appdetail.viewmodel.SingleAppUsageDetailViewModel
-// import com.app.screentime.blocking.component.AddBlockingRuleBottomSheet // Removed - App Blocking feature disabled
-// import com.app.screentime.blocking.manager.AppBlockManager // Removed - App Blocking feature disabled
+import com.app.screentime.config.R
+import com.app.screentime.config.data.Feature
+import com.app.screentime.config.featureflag.FeatureFlagHelper
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.data.uiModel.WeeklyDataReport
 import com.app.screentime.landing.component.NetworkCard
 import com.app.screentime.landing.component.UsageSummaryCard
-import com.app.screentime.record.repository.toReadableDataSize
 import com.app.screentime.record.repository.formatDuration
-import com.app.screentime.statistics.screen.WeeklyUsageChart
+import com.app.screentime.record.repository.toReadableDataSize
 import com.app.screentime.statistics.model.ChartFormatterProps
-import com.telekom.odsystem.organisms.barchart.ODSBarItemDirection
-import com.telekom.odsystem.organisms.barchart.ODSBarItemProps
+import com.app.screentime.statistics.screen.WeeklyUsageChart
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.ui.theme.headerTheme
-
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -91,7 +89,8 @@ import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
-import com.telekom.odsystem.tokens.tokens.frogSecondaryScheme
+import com.telekom.odsystem.organisms.barchart.ODSBarItemDirection
+import com.telekom.odsystem.organisms.barchart.ODSBarItemProps
 import com.telekom.odsystem.organisms.cardquickaction.ODSCardQuickAction
 import com.telekom.odsystem.organisms.cardquickaction.ODSCardQuickActionProps
 import com.telekom.odsystem.organisms.cardquickaction.ODSCardQuickActionSize
@@ -99,7 +98,7 @@ import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
-import kotlinx.coroutines.launch
+import com.telekom.odsystem.tokens.tokens.frogSecondaryScheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,11 +108,12 @@ fun SingleAppUsageDetailScreen(
     viewModel: SingleAppUsageDetailViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
+
     val activity = LocalActivity.current
     // Get theme mode for status bar styling
     val useDarkTheme = LocalThemeMode.current
     SideEffect {
-        if (activity is ComponentActivity) {
+        if (activity is AppCompatActivity) {
             activity.enableEdgeToEdge(
                 statusBarStyle = if (useDarkTheme) {
                     SystemBarStyle.dark(scheme.basicBackground.getIntColor())
@@ -129,7 +129,7 @@ fun SingleAppUsageDetailScreen(
         }
     }
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
 
     // Get app info for icon
@@ -794,7 +794,7 @@ private fun TimerBottomSheet(
 
     var selectedMinutes by remember { mutableIntStateOf(30) }
 
-    val appInfo = remember(packageName) {
+    remember(packageName) {
         try {
             context.packageManager.getApplicationInfo(packageName, 0)
         } catch (e: Exception) {

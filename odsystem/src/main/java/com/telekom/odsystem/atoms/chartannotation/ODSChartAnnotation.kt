@@ -28,7 +28,7 @@ import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 @Composable
-public fun odsChartAnnotation(
+fun odsChartAnnotation(
     scheme: ODSTheme = neutralScheme,
     format: (context: CartesianDrawingContext, targets: List<CartesianMarker.Target>) -> CharSequence = remember { { _, _ -> String() } },
 ): CartesianMarker {

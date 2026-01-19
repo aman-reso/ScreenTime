@@ -24,7 +24,7 @@ enum class ODSChatBubbleLeadingElementType {
  * @property badgeIconProps Badge icon properties (if type is ODS_BADGE_ICON).
  */
 data class ODSChatBubbleLeadingElementProps(
-    var type: ODSChatBubbleLeadingElementType = ODSChatBubbleLeadingElementType.ODS_BADGE_ICON,
+    var type: ODSChatBubbleLeadingElementType = ODS_BADGE_ICON,
     var avatarProps: ODSAvatarProps? = null,
     var badgeIconProps: ODSBadgeIconProps? = null
 )

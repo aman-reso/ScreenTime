@@ -5,9 +5,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.link.ODSLinkAlignment
 import com.telekom.odsystem.atoms.link.ODSLinkProps
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
@@ -27,7 +28,10 @@ fun ChallengeErrorState(
 ) {
     ODSColumn(
         modifier = Modifier.fillMaxSize(),
-        padding = ODSPadding(all = DSVariables.spacingComponent4)
+        padding = ODSPadding(
+            horizontal = DSVariables.spacingComponent4,
+            vertical = DSVariables.spacingComponent7
+        )
     ) {
         ODSInlineNotification(
             modifier = Modifier.fillMaxWidth(),
@@ -37,6 +41,7 @@ fun ChallengeErrorState(
                 title = stringResource(R.string.error),
                 text = message,
                 link1Props = ODSLinkProps(
+                    alignment = ODSLinkAlignment.LEFT,
                     label = stringResource(R.string.retry)
                 ),
                 showCloseButton = false

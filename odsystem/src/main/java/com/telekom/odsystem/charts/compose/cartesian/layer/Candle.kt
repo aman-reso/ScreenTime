@@ -53,7 +53,7 @@ private fun LineComponent.copyWithColor(color: Color) =
  */
 @Composable
 @Stable
-public fun CandlestickCartesianLayer.CandleProvider.Companion.absolute(
+fun CandlestickCartesianLayer.CandleProvider.Companion.absolute(
     bullish: Candle = Candle.sharpFilledCandle(vicoTheme.candlestickCartesianLayerColors.bullish),
     neutral: Candle = bullish.copyWithColor(vicoTheme.candlestickCartesianLayerColors.neutral),
     bearish: Candle = bullish.copyWithColor(vicoTheme.candlestickCartesianLayerColors.bearish),
@@ -66,7 +66,7 @@ public fun CandlestickCartesianLayer.CandleProvider.Companion.absolute(
  */
 @Composable
 @Stable
-public fun CandlestickCartesianLayer.CandleProvider.Companion.absoluteRelative(
+fun CandlestickCartesianLayer.CandleProvider.Companion.absoluteRelative(
     absolutelyBullishRelativelyBullish: Candle =
         Candle.sharpHollowCandle(vicoTheme.candlestickCartesianLayerColors.bullish),
     absolutelyBullishRelativelyNeutral: Candle =

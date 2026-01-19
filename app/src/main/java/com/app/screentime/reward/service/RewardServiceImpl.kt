@@ -4,6 +4,8 @@ import com.app.screentime.core.network.ApiEndpoints
 import com.app.screentime.core.network.NetworkClient
 import com.app.screentime.core.network.model.ApiError
 import com.app.screentime.core.network.model.ApiResponse
+import com.app.screentime.reward.model.AddCoinsRequest
+import com.app.screentime.reward.model.AddCoinsResponse
 import com.app.screentime.reward.model.CoinHistoryResponse
 import com.app.screentime.reward.model.RewardCatalogResponse
 import com.app.screentime.reward.model.RewardClaimRequest
@@ -21,7 +23,6 @@ import javax.inject.Singleton
 /**
  * Implementation of RewardService using Ktor
  */
-@Singleton
 class RewardServiceImpl @Inject constructor(
     private val networkClient: NetworkClient
 ) : RewardService {
@@ -196,6 +197,80 @@ class RewardServiceImpl @Inject constructor(
         } catch (e: ServerResponseException) {
             val errorBody = e.response.bodyAsText()
             Result.failure(Exception("Server error: ${e.response.status}, $errorBody", e))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun addCoins(request: AddCoinsRequest): Result<ApiResponse<AddCoinsResponse>> {
+        return try {
+            val response: HttpResponse = httpClient.post(ApiEndpoints.Rewards.ADD_COINS) {
+                setBody(request)
+            }
+
+            if (response.status.isSuccess()) {
+                // The API returns AddCoinsResponse directly, not wrapped in ApiResponse
+                val addCoinsResponse: AddCoinsResponse = response.body()
+                // Wrap it in ApiResponse for consistency
+                val apiResponse = ApiResponse(
+                    success = addCoinsResponse.success,
+                    status = addCoinsResponse.status,
+                    data = addCoinsResponse,
+                    message = addCoinsResponse.message,
+                    timestamp = addCoinsResponse.timestamp,
+                    error = addCoinsResponse.error?.let { ApiError(message = it) }
+                )
+                Result.success(apiResponse)
+            } else {
+                // Try to parse error response
+                val errorMessage = try {
+                    val errorResponse: ApiResponse<*> = response.body()
+                    errorResponse.error?.message ?: errorResponse.message ?: "Failed to add coins"
+                } catch (e: Exception) {
+                    val errorBody = response.bodyAsText()
+                    errorBody?.let { body ->
+                        try {
+                            val messageMatch = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(body)
+                            messageMatch?.groupValues?.get(1) ?: "Failed to add coins"
+                        } catch (e: Exception) {
+                            "Failed to add coins"
+                        }
+                    } ?: "Failed to add coins"
+                }
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: ClientRequestException) {
+            val errorMessage = try {
+                val errorResponse: ApiResponse<*> = e.response.body()
+                errorResponse.error?.message ?: errorResponse.message ?: "Failed to add coins"
+            } catch (parseError: Exception) {
+                val errorBody = e.response.bodyAsText()
+                errorBody?.let { body ->
+                    try {
+                        val messageMatch = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(body)
+                        messageMatch?.groupValues?.get(1) ?: "Failed to add coins"
+                    } catch (e: Exception) {
+                        "Failed to add coins"
+                    }
+                } ?: "Failed to add coins"
+            }
+            Result.failure(Exception(errorMessage))
+        } catch (e: ServerResponseException) {
+            val errorMessage = try {
+                val errorResponse: ApiResponse<*> = e.response.body()
+                errorResponse.error?.message ?: errorResponse.message ?: "Failed to add coins"
+            } catch (parseError: Exception) {
+                val errorBody = e.response.bodyAsText()
+                errorBody?.let { body ->
+                    try {
+                        val messageMatch = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(body)
+                        messageMatch?.groupValues?.get(1) ?: "Failed to add coins"
+                    } catch (e: Exception) {
+                        "Failed to add coins"
+                    }
+                } ?: "Failed to add coins"
+            }
+            Result.failure(Exception(errorMessage))
         } catch (e: Exception) {
             Result.failure(e)
         }

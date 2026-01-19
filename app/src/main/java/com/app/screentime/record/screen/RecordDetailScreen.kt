@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,19 +22,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.app.screentime.config.data.Feature
+import com.app.screentime.config.featureflag.FeatureFlagHelper
 import com.app.screentime.record.component.DateSpinner
 import com.app.screentime.record.component.SummaryTab
-import com.app.screentime.record.component.TimelineTab
 import com.app.screentime.record.viewmodel.RecordDetailViewModel
 import com.app.screentime.ui.theme.LocalThemeMode
 
@@ -54,11 +51,6 @@ import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSPadding
-import com.telekom.odsystem.molecules.tabs.ODSTabs
-import com.telekom.odsystem.molecules.tabs.ODSTabsProps
-import com.telekom.odsystem.molecules.tabs.ODSTabsSize
-import com.telekom.odsystem.molecules.tabs.ODSTabsVariant
-import com.telekom.odsystem.molecules.tabs.ODSTabItemModel
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import org.joda.time.LocalDate
@@ -74,6 +66,8 @@ fun RecordDetailScreen(
     scheme: ODSTheme = neutralScheme,
     viewModel: RecordDetailViewModel = hiltViewModel()
 ) {
+
+    
     val activity = LocalActivity.current
     // Get theme mode for status bar styling
     val useDarkTheme = LocalThemeMode.current
@@ -96,40 +90,11 @@ fun RecordDetailScreen(
         }
     }
     val uiState by viewModel.uiState.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
 
-    val tabs = listOf("Summary", "Timeline")
-    val pagerState = rememberPagerState(pageCount = { tabs.size }, initialPage = 0)
-
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-
-    // Track selected date for display
-    val today = com.app.screentime.utils.DateUtils.today()
-    var selectedDateDisplay by remember { mutableStateOf(today.toString("d MMM yyyy")) }
-
-    // Sync tab selection with pager state
-    LaunchedEffect(pagerState.currentPage) {
-        selectedTabIndex = pagerState.currentPage
-    }
-
-    // Sync pager with tab selection
-    LaunchedEffect(selectedTabIndex) {
-        if (pagerState.currentPage != selectedTabIndex) {
-            coroutineScope.launch {
-                pagerState.animateScrollToPage(selectedTabIndex)
-            }
-        }
-    }
-
-    // Tab elements
-    val tabElements = listOf(
-        ODSTabItemModel(label = "Summary"),
-        ODSTabItemModel(label = "Timeline")
-    )
+    val today = DateUtils.today()
+    var selectedDateDisplay by remember { mutableStateOf("Today") }
 
     LaunchedEffect(Unit) {
-        // After TOTP verification, use the new daily stats API
-        // Use username as targetUserId (API may accept username or userId)
         viewModel.getDailyUsageStats(targetUserId = username)
     }
 
@@ -143,7 +108,7 @@ fun RecordDetailScreen(
                 .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
                 .fillMaxWidth()
         ) {}
-        
+
         ODSRow(
             modifier = Modifier.fillMaxWidth(),
             padding = ODSPadding(horizontal = 8.dp),
@@ -179,56 +144,33 @@ fun RecordDetailScreen(
                             selectedDate,
                             DateTimeFormat.forPattern("yyyy-MM-dd")
                         )
-                        selectedDateDisplay = localDate.toString("d MMM yyyy")
+                        // Format without year
+                        val today = DateUtils.today()
+                        selectedDateDisplay = when (localDate) {
+                            today -> "Today"
+                            today.minusDays(1) -> "Yesterday"
+                            today.minusDays(2) -> "Day before yesterday"
+                            else -> localDate.toString("d MMM")
+                        }
                         viewModel.getDailyUsageStats(targetUserId = username, date = selectedDate)
                     }
                 )
             }
         }
 
-        ODSTabs(
-            modifier = Modifier.fillMaxWidth(),
+        // Summary Tab Content
+        SummaryTab(
+            uiState = uiState,
+            onNavigateToAppDetails = onNavigateToAppDetails,
+            selectedDateDisplay = selectedDateDisplay,
             scheme = scheme,
-            props = ODSTabsProps(
-                tabElements = tabElements,
-                size = ODSTabsSize.SMALL,
-                variant = ODSTabsVariant.FILL,
-                showDividerFrame = true
-            ),
-            selectedTabIndex = selectedTabIndex,
-            onSelectedTabChange = { index ->
-                selectedTabIndex = index
-                coroutineScope.launch {
-                    pagerState.animateScrollToPage(index)
-                }
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f),
+            onClearError = {
+                viewModel.clearError()
             }
         )
-
-        // Tab Content with Pager
-        HorizontalPager(
-            state = pagerState, modifier = Modifier
-                .fillMaxSize()
-                .weight(1f)
-        ) { page ->
-            when (page) {
-                0 -> {
-                    // Summary Tab
-                    SummaryTab(
-                        viewModel = viewModel,
-                        uiState = uiState,
-                        onNavigateToAppDetails = onNavigateToAppDetails,
-                        selectedDateDisplay = selectedDateDisplay, scheme = scheme
-                    )
-                }
-
-                1 -> {
-                    // Timeline Tab
-                    TimelineTab(
-                        uiState = uiState, viewModel = viewModel, scheme = scheme
-                    )
-                }
-            }
-        }
     }
 }
 

@@ -34,8 +34,7 @@ fun InfoCard(
         background = style.backgroundColor,
         cornerRadius = ODSCorners(all = tokens.cornerRadius),
         border = ODSBorder(
-            width = tokens.borderWidth,
-            colorList = style.borderColor ?: emptyList()
+            width = tokens.borderWidth
         )
     ) {
         ODSColumn(

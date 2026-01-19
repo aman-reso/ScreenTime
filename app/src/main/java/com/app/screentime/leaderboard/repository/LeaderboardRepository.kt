@@ -9,7 +9,6 @@ import javax.inject.Singleton
 /**
  * Repository for Leaderboard operations
  */
-@Singleton
 class LeaderboardRepository @Inject constructor(
     private val leaderboardService: LeaderboardService
 ) {
@@ -20,9 +19,6 @@ class LeaderboardRepository @Inject constructor(
     suspend fun getWeeklyLeaderboard(): Result<ApiResponse<LeaderboardResponse>> {
         return leaderboardService.getWeeklyLeaderboard()
     }
-    
-    suspend fun getMonthlyLeaderboard(): Result<ApiResponse<LeaderboardResponse>> {
-        return leaderboardService.getMonthlyLeaderboard()
-    }
+
 }
 

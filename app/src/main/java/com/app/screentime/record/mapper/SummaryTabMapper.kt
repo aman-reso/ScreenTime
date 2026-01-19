@@ -30,7 +30,6 @@ class SummaryTabMapper @Inject constructor() {
             return SummaryTabUiProps(
                 appUsageList = emptyList(),
                 totalScreenTime = 0L,
-                usageDonutData = null,
                 isLoading = isLoading,
                 error = error
             )
@@ -79,7 +78,6 @@ class SummaryTabMapper @Inject constructor() {
         return SummaryTabUiProps(
             appUsageList = appUsageList,
             totalScreenTime = totalScreenTime,
-            usageDonutData = usageDonutData,
             isLoading = isLoading,
             error = error
         )
@@ -137,12 +135,10 @@ class SummaryTabMapper @Inject constructor() {
 
     /**
      * Format total time in milliseconds to human-readable string
+     * Uses the same format as formatUsageTime for consistency
      */
     private fun formatTotalTime(totalMs: Long): String {
-        val totalMinutes = totalMs / (1000 * 60)
-        val hours = totalMinutes / 60
-        val minutes = totalMinutes % 60
-        return if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
+        return formatUsageTime(totalMs)
     }
 }
 

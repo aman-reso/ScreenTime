@@ -8,7 +8,7 @@ import com.telekom.odsystem.charts.core.common.DrawingContext
  * coordinates. Its subclasses are used throughout the library.
  */
 @Immutable
-public interface Component {
+interface Component {
   /** Instructs the [Component] to draw itself at the given coordinates. */
-  public fun draw(context: DrawingContext, left: Float, top: Float, right: Float, bottom: Float)
+  fun draw(context: DrawingContext, left: Float, top: Float, right: Float, bottom: Float)
 }

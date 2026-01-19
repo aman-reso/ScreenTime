@@ -32,7 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.reward.component.RewardTransactionItem
 import com.app.screentime.reward.viewmodel.RewardTransactionViewModel
 import com.app.screentime.ui.theme.LocalThemeMode

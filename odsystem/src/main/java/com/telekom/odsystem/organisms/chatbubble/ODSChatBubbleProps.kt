@@ -65,7 +65,7 @@ data class ODSChatBubbleProps(
     var showError: Boolean = false,
     var showFooter: Boolean = true,
     var showHelperText: Boolean = true,
-    var variant: ODSChatBubbleVariant = ODSChatBubbleVariant.INCOMING,
+    var variant: ODSChatBubbleVariant = INCOMING,
     var chatBubbleLeadingElementProps: ODSChatBubbleLeadingElementProps? = null,
     var buttonProps: ODSChatBubbleButtonProps? = null
 )

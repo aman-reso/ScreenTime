@@ -38,7 +38,7 @@ enum class ODSFileUploadType {
 data class ODSFileUploadProps(
     var label: String? = null,
     var subtle: Boolean = true,
-    var type: ODSFileUploadType = ODSFileUploadType.EXTENDED,
+    var type: ODSFileUploadType = EXTENDED,
     var actionButtonProps: ODSButtonProps? = null,
     var thumbnailProps: ODSThumbnailProps? = null,
     var progressBarProps: ODSProgressBarProps? = null,

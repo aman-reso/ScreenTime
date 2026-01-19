@@ -138,7 +138,7 @@ data class ODSCardChoiceImageProps(
     var readOnly: Boolean = false,
     var selected: Boolean = false,
     var subtle: Boolean = false,
-    var type: ODSCardChoiceImageType = ODSCardChoiceImageType.RADIO_CHOICE,
+    var type: ODSCardChoiceImageType = RADIO_CHOICE,
     var image: ODSImageModel? = null, // Not exported by the plugin
     var imageAspectRatio: ODSAspectRatio = ODSAspectRatio.VALUE_4_3, // Not exported by the plugin
     var radioIconProps: ODSCardChoiceImageRadioIconProps = ODSCardChoiceImageRadioIconProps(), // Not exported by the plugin

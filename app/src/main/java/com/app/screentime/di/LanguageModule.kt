@@ -1,6 +1,8 @@
 package com.app.screentime.di
 
 import android.content.Context
+import com.app.screentime.config.language.AppLanguageManager
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.ui.language.LanguageRepository
 import dagger.Module
 import dagger.Provides
@@ -15,7 +17,10 @@ object LanguageModule {
 
     @Provides
     @Singleton
-    fun provideLanguageRepository(@ApplicationContext context: Context): LanguageRepository {
-        return LanguageRepository(context)
+    fun provideLanguageRepository(
+        @ApplicationContext context: Context,
+        appLanguageManager: AppLanguageManager
+    ): LanguageRepository {
+        return LanguageRepository(context, appLanguageManager)
     }
 }

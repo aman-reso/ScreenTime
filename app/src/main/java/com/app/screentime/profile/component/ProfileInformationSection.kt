@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.divider.ODSDivider

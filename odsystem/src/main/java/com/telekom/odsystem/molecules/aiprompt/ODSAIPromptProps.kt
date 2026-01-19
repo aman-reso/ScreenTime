@@ -64,11 +64,11 @@ enum class ODSAIPromptCustomWidth {
  * @param variant The visual style of the AI Prompt.
  */
 data class ODSAIPromptProps(
-    var customWidth: ODSAIPromptCustomWidth = ODSAIPromptCustomWidth.FILL,
+    var customWidth: ODSAIPromptCustomWidth = FILL,
     var description: String? = null,
     var icon: ODSIconModel? = null,
     var rightIcon: ODSIconModel? = null,
     var title: String? = null,
-    var type: ODSAIPromptType = ODSAIPromptType.TOP_ICON_TEXT,
-    var variant: ODSAIPromptVariant = ODSAIPromptVariant.FILLED,
+    var type: ODSAIPromptType = TOP_ICON_TEXT,
+    var variant: ODSAIPromptVariant = FILLED,
 )

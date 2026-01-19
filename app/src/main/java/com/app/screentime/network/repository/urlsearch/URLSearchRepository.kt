@@ -12,7 +12,5 @@ import javax.inject.Singleton
 @Singleton
 class URLSearchRepository @Inject constructor(
     private val urlSearchService: URLSearchService
-) {
-
-}
+)
 

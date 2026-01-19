@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
  * Houses information on a [CartesianChart]’s scroll value. Allows for scroll customization and
  * programmatic scrolling.
  */
-public class VicoScrollState {
+class VicoScrollState {
     private val initialScroll: Scroll.Absolute
     private val autoScroll: Scroll
     private val autoScrollCondition: AutoScrollCondition
@@ -56,7 +56,7 @@ public class VicoScrollState {
     }
 
     /** The current scroll value (in pixels). */
-    public var value: Float
+    var value: Float
         get() = _value.floatValue
         private set(newValue) {
             val oldValue = value
@@ -65,7 +65,7 @@ public class VicoScrollState {
         }
 
     /** The maximum scroll value (in pixels). */
-    public var maxValue: Float
+    var maxValue: Float
         get() = _maxValue.floatValue
         internal set(newMaxValue) {
             if (newMaxValue == maxValue) return
@@ -101,7 +101,7 @@ public class VicoScrollState {
      * @param autoScrollCondition defines when an automatic scroll should occur.
      * @param autoScrollAnimationSpec the [AnimationSpec] for automatic scrolling.
      */
-    public constructor(
+    constructor(
         scrollEnabled: Boolean,
         initialScroll: Scroll.Absolute,
         autoScroll: Scroll,
@@ -158,7 +158,7 @@ public class VicoScrollState {
     }
 
     /** Triggers a scroll. */
-    public suspend fun scroll(scroll: Scroll) {
+    suspend fun scroll(scroll: Scroll) {
         withUpdated { context, layerDimensions, bounds ->
             scrollableState.scrollBy(
                 scroll.getDelta(
@@ -173,7 +173,7 @@ public class VicoScrollState {
     }
 
     /** Triggers an animated scroll. */
-    public suspend fun animateScroll(
+    suspend fun animateScroll(
         scroll: Scroll,
         animationSpec: AnimationSpec<Float> = spring(),
     ) {
@@ -212,7 +212,7 @@ public class VicoScrollState {
 
 /** Creates and remembers a [VicoScrollState] instance. */
 @Composable
-public fun rememberVicoScrollState(
+fun rememberVicoScrollState(
     scrollEnabled: Boolean = true,
     initialScroll: Scroll.Absolute = Scroll.Absolute.Start,
     autoScroll: Scroll = initialScroll,

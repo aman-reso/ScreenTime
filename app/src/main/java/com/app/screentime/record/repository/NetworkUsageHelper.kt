@@ -14,7 +14,7 @@ import javax.inject.Inject
  * Android applications. It provides methods to fetch network usage data for mobile and Wi-Fi
  * connections over specified time intervals.
  */
-class NetworkUsageHelper constructor(val context: Context) {
+class NetworkUsageHelper(val context: Context) {
     val networkStatsManager =
         context.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
 

@@ -59,7 +59,7 @@ import kotlinx.coroutines.launch
  * @param placeholder shown when no [CartesianChartModel] is available.
  */
 @Composable
-public fun CartesianChartHost(
+fun CartesianChartHost(
     chart: CartesianChart,
     modelProducer: CartesianChartModelProducer,
     modifier: Modifier = Modifier,
@@ -108,7 +108,7 @@ public fun CartesianChartHost(
  */
 @Composable
 @SuppressLint("RememberReturnType")
-public fun CartesianChartHost(
+fun CartesianChartHost(
     chart: CartesianChart,
     model: CartesianChartModel,
     modifier: Modifier = Modifier,

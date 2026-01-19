@@ -11,7 +11,7 @@ import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.app.screentime.MainActivity
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.navigation.Screen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -116,7 +116,7 @@ object NotificationHelper {
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         val notificationBuilder = NotificationCompat.Builder(context, getChannelId(type))
-            .setSmallIcon(R.mipmap.app_icon_round)
+            .setSmallIcon(com.app.screentime.R.mipmap.app_icon_round)
             .setContentTitle(title)
             .setContentText(message)
             .setAutoCancel(true)

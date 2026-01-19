@@ -1,11 +1,13 @@
 package com.app.screentime.utils
 
 import android.util.Log
+import com.app.screentime.BuildConfig
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * Logger utility class for app-wide logging
+ * Only logs in DEBUG builds to avoid logging in production
  */
 @Singleton
 class Logger @Inject constructor() {
@@ -15,43 +17,63 @@ class Logger @Inject constructor() {
     }
     
     fun d(tag: String, message: String) {
-        Log.d(tag, message)
+        if (BuildConfig.DEBUG) {
+            Log.d(tag, message)
+        }
     }
     
     fun d(tag: String, message: String, throwable: Throwable) {
-        Log.d(tag, message, throwable)
+        if (BuildConfig.DEBUG) {
+            Log.d(tag, message, throwable)
+        }
     }
     
     fun i(tag: String, message: String) {
-        Log.i(tag, message)
+        if (BuildConfig.DEBUG) {
+            Log.i(tag, message)
+        }
     }
     
     fun i(tag: String, message: String, throwable: Throwable) {
-        Log.i(tag, message, throwable)
+        if (BuildConfig.DEBUG) {
+            Log.i(tag, message, throwable)
+        }
     }
     
     fun w(tag: String, message: String) {
-        Log.w(tag, message)
+        if (BuildConfig.DEBUG) {
+            Log.w(tag, message)
+        }
     }
     
     fun w(tag: String, message: String, throwable: Throwable) {
-        Log.w(tag, message, throwable)
+        if (BuildConfig.DEBUG) {
+            Log.w(tag, message, throwable)
+        }
     }
     
     fun e(tag: String, message: String) {
-        Log.e(tag, message)
+        if (BuildConfig.DEBUG) {
+            Log.e(tag, message)
+        }
     }
     
     fun e(tag: String, message: String, throwable: Throwable) {
-        Log.e(tag, message, throwable)
+        if (BuildConfig.DEBUG) {
+            Log.e(tag, message, throwable)
+        }
     }
     
     fun v(tag: String, message: String) {
-        Log.v(tag, message)
+        if (BuildConfig.DEBUG) {
+            Log.v(tag, message)
+        }
     }
     
     fun v(tag: String, message: String, throwable: Throwable) {
-        Log.v(tag, message, throwable)
+        if (BuildConfig.DEBUG) {
+            Log.v(tag, message, throwable)
+        }
     }
     
     // Convenience methods with default TAG

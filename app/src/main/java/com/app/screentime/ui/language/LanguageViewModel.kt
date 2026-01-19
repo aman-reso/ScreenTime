@@ -18,12 +18,13 @@ class LanguageViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = "en"
+            initialValue = languageRepository.getCurrentLanguage()
         )
-
-    fun setLanguage(language: String) {
-        viewModelScope.launch {
-            languageRepository.setLanguage(language)
-        }
+    
+    /**
+     * Refresh language from AppLanguageManager
+     */
+    fun refreshLanguage() {
+        languageRepository.refreshLanguage()
     }
 }

@@ -2,7 +2,7 @@ package com.app.screentime.landing.util
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.data.entity.AppUsage
 
 /**

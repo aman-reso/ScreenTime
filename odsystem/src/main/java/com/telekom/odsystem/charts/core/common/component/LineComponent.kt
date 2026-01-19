@@ -20,9 +20,9 @@ import com.telekom.odsystem.charts.core.common.shape.Shape
  * @param shadow stores the shadow properties.
  * @property thicknessDp the line thickness (in dp).
  */
-public open class LineComponent(
+open class LineComponent(
   fill: Fill,
-  public val thicknessDp: Float = Defaults.LINE_COMPONENT_THICKNESS_DP,
+  val thicknessDp: Float = Defaults.LINE_COMPONENT_THICKNESS_DP,
   shape: Shape = Shape.Rectangle,
   margins: Insets = Insets.Zero,
   strokeFill: Fill = Fill.Transparent,
@@ -33,7 +33,7 @@ public open class LineComponent(
     get() = thicknessDp.pixels
 
   /** A convenience function for [draw] that draws the [LineComponent] horizontally. */
-  public open fun drawHorizontal(
+  open fun drawHorizontal(
     context: DrawingContext,
     left: Float,
     right: Float,
@@ -51,7 +51,7 @@ public open class LineComponent(
   }
 
   /** A convenience function for [draw] that draws the [LineComponent] vertically. */
-  public open fun drawVertical(
+  open fun drawVertical(
     context: DrawingContext,
     x: Float,
     top: Float,
@@ -80,7 +80,7 @@ public open class LineComponent(
     LineComponent(fill, thicknessDp, shape, margins, strokeFill, strokeThicknessDp, shadow)
 
   /** Creates a new [LineComponent] based on this one. */
-  public open fun copy(
+  open fun copy(
     fill: Fill = this.fill,
     thicknessDp: Float = this.thicknessDp,
     shape: Shape = this.shape,

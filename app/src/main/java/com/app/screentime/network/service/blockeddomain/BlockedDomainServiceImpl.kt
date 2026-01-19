@@ -15,7 +15,7 @@ import javax.inject.Singleton
 /**
  * Implementation of BlockedDomainService using Ktor
  */
-@Singleton
+
 class BlockedDomainServiceImpl @Inject constructor(
     private val networkClient: NetworkClient
 ) : BlockedDomainService {

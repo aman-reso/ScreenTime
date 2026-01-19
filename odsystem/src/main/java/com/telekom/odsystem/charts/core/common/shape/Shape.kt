@@ -6,12 +6,12 @@ import com.telekom.odsystem.charts.core.common.MeasuringContext
 
 /** Defines a shape. */
 @Immutable
-public fun interface Shape {
+fun interface Shape {
   /**
    * Adds an outline of the [Shape] to [path]. [left], [top], [right], and [bottom] define the
    * outline bounds.
    */
-  public fun outline(
+  fun outline(
     context: MeasuringContext,
     path: Path,
     left: Float,
@@ -20,9 +20,9 @@ public fun interface Shape {
     bottom: Float,
   )
 
-  public companion object {
+  companion object {
     /** A rectangle with sharp corners. */
-    public val Rectangle: Shape = Shape { _, path, left, top, right, bottom ->
+    val Rectangle: Shape = Shape { _, path, left, top, right, bottom ->
       path.moveTo(left, top)
       path.lineTo(right, top)
       path.lineTo(right, bottom)

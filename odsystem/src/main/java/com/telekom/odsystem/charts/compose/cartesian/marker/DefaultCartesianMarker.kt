@@ -13,7 +13,7 @@ import com.telekom.odsystem.charts.core.common.component.TextComponent
 
 /** Creates and remembers a [DefaultCartesianMarker]. */
 @Composable
-public fun rememberDefaultCartesianMarker(
+fun rememberDefaultCartesianMarker(
     label: TextComponent,
     valueFormatter: DefaultCartesianMarker.ValueFormatter = remember {
         DefaultCartesianMarker.ValueFormatter.default()

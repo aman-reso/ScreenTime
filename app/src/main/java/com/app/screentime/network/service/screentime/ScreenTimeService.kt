@@ -19,5 +19,14 @@ interface ScreenTimeService {
 
     // Get last sync time for usage stats
     suspend fun getUsageLastSyncTime(): Result<ApiResponse<UsageLastSyncResponse>>
+
+    // Get summary screen time for multiple users
+    suspend fun getSummaryScreenTime(request: SummaryScreenTimeRequest): Result<ApiResponse<SummaryScreenTimeResponseData>>
+
+    // Submit app stats for a date
+    suspend fun submitAppStats(request: AppStatsRequest): Result<ApiResponse<AppStatsResponse>>
+
+    // Get app stats for a date
+    suspend fun getAppStats(date: String, targetUserName: String): Result<ApiResponse<AppStatsGetResponse>>
 }
 

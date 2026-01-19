@@ -28,7 +28,7 @@ import com.telekom.odsystem.charts.core.common.data.ExtraStore
  * @see rememberLineCartesianLayer
  */
 @Composable
-public fun rememberCartesianChart(
+fun rememberCartesianChart(
     vararg layers: CartesianLayer<*>,
     startAxis: Axis<Axis.Position.Vertical.Start>? = null,
     topAxis: Axis<Axis.Position.Horizontal.Top>? = null,

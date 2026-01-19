@@ -18,20 +18,20 @@ data class ODSElevation(
     @Composable
     fun toElevation(): Dp {
         val shadowRadius = blur.dp
-        val shadowSpread = spread.toFloat()
-        val shadowOffsetX = x.toFloat()
-        val shadowOffsetY = y.toFloat()
-        val shadowColor = color.getColor()
+        spread.toFloat()
+        x.toFloat()
+        y.toFloat()
+        color.getColor()
         // todo add elevation overlay
         return shadowRadius
     }
 
     fun toElevationValue(): Float {
         val shadowRadius = blur.toFloat()
-        val shadowSpread = spread.toFloat()
-        val shadowOffsetX = x.toFloat()
-        val shadowOffsetY = y.toFloat()
-        val shadowColor = color.getColor()
+        spread.toFloat()
+        x.toFloat()
+        y.toFloat()
+        color.getColor()
         // todo add elevation overlay
         return shadowRadius
     }

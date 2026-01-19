@@ -44,7 +44,7 @@ import kotlin.math.max
  *   scaling.
  */
 @Stable
-public open class CandlestickCartesianLayer
+open class CandlestickCartesianLayer
 protected constructor(
     protected val candleProvider: CandleProvider,
     protected val minCandleBodyHeightDp: Float,
@@ -66,19 +66,19 @@ protected constructor(
      * @param topWick used for the top wick.
      * @param bottomWick used for the bottom wick.
      */
-    public data class Candle(
-        public val body: LineComponent,
-        public val topWick: LineComponent = body.asWick(),
-        public val bottomWick: LineComponent = topWick,
+    data class Candle(
+        val body: LineComponent,
+        val topWick: LineComponent = body.asWick(),
+        val bottomWick: LineComponent = topWick,
     ) {
         /** The width of the [Candle] (in dp). */
-        public val widthDp: Float
+        val widthDp: Float
             get() = maxOf(body.thicknessDp, topWick.thicknessDp, bottomWick.thicknessDp)
 
         // Empty companion object is needed for extension functions.
         /** @suppress */
         @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-        public companion object
+        companion object
     }
 
     private val _markerTargets = mutableMapOf<Double, List<CandlestickCartesianLayerMarkerTarget>>()
@@ -86,7 +86,7 @@ protected constructor(
     override val markerTargets: Map<Double, List<CartesianMarker.Target>> = _markerTargets
 
     /** Creates a [CandlestickCartesianLayer]. */
-    public constructor(
+    constructor(
         candleProvider: CandleProvider,
         minCandleBodyHeightDp: Float = Defaults.MIN_CANDLE_BODY_HEIGHT_DP,
         candleSpacingDp: Float = Defaults.CANDLE_SPACING_DP,
@@ -326,7 +326,7 @@ protected constructor(
     }
 
     /** Creates a new [CandlestickCartesianLayer] based on this one. */
-    public fun copy(
+    fun copy(
         candleProvider: CandleProvider = this.candleProvider,
         minCandleBodyHeightDp: Float = this.minCandleBodyHeightDp,
         candleSpacingDp: Float = this.candleSpacingDp,
@@ -373,18 +373,18 @@ protected constructor(
         )
 
     /** Provides [Candle]s to [CandlestickCartesianLayer]s. */
-    public interface CandleProvider {
+    interface CandleProvider {
         /** Returns the [Candle] for the given [CandlestickCartesianLayerModel.Entry]. */
-        public fun getCandle(
+        fun getCandle(
             entry: CandlestickCartesianLayerModel.Entry,
             extraStore: ExtraStore,
         ): Candle
 
         /** Returns the widest [Candle]. */
-        public fun getWidestCandle(extraStore: ExtraStore): Candle
+        fun getWidestCandle(extraStore: ExtraStore): Candle
 
         /** Provides access to [CandleProvider] factory functions. */
-        public companion object {
+        companion object {
             internal data class Absolute(
                 val bullish: Candle,
                 val neutral: Candle,
@@ -465,7 +465,7 @@ protected constructor(
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun LineComponent.asWick(): LineComponent =
+fun LineComponent.asWick(): LineComponent =
     copy(
         fill = effectiveStrokeFill,
         thicknessDp = Defaults.WICK_DEFAULT_WIDTH_DP,
@@ -476,7 +476,7 @@ public fun LineComponent.asWick(): LineComponent =
 /**
  * Switches between three [Candle]s based on [CandlestickCartesianLayerModel.Entry.absoluteChange].
  */
-public fun CandlestickCartesianLayer.CandleProvider.Companion.absolute(
+fun CandlestickCartesianLayer.CandleProvider.Companion.absolute(
     bullish: Candle,
     neutral: Candle,
     bearish: Candle,
@@ -487,7 +487,7 @@ public fun CandlestickCartesianLayer.CandleProvider.Companion.absolute(
  * Switches between nine [Candle]s based on [CandlestickCartesianLayerModel.Entry.absoluteChange]
  * and [CandlestickCartesianLayerModel.Entry.relativeChange].
  */
-public fun CandlestickCartesianLayer.CandleProvider.Companion.absoluteRelative(
+fun CandlestickCartesianLayer.CandleProvider.Companion.absoluteRelative(
     absolutelyBullishRelativelyBullish: Candle,
     absolutelyBullishRelativelyNeutral: Candle,
     absolutelyBullishRelativelyBearish: Candle,

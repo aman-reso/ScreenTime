@@ -56,3 +56,14 @@
 -dontwarn org.joda.convert.**
 -keep class org.joda.time.** { *; }
 -dontwarn org.joda.time.**
+
+# Keep PreferencesManager constants for language support
+-keep class com.app.screentime.core.network.preferences.PreferencesManager {
+    public static final java.lang.String PREFS_NAME;
+    public static final java.lang.String KEY_LANGUAGE;
+}
+
+# Keep MainActivity attachBaseContext for locale handling
+-keep class com.app.screentime.MainActivity {
+    protected void attachBaseContext(android.content.Context);
+}

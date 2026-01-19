@@ -13,7 +13,7 @@ import com.telekom.odsystem.charts.core.common.Defaults.FADING_EDGE_WIDTH_DP
 
 /** Creates and remembers a [FadingEdges] instance. */
 @Composable
-public fun rememberFadingEdges(
+fun rememberFadingEdges(
     startWidth: Dp = FadingEdgesDefaults.edgeWidth,
     endWidth: Dp = FadingEdgesDefaults.edgeWidth,
     visibilityThreshold: Dp = FadingEdgesDefaults.visibilityThreshold,
@@ -30,7 +30,7 @@ public fun rememberFadingEdges(
 
 /** Creates and remembers a [FadingEdges] instance. */
 @Composable
-public fun rememberFadingEdges(
+fun rememberFadingEdges(
     width: Dp = FadingEdgesDefaults.edgeWidth,
     visibilityThreshold: Dp = FadingEdgesDefaults.visibilityThreshold,
     visibilityEasing: Easing = FadingEdgesDefaults.visibilityEasing,

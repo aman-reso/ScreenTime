@@ -2,6 +2,7 @@ package com.app.screentime.consent.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.screentime.config.R
 import com.app.screentime.consent.mapper.ConsentMapper
 import com.app.screentime.consent.model.ConsentUiModel
 import com.app.screentime.consent.usecase.ConsentUseCase
@@ -10,6 +11,7 @@ import com.app.screentime.network.model.*
 import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +23,8 @@ class ConsentViewModel @Inject constructor(
     private val consentUseCase: ConsentUseCase,
     private val consentMapper: ConsentMapper,
     private val preferencesUseCase: PreferencesUseCase,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    @ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConsentUiState())
@@ -171,7 +174,7 @@ class ConsentViewModel @Inject constructor(
             if (deviceId.isNullOrEmpty()) {
                 _uiState.value = _uiState.value.copy(
                     isSubmitting = false,
-                    error = "Device not registered"
+                    error = context.getString(R.string.device_not_registered)
                 )
                 return@launch
             }

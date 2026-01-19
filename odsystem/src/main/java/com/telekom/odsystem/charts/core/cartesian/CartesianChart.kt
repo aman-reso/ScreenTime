@@ -39,7 +39,7 @@ import kotlin.math.abs
 /** A chart based on a Cartesian coordinate plane, composed of [CartesianLayer]s. */
 @Suppress("All")
 @Stable
-public open class CartesianChart
+open class CartesianChart
 private constructor(
     vararg layers: CartesianLayer<*>,
     startAxis: Axis<Axis.Position.Vertical.Start>? = null,
@@ -47,18 +47,17 @@ private constructor(
     endAxis: Axis<Axis.Position.Vertical.End>? = null,
     bottomAxis: Axis<Axis.Position.Horizontal.Bottom>? = null,
     /** @suppress */
-    @get:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) public val marker: CartesianMarker? = null,
+    @get:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) val marker: CartesianMarker? = null,
     protected val markerVisibilityListener: CartesianMarkerVisibilityListener? = null,
     /** @suppress */
-    @get:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public val layerPadding: ((ExtraStore) -> CartesianLayerPadding) = { CartesianLayerPadding() },
+    @get:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) val layerPadding: ((ExtraStore) -> CartesianLayerPadding) = { CartesianLayerPadding() },
     protected val legend: Legend<CartesianMeasuringContext, CartesianDrawingContext>? = null,
     protected val fadingEdges: FadingEdges? = null,
     protected val decorations: List<Decoration> = emptyList(),
     protected val persistentMarkers: (PersistentMarkerScope.(ExtraStore) -> Unit)? = null,
     protected val getXStep: ((CartesianChartModel) -> Double) = { it.getXDeltaGcd() },
     /** @suppress */
-    @get:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) public val id: UUID,
+    @get:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP) val id: UUID,
     private var previousMarkerTargetHashCode: Int?,
     private val persistentMarkerMap: MutableMap<Double, CartesianMarker>,
     private var previousPersistentMarkerHashCode: Int?,
@@ -141,10 +140,10 @@ private constructor(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public val layerBounds: RectF = RectF()
+    val layerBounds: RectF = RectF()
 
     /** The [CartesianLayer]s of which this [CartesianChart] is composed. */
-    public val layers: List<CartesianLayer<*>> = layers.toList()
+    val layers: List<CartesianLayer<*>> = layers.toList()
 
     /** Links _x_ values to [CartesianMarker.Target]s. */
     @Suppress("UNCHECKED_CAST")
@@ -152,16 +151,16 @@ private constructor(
         _markerTargets as SortedMap<Double, List<CartesianMarker.Target>>
 
     /** The start [Axis]. */
-    public val startAxis: Axis<Axis.Position.Vertical.Start>? by axisManager::startAxis
+    val startAxis: Axis<Axis.Position.Vertical.Start>? by axisManager::startAxis
 
     /** The top [Axis]. */
-    public val topAxis: Axis<Axis.Position.Horizontal.Top>? by axisManager::topAxis
+    val topAxis: Axis<Axis.Position.Horizontal.Top>? by axisManager::topAxis
 
     /** The end [Axis]. */
-    public val endAxis: Axis<Axis.Position.Vertical.End>? by axisManager::endAxis
+    val endAxis: Axis<Axis.Position.Vertical.End>? by axisManager::endAxis
 
     /** The bottom [Axis]. */
-    public val bottomAxis: Axis<Axis.Position.Horizontal.Bottom>? by axisManager::bottomAxis
+    val bottomAxis: Axis<Axis.Position.Horizontal.Bottom>? by axisManager::bottomAxis
 
     init {
         axisManager.startAxis = startAxis
@@ -188,7 +187,7 @@ private constructor(
      * @param persistentMarkers adds persistent [CartesianMarker]s.
      * @param getXStep defines the _x_ step (the difference between neighboring major _x_ values).
      */
-    public constructor(
+    constructor(
         vararg layers: CartesianLayer<*>,
         startAxis: Axis<Axis.Position.Vertical.Start>? = null,
         topAxis: Axis<Axis.Position.Horizontal.Top>? = null,
@@ -228,7 +227,7 @@ private constructor(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public fun prepare(
+    fun prepare(
         context: CartesianMeasuringContext,
         layerDimensions: MutableCartesianLayerDimensions,
     ) {
@@ -287,7 +286,7 @@ private constructor(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public fun draw(context: CartesianDrawingContext) {
+    fun draw(context: CartesianDrawingContext) {
         with(context) {
             val canvasSaveCount = if (fadingEdges != null) canvas.saveLayer() else -1
             axisManager.drawUnderLayers(context)
@@ -315,7 +314,7 @@ private constructor(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public fun updateRanges(ranges: MutableCartesianChartRanges, model: CartesianChartModel) {
+    fun updateRanges(ranges: MutableCartesianChartRanges, model: CartesianChartModel) {
         ranges.xStep = getXStep(model)
         model.forEachWithLayer(rangeUpdateConsumer.apply { this.ranges = ranges })
     }
@@ -352,7 +351,7 @@ private constructor(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public fun prepareForTransformation(
+    fun prepareForTransformation(
         model: CartesianChartModel?,
         extraStore: MutableExtraStore,
         ranges: CartesianChartRanges,
@@ -367,7 +366,7 @@ private constructor(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public suspend fun transform(extraStore: MutableExtraStore, fraction: Float) {
+    suspend fun transform(extraStore: MutableExtraStore, fraction: Float) {
         layers.forEach { it.transform(extraStore, fraction) }
     }
 
@@ -430,11 +429,11 @@ private constructor(
     }
 
     protected interface ModelAndLayerConsumer {
-        public operator fun <T : CartesianLayerModel> invoke(model: T?, layer: CartesianLayer<T>)
+        operator fun <T : CartesianLayerModel> invoke(model: T?, layer: CartesianLayer<T>)
     }
 
     /** Creates a new [CartesianChart] based on this one. */
-    public fun copy(
+    fun copy(
         vararg layers: CartesianLayer<*> = this.layers.toTypedArray(),
         startAxis: Axis<Axis.Position.Vertical.Start>? = this.startAxis,
         topAxis: Axis<Axis.Position.Horizontal.Top>? = this.topAxis,
@@ -506,12 +505,12 @@ private constructor(
     }
 
     /** Facilitates adding persistent [CartesianMarker]s to [CartesianChart]s. */
-    public fun interface PersistentMarkerScope {
+    fun interface PersistentMarkerScope {
         /** Adds this [CartesianMarker] at [x]. */
-        public infix fun CartesianMarker.at(x: Number)
+        infix fun CartesianMarker.at(x: Number)
     }
 
     protected companion object {
-        public val cacheKeyNamespace: CacheStore.KeyNamespace = CacheStore.KeyNamespace()
+        val cacheKeyNamespace: CacheStore.KeyNamespace = CacheStore.KeyNamespace()
     }
 }

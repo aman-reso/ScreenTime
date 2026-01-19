@@ -18,7 +18,7 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 /** Creates [CartesianChartModel]s and handles difference animations. */
-public class CartesianChartModelProducer {
+class CartesianChartModelProducer {
     private var lastPartials = emptyList<CartesianLayerModel.Partial>()
     private var lastTransactionExtraStore = MutableExtraStore()
     private var cachedModel: CartesianChartModel? = null
@@ -80,7 +80,7 @@ public class CartesianChartModelProducer {
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public suspend fun registerForUpdates(
+    suspend fun registerForUpdates(
         key: Any,
         cancelAnimation: suspend () -> Unit,
         startAnimation: (transformModel: suspend (key: Any, fraction: Float) -> Unit) -> Unit,
@@ -111,11 +111,11 @@ public class CartesianChartModelProducer {
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public fun isRegistered(key: Any): Boolean = updateReceivers.containsKey(key)
+    fun isRegistered(key: Any): Boolean = updateReceivers.containsKey(key)
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public fun unregisterFromUpdates(key: Any) {
+    fun unregisterFromUpdates(key: Any) {
         updateReceivers.remove(key)
     }
 
@@ -124,17 +124,17 @@ public class CartesianChartModelProducer {
      * the update is complete. Between steps 2 and 3, if there’s already an update in progress, the
      * current coroutine is suspended until the ongoing update’s completion.
      */
-    public suspend fun runTransaction(block: Transaction.() -> Unit) {
+    suspend fun runTransaction(block: Transaction.() -> Unit) {
         withContext(Dispatchers.Default) { Transaction().also(block).commit() }
     }
 
     /** Handles data updates. This is used via [runTransaction]. */
-    public inner class Transaction internal constructor() {
+    inner class Transaction internal constructor() {
         private val newPartials = mutableListOf<CartesianLayerModel.Partial>()
         private val newExtraStore = MutableExtraStore()
 
         /** Adds a [CartesianLayerModel.Partial]. */
-        public fun add(partial: CartesianLayerModel.Partial) {
+        fun add(partial: CartesianLayerModel.Partial) {
             newPartials.add(partial)
         }
 
@@ -142,7 +142,7 @@ public class CartesianChartModelProducer {
          * Allows for adding auxiliary values, which can later be retrieved via
          * [CartesianChartModel.extraStore].
          */
-        public fun extras(block: (MutableExtraStore) -> Unit) {
+        fun extras(block: (MutableExtraStore) -> Unit) {
             block(newExtraStore)
         }
 
@@ -183,4 +183,4 @@ internal object PreviewContextKey : CoroutineContext.Key<PreviewContext>
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public object PreviewContext : AbstractCoroutineContextElement(PreviewContextKey)
+object PreviewContext : AbstractCoroutineContextElement(PreviewContextKey)

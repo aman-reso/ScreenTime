@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.foundations.HexColor
@@ -32,7 +34,7 @@ fun TotalEarnedPointsCard(
     ) {
         // Title
         ODSText(
-            text = "TOTAL EARNED POINTS",
+            text = stringResource(R.string.total_earned_points),
             style = com.telekom.odsystem.DSTextStyles.bodyMBold,
             color = HexColor("FFFFFF")
         )
@@ -54,7 +56,7 @@ fun TotalEarnedPointsCard(
                     color = HexColor("000000")
                 )
                 ODSText(
-                    text = "POINTS",
+                    text = stringResource(R.string.points),
                     style = com.telekom.odsystem.DSTextStyles.bodyMBold,
                     color = HexColor("000000")
                 )
@@ -70,7 +72,7 @@ fun TotalEarnedPointsCard(
                     color = HexColor("000000")
                 )
                 ODSText(
-                    text = "RUPEES",
+                    text = stringResource(R.string.rupees),
                     style = com.telekom.odsystem.DSTextStyles.bodyMBold,
                     color = HexColor("000000")
                 )
@@ -78,6 +80,7 @@ fun TotalEarnedPointsCard(
         }
     }
 }
+
 
 
 

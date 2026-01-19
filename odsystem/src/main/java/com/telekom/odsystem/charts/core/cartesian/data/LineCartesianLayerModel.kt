@@ -6,11 +6,11 @@ import com.telekom.odsystem.charts.core.common.rangeOf
 import com.telekom.odsystem.charts.core.common.rangeOfPair
 
 /** Stores a [LineCartesianLayer]’s data. */
-public class LineCartesianLayerModel : CartesianLayerModel {
+class LineCartesianLayerModel : CartesianLayerModel {
     private val entries: List<Entry>
 
     /** The series (lists of [Entry] instances). */
-    public val series: List<List<Entry>>
+    val series: List<List<Entry>>
 
     override val id: Int
 
@@ -24,7 +24,7 @@ public class LineCartesianLayerModel : CartesianLayerModel {
 
     override val extraStore: ExtraStore
 
-    public constructor(series: List<List<Entry>>) : this(series, ExtraStore.Empty)
+    constructor(series: List<List<Entry>>) : this(series, ExtraStore.Empty)
 
     private constructor(series: List<List<Entry>>, extraStore: ExtraStore) {
         require(series.isNotEmpty()) { "At least one series should be added." }
@@ -92,9 +92,9 @@ public class LineCartesianLayerModel : CartesianLayerModel {
     }
 
     /** Represents a line node at ([x], [y]). */
-    public class Entry internal constructor(override val x: Double, public val y: Double) :
+    class Entry internal constructor(override val x: Double, val y: Double) :
         CartesianLayerModel.Entry {
-        public constructor(x: Number, y: Number) : this(x.toDouble(), y.toDouble())
+        constructor(x: Number, y: Number) : this(x.toDouble(), y.toDouble())
 
         override fun equals(other: Any?): Boolean =
             this === other || other is Entry && x == other.x && y == other.y
@@ -106,7 +106,7 @@ public class LineCartesianLayerModel : CartesianLayerModel {
      * Stores the minimum amount of data required to create a [LineCartesianLayerModel] and
      * facilitates this creation.
      */
-    public class Partial(private val series: List<List<Entry>>) : CartesianLayerModel.Partial {
+    class Partial(private val series: List<List<Entry>>) : CartesianLayerModel.Partial {
         override fun complete(extraStore: ExtraStore): CartesianLayerModel =
             LineCartesianLayerModel(series, extraStore)
 
@@ -117,35 +117,35 @@ public class LineCartesianLayerModel : CartesianLayerModel {
     }
 
     /** Facilitates the creation of [LineCartesianLayerModel]s and [Partial]s. */
-    public class BuilderScope internal constructor() {
+    class BuilderScope internal constructor() {
         internal val series = mutableListOf<List<Entry>>()
 
         /**
          * Adds a series with the provided _x_ values ([x]) and _y_ values ([y]). [x] and [y] should
          * have the same size.
          */
-        public fun series(x: Collection<Number>, y: Collection<Number>) {
+        fun series(x: Collection<Number>, y: Collection<Number>) {
             series.add(x.zip(y, LineCartesianLayerModel::Entry))
         }
 
         /** Adds a series with the provided _y_ values ([y]), using their indices as the _x_ values. */
-        public fun series(y: Collection<Number>) {
+        fun series(y: Collection<Number>) {
             series(y.indices.toList(), y)
         }
 
         /** Adds a series with the provided _y_ values ([y]), using their indices as the _x_ values. */
-        public fun series(vararg y: Number) {
+        fun series(vararg y: Number) {
             series(y.toList())
         }
     }
 
-    public companion object {
+    companion object {
         /** Creates a [LineCartesianLayerModel]. */
-        public fun build(block: BuilderScope.() -> Unit): LineCartesianLayerModel =
+        fun build(block: BuilderScope.() -> Unit): LineCartesianLayerModel =
             LineCartesianLayerModel(BuilderScope().apply(block).series)
 
         /** Creates a [Partial]. */
-        public fun partial(block: BuilderScope.() -> Unit): Partial =
+        fun partial(block: BuilderScope.() -> Unit): Partial =
             Partial(BuilderScope().apply(block).series)
     }
 }
@@ -154,7 +154,7 @@ public class LineCartesianLayerModel : CartesianLayerModel {
  * Calls [block] to create a [LineCartesianLayerModel.Partial] and adds it to the
  * [CartesianChartModelProducer.Transaction]’s [CartesianLayerModel.Partial] list.
  */
-public fun CartesianChartModelProducer.Transaction.lineSeries(
+fun CartesianChartModelProducer.Transaction.lineSeries(
     block: LineCartesianLayerModel.BuilderScope.() -> Unit
 ) {
     add(LineCartesianLayerModel.partial(block))

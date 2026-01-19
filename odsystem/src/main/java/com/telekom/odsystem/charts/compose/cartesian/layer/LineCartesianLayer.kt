@@ -24,7 +24,7 @@ import com.telekom.odsystem.charts.core.common.setValue
 
 /** Creates and remembers a [LineCartesianLayer]. */
 @Composable
-public fun rememberLineCartesianLayer(
+fun rememberLineCartesianLayer(
     lineProvider: LineCartesianLayer.LineProvider =
         LineCartesianLayer.LineProvider.series(
             vicoTheme.lineCartesianLayerColors.map { color ->
@@ -73,7 +73,7 @@ public fun rememberLineCartesianLayer(
 
 /** Creates and remembers a [LineCartesianLayer.Line]. */
 @Composable
-public fun LineCartesianLayer.Companion.rememberLine(
+fun LineCartesianLayer.Companion.rememberLine(
     fill: LineCartesianLayer.LineFill =
         vicoTheme.lineCartesianLayerColors.first().let { color ->
             remember(color) { LineCartesianLayer.LineFill.single(fill(color)) }
@@ -112,7 +112,7 @@ public fun LineCartesianLayer.Companion.rememberLine(
     }
 
 /** Creates a [LineCartesianLayer.Point]. */
-public fun LineCartesianLayer.Companion.point(
+fun LineCartesianLayer.Companion.point(
     component: Component,
     size: Dp = Defaults.POINT_SIZE.dp,
 ): LineCartesianLayer.Point = LineCartesianLayer.Point(component, size.value)
@@ -130,14 +130,14 @@ private val StrokeCap.paintCap: Paint.Cap
         }
 
 /** Creates a [LineCartesianLayer.LineStroke.Continuous] instance. */
-public fun LineCartesianLayer.LineStroke.Companion.continuous(
+fun LineCartesianLayer.LineStroke.Companion.continuous(
     thickness: Dp = Defaults.LINE_SPEC_THICKNESS_DP.dp,
     cap: StrokeCap = StrokeCap.Butt,
 ): LineCartesianLayer.LineStroke.Continuous =
     LineCartesianLayer.LineStroke.Continuous(thickness.value, cap.paintCap)
 
 /** Creates a [LineCartesianLayer.LineStroke.Dashed] instance. */
-public fun LineCartesianLayer.LineStroke.Companion.dashed(
+fun LineCartesianLayer.LineStroke.Companion.dashed(
     thickness: Dp = Defaults.LINE_SPEC_THICKNESS_DP.dp,
     cap: StrokeCap = StrokeCap.Butt,
     dashLength: Dp = Defaults.LINE_DASH_LENGTH.dp,

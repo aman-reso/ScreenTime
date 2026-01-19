@@ -15,7 +15,7 @@ import com.telekom.odsystem.charts.core.common.shader.LinearGradientShaderProvid
 import com.telekom.odsystem.charts.core.common.shader.ShaderProvider
 
 /** A [Dp] version of [ShaderProvider.component]. */
-public fun ShaderProvider.Companion.component(
+fun ShaderProvider.Companion.component(
     component: Component,
     componentSize: Dp,
     checker: Boolean = true,
@@ -24,21 +24,21 @@ public fun ShaderProvider.Companion.component(
 ): ShaderProvider = component(component, componentSize.value, checker, xTileMode, yTileMode)
 
 /** A [Color] version of [ShaderProvider.horizontalGradient]. */
-public fun ShaderProvider.Companion.horizontalGradient(
+fun ShaderProvider.Companion.horizontalGradient(
     colors: Array<Color>,
     positions: FloatArray? = null,
 ): ShaderProvider =
     LinearGradientShaderProvider(IntArray(colors.size) { colors[it].toArgb() }, positions, true)
 
 /** A [Color] version of [ShaderProvider.verticalGradient]. */
-public fun ShaderProvider.Companion.verticalGradient(
+fun ShaderProvider.Companion.verticalGradient(
     colors: Array<Color>,
     positions: FloatArray? = null,
 ): ShaderProvider =
     LinearGradientShaderProvider(IntArray(colors.size) { colors[it].toArgb() }, positions, false)
 
 /** Converts this [Brush] to a [ShaderProvider]. */
-public fun Brush.toShaderProvider(): ShaderProvider =
+fun Brush.toShaderProvider(): ShaderProvider =
     object : CachingShaderProvider() {
         override fun createShader(
             context: DrawingContext,

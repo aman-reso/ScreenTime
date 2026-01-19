@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.common.component.ODSCountdownTimer
 import com.app.screentime.common.component.ODSCountdownTimerFormat
 import com.app.screentime.common.component.ODSCountdownTimerProps

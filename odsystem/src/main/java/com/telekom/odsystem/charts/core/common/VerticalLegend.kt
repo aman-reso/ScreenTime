@@ -13,7 +13,7 @@ import kotlin.math.max
  * @param rowSpacingDp the row spacing (in dp).
  * @param padding the content padding.
  */
-public open class VerticalLegend<M : MeasuringContext, D : DrawingContext>(
+open class VerticalLegend<M : MeasuringContext, D : DrawingContext>(
     protected val items: AdditionScope<LegendItem>.(ExtraStore) -> Unit,
     protected val iconSizeDp: Float = Defaults.LEGEND_ICON_SIZE,
     protected val iconLabelSpacingDp: Float = Defaults.LEGEND_ICON_LABEL_SPACING,

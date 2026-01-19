@@ -7,6 +7,7 @@ import com.telekom.odsystem.foundations.ODSEffect
 import com.telekom.odsystem.foundations.ODSElevation
 import com.telekom.odsystem.foundations.ODSElevationType
 
+//#e8e9e8
 val lightMode = ODSTheme(
     name = "lightMode",
     basicAccent = HexColor(0xffe20074),

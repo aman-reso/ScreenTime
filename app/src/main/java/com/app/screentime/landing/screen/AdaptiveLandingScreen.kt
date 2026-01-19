@@ -37,6 +37,12 @@ fun AdaptiveLandingScreen(
     onNavigateToSingleAppUsageDetail: (String) -> Unit = {},
     onNavigateToChallengeDetail: (String) -> Unit = {},
     onNavigateToChallenges: () -> Unit = {},
+    onNavigateToControlCenter: () -> Unit = {},
+    onNavigateToManageLocation: () -> Unit = {},
+    onNavigateToRecoverNotification: () -> Unit = {},
+    onNavigateToAppLock: () -> Unit = {},
+    onNavigateToFileManager: () -> Unit = {},
+    onNavigateToWallpaper: () -> Unit = {},
     landingViewModel: LandingViewModel = hiltViewModel(),
     statisticsViewModel: StatisticsViewModel = hiltViewModel(),
     openSearchScreen: () -> Unit = {},
@@ -84,12 +90,20 @@ fun AdaptiveLandingScreen(
                 LandingScreenV2(
                     modifier = Modifier.fillMaxSize(),
                     onNavigateToLeaderboard = onNavigateToLeaderboard,
-                    onNavigateToReward = onNavigateToReward,
+                    onNavigateToReward = {
+                    onNavigateToReward()
+                },
                     onNavigateToSearch = onNavigateToSearch,
                     onNavigateToStatistics = onNavigateToStatistics,
                     onNavigateToSingleAppUsageDetail = onNavigateToSingleAppUsageDetail,
                     onNavigateToChallengeDetail = onNavigateToChallengeDetail,
                     onNavigateToChallenges = onNavigateToChallenges,
+                    onNavigateToControlCenter = onNavigateToControlCenter,
+                    onNavigateToManageLocation = onNavigateToManageLocation,
+                    onNavigateToRecoverNotification = onNavigateToRecoverNotification,
+                    onNavigateToAppLock = onNavigateToAppLock,
+                    onNavigateToFileManager = onNavigateToFileManager,
+                    onNavigateToWallpaper = onNavigateToWallpaper,
                     viewModel = landingViewModel,
                     scheme = scheme
                 )
@@ -120,12 +134,20 @@ fun AdaptiveLandingScreen(
         LandingScreenV2(
             modifier = modifier.fillMaxSize(),
             onNavigateToLeaderboard = onNavigateToLeaderboard,
-            onNavigateToReward = onNavigateToReward,
+            onNavigateToReward = {
+                onNavigateToReward()
+            },
             onNavigateToSearch = onNavigateToSearch,
             onNavigateToStatistics = onNavigateToStatistics,
             onNavigateToSingleAppUsageDetail = onNavigateToSingleAppUsageDetail,
             onNavigateToChallengeDetail = onNavigateToChallengeDetail,
             onNavigateToChallenges = onNavigateToChallenges,
+            onNavigateToControlCenter = onNavigateToControlCenter,
+            onNavigateToManageLocation = onNavigateToManageLocation,
+            onNavigateToRecoverNotification = onNavigateToRecoverNotification,
+            onNavigateToAppLock = onNavigateToAppLock,
+            onNavigateToFileManager = onNavigateToFileManager,
+            onNavigateToWallpaper = onNavigateToWallpaper,
             viewModel = landingViewModel,
             scheme = scheme
         )

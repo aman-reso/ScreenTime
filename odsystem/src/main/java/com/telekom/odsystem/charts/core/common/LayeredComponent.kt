@@ -10,7 +10,7 @@ import com.telekom.odsystem.charts.core.common.component.Component
  * @property padding the padding between [back] and [front].
  * @property margins the margins around the [LayeredComponent].
  */
-public open class LayeredComponent(
+open class LayeredComponent(
   protected val back: Component,
   protected val front: Component,
   protected val padding: Insets = Insets.Zero,

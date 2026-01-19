@@ -15,8 +15,10 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.app.screentime.config.R as ConfigR
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.R
@@ -98,7 +100,7 @@ fun UserProfileCard(
         }
         joinedOn?.takeIf { it.isNotEmpty() }?.let {
             ODSText(
-                text = "Joined On $it",
+                text = stringResource(ConfigR.string.joined_on, it),
                 style = DSTextStyles.bodySRegular,
                 modifier = Modifier.wrapContentWidth(),
                 textAlign = TextAlign.Center,

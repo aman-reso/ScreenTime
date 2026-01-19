@@ -54,7 +54,7 @@ internal inline val Int.half: Int
   get() = this / 2
 
 /** @suppress */
-public inline val Float.half: Float
+inline val Float.half: Float
   @RestrictTo(RestrictTo.Scope.LIBRARY) get() = this / 2
 
 internal inline val Double.half: Double
@@ -67,7 +67,7 @@ internal inline val Double.doubled: Double
   get() = 2 * this
 
 /** @suppress */
-public inline val Float?.orZero: Float
+inline val Float?.orZero: Float
   @RestrictTo(RestrictTo.Scope.LIBRARY) get() = this ?: 0f
 
 internal val Double?.orZero: Double
@@ -87,15 +87,15 @@ internal inline val Float.piRad: Float
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY)
-public fun Int.hasFlag(flag: Int): Boolean = this and flag == flag
+fun Int.hasFlag(flag: Int): Boolean = this and flag == flag
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY)
-public fun firstNonNegativeOf(vararg floats: Float): Float? = floats.firstOrNull { it >= 0f }
+fun firstNonNegativeOf(vararg floats: Float): Float? = floats.firstOrNull { it >= 0f }
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY)
-public fun Float.rangeWith(other: Float): ClosedFloatingPointRange<Float> =
+fun Float.rangeWith(other: Float): ClosedFloatingPointRange<Float> =
   if (other > this) this..other else other..this
 
 internal fun Float.lerp(to: Float, fraction: Float): Float = this + (to - this) * fraction

@@ -6,7 +6,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
 import com.app.screentime.ads.RewardedAdManager
-import com.google.android.gms.ads.rewarded.RewardItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,21 +13,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -37,9 +36,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.reward.component.ExpiringPointsBanner
+import com.app.screentime.config.data.Feature
+import com.app.screentime.config.featureflag.FeatureFlagHelper
 import com.app.screentime.reward.component.PointsHeader
 import com.app.screentime.reward.component.RewardCardV1
 import com.app.screentime.reward.component.RewardClaimDialog
@@ -65,7 +66,6 @@ import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
-import com.telekom.odsystem.tokens.tokens.macawSecondaryScheme
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonButtonType
@@ -76,12 +76,14 @@ import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSLazyColumn
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.tokens.tokens.kingfisherSecondaryScheme
 import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenu
 import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenuButtonProps
 import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenuMenuSize
 import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenuOptions
 import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenuProps
+import com.app.screentime.ui.atom.PullToRefreshBox
+import kotlin.math.absoluteValue
+import com.app.screentime.config.R as ConfigR
 
 /**
  * Data class for recommended activity (for backward compatibility with dialogs)
@@ -92,6 +94,7 @@ import com.telekom.odsystem.molecules.flyoutmenu.ODSFlyoutMenuProps
  */
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun RewardScreen(
@@ -103,6 +106,7 @@ fun RewardScreen(
     headerScheme: ODSTheme = headerTheme.current,
     viewModel: RewardViewModel = hiltViewModel()
 ) {
+
     val activity = LocalActivity.current
     // Get theme mode for status bar styling
     val useDarkTheme = LocalThemeMode.current
@@ -124,6 +128,12 @@ fun RewardScreen(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    
+    // Reload data when screen is opened
+    LaunchedEffect(Unit) {
+        viewModel.loadRewardData()
+    }
+    
     var showClaimDialog by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
     var showRewardInfoBottomSheet by remember { mutableStateOf(false) }
@@ -134,6 +144,9 @@ fun RewardScreen(
     var isMenuExpanded by remember { mutableStateOf(false) }
     var showAdRewardSuccess by remember { mutableStateOf(false) }
     var earnedCoinsFromAd by remember { mutableStateOf(0) }
+    var showWatchAdSection by remember { mutableStateOf(true) }
+    var isAdLoading by remember { mutableStateOf(false) }
+    var adError by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
     val density = LocalDensity.current
     var expandedHeaderHeightPx by remember { mutableIntStateOf(0) }
@@ -161,6 +174,14 @@ fun RewardScreen(
 
 
 
+    // Reset header height measurement when watch ad section visibility changes
+    LaunchedEffect(showWatchAdSection) {
+        expandedHeaderHeightPx = 0
+        headerOffsetPx = 0f
+        lastScrollOffset = 0
+        lastFirstVisibleItem = 0
+    }
+
     LaunchedEffect(listState) {
         snapshotFlow {
             listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
@@ -182,8 +203,7 @@ fun RewardScreen(
                 }
             }
 
-            headerOffsetPx = (headerOffsetPx + delta)
-                .coerceIn(0f, expandedHeaderHeightPx.toFloat())
+            headerOffsetPx = (headerOffsetPx + delta).coerceIn(0f, expandedHeaderHeightPx.toFloat())
 
             lastFirstVisibleItem = index
             lastScrollOffset = offset
@@ -216,7 +236,7 @@ fun RewardScreen(
                         modifier = Modifier.wrapContentHeight(),
                         scheme = scheme,
                         props = ODSLoadingSpinnerProps(
-                            labelText = stringResource(com.app.screentime.R.string.loading),
+                            labelText = stringResource(com.app.screentime.config.R.string.loading),
                             size = ODSLoadingSpinnerSize.SMALL,
                             variant = ODSLoadingSpinnerVariant.STANDARD,
                             labelAlignment = ODSLoadingSpinnerLabelAlignment.HORIZONTAL
@@ -240,7 +260,6 @@ fun RewardScreen(
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
                     )
-
                     ODSColumn(
                         modifier = Modifier.fillMaxSize()
                     ) {
@@ -267,7 +286,7 @@ fun RewardScreen(
                                             buttonIcon = ODSIconModel(
                                                 drawableRes = R.drawable.left_condensed_type_standard_size_standard,
                                                 tint = headerScheme.basicText,
-                                                contentDescription = "Back"
+                                                contentDescription = stringResource(ConfigR.string.back)
                                             ),
                                             buttonType = ODSButtonButtonType.ICON_ONLY,
                                             variant = ODSButtonVariant.GHOST,
@@ -276,13 +295,14 @@ fun RewardScreen(
                                     )
 
                                     ODSText(
-                                        text = "Reward",
-                                        style = DSTextStyles.bodyL,
+                                        text = stringResource(ConfigR.string.reward),
+                                        style = DSTextStyles.bodyMBold,
                                         color = headerScheme.basicText,
-                                        modifier = Modifier.padding(start = DSVariables.spacingComponent2)
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .weight(1f)
                                     )
-
-                                    Spacer(modifier = Modifier.weight(1f))
 
                                     ODSFlyoutMenu(
                                         scheme = headerScheme,
@@ -293,14 +313,14 @@ fun RewardScreen(
                                                 buttonIcon = ODSIconModel(
                                                     drawableRes = R.drawable.menu_type_standard_size_standard,
                                                     tint = headerScheme.basicText,
-                                                    contentDescription = "Menu"
+                                                    contentDescription = stringResource(ConfigR.string.menu)
                                                 ),
                                                 variant = ODSButtonVariant.GHOST,
                                                 size = ODSButtonSize.SMALL
                                             ),
                                             options = listOf(
-                                                ODSFlyoutMenuOptions(label = "Coin History"),
-                                                ODSFlyoutMenuOptions(label = "Order History")
+                                                ODSFlyoutMenuOptions(label = stringResource(ConfigR.string.coin_history)),
+                                                ODSFlyoutMenuOptions(label = stringResource(ConfigR.string.order_history))
                                             )
                                         ),
                                         onClick = { isMenuExpanded = !isMenuExpanded },
@@ -311,41 +331,80 @@ fun RewardScreen(
                                                 0 -> onNavigateToCoinHistory()
                                                 1 -> onNavigateToRewardHistory(null)
                                             }
-                                        }
-                                    )
+                                        })
                                 }
 
                                 ODSBox(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .onSizeChanged { size ->
-                                            if (expandedHeaderHeightPx == 0) {
-                                                expandedHeaderHeightPx = size.height
-                                            }
-                                        }
-                                        .then(
-                                            if (expandedHeaderHeightPx > 0) {
-                                                Modifier.height(headerHeightDp)
+                                    .fillMaxWidth()
+                                    .onSizeChanged { size ->
+                                            val heightDiff = if (expandedHeaderHeightPx > 0) {
+                                                (expandedHeaderHeightPx - size.height).absoluteValue
                                             } else {
-                                                Modifier // Let it measure naturally first
+                                                Int.MAX_VALUE // Force update on first measurement
                                             }
-                                        )
-                                        .graphicsLayer {
-                                            alpha = 1f - collapseFraction
-                                        }) {
+                                            // Update height if initial measurement or if height changed significantly
+                                            if (expandedHeaderHeightPx == 0 || heightDiff > 10) {
+                                                val wasInitial = expandedHeaderHeightPx == 0
+                                            expandedHeaderHeightPx = size.height
+                                                if (!wasInitial) {
+                                                    headerOffsetPx = 0f
+                                                }
+                                        }
+                                    }
+                                    .then(
+                                        if (expandedHeaderHeightPx > 0) {
+                                            Modifier.height(headerHeightDp)
+                                        } else {
+                                            Modifier // Let it measure naturally first
+                                        }
+                                    )
+                                    .graphicsLayer {
+                                        alpha = 1f - collapseFraction
+                                    }) {
                                     PointsHeader(
                                         points = uiState.totalCoins,
-                                        onOrderHistoryClick = {
-                                            onNavigateToRewardHistory(null)
-                                        },
-                                        onCoinHistoryClick = {
-                                            onNavigateToCoinHistory()
-                                        },
+                                        coinHistory = uiState.coinHistory,
                                         onInfoClick = {
                                             onNavigateToCoinHistory()
                                         },
                                         scheme = headerScheme,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        showWatchAdSection = showWatchAdSection,
+                                        isAdLoading = isAdLoading,
+                                        adError = adError,
+                                        onWatchAdClick = {
+                                            activity?.let {
+                                                isAdLoading = true
+                                                adError = null
+                                                RewardedAdManager.showRewardedAd(
+                                                    activity = it,
+                                                    onRewardEarned = { rewardItem ->
+                                                        earnedCoinsFromAd = rewardItem.amount
+                                                        // Add coins via API
+                                                        viewModel.addCoinsForAdWatch(
+                                                            onSuccess = {
+                                                                isAdLoading = false
+                                                                showAdRewardSuccess = true
+                                                                // Hide the section after successful coin addition
+                                                                showWatchAdSection = false
+                                                            },
+                                                            onError = { errorMsg ->
+                                                                isAdLoading = false
+                                                                adError = errorMsg
+                                                                showAdRewardSuccess = false
+                                                            }
+                                                        )
+                                                    },
+                                                    onAdDismissed = {
+                                                        // If ad was dismissed without reward, reset loading state
+                                                        if (isAdLoading) {
+                                                            isAdLoading = false
+                                                        }
+                                                    }
+                                                )
+                                            }
+                                        }
                                     )
                                 }
                             }
@@ -357,6 +416,15 @@ fun RewardScreen(
                                 .weight(1f),
                             background = listOf(ODSColorModel(scheme.basicBackground))
                         ) {
+                            val isRefreshing = uiState.isLoading
+
+                            PullToRefreshBox(
+                                isRefreshing = isRefreshing,
+                                onRefresh = {
+                                    viewModel.loadRewardData()
+                                },
+                                modifier = Modifier.fillMaxSize()
+                        ) {
                             ODSLazyColumn(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
@@ -367,61 +435,9 @@ fun RewardScreen(
                                 gap = DSVariables.spacingComponent3
                             ) {
 
-//                                // Watch Ad to Earn Coins Section
-//                                item {
-//                                    ODSBox(
-//                                        modifier = Modifier.fillMaxWidth(),
-//                                        background = listOf(ODSColorModel(scheme.basicBackgroundCard)),
-//                                        cornerRadius = ODSCorners(all = DSVariables.radiusMedium),
-//                                        padding = ODSPadding(all = DSVariables.spacingComponent4)
-//                                    ) {
-//                                        ODSColumn(
-//                                            modifier = Modifier.fillMaxWidth(),
-//                                            gap = DSVariables.spacingComponent3
-//                                        ) {
-//                                            ODSText(
-//                                                text = "Watch Ad to Earn Coins",
-//                                                style = DSTextStyles.bodyMBold,
-//                                                color = scheme.basicText
-//                                            )
-//                                            ODSText(
-//                                                text = "Watch a short video ad to earn bonus coins",
-//                                                style = DSTextStyles.bodySRegular,
-//                                                color = scheme.basicTextRecessive
-//                                            )
-//                                            ODSButton(
-//                                                scheme = scheme,
-//                                                props = ODSButtonProps(
-//                                                    label = if (RewardedAdManager.isAdLoaded()) "Watch Ad Now" else "Loading Ad...",
-//                                                    buttonType = ODSButtonButtonType.STANDARD,
-//                                                    variant = ODSButtonVariant.PRIMARY,
-//                                                    size = ODSButtonSize.SMALL
-//                                                ),
-//                                                onClick = {
-//                                                    activity?.let {
-//                                                        RewardedAdManager.showRewardedAd(
-//                                                            activity = it,
-//                                                            onRewardEarned = { rewardItem ->
-//                                                                earnedCoinsFromAd = rewardItem.amount
-//                                                                showAdRewardSuccess = true
-//                                                                // Reload coins after earning reward
-//                                                                viewModel.loadTotalCoins()
-//                                                            },
-//                                                            onAdDismissed = {
-//                                                                // Ad dismissed, next ad will be loaded lazily when needed
-//                                                            }
-//                                                        )
-//                                                    }
-//                                                },
-//                                                modifier = Modifier.fillMaxWidth()
-//                                            )
-//                                        }
-//                                    }
-//                                }
-
                                 item {
                                     ODSText(
-                                        text = "Available rewards",
+                                            text = stringResource(ConfigR.string.available_rewards),
                                         style = DSTextStyles.bodyMBold,
                                         color = scheme.basicText
                                     )
@@ -430,7 +446,7 @@ fun RewardScreen(
                                 if (uiState.catalogPairs.isEmpty()) {
                                     item {
                                         ODSText(
-                                            text = "No rewards available",
+                                                text = stringResource(ConfigR.string.no_rewards_available),
                                             style = DSTextStyles.bodyMRegular,
                                             color = scheme.basicTextRecessive
                                         )
@@ -438,14 +454,19 @@ fun RewardScreen(
                                 } else {
                                     items(
                                         items = uiState.catalogPairs,
-                                        key = { pair -> pair.firstOrNull()?.id?.toString() ?: "" }
-                                    ) { pair ->
+                                        key = { pair ->
+                                            pair.firstOrNull()?.id?.toString() ?: ""
+                                        }) { pair ->
                                         ODSRow(
                                             modifier = Modifier.fillMaxWidth(),
                                             gap = DSVariables.spacingComponent3
                                         ) {
                                             pair.forEach { catalogItem ->
                                                 RewardCardV1(
+                                                    onClick = {
+                                                        selectedReward = catalogItem
+                                                        showRewardInfoBottomSheet = true
+                                                    },
                                                     title = catalogItem.title,
                                                     imageTag = catalogItem.imageUrl?.let {
                                                         ODSImageModel(
@@ -453,13 +474,9 @@ fun RewardScreen(
                                                             contentDescription = catalogItem.title
                                                         )
                                                     },
-                                                    coinOrPrice = "${catalogItem.coinPrice} coins",
-                                                    actionText = if (catalogItem.isActive && catalogItem.stockQuantity > 0) "Claim" else null,
+                                                        coinOrPrice = "${catalogItem.coinPrice} ${stringResource(ConfigR.string.coins)}",
+                                                        actionText = if (catalogItem.isActive && catalogItem.stockQuantity > 0) stringResource(ConfigR.string.claim) else null,
                                                     onActionClick = {
-                                                        selectedReward = catalogItem
-                                                        showRewardInfoBottomSheet = true
-                                                    },
-                                                    onClick = {
                                                         selectedReward = catalogItem
                                                         showRewardInfoBottomSheet = true
                                                     },
@@ -470,6 +487,7 @@ fun RewardScreen(
                                             // Add spacer if odd number of items
                                             if (pair.size == 1) {
                                                 Spacer(modifier = Modifier.weight(1f))
+                                                }
                                             }
                                         }
                                     }
@@ -489,8 +507,8 @@ fun RewardScreen(
                 showClaimDialog = false
                 selectedReward = null
             },
-            title = "We have a cash reward for you!",
-            description = "Click the button below to claim your ${activity.coinPrice} Leaderboard bonus",
+            title = stringResource(ConfigR.string.we_have_cash_reward),
+            description = stringResource(ConfigR.string.claim_reward_description, activity.coinPrice),
             coin = activity.coinPrice.toString(),
             onConfirmClick = {
                 showClaimDialog = false
@@ -517,8 +535,8 @@ fun RewardScreen(
             showAdRewardSuccess = false
             earnedCoinsFromAd = 0
         },
-        title = "Coins Earned!",
-        description = "You earned ${earnedCoinsFromAd} coins for watching the ad!",
+        title = stringResource(ConfigR.string.coins_earned),
+        description = stringResource(ConfigR.string.coins_earned_description, earnedCoinsFromAd),
         onKeepTradingClick = {
             showAdRewardSuccess = false
             earnedCoinsFromAd = 0

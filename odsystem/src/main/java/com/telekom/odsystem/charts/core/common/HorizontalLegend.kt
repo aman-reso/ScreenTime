@@ -15,13 +15,13 @@ import kotlin.math.max
  * @property columnSpacingDp the column spacing (in dp).
  * @property padding the content padding.
  */
-public open class HorizontalLegend<M : MeasuringContext, D : DrawingContext>(
-  protected val items: AdditionScope<LegendItem>.(ExtraStore) -> Unit,
-  protected val iconSizeDp: Float = Defaults.LEGEND_ICON_SIZE,
-  protected val iconLabelSpacingDp: Float = Defaults.LEGEND_ICON_LABEL_SPACING,
-  protected val rowSpacingDp: Float = Defaults.LEGEND_ROW_SPACING,
-  protected val columnSpacingDp: Float = Defaults.LEGEND_COLUMN_SPACING,
-  protected val padding: Insets = Insets.Companion.Zero,
+open class HorizontalLegend<M : MeasuringContext, D : DrawingContext>(
+    protected val items: AdditionScope<LegendItem>.(ExtraStore) -> Unit,
+    protected val iconSizeDp: Float = Defaults.LEGEND_ICON_SIZE,
+    protected val iconLabelSpacingDp: Float = Defaults.LEGEND_ICON_LABEL_SPACING,
+    protected val rowSpacingDp: Float = Defaults.LEGEND_ROW_SPACING,
+    protected val columnSpacingDp: Float = Defaults.LEGEND_COLUMN_SPACING,
+    protected val padding: Insets = Insets.Zero,
 ) : Legend<M, D> {
   private val itemManager = LegendItemManager(items)
   private val heights = mutableListOf<Float>()

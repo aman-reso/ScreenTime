@@ -28,7 +28,7 @@ import java.text.DecimalFormat
  * @property verticalAxisPosition the position of the [VerticalAxis] whose scale the
  *   [HorizontalLine] should use when interpreting [y].
  */
-public class HorizontalLine(
+class HorizontalLine(
     private val y: (ExtraStore) -> Double,
     private val line: LineComponent,
     private val labelComponent: TextComponent? = null,
@@ -106,9 +106,9 @@ public class HorizontalLine(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public companion object {
+    companion object {
         private val decimalFormat: DecimalFormat = DecimalFormat("#.##;−#.##")
 
-        public fun getLabel(y: Double): String = decimalFormat.format(y)
+        fun getLabel(y: Double): String = decimalFormat.format(y)
     }
 }

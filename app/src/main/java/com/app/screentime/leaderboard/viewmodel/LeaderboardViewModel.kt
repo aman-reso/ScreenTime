@@ -7,6 +7,7 @@ import com.app.screentime.network.model.LeaderboardEntry
 import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.leaderboard.service.LeaderboardService
 import com.app.screentime.record.repository.formatDuration
+import com.app.screentime.analytics.AnalyticsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,30 +25,34 @@ data class LeaderboardUiState(
     val userDailyDuration: Long? = null,
     val userWeeklyDuration: Long? = null,
     val currentUsername: String? = null,
-    val currentUserId: String? = null
+    val currentUserId: String? = null,
+    val shouldShowAd: Boolean = false // Flag to trigger ad display after successful API call
 )
 
 @HiltViewModel
 class LeaderboardViewModel @Inject constructor(
     private val leaderboardRepository: LeaderboardRepository,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val analyticsUseCase: AnalyticsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LeaderboardUiState())
     val uiState: StateFlow<LeaderboardUiState> = _uiState.asStateFlow()
 
     init {
-        loadLeaderboardData()
+        analyticsUseCase.trackLeaderboardView()
+        loadLeaderboardData(showAd = true) // Show ad on initial load
     }
 
-    fun loadLeaderboardData(date: String? = null) {
+    fun loadLeaderboardData(date: String? = null, showAd: Boolean = false) {
         val userId = preferencesManager.getUserId()
         val username = preferencesManager.getUsername() ?: "You"
         _uiState.value = _uiState.value.copy(
             currentUsername = username,
             currentUserId = userId,
             isLoading = true,
-            error = null
+            error = null,
+            shouldShowAd = false // Reset ad flag
         )
 
         viewModelScope.launch {
@@ -98,7 +103,8 @@ class LeaderboardViewModel @Inject constructor(
                             weeklyEntries = weeklyEntries,
                             userWeeklyRank = userEntry?.rank,
                             userWeeklyDuration = userEntry?.totalScreenTime,
-                            isLoading = false
+                            isLoading = false,
+                            shouldShowAd = showAd // Trigger ad display only if showAd is true
                         )
                     } else {
                         _uiState.value = _uiState.value.copy(
@@ -124,6 +130,10 @@ class LeaderboardViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+    
+    fun onAdShown() {
+        _uiState.value = _uiState.value.copy(shouldShowAd = false)
     }
 }
 

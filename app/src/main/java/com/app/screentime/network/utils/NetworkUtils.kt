@@ -1,6 +1,7 @@
 package com.app.screentime.network.utils
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
@@ -86,6 +87,26 @@ class NetworkUtils @Inject constructor(@ApplicationContext private val context: 
             isMobileDataConnected() -> "Mobile"
             isNetworkAvailable() -> "Other"
             else -> "None"
+        }
+    }
+
+    /**
+     * Check if device is eSIM compatible
+     * Uses PackageManager.FEATURE_TELEPHONY_EUICC for Android 9+ (API 28+)
+     * @return true if device supports eSIM, false otherwise
+     */
+    fun isEsimCompatible(): Boolean {
+        return try {
+            // eSIM support was standardized in Android 9 (API 28)
+            // For Android 9+, use PackageManager feature check
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_EUICC)
+            } else {
+                // eSIM support was not standardized before Android 9
+                false
+            }
+        } catch (e: Exception) {
+            false
         }
     }
 }

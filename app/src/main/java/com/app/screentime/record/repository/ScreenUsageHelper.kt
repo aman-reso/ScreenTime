@@ -37,7 +37,7 @@ data class AppEvent(
  * ScreenUsageHelper provides utility methods for gathering and calculating screen usage statistics
  * for Android applications. It interacts with the UsageStatsManager to query and process usage data.
  */
-class ScreenUsageHelper constructor(private val context: Context) {
+class ScreenUsageHelper(private val context: Context) {
     val usageStatsManager =
         context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 

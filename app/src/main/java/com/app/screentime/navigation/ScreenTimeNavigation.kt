@@ -26,10 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.LocalActivity
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
 import com.app.screentime.ads.InterstitialAdManager
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.app.screentime.appdetail.screen.SingleAppUsageDetailScreen
+import com.app.screentime.applock.screen.AppLockScreen
 import com.app.screentime.challenge.screen.ChallengeDetailScreen
 import com.app.screentime.challenge.screen.ChallengeListScreen
 // import com.app.screentime.challenge.screen.ChallengeDetailScreen // Removed - Challenge feature disabled
@@ -40,13 +43,18 @@ import com.app.screentime.notifications.screen.CapturedNotificationsScreen
 import com.app.screentime.permission.AppPermissionScreen
 import com.app.screentime.permission.checkUsageStatsPermission
 import com.app.screentime.profile.screen.ProfileScreen
+import com.app.screentime.controlcenter.screen.ControlCenterScreen
+import com.app.screentime.filemanager.screen.FileManagerScreen
+import com.app.screentime.location.screen.LocationManagementScreen
 import com.app.screentime.record.screen.RecordDetailScreen
 import com.app.screentime.reward.screen.CoinHistoryScreen
 import com.app.screentime.reward.screen.RewardScreen
 import com.app.screentime.reward.screen.RewardTransactionScreen
 import com.app.screentime.search.screen.SearchScreen
 import com.app.screentime.statistics.screen.StatisticsScreen
+import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.wallpaper.screen.WallpaperScreen
+import com.app.screentime.wallpaper.screen.FullScreenWallpaperScreen
 // import com.app.screentime.wallpaper.screen.WallpaperScreen // Removed - Wallpaper feature disabled
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButton
@@ -60,6 +68,7 @@ import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigation
 import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigationItemProps
 import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigationProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import kotlinx.serialization.json.Json
 
 /**
  * Main navigation composable for ScreenTime app.
@@ -67,6 +76,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
  * @param scheme ODS theme scheme for styling.
  * @param props Configuration properties for navigation.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ScreenTimeNavigation(
@@ -77,7 +87,7 @@ fun ScreenTimeNavigation(
     deeplinkUri: android.net.Uri? = null
 ) {
     val context = LocalContext.current
-    val activity = LocalActivity.current
+    LocalActivity.current
     val isUsagePermission = checkUsageStatsPermission(context)
     val navigationItems = getNavigationItems()
     val navigationTokens = getNavigationTokens()
@@ -163,6 +173,8 @@ fun ScreenTimeNavigation(
                         variant = ODSFloatingActionButtonVariant.SECONDARY
                     ),
                     onClick = {
+                        // Tracking happens in onNavigateToReward callback for Landing screen
+                        // For other screens, the floating button is only shown on Landing
                         backStack.add(Screen.Reward)
                     }
                 )
@@ -273,24 +285,14 @@ private fun NavigationHost(
                     .fillMaxSize()
                     .padding(bottom = paddingValues.calculateBottomPadding()),
                 onNavigateToLeaderboard = {
-                    activity?.let {
-                        InterstitialAdManager.showInterstitialAd(it) {
-                            backStack.add(Screen.Leaderboard)
-                        }
-                    } ?: run {
-                        backStack.add(Screen.Leaderboard)
-                    }
+                    backStack.add(Screen.Leaderboard)
                 },
-                onNavigateToReward = { backStack.add(Screen.Reward) },
+                onNavigateToReward = {
+                    backStack.add(Screen.Reward)
+                },
                 onNavigateToSearch = { backStack.add(Screen.Search) },
                 onNavigateToStatistics = {
-                    activity?.let {
-                        InterstitialAdManager.showInterstitialAd(it) {
-                            backStack.add(Screen.Statistics)
-                        }
-                    } ?: run {
-                        backStack.add(Screen.Statistics)
-                    }
+                    backStack.add(Screen.Statistics)
                 },
                 onNavigateToSingleAppUsageDetail = { packageName ->
                     backStack.add(
@@ -311,14 +313,14 @@ private fun NavigationHost(
                     )
                 },
                 onNavigateToChallenges = {
-                    activity?.let {
-                        InterstitialAdManager.showInterstitialAd(it) {
-                            backStack.add(Screen.Challenges)
-                        }
-                    } ?: run {
-                        backStack.add(Screen.Challenges)
-                    }
+                    backStack.add(Screen.Challenges)
                 },
+                onNavigateToControlCenter = { backStack.add(Screen.ControlCenter) },
+                onNavigateToManageLocation = { backStack.add(Screen.ManageLocation) },
+                onNavigateToRecoverNotification = { backStack.add(Screen.CapturedNotifications) },
+                onNavigateToAppLock = { backStack.add(Screen.AppLock) },
+                onNavigateToFileManager = { backStack.add(Screen.FileManager) },
+                onNavigateToWallpaper = { backStack.add(Screen.Wallpaper) },
                 openSearchScreen = {
                     backStack.add(Screen.Search)
                 },
@@ -335,7 +337,10 @@ private fun NavigationHost(
                 scheme = scheme,
                 onNavigateToCapturedNotifications = { backStack.add(Screen.CapturedNotifications) },
                 onNavigateToWallpaper = { backStack.add(Screen.Wallpaper) },
-                onNavigateToRecoverNotification = { backStack.add(Screen.CapturedNotifications) }
+                onNavigateToRecoverNotification = { backStack.add(Screen.CapturedNotifications) },
+                onNavigateToControlCenter = { backStack.add(Screen.ControlCenter) },
+                onNavigateToManageLocation = { backStack.add(Screen.ManageLocation) },
+                onNavigateToFileManager = { backStack.add(Screen.FileManager) }
             )
         }
 
@@ -345,7 +350,57 @@ private fun NavigationHost(
                     if (backStack.size > 1) {
                         backStack.removeLastOrNull()
                     }
-                }
+                },
+                scheme = scheme
+            )
+        }
+
+        entry<Screen.ControlCenter> {
+            ControlCenterScreen(
+                onBackClick = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                onNavigateToRecordDetail = { username ->
+                    backStack.add(Screen.RecordDetail(RecordDetailParams(username)))
+                },
+                scheme = scheme
+            )
+        }
+
+        entry<Screen.ManageLocation> {
+            LocationManagementScreen(
+                onBackClick = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                scheme = scheme
+            )
+        }
+
+        entry<Screen.AppLock> {
+            AppLockScreen(
+                onBackClick = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                scheme = scheme,
+                useDarkTheme = LocalThemeMode.current
+            )
+        }
+
+        entry<Screen.FileManager> {
+//            StorageDashboardScreen()
+            FileManagerScreen(
+                onBackClick = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                scheme = scheme
             )
         }
 
@@ -530,8 +585,33 @@ private fun NavigationHost(
                     if (backStack.size > 1) {
                         backStack.removeLastOrNull()
                     }
+                },
+                onNavigateToFullScreen = { wallpaperId, imageItem ->
+                    backStack.add(
+                        Screen.FullScreenWallpaper(
+                            FullScreenWallpaperParams(
+                                wallpaperId = wallpaperId,
+                                imageItemJson = imageItem
+                            )
+                        )
+                    )
                 }
             )
+        }
+
+        entry<Screen.FullScreenWallpaper> { key ->
+            key.params?.let { params ->
+                FullScreenWallpaperScreen(
+                    imageItem = params.imageItemJson,
+                    modifier = Modifier.fillMaxSize(),
+                    onBackClick = {
+                        if (backStack.size > 1) {
+                            backStack.removeLastOrNull()
+                        }
+                    },
+                    scheme = scheme
+                )
+            }
         }
     })
 }

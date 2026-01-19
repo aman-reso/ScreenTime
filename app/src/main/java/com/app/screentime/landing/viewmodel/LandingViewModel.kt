@@ -8,7 +8,8 @@ import com.app.screentime.landing.usecase.LandingUsecase
 import com.app.screentime.core.network.model.DeviceRegistrationResponse
 import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
-import com.app.screentime.widget.ScreenTimeWidgetHelper
+import com.app.screentime.analytics.AnalyticsUseCase
+import com.app.screentime.sync.DataSyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,8 @@ class LandingViewModel @Inject constructor(
     private val landingUsecase: LandingUsecase,
     private val preferences: PreferencesUseCase,
     private val preferencesManager: PreferencesManager,
+    private val analyticsUseCase: AnalyticsUseCase,
+    private val dataSyncManager: DataSyncManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -33,7 +36,24 @@ class LandingViewModel @Inject constructor(
     val dailyGoalHours: StateFlow<Int> = _dailyGoalHours.asStateFlow()
 
     init {
+        analyticsUseCase.trackHomeScreen()
         loadLandingData()
+    }
+
+    fun trackLeaderboardClick() {
+        analyticsUseCase.trackLeaderboardClick()
+    }
+
+    fun trackRewardClick() {
+        analyticsUseCase.trackRewardClick()
+    }
+
+    fun trackSearchClick() {
+        analyticsUseCase.trackSearchClick()
+    }
+
+    fun trackFloatingButtonRewardClick() {
+        analyticsUseCase.trackFloatingButtonRewardClick()
     }
 
     /**
@@ -55,20 +75,15 @@ class LandingViewModel @Inject constructor(
                 isLoading = false
             )
             _uiProps.value = props
-
-            // Update widget if we have data
-            if (props.topUsedApps.isNotEmpty()) {
-                val dailyLimit = 3 * 60 * 60 * 1000L // Default 3 hours in milliseconds
-                ScreenTimeWidgetHelper.updateWidgetFromAppUsages(
-                    context = context,
-                    appUsages = props.topUsedApps,
-                    dailyLimit = dailyLimit
-                )
-            }
-
             val joinedChallenges = landingUsecase.getJoinedChallenges()
             val recentData = _uiProps.value?.copy(joinedChallenges = joinedChallenges)
             _uiProps.value = recentData
+
+            // Sync leaderboard stats
+            landingUsecase.syncLeaderboardStats()
+            
+            // Sync app stats using new /api/app-stats endpoint
+            dataSyncManager.syncAppStats()
         }
     }
 

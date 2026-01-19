@@ -1,7 +1,12 @@
 package com.app.screentime.profile.usecase
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
-import com.app.screentime.R
+import android.content.Intent
+import android.os.Build
+import com.app.screentime.BuildConfig
+import com.app.screentime.config.R
 import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.network.model.UsernameUpdateRequest
 import com.app.screentime.profile.mapper.ProfileMapper
@@ -13,7 +18,7 @@ import com.app.screentime.profile.model.ProfileUiModel
 import com.app.screentime.profile.model.ProfileUiProps
 import com.app.screentime.profile.model.SettingsItemClickResult
 import com.app.screentime.profile.repository.ProfileRepository
-import com.app.screentime.widget.WidgetSetupHelper
+import com.app.screentime.widget.ScreenTimeXmlWidgetProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -91,23 +96,7 @@ class ProfileUseCase @Inject constructor(
             // App Restrictions Section - Removed
             // add(ProfileSettingsUi.SectionTitle(R.string.app_restrictions))
 
-            // Features Section
-            add(ProfileSettingsUi.SectionTitle(R.string.features))
-            add(
-                ProfileSettingsUi.Other(
-                    R.string.recover_deleted_notifications,
-                    url = "",
-                    key = ProfileSettingsKey.RECOVER_NOTIFICATION
-                )
-            )
-            // Wallpaper feature disabled
-            add(
-                ProfileSettingsUi.Other(
-                    R.string.set_wallpaper,
-                    url = "",
-                    key = ProfileSettingsKey.WALLPAPER
-                )
-            )
+            // Features Section - Removed
 
             // Appearance Section
             add(ProfileSettingsUi.SectionTitle(R.string.appearance))
@@ -156,6 +145,13 @@ class ProfileUseCase @Inject constructor(
                     key = ProfileSettingsKey.HELP_SUPPORT
                 )
             )
+            add(
+                ProfileSettingsUi.Other(
+                    R.string.feedback,
+                    url = "",
+                    key = ProfileSettingsKey.FEEDBACK
+                )
+            )
 
             // Note: Device Admin removed - not suitable for consumer apps
             // Google Play rejects device admin for non-enterprise apps
@@ -200,9 +196,12 @@ class ProfileUseCase @Inject constructor(
             ProfileSettingsKey.WIDGET -> SettingsItemClickResult.RequestWidgetSetup
             ProfileSettingsKey.SHARE_APP -> SettingsItemClickResult.ShareApp
             ProfileSettingsKey.HELP_SUPPORT -> SettingsItemClickResult.ShowDialog(DialogType.HELP_SUPPORT)
+            ProfileSettingsKey.FEEDBACK -> SettingsItemClickResult.ShowDialog(DialogType.FEEDBACK)
+            ProfileSettingsKey.CONTROL_CENTER -> SettingsItemClickResult.NavigateToScreen("control_center")
+            ProfileSettingsKey.MANAGE_LOCATION -> SettingsItemClickResult.NavigateToScreen("manage_location")
             ProfileSettingsKey.RECOVER_NOTIFICATION -> SettingsItemClickResult.NavigateToScreen("recover_notification")
-
-            // ProfileSettingsKey.APP_LOCK -> SettingsItemClickResult.NavigateToScreen("app_lock") // Removed - App Lock feature disabled
+            ProfileSettingsKey.APP_LOCK -> SettingsItemClickResult.NavigateToScreen("app_lock")
+            ProfileSettingsKey.FILE_MANAGER -> SettingsItemClickResult.NavigateToScreen("file_manager")
             ProfileSettingsKey.WALLPAPER -> SettingsItemClickResult.NavigateToScreen("wallpaper") // Removed - Wallpaper feature disabled
 
             else -> {
@@ -216,7 +215,55 @@ class ProfileUseCase @Inject constructor(
     }
 
     suspend fun requestWidgetSetup() {
-        WidgetSetupHelper.requestWidgetSetup(context)
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val componentName = ComponentName(context, ScreenTimeXmlWidgetProvider::class.java)
+        
+        // Check if widget pinning is supported (Android 8.0+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                // Request to pin the widget
+                val successCallback = android.app.PendingIntent.getBroadcast(
+                    context,
+                    0,
+                    android.content.Intent(),
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                )
+                
+                appWidgetManager.requestPinAppWidget(componentName, null, successCallback)
+            } else {
+                // Fallback: Open widget picker or show instructions
+                openWidgetPicker(context)
+            }
+        } else {
+            // For older Android versions, open widget picker
+            openWidgetPicker(context)
+        }
+    }
+    
+    /**
+     * Open widget picker for older Android versions or as fallback
+     */
+    private fun openWidgetPicker(context: Context) {
+        try {
+            val intent = Intent(android.appwidget.AppWidgetManager.ACTION_APPWIDGET_PICK)
+            intent.putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID, android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            // If widget picker is not available, try to open app info
+            try {
+                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = android.net.Uri.parse("package:${context.packageName}")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } catch (e2: Exception) {
+                // Last resort: open main activity
+                val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            }
+        }
     }
 }
 

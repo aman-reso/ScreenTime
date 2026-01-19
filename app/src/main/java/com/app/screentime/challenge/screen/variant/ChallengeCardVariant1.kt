@@ -277,7 +277,7 @@ fun CurvedCryptoCardPreview() {
         CurvedCryptoCard(
             title = "Solana",
             subtitle = "A high-performance blockchain supporting builders around the world",
-            date = "Dec 15, 2024",
+            date = "26 Jan",
             tags = listOf("Crypto", "Blockchain", "DeFi"),
             imageUrl = "https://fastly.picsum.photos/id/866/200/300.jpg?hmac=rcadCENKh4rD6MAp6V_ma-AyWv641M4iiOpe1RyFHeI"
         )

@@ -14,11 +14,11 @@ import kotlin.math.ceil
  * @property gapLengthDp the gap length in dp.
  * @property fitStrategy the [DashedShape.FitStrategy] to use for the dashes.
  */
-public class DashedShape(
-  public val shape: Shape = Shape.Companion.Rectangle,
-  public val dashLengthDp: Float = Defaults.DASHED_SHAPE_DASH_LENGTH,
-  public val gapLengthDp: Float = Defaults.DASHED_SHAPE_GAP_LENGTH,
-  public val fitStrategy: FitStrategy = FitStrategy.Resize,
+class DashedShape(
+    val shape: Shape = Shape.Rectangle,
+    val dashLengthDp: Float = Defaults.DASHED_SHAPE_DASH_LENGTH,
+    val gapLengthDp: Float = Defaults.DASHED_SHAPE_GAP_LENGTH,
+    val fitStrategy: FitStrategy = FitStrategy.Resize,
 ) : Shape {
   private var drawDashLength = dashLengthDp
   private var drawGapLength = gapLengthDp
@@ -146,7 +146,7 @@ public class DashedShape(
   }
 
   /** Defines how a [DashedShape] is to be rendered. */
-  public enum class FitStrategy {
+  enum class FitStrategy {
     /**
      * The [DashedShape] will slightly increase or decrease the [DashedShape.dashLengthDp] and
      * [DashedShape.gapLengthDp] values so that the dashes fit perfectly without being cut off.

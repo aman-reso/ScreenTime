@@ -7,27 +7,27 @@ import com.telekom.odsystem.charts.core.common.data.ExtraStore
 import com.telekom.odsystem.charts.core.common.gcdWith
 
 /** Stores a [CartesianChart]’s data. */
-public class CartesianChartModel {
+class CartesianChartModel {
     /** The [CartesianLayerModel]s. */
-    public val models: List<CartesianLayerModel>
+    val models: List<CartesianLayerModel>
 
     /** Identifies this [CartesianChartModel] in terms of the [CartesianLayerModel.id]s. */
-    public val id: Int
+    val id: Int
 
     /**
      * Expresses the size of this [CartesianChartModel] in terms of the range of the _x_ values
      * covered.
      */
-    public val width: Double
+    val width: Double
 
     /** Stores auxiliary data, including [CartesianLayerDrawingModel]s. */
-    public val extraStore: ExtraStore
+    val extraStore: ExtraStore
 
     /** Creates a [CartesianChartModel] consisting of the given [CartesianLayerModel]s. */
-    public constructor(models: List<CartesianLayerModel>) : this(models, ExtraStore.Empty)
+    constructor(models: List<CartesianLayerModel>) : this(models, ExtraStore.Empty)
 
     /** Creates a [CartesianChartModel] consisting of the given [CartesianLayerModel]s. */
-    public constructor(vararg models: CartesianLayerModel) : this(models.toList())
+    constructor(vararg models: CartesianLayerModel) : this(models.toList())
 
     internal constructor(
         models: List<CartesianLayerModel>,
@@ -52,7 +52,7 @@ public class CartesianChartModel {
     }
 
     /** Returns the greatest common divisor of the _x_ values’ differences. */
-    public fun getXDeltaGcd(): Double =
+    fun getXDeltaGcd(): Double =
         models.fold<CartesianLayerModel, Double?>(null) { gcd, layerModel ->
             val layerModelGcd = layerModel.getXDeltaGcd()
             gcd?.gcdWith(layerModelGcd) ?: layerModelGcd
@@ -62,16 +62,16 @@ public class CartesianChartModel {
      * Creates a copy of this [CartesianChartModel] with the given [ExtraStore], which is also applied
      * to the [CartesianLayerModel]s.
      */
-    public fun copy(extraStore: ExtraStore): CartesianChartModel =
+    fun copy(extraStore: ExtraStore): CartesianChartModel =
         CartesianChartModel(models.map { it.copy(extraStore) }, id, width, extraStore)
 
     /** Creates an immutable copy of this [CartesianChartModel]. */
-    public fun toImmutable(): CartesianChartModel = this
+    fun toImmutable(): CartesianChartModel = this
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public companion object {
-        public val Empty: CartesianChartModel =
+    companion object {
+        val Empty: CartesianChartModel =
             CartesianChartModel(
                 models = emptyList(),
                 id = 0,

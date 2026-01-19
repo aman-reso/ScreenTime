@@ -6,7 +6,7 @@ import com.telekom.odsystem.charts.core.common.Fill
 import com.telekom.odsystem.charts.core.common.shader.ShaderProvider
 
 /** Creates a [Fill]. */
-public fun fill(color: Color): Fill = Fill(color.toArgb())
+fun fill(color: Color): Fill = Fill(color.toArgb())
 
 /** Creates a [Fill]. */
-public fun fill(shaderProvider: ShaderProvider): Fill = Fill(shaderProvider)
+fun fill(shaderProvider: ShaderProvider): Fill = Fill(shaderProvider)

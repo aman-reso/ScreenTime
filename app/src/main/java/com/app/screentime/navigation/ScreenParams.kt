@@ -1,5 +1,7 @@
 package com.app.screentime.navigation
 
+import com.app.screentime.wallpaper.api.model.ImageItem
+
 /**
  * Data classes for screen parameters in Navigation 3
  */
@@ -18,6 +20,18 @@ data class SingleAppUsageDetailParams(
 data class AppDetailsParams(
     val packageName: String
 )
+
+data class FullScreenWallpaperParams(
+    val wallpaperId: String,
+    val imageItemJson: ImageItem? = null
+)
+
+
+
+
+
+
+
 
 
 

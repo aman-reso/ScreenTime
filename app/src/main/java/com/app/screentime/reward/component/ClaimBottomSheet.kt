@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.atoms.ODSColumn
@@ -57,7 +57,7 @@ fun ClaimBottomSheet(
         onCloseClicked = onDismiss,
         titleSlot = {
             ODSText(
-                text = "Claim Reward",
+                text = stringResource(R.string.claim_reward),
                 style = DSTextStyles.bodyL,
                 color = scheme.basicText
             )
@@ -71,7 +71,7 @@ fun ClaimBottomSheet(
                 ODSTextField(
                     scheme = scheme,
                     props = ODSTextFieldProps(
-                        label = "Name",
+                        label = stringResource(R.string.name),
                         inputText = name,
                         size = ODSTextFieldSize.SMALL
                     ),
@@ -81,7 +81,7 @@ fun ClaimBottomSheet(
                 ODSTextField(
                     scheme = scheme,
                     props = ODSTextFieldProps(
-                        label = "Phone Number",
+                        label = stringResource(R.string.phone_number),
                         inputText = phoneNumber,
                         size = ODSTextFieldSize.SMALL
                     ),
@@ -91,7 +91,7 @@ fun ClaimBottomSheet(
                 ODSTextField(
                     scheme = scheme,
                     props = ODSTextFieldProps(
-                        label = "Pincode",
+                        label = stringResource(R.string.pincode),
                         inputText = postalCode,
                         size = ODSTextFieldSize.SMALL
                     ),
@@ -102,7 +102,7 @@ fun ClaimBottomSheet(
                 ODSTextField(
                     scheme = scheme,
                     props = ODSTextFieldProps(
-                        label = "Address",
+                        label = stringResource(R.string.address),
                         inputText = address,
                         size = ODSTextFieldSize.SMALL
                     ),
@@ -115,7 +115,7 @@ fun ClaimBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 scheme = scheme,
                 props = ODSButtonProps(
-                    label = "Proceed next",
+                    label = stringResource(R.string.proceed_next),
                     variant = ODSButtonVariant.SECONDARY,
                     size = ODSButtonSize.SMALL,
                     disabled = name.isBlank() || phoneNumber.isBlank() || address.isBlank()
@@ -128,6 +128,7 @@ fun ClaimBottomSheet(
         }
     )
 }
+
 
 
 

@@ -60,7 +60,7 @@ private const val SQUARED_ROUNDED = 6f
 
 @Suppress("All")
 @Composable
-public fun ODSVerticalBarChart(
+fun ODSVerticalBarChart(
     modifier: Modifier = Modifier,
     scheme: ODSTheme = neutralScheme,
     style: ODSBarChartStyle = ODSBarChartStyle(),

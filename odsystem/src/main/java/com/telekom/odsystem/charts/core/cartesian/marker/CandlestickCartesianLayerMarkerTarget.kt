@@ -20,16 +20,16 @@ import com.telekom.odsystem.charts.core.cartesian.layer.CandlestickCartesianLaye
  * @property lowColor the color of [CandlestickCartesianLayer.Candle.bottomWick].
  * @property highColor the color of [CandlestickCartesianLayer.Candle.topWick].
  */
-public data class CandlestickCartesianLayerMarkerTarget(
+data class CandlestickCartesianLayerMarkerTarget(
     override val x: Double,
     override val canvasX: Float,
-    public val entry: CandlestickCartesianLayerModel.Entry,
-    public val openingCanvasY: Float,
-    public val closingCanvasY: Float,
-    public val lowCanvasY: Float,
-    public val highCanvasY: Float,
-    public val openingColor: Int,
-    public val closingColor: Int,
-    public val lowColor: Int,
-    public val highColor: Int,
+    val entry: CandlestickCartesianLayerModel.Entry,
+    val openingCanvasY: Float,
+    val closingCanvasY: Float,
+    val lowCanvasY: Float,
+    val highCanvasY: Float,
+    val openingColor: Int,
+    val closingColor: Int,
+    val lowColor: Int,
+    val highColor: Int,
 ) : CartesianMarker.Target

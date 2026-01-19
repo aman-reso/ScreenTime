@@ -28,7 +28,7 @@ import java.text.DecimalFormat
  * @property verticalAxisPosition the position of the [VerticalAxis] whose scale the [HorizontalBox]
  *   should use when interpreting [y].
  */
-public class HorizontalBox(
+class HorizontalBox(
     private val y: (ExtraStore) -> ClosedFloatingPointRange<Double>,
     private val box: ShapeComponent,
     private val labelComponent: TextComponent? = null,
@@ -108,10 +108,10 @@ public class HorizontalBox(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public companion object {
+    companion object {
         private val decimalFormat = DecimalFormat("#.##;−#.##")
 
-        public fun getLabel(y: ClosedFloatingPointRange<Double>): String =
+        fun getLabel(y: ClosedFloatingPointRange<Double>): String =
             "${decimalFormat.format(y.start)}–${decimalFormat.format(y.endInclusive)}"
     }
 }

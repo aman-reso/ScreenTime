@@ -10,10 +10,10 @@ import com.telekom.odsystem.charts.core.common.component.TextComponent
  * @param labelComponent the label [TextComponent].
  * @param label the label text.
  */
-public open class LegendItem(
-  public open val icon: Component,
-  public open val labelComponent: TextComponent,
-  public open val label: CharSequence,
+open class LegendItem(
+  open val icon: Component,
+  open val labelComponent: TextComponent,
+  open val label: CharSequence,
 ) {
   /**
    * Measures the height of the label.
@@ -23,7 +23,7 @@ public open class LegendItem(
    *   (in dp).
    * @param maxWidth the maximum [LegendItem] width.
    */
-  public fun getLabelHeight(
+  fun getLabelHeight(
     context: MeasuringContext,
     iconSizeDp: Float,
     iconLabelSpacingDp: Float,
@@ -43,7 +43,7 @@ public open class LegendItem(
    *   (in dp).
    * @param maxWidth the maximum [LegendItem] width.
    */
-  public fun getLabelWidth(
+  fun getLabelWidth(
     context: MeasuringContext,
     iconSizeDp: Float,
     iconLabelSpacingDp: Float,
@@ -63,7 +63,7 @@ public open class LegendItem(
    *   (in dp).
    * @param maxWidth the maximum [LegendItem] width.
    */
-  public fun getWidth(
+  fun getWidth(
     context: MeasuringContext,
     iconSizeDp: Float,
     iconLabelSpacingDp: Float,

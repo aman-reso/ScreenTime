@@ -19,11 +19,11 @@ import com.telekom.odsystem.charts.core.common.shape.Shape
  * @property strokeThicknessDp the stroke thickness (in dp).
  * @property shadow stores the shadow properties.
  */
-public open class ShapeComponent(
-  public val fill: Fill = Fill.Black,
-  public val shape: Shape = Shape.Rectangle,
+open class ShapeComponent(
+  val fill: Fill = Fill.Black,
+  val shape: Shape = Shape.Rectangle,
   protected val margins: Insets = Insets.Zero,
-  public val strokeFill: Fill = Fill.Transparent,
+  val strokeFill: Fill = Fill.Transparent,
   protected val strokeThicknessDp: Float = 0f,
   protected val shadow: Shadow? = null,
 ) : Component {
@@ -83,7 +83,7 @@ public open class ShapeComponent(
   }
 
   /** Creates a new [ShapeComponent] based on this one. */
-  public open fun copy(
+  open fun copy(
     fill: Fill = this.fill,
     shape: Shape = this.shape,
     margins: Insets = this.margins,

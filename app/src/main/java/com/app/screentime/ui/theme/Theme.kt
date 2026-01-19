@@ -31,7 +31,6 @@ fun ScreenTimeTheme(
     val themeString by themeViewModel.theme.collectAsState()
 
     val odsThemeLiveData = remember { ODSThemeLiveDataHolder.getODSThemeLiveData() }
-    val odsScheme by odsThemeLiveData.collectAsState(neutralScheme)
 
     // Sync theme with ODSystem when themeString changes
     LaunchedEffect(themeString) {

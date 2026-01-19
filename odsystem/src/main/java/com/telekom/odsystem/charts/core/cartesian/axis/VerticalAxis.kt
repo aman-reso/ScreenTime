@@ -40,19 +40,19 @@ private const val TITLE_ABS_ROTATION_DEGREES = 90f
  * @property verticalLabelPosition defines the vertical positions of the labels relative to their
  *   ticks.
  */
-public open class VerticalAxis<P : Axis.Position.Vertical>
+open class VerticalAxis<P : Axis.Position.Vertical>
 protected constructor(
     override val position: P,
     line: LineComponent?,
     label: TextComponent?,
     labelRotationDegrees: Float,
-    public val horizontalLabelPosition: HorizontalLabelPosition,
-    public val verticalLabelPosition: Position.Vertical,
+    val horizontalLabelPosition: HorizontalLabelPosition,
+    val verticalLabelPosition: Position.Vertical,
     valueFormatter: CartesianValueFormatter,
     tick: LineComponent?,
     tickLengthDp: Float,
     guideline: LineComponent?,
-    public val itemPlacer: ItemPlacer,
+    val itemPlacer: ItemPlacer,
     size: Size,
     titleComponent: TextComponent?,
     title: CharSequence?,
@@ -86,7 +86,7 @@ protected constructor(
 
     /** @suppress */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public constructor(
+    constructor(
         position: P,
         line: LineComponent?,
         label: TextComponent?,
@@ -393,7 +393,7 @@ protected constructor(
         }
 
     /** Creates a new [VerticalAxis] based on this one. */
-    public fun copy(
+    fun copy(
         line: LineComponent? = this.line,
         label: TextComponent? = this.label,
         labelRotationDegrees: Float = this.labelRotationDegrees,
@@ -443,23 +443,23 @@ protected constructor(
     /**
      * Defines the horizontal position of each of a vertical axis’s labels relative to the axis line.
      */
-    public enum class HorizontalLabelPosition {
+    enum class HorizontalLabelPosition {
         Outside,
         Inside,
     }
 
     /** Determines for what _y_ values a [VerticalAxis] displays labels, ticks, and guidelines. */
-    public interface ItemPlacer {
+    interface ItemPlacer {
         /**
          * Returns a boolean indicating whether to shift the lines whose _y_ values are equal to
          * [CartesianChartRanges.YRange.maxY], if such lines are present, such that they’re immediately
          * above the [CartesianLayer] bounds. If a top [HorizontalAxis] is present, the shifted tick
          * will then be aligned with the axis line, and the shifted guideline will be hidden.
          */
-        public fun getShiftTopLines(context: CartesianDrawingContext): Boolean = true
+        fun getShiftTopLines(context: CartesianDrawingContext): Boolean = true
 
         /** Returns, as a list, the _y_ values for which labels are to be displayed. */
-        public fun getLabelValues(
+        fun getLabelValues(
             context: CartesianDrawingContext,
             axisHeight: Float,
             maxLabelHeight: Float,
@@ -471,7 +471,7 @@ protected constructor(
          * measure their widths during the measuring phase. This affects how much horizontal space the
          * [VerticalAxis] requests.
          */
-        public fun getWidthMeasurementLabelValues(
+        fun getWidthMeasurementLabelValues(
             context: CartesianMeasuringContext,
             axisHeight: Float,
             maxLabelHeight: Float,
@@ -483,13 +483,13 @@ protected constructor(
          * measure their heights during the measuring phase. The height of the tallest label is passed
          * to other functions.
          */
-        public fun getHeightMeasurementLabelValues(
+        fun getHeightMeasurementLabelValues(
             context: CartesianMeasuringContext,
             position: Axis.Position.Vertical,
         ): List<Double>
 
         /** Returns, as a list, the _y_ values for which ticks and guidelines are to be displayed. */
-        public fun getLineValues(
+        fun getLineValues(
             context: CartesianDrawingContext,
             axisHeight: Float,
             maxLabelHeight: Float,
@@ -497,7 +497,7 @@ protected constructor(
         ): List<Double>? = null
 
         /** Returns the top [CartesianLayer]-area margin required by the [VerticalAxis]. */
-        public fun getTopLayerMargin(
+        fun getTopLayerMargin(
             context: CartesianMeasuringContext,
             verticalLabelPosition: Position.Vertical,
             maxLabelHeight: Float,
@@ -505,7 +505,7 @@ protected constructor(
         ): Float
 
         /** Returns the bottom [CartesianLayer]-area margin required by the [VerticalAxis]. */
-        public fun getBottomLayerMargin(
+        fun getBottomLayerMargin(
             context: CartesianMeasuringContext,
             verticalLabelPosition: Position.Vertical,
             maxLabelHeight: Float,
@@ -513,7 +513,7 @@ protected constructor(
         ): Float
 
         /** Houses [ItemPlacer] factory functions. */
-        public companion object {
+        companion object {
             /**
              * Creates a step-based [ItemPlacer] implementation. [step] returns the difference between the
              * _y_ values of neighboring labels (and their corresponding line pairs). A multiple of this
@@ -521,7 +521,7 @@ protected constructor(
              * automatically. [shiftTopLines] is used as the return value of
              * [ItemPlacer.getShiftTopLines].
              */
-            public fun step(
+            fun step(
                 step: (ExtraStore) -> Double? = { null },
                 shiftTopLines: Boolean = true,
             ): ItemPlacer =
@@ -536,7 +536,7 @@ protected constructor(
              * prevention. If `null` is returned, the [VerticalAxis] will display as many items as
              * possible. [shiftTopLines] is used as the return value of [ItemPlacer.getShiftTopLines].
              */
-            public fun count(
+            fun count(
                 count: (ExtraStore) -> Int? = { null },
                 shiftTopLines: Boolean = true,
             ): ItemPlacer =
@@ -548,9 +548,9 @@ protected constructor(
     }
 
     /** Houses [VerticalAxis] factory functions. */
-    public companion object {
+    companion object {
         /** Creates a start [VerticalAxis]. */
-        public fun start(
+        fun start(
             line: LineComponent? = null,
             label: TextComponent? = null,
             labelRotationDegrees: Float = 0f,
@@ -583,7 +583,7 @@ protected constructor(
             )
 
         /** Creates an end [VerticalAxis]. */
-        public fun end(
+        fun end(
             line: LineComponent? = null,
             label: TextComponent? = null,
             labelRotationDegrees: Float = 0f,

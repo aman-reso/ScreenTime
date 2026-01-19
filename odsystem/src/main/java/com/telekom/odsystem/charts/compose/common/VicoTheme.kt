@@ -23,7 +23,7 @@ import com.telekom.odsystem.charts.core.common.component.LineComponent
  * @param lineColor used for [HorizontalAxis] and [VerticalAxis] lines.
  * @param textColor used for [HorizontalAxis] and [VerticalAxis] labels.
  */
-public data class VicoTheme(
+data class VicoTheme(
     val candlestickCartesianLayerColors: CandlestickCartesianLayerColors,
     val columnCartesianLayerColors: List<Color>,
     val lineCartesianLayerColors: List<Color> = columnCartesianLayerColors,
@@ -37,15 +37,15 @@ public data class VicoTheme(
      * @property neutral used for neutral [CandlestickCartesianLayer.Candle]s.
      * @property bearish used for bearish [CandlestickCartesianLayer.Candle]s.
      */
-    public data class CandlestickCartesianLayerColors(
+    data class CandlestickCartesianLayerColors(
         val bullish: Color,
         val neutral: Color,
         val bearish: Color,
     ) {
         /** @suppress */
         @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-        public companion object {
-            public fun fromDefaultColors(defaultColors: DefaultColors): CandlestickCartesianLayerColors =
+        companion object {
+            fun fromDefaultColors(defaultColors: DefaultColors): CandlestickCartesianLayerColors =
                 CandlestickCartesianLayerColors(
                     Color(defaultColors.bullishCandleColor),
                     Color(defaultColors.neutralCandleColor),
@@ -73,11 +73,11 @@ public data class VicoTheme(
 private val LocalVicoTheme = staticCompositionLocalOf<VicoTheme?> { null }
 
 /** The current [VicoTheme]. */
-public val vicoTheme: VicoTheme
+val vicoTheme: VicoTheme
     @Composable get() = LocalVicoTheme.current ?: if (isSystemInDarkTheme()) Dark else Light
 
 /** Provides a [VicoTheme]. */
 @Composable
-public fun ProvideVicoTheme(theme: VicoTheme, content: @Composable () -> Unit) {
+fun ProvideVicoTheme(theme: VicoTheme, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalVicoTheme provides theme, content)
 }

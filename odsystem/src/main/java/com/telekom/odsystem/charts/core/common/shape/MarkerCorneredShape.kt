@@ -11,27 +11,27 @@ import com.telekom.odsystem.charts.core.common.half
  *
  * @property tickSizeDp the size of the tick (in dp).
  */
-public open class MarkerCorneredShape(
+open class MarkerCorneredShape(
   topLeft: Corner,
   topRight: Corner,
   bottomRight: Corner,
   bottomLeft: Corner,
-  public val tickSizeDp: Float = MARKER_TICK_SIZE,
+  val tickSizeDp: Float = MARKER_TICK_SIZE,
 ) : CorneredShape(topLeft, topRight, bottomRight, bottomLeft) {
   /** The tick’s _x_ coordinate. If this is null, the tick isn’t drawn. */
-  public var tickX: Float? = null
+  var tickX: Float? = null
 
   /** Specifies the tick position. */
-  public var tickPosition: TickPosition = TickPosition.Bottom
+  var tickPosition: TickPosition = TickPosition.Bottom
 
   private val tickPath = Path()
 
-  public constructor(
+  constructor(
     all: Corner,
     tickSizeDp: Float = MARKER_TICK_SIZE,
   ) : this(all, all, all, all, tickSizeDp)
 
-  public constructor(
+  constructor(
       base: CorneredShape,
       tickSizeDp: Float = MARKER_TICK_SIZE,
   ) : this(
@@ -95,7 +95,7 @@ public open class MarkerCorneredShape(
   override fun hashCode(): Int = super.hashCode() * 31 + tickSizeDp.hashCode()
 
   /** Specifies the position of a [MarkerCorneredShape]’s tick. */
-  public enum class TickPosition {
+  enum class TickPosition {
     /** Positions the tick at the top of the [MarkerCorneredShape]. */
     Top,
 

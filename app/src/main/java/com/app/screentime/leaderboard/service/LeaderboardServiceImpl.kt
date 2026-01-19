@@ -4,6 +4,7 @@ import com.app.screentime.core.network.ApiEndpoints
 import com.app.screentime.core.network.NetworkClient
 import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.LeaderboardResponse
+import com.app.screentime.network.model.LeaderboardStatsUpdateRequest
 import io.ktor.client.call.*
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
@@ -16,7 +17,6 @@ import javax.inject.Singleton
 /**
  * Implementation of LeaderboardService
  */
-@Singleton
 class LeaderboardServiceImpl @Inject constructor(
     private val networkClient: NetworkClient
 ) : LeaderboardService {
@@ -66,16 +66,19 @@ class LeaderboardServiceImpl @Inject constructor(
             Result.failure(e)
         }
     }
-
-    override suspend fun getMonthlyLeaderboard(): Result<ApiResponse<LeaderboardResponse>> {
+    
+    override suspend fun updateStats(request: LeaderboardStatsUpdateRequest): Result<ApiResponse<Unit>> {
         return try {
-            val response: HttpResponse = httpClient.get(ApiEndpoints.Leaderboard.MONTHLY)
+            val response: HttpResponse = httpClient.post(ApiEndpoints.Leaderboard.UPDATE_STATS) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
 
             if (response.status.isSuccess()) {
-                val apiResponse: ApiResponse<LeaderboardResponse> = response.body()
+                val apiResponse: ApiResponse<Unit> = response.body()
                 Result.success(apiResponse)
             } else {
-                Result.failure(Exception("Failed to get monthly leaderboard: ${response.status}"))
+                Result.failure(Exception("Failed to update leaderboard stats: ${response.status}"))
             }
         } catch (e: ClientRequestException) {
             val errorBody = e.response.bodyAsText()

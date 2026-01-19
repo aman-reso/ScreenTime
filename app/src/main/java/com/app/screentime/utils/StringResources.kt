@@ -3,7 +3,7 @@ package com.app.screentime.utils
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import com.app.screentime.R
+import com.app.screentime.config.R
 
 /**
  * Utility object for accessing string resources

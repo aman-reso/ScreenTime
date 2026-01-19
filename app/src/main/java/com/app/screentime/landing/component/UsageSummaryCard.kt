@@ -1,6 +1,7 @@
 package com.app.screentime.landing.component
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -8,9 +9,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.app.screentime.R
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSColumn
@@ -41,14 +44,16 @@ fun UsageSummaryCard(
     onEditDailyGoal: (() -> Unit)? = null,
     scheme: ODSTheme = neutralScheme
 ) {
+    val editIconInteractionSource = remember { MutableInteractionSource() }
+    
     ODSCardBasic(
+        onClick = onClick,
         contentPadding = ODSPadding(
             horizontal = DSVariables.spacingComponent4,
             vertical = DSVariables.spacingComponent4
         ),
         modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .fillMaxWidth(),
         scheme = scheme,
         props = ODSCardBasicProps(),
         contentSlot = {
@@ -67,7 +72,7 @@ fun UsageSummaryCard(
                         gap = DSVariables.spacingComponent2
                     ) {
                         ODSText(
-                            text = "Today's Total",
+                            text = stringResource(R.string.todays_total),
                             style = DSTextStyles.bodyMRegular,
                             color = scheme.basicTextRecessive
                         )
@@ -106,13 +111,17 @@ fun UsageSummaryCard(
                         gap = DSVariables.spacingComponent1
                     ) {
                         ODSText(
-                            text = "Daily Goal",
+                            text = stringResource(R.string.daily_goal),
                             style = DSTextStyles.bodyMRegular,
                             color = scheme.basicTextRecessive
                         )
                         onEditDailyGoal?.let {
                             ODSIcon(
-                                modifier = Modifier.clickable { it() },
+                                modifier = Modifier.clickable(
+                                    interactionSource = editIconInteractionSource,
+                                    indication = null,
+                                    onClick = it
+                                ),
                                 iconModel = ODSIconModel(
                                     drawableRes = com.telekom.odsystem.R.drawable.edit_type_standard,
                                     contentDescription = "Edit daily goal",
@@ -137,7 +146,7 @@ fun UsageSummaryCard(
                         horizontalAlignment = Alignment.End
                     ) {
                         ODSText(
-                            text = "Notifications",
+                            text = stringResource(R.string.notifications),
                             style = DSTextStyles.bodyMRegular,
                             color = scheme.basicTextRecessive
                         )

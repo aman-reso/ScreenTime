@@ -124,7 +124,7 @@ fun ODSSliderInputFieldGroup(
                 SliderInputFieldMinLabelContainer(
                     modifier = Modifier
                         .weight(1f)
-                        .semantics() { isTraversalGroup = true },
+                        .semantics { isTraversalGroup = true },
                     scheme = scheme,
                     props = props,
                     style = style,
@@ -137,7 +137,7 @@ fun ODSSliderInputFieldGroup(
                 SliderInputFieldMaxWithLabelContainer(
                     modifier = Modifier
                         .weight(1f)
-                        .semantics() { isTraversalGroup = true },
+                        .semantics { isTraversalGroup = true },
                     scheme = scheme,
                     props = props,
                     style = style,

@@ -2,7 +2,7 @@
 // Generated on Thu, 06 Nov 2025 15:32:44 GMT
 
 
-package com.telekom.odsystem.tokens;
+package com.telekom.odsystem.tokens
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity

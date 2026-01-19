@@ -10,38 +10,39 @@ coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-lifecycleRuntimeKtx = "2.9.4"
-activityCompose = "1.11.0"
-composeBom = "2025.11.00"
+lifecycleRuntimeKtx = "2.10.0"
+activityCompose = "1.12.2"
+composeBom = "2026.01.00"
 hilt = "2.57.2"
-room = "2.8.3"
+room = "2.8.4"
 materialIcons = "1.7.8"
-material3 = "1.5.0-alpha08"
+material3 = "1.5.0-alpha12"
 navigation = "2.9.6"
-nav3Core = "1.0.0-rc01"
+nav3Core = "1.0.0"
 lifecycleViewmodelNav3 = "2.10.0-beta01"
-kotlinSerialization = "2.2.21"
+kotlinSerialization = "2.3.0"
 kotlinxSerializationCore = "1.9.0"
 kotlinxSerializationJson = "1.9.0"
-lifecycleViewmodelCompose = "2.9.4"
-material3AdaptiveNav3 = "1.3.0-alpha03"
+lifecycleViewmodelCompose = "2.10.0"
+material3AdaptiveNav3 = "1.3.0-alpha06"
 navigationRuntimeKtx = "2.9.6"
 jodaTime = "2.14.0"
-ktor = "3.3.1"
+ktor = "3.3.3"
 hiltCommonVersion = "1.3.0"
 hiltWorkVersion = "1.3.0"
 startupAndroid = "1.2.0"
 workRuntimeKtx = "2.11.0"
-glance = "1.1.1"
-uiGraphics = "1.9.4"
-datastore-preferences = "1.1.7"
+uiGraphics = "1.10.1"
+datastore-preferences = "1.2.0"
 google-services = "4.4.4"
 firebase-crashlytics-plugin = "3.0.6"
-firebase-bom = "34.5.0"
+firebase-bom = "34.8.0"
 coil = "2.7.0"
 firebaseMessagingKtx = "25.0.1"
 play-app-update = "2.1.0"
-play-services-ads = "24.0.0"
+play-services-ads = "24.9.0"
+play-services-location = "21.3.0"
+appcompat = "1.7.1"
 
 [libraries]
 androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutComposeVersion" }
@@ -103,8 +104,6 @@ ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.r
 androidx-hilt-common = { group = "androidx.hilt", name = "hilt-common", version.ref = "hiltCommonVersion" }
 androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hiltWorkVersion" }
 
-# Glance Widget dependencies
-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 
 # Security/Crypto dependencies
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security-crypto" }
@@ -114,7 +113,6 @@ datastore-preferences = { group = "androidx.datastore", name = "datastore-prefer
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
-firebase-config = { group = "com.google.firebase", name = "firebase-config" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 
 # Coil for image loading
@@ -124,6 +122,8 @@ firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messa
 play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "play-app-update" }
 play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "play-app-update" }
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "play-services-ads" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 
 

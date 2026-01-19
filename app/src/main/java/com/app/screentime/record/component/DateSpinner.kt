@@ -23,15 +23,21 @@ fun DateSpinner(
 ) {
 
     val today = DateUtils.today()
-    val dates = (0..3).map { today.minusDays(it) }
+    val dates = (0..2).map { today.minusDays(it) } // Only 3 days: today, yesterday, day before yesterday
 
-    val dateDisplayMap = dates.associate {
-        it.toString("yyyy-MM-dd") to it.toString("d MMM yyyy")
-    }
+    val dateDisplayMap = dates.mapIndexed { index, date ->
+        val apiDate = date.toString("yyyy-MM-dd")
+        val displayLabel = when (index) {
+            0 -> "Today"
+            1 -> "Yesterday"
+            2 -> "Day before yesterday"
+            else -> date.toString("d MMM")
+        }
+        apiDate to displayLabel
+    }.toMap()
 
     var expanded by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf(today.toString("yyyy-MM-dd")) }
-    val displayDate = dateDisplayMap[selectedDate] ?: today.toString("d MMM yyyy")
 
     // Convert dates to ODSDropdownSelectOptions
     val options = remember(dates, dateDisplayMap) {

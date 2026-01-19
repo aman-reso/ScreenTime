@@ -9,8 +9,10 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -140,7 +142,7 @@ private fun AppUsageItem(
         } else {
             val fallbackIcon = when {
                 appUsage.applicationInfo == null -> Icons.AutoMirrored.Filled.Help
-                appUsage.applicationInfo?.icon == 0 -> Icons.Filled.Help
+                appUsage.applicationInfo?.icon == 0 -> Icons.AutoMirrored.Outlined.HelpOutline
                 else -> Icons.Filled.Android
             }
             Triple(

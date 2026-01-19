@@ -2,6 +2,8 @@ package com.app.screentime.reward.repository
 
 import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.core.network.preferences.PreferencesManager
+import com.app.screentime.reward.model.AddCoinsRequest
+import com.app.screentime.reward.model.AddCoinsResponse
 import com.app.screentime.reward.model.CoinHistoryResponse
 import com.app.screentime.reward.model.RewardCatalogResponse
 import com.app.screentime.reward.model.RewardClaimRequest
@@ -35,6 +37,10 @@ class RewardRepository @Inject constructor(
 
     suspend fun getRewardTransactions(): Result<ApiResponse<RewardTransactionResponse>> {
         return rewardService.getRewardTransactions()
+    }
+
+    suspend fun addCoins(request: AddCoinsRequest): Result<ApiResponse<AddCoinsResponse>> {
+        return rewardService.addCoins(request)
     }
 
     fun saveClaimDetails(details: SavedClaimDetails) {

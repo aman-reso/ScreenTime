@@ -17,11 +17,11 @@ import kotlin.math.absoluteValue
  * @param bottomLeft specifies a [Corner] for the bottom left of the [Shape].
  * @param bottomRight specifies a [Corner] for the bottom right of the [Shape].
  */
-public open class CorneredShape(
-  public val topLeft: Corner = Corner.Sharp,
-  public val topRight: Corner = Corner.Sharp,
-  public val bottomRight: Corner = Corner.Sharp,
-  public val bottomLeft: Corner = Corner.Sharp,
+open class CorneredShape(
+  val topLeft: Corner = Corner.Sharp,
+  val topRight: Corner = Corner.Sharp,
+  val bottomRight: Corner = Corner.Sharp,
+  val bottomLeft: Corner = Corner.Sharp,
 ) : Shape {
   private val Float.nonZero: Float
     get() = if (this == 0f) 1f else this
@@ -41,7 +41,7 @@ public open class CorneredShape(
   }
 
   @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-  public fun outline(
+  fun outline(
     density: Float,
     path: Path,
     left: Float,
@@ -131,7 +131,7 @@ public open class CorneredShape(
   }
 
   /** Denotes a corner position. */
-  public enum class CornerPosition {
+  enum class CornerPosition {
     TopLeft,
     TopRight,
     BottomRight,
@@ -139,9 +139,9 @@ public open class CorneredShape(
   }
 
   /** Defines a corner shape. */
-  public fun interface CornerTreatment {
+  fun interface CornerTreatment {
     /** Adds a corner segment connecting ([x1], [y1]) and ([x2], [y2]) to [path]. */
-    public fun createCorner(
+    fun createCorner(
       path: Path,
       position: CornerPosition,
       x1: Float,
@@ -151,9 +151,9 @@ public open class CorneredShape(
     )
 
     /** Houses [CornerTreatment] singletons. */
-    public companion object {
+    companion object {
       /** Produces sharp corners. */
-      public val Sharp: CornerTreatment = CornerTreatment { path, position, x1, y1, x2, y2 ->
+      val Sharp: CornerTreatment = CornerTreatment { path, position, x1, y1, x2, y2 ->
         with(path) {
           when (position) {
             CornerPosition.TopLeft -> lineTo(x1, y2)
@@ -165,10 +165,10 @@ public open class CorneredShape(
       }
 
       /** Produces rounded corners. */
-      public val Rounded: CornerTreatment = RoundedCornerTreatment
+      val Rounded: CornerTreatment = RoundedCornerTreatment
 
       /** Produces cut corners. */
-      public val Cut: CornerTreatment = CornerTreatment { path, _, x1, y1, x2, y2 ->
+      val Cut: CornerTreatment = CornerTreatment { path, _, x1, y1, x2, y2 ->
         path.lineTo(x1, y1)
         path.lineTo(x2, y2)
       }
@@ -176,16 +176,16 @@ public open class CorneredShape(
   }
 
   /** Defines a corner style. */
-  public sealed class Corner(internal val treatment: CornerTreatment) {
+  sealed class Corner(internal val treatment: CornerTreatment) {
     internal abstract fun getSize(max: Float, density: Float): Float
 
     /** Produces absolutely sized corners. */
-    public class Absolute(private val sizeDp: Float, shape: CornerTreatment) : Corner(shape) {
+    class Absolute(private val sizeDp: Float, shape: CornerTreatment) : Corner(shape) {
       override fun getSize(max: Float, density: Float) = sizeDp * density
     }
 
     /** Produces relatively sized corners. */
-    public class Relative(
+    class Relative(
       @IntRange(0, 100) private val sizePercent: Int,
       treatment: CornerTreatment,
     ) : Corner(treatment) {
@@ -197,22 +197,22 @@ public open class CorneredShape(
     }
 
     /** Houses [Corner] singletons. */
-    public companion object {
+    companion object {
       /** Produces sharp corners. */
-      public val Sharp: Corner = Absolute(sizeDp = 0f, shape = CornerTreatment.Sharp)
+      val Sharp: Corner = Absolute(sizeDp = 0f, shape = CornerTreatment.Sharp)
 
       /** Produces fully rounded corners. */
-      public val Rounded: Corner = Relative(sizePercent = 100, treatment = CornerTreatment.Rounded)
+      val Rounded: Corner = Relative(sizePercent = 100, treatment = CornerTreatment.Rounded)
     }
   }
 
   /** Houses [CorneredShape] singletons and factory functions. */
-  public companion object {
+  companion object {
     /** A [CorneredShape] with fully rounded corners. */
-    public val Pill: CorneredShape = rounded(allPercent = 50)
+    val Pill: CorneredShape = rounded(allPercent = 50)
 
     /** Creates a [CorneredShape] with rounded corners of the provided radii. */
-    public fun rounded(
+    fun rounded(
       topLeftDp: Float = 0f,
       topRightDp: Float = 0f,
       bottomRightDp: Float = 0f,
@@ -226,10 +226,10 @@ public open class CorneredShape(
       )
 
     /** Creates a [CorneredShape] with rounded corners of the provided radius. */
-    public fun rounded(allDp: Float): CorneredShape = rounded(allDp, allDp, allDp, allDp)
+    fun rounded(allDp: Float): CorneredShape = rounded(allDp, allDp, allDp, allDp)
 
     /** Creates a [CorneredShape] with rounded corners of the provided radii. */
-    public fun rounded(
+    fun rounded(
       topLeftPercent: Int = 0,
       topRightPercent: Int = 0,
       bottomRightPercent: Int = 0,
@@ -243,11 +243,11 @@ public open class CorneredShape(
       )
 
     /** Creates a [CorneredShape] with rounded corners of the provided radius. */
-    public fun rounded(allPercent: Int): CorneredShape =
+    fun rounded(allPercent: Int): CorneredShape =
       rounded(allPercent, allPercent, allPercent, allPercent)
 
     /** Creates a [CorneredShape] with cut corners of the provided sizes. */
-    public fun cut(
+    fun cut(
       topLeftDp: Float = 0f,
       topRightDp: Float = 0f,
       bottomRightDp: Float = 0f,
@@ -261,10 +261,10 @@ public open class CorneredShape(
       )
 
     /** Creates a [CorneredShape] with cut corners of the provided size. */
-    public fun cut(allDp: Float): CorneredShape = cut(allDp, allDp, allDp, allDp)
+    fun cut(allDp: Float): CorneredShape = cut(allDp, allDp, allDp, allDp)
 
     /** Creates a [CorneredShape] with cut corners of the provided sizes. */
-    public fun cut(
+    fun cut(
       topLeftPercent: Int = 0,
       topRightPercent: Int = 0,
       bottomRightPercent: Int = 0,
@@ -278,7 +278,7 @@ public open class CorneredShape(
       )
 
     /** Creates a [CorneredShape] with cut corners of the provided size. */
-    public fun cut(allPercent: Int): CorneredShape =
+    fun cut(allPercent: Int): CorneredShape =
       cut(allPercent, allPercent, allPercent, allPercent)
   }
 }

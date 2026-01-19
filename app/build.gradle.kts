@@ -26,8 +26,8 @@ android {
         applicationId = "com.app.screentime"
         minSdk = 24
         targetSdk = 36
-        versionCode = 60
-        versionName = "6.0"
+        versionCode = 71
+        versionName = "7.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -40,7 +40,7 @@ android {
         buildConfigField(
             "String",
             "API_DEV_BASE_URL",
-            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://api.apptime.in")}\""
+            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://f30aa0d35e07.ngrok-free.app")}\""
         )
         buildConfigField(
             "String",
@@ -90,13 +90,11 @@ android {
     hilt {
         enableAggregatingTask = false
     }
-
     ksp {
         arg("room.incremental", "true")
         arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
     }
-    
-    // Configure to handle AAR files without sources
+
     configurations.all {
         resolutionStrategy {
             eachDependency {
@@ -104,9 +102,13 @@ android {
             }
         }
     }
+
 }
 
 dependencies {
+    // Config module (translations)
+    implementation(project(":config"))
+
     // ODS Library module with sources
     implementation(project(":odsystem"))
 
@@ -115,6 +117,18 @@ dependencies {
 
     // Wallpaper module
     implementation(project(":wallpaper"))
+
+    // Analytics module
+    implementation(project(":analytics"))
+
+    // AppLock module
+    implementation(project(":applock"))
+    
+    // FileManager module
+    implementation(project(":filemanager"))
+
+    // Ads module
+    implementation(project(":ads"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -133,6 +147,7 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.appcompat)
     ksp(libs.hilt.compiler)
 
     // Room dependencies
@@ -172,9 +187,6 @@ dependencies {
     implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.kotlinx.serialization.core)
 
-    // Glance Widget dependencies
-    implementation(libs.glance.appwidget)
-
     // Coil for image loading
     implementation(libs.coil.compose)
 
@@ -200,13 +212,12 @@ dependencies {
 //     Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.config)
+    // Firebase Analytics is now in :analytics module
     implementation(libs.firebase.messaging)
 
     // ConstraintLayout Compose
     implementation(libs.androidx.constraintlayout.compose)
 
-    // Google Mobile Ads
-    implementation(libs.play.services.ads)
+    // Google Play Services Location
+    implementation(libs.play.services.location)
 }

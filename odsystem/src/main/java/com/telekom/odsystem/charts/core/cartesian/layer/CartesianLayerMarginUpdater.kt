@@ -6,9 +6,9 @@ import com.telekom.odsystem.charts.core.cartesian.CartesianMeasuringContext
 /**
  * Enables a [CartesianChart] component to make room for itself around the [CartesianLayer] area.
  */
-public interface CartesianLayerMarginUpdater<M> {
+interface CartesianLayerMarginUpdater<M> {
   /** Ensures that there are sufficient [CartesianLayer]-area margins. */
-  public fun updateLayerMargins(
+  fun updateLayerMargins(
     context: CartesianMeasuringContext,
     layerMargins: CartesianLayerMargins,
     layerDimensions: CartesianLayerDimensions,
@@ -16,7 +16,7 @@ public interface CartesianLayerMarginUpdater<M> {
   ) {}
 
   /** Ensures that there are sufficient horizontal [CartesianLayer]-area margins. */
-  public fun updateHorizontalLayerMargins(
+  fun updateHorizontalLayerMargins(
     context: CartesianMeasuringContext,
     horizontalLayerMargins: HorizontalCartesianLayerMargins,
     layerHeight: Float,

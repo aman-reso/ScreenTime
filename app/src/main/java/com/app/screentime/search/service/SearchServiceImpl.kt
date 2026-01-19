@@ -16,7 +16,6 @@ import javax.inject.Singleton
 /**
  * Implementation of SearchService using Ktor
  */
-@Singleton
 class SearchServiceImpl @Inject constructor(
     private val networkClient: NetworkClient
 ) : SearchService {

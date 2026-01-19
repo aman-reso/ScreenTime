@@ -6,18 +6,18 @@ import kotlin.math.max
 import kotlin.math.min
 
 /** Represents a [CartesianChart]’s zoom factor. */
-public fun interface Zoom {
+fun interface Zoom {
   /** Returns the zoom factor. */
-  public fun getValue(
+  fun getValue(
     context: CartesianMeasuringContext,
     layerDimensions: CartesianLayerDimensions,
     bounds: RectF,
   ): Float
 
   /** Houses [Zoom] singletons and factory functions. */
-  public companion object {
+  companion object {
     /** Ensures all of the [CartesianChart]’s content is visible. */
-    public val Content: Zoom = Zoom { context, layerDimensions, bounds ->
+    val Content: Zoom = Zoom { context, layerDimensions, bounds ->
       val scalableContentWidth = layerDimensions.getScalableContentWidth(context)
       if (scalableContentWidth == 0f) {
         1f
@@ -27,15 +27,15 @@ public fun interface Zoom {
     }
 
     /** Uses a zoom factor of [value]. */
-    public fun fixed(value: Float = 1f): Zoom = Zoom { _, _, _ -> value }
+    fun fixed(value: Float = 1f): Zoom = Zoom { _, _, _ -> value }
 
     /** Ensures the specified number of _x_ units is visible. */
-    public fun x(x: Double): Zoom = Zoom { context, layerDimensions, bounds ->
+    fun x(x: Double): Zoom = Zoom { context, layerDimensions, bounds ->
       bounds.width() * (context.ranges.xStep / x).toFloat() / layerDimensions.xSpacing
     }
 
     /** Uses the smaller of [a]’s zoom factor and [b]’s zoom factor. */
-    public fun min(a: Zoom, b: Zoom): Zoom = Zoom { context, layerDimensions, bounds ->
+    fun min(a: Zoom, b: Zoom): Zoom = Zoom { context, layerDimensions, bounds ->
       min(
         a.getValue(context, layerDimensions, bounds),
         b.getValue(context, layerDimensions, bounds),
@@ -43,7 +43,7 @@ public fun interface Zoom {
     }
 
     /** Uses the greater of [a]’s zoom factor and [b]’s zoom factor. */
-    public fun max(a: Zoom, b: Zoom): Zoom = Zoom { context, layerDimensions, bounds ->
+    fun max(a: Zoom, b: Zoom): Zoom = Zoom { context, layerDimensions, bounds ->
       max(
         a.getValue(context, layerDimensions, bounds),
         b.getValue(context, layerDimensions, bounds),

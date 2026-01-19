@@ -12,7 +12,7 @@ import com.telekom.odsystem.charts.core.cartesian.layer.CartesianLayerPadding
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public class MutableCartesianMeasuringContext(
+class MutableCartesianMeasuringContext(
     override val canvasBounds: RectF,
     override var density: Float,
     override var extraStore: ExtraStore,

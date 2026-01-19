@@ -16,7 +16,7 @@ import com.telekom.odsystem.charts.core.common.setValue
 
 /** Creates and remembers a [CandlestickCartesianLayer]. */
 @Composable
-public fun rememberCandlestickCartesianLayer(
+fun rememberCandlestickCartesianLayer(
     candleProvider: CandlestickCartesianLayer.CandleProvider =
         CandlestickCartesianLayer.CandleProvider.absolute(),
     minCandleBodyHeight: Dp = Defaults.MIN_CANDLE_BODY_HEIGHT_DP.dp,

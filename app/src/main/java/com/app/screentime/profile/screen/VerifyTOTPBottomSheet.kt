@@ -19,8 +19,9 @@ import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
 import androidx.compose.ui.res.stringResource
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
 import com.telekom.odsystem.molecules.codeinput.ODSCodeInput
 import com.telekom.odsystem.molecules.codeinput.ODSCodeInputProps
@@ -152,6 +153,7 @@ fun VerifyTOTPBottomSheetContent(
                         label = if (uiState.isVerifying) stringResource(R.string.verifying) else stringResource(
                             R.string.verify
                         ),
+                        variant = ODSButtonVariant.SECONDARY,
                         disabled = uiState.isVerifying || otpText.length != 6 || username == null
                     ),
                     onClick = {

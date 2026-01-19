@@ -3,7 +3,9 @@ package com.app.screentime.search.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.network.model.UserSearchResult
+import com.app.screentime.profile.repository.TOTPRepository
 import com.app.screentime.search.usecase.SearchUseCase
+import com.app.screentime.analytics.AnalyticsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,11 +15,21 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val searchUseCase: SearchUseCase
+    private val searchUseCase: SearchUseCase,
+    private val totpRepository: TOTPRepository,
+    private val analyticsUseCase: AnalyticsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
+
+    init {
+        analyticsUseCase.trackSearchUsernameScreen()
+    }
+
+    fun trackTOTPVerify() {
+        analyticsUseCase.trackTOTPVerify()
+    }
 
     /**
      * Search users by query string
@@ -72,6 +84,24 @@ class SearchViewModel @Inject constructor(
      */
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    /**
+     * Check TOTP status for a username
+     * Returns true if access is already granted, false otherwise
+     */
+    suspend fun checkTOTPStatus(username: String?): Boolean {
+        if (username.isNullOrBlank()){
+            return false
+        }
+        return totpRepository.getTOTPStatus(username).fold(
+            onSuccess = { response ->
+                response.data?.hasAccess == true
+            },
+            onFailure = {
+                false
+            }
+        )
     }
 }
 

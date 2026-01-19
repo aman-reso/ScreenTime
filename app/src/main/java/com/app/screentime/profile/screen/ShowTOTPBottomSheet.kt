@@ -19,7 +19,7 @@ import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import androidx.compose.ui.res.stringResource
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
 
 import com.app.screentime.utils.DateUtils
@@ -95,7 +95,7 @@ fun ShowTOTPBottomSheetContent(
                 ODSRow(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(DSVariables.spacingComponent4)
+                    horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent4)
                 ) {
                     ODSBox(
                         modifier = Modifier.size(DSVariables.sizingComponent13), // 40.dp

@@ -29,7 +29,7 @@ internal fun <T> mutableListOf(sourceCollection: Collection<T>): MutableList<T> 
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun <T> List<T>.getRepeating(index: Int): T {
+fun <T> List<T>.getRepeating(index: Int): T {
     if (isEmpty()) throw IllegalStateException(ERR_REPEATING_COLLECTION_EMPTY)
     return get(index % size.coerceAtLeast(1))
 }

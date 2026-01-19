@@ -9,23 +9,23 @@ import com.telekom.odsystem.charts.core.cartesian.layer.CartesianLayerDimensions
 import kotlin.math.ceil
 
 /** A [DrawingContext] extension with [CartesianChart]-specific data. */
-public interface CartesianDrawingContext : DrawingContext, CartesianMeasuringContext {
+interface CartesianDrawingContext : DrawingContext, CartesianMeasuringContext {
   /** The bounds of the [CartesianLayer] area. */
-  public val layerBounds: RectF
+  val layerBounds: RectF
 
   /** Stores shared [CartesianLayer] dimensions. */
-  public val layerDimensions: CartesianLayerDimensions
+  val layerDimensions: CartesianLayerDimensions
 
   /** The scroll value (in pixels). */
-  public val scroll: Float
+  val scroll: Float
 
   /** The zoom factor. */
-  public val zoom: Float
+  val zoom: Float
 }
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun CartesianMeasuringContext.getMaxScrollDistance(
+fun CartesianMeasuringContext.getMaxScrollDistance(
   chartWidth: Float,
   layerDimensions: CartesianLayerDimensions,
 ): Float =
@@ -48,7 +48,7 @@ internal fun CartesianDrawingContext.getVisibleXRange(): ClosedFloatingPointRang
 
 /** @suppress */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public fun CartesianDrawingContext(
+fun CartesianDrawingContext(
   measuringContext: CartesianMeasuringContext,
   canvas: Canvas,
   layerDimensions: CartesianLayerDimensions,

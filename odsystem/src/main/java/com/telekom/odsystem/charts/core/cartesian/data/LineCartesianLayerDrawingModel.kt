@@ -6,9 +6,9 @@ import com.telekom.odsystem.charts.core.common.lerp
 import com.telekom.odsystem.charts.core.common.orZero
 
 /** Houses [LineCartesianLayer] drawing information. [opacity] is the lines’ opacity. */
-public class LineCartesianLayerDrawingModel(
+class LineCartesianLayerDrawingModel(
     private val entries: List<Map<Double, Entry>>,
-    public val opacity: Float = 1f,
+    val opacity: Float = 1f,
 ) : CartesianLayerDrawingModel<LineCartesianLayerDrawingModel.Entry>(entries) {
     override fun transform(
         entries: List<Map<Double, Entry>>,
@@ -33,7 +33,7 @@ public class LineCartesianLayerDrawingModel(
      * the point from the bottom of the [LineCartesianLayer] as a fraction of the
      * [LineCartesianLayer]’s height.
      */
-    public class Entry(public val y: Float) : CartesianLayerDrawingModel.Entry {
+    class Entry(val y: Float) : CartesianLayerDrawingModel.Entry {
         override fun transform(
             from: CartesianLayerDrawingModel.Entry?,
             fraction: Float,

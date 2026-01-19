@@ -9,23 +9,23 @@ import java.text.DecimalFormat
 import java.util.Locale
 
 /** Formats values for display. */
-public fun interface CartesianValueFormatter {
+fun interface CartesianValueFormatter {
     /**
      * Formats [value]. [verticalAxisPosition] is the position of the [VerticalAxis] with which the
      * caller is associated.
      */
-    public fun format(
+    fun format(
         context: CartesianMeasuringContext,
         value: Double,
         verticalAxisPosition: Axis.Position.Vertical?,
     ): CharSequence
 
     /** Houses [CartesianValueFormatter] factory functions. */
-    public companion object {
+    companion object {
         private val cache = LruCache<Locale, CartesianValueFormatter>(1)
 
         /** @suppress */
-        public val Default: CartesianValueFormatter
+        val Default: CartesianValueFormatter
             @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
             get() {
                 val locale = Locale.getDefault()
@@ -60,7 +60,7 @@ public fun interface CartesianValueFormatter {
         }
 
         /** Formats values via [decimalFormat]. */
-        public fun decimal(
+        fun decimal(
             decimalFormat: DecimalFormat = DecimalFormat("#.##;−#.##")
         ): CartesianValueFormatter = Decimal(decimalFormat)
 
@@ -68,7 +68,7 @@ public fun interface CartesianValueFormatter {
          * Divides values by [CartesianChartRanges.YRange.maxY] and formats the resulting quotients via
          * [decimalFormat].
          */
-        public fun yPercent(
+        fun yPercent(
             decimalFormat: DecimalFormat = DecimalFormat("#.##%;−#.##%")
         ): CartesianValueFormatter = YPercent(decimalFormat)
     }

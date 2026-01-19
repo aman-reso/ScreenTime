@@ -5,7 +5,7 @@
 
 
 
-package com.telekom.odsystem.tokens;
+package com.telekom.odsystem.tokens
 
 import androidx.compose.ui.unit.dp
 

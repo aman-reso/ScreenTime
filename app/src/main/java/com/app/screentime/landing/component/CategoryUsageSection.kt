@@ -20,6 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import com.app.screentime.landing.model.CategoryUsage
 import com.app.screentime.landing.util.AppCategoryUtils
 import com.telekom.odsystem.DSVariables
@@ -93,7 +95,7 @@ fun CategoryUsageSection(
             modifier = Modifier.fillMaxWidth(),
             scheme = scheme,
             props = ODSAccordionProps(
-                headerText = "Category Usage",
+                headerText = stringResource(R.string.category_usage),
                 expanded = isExpanded,
                 size = ODSAccordionSize.SMALL
             ),

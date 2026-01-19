@@ -9,8 +9,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.app.screentime.config.R
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBorder
@@ -43,7 +45,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun BottomBar(
     modifier: Modifier = Modifier,
     scheme: ODSTheme,
-    props: BottomBarProps = BottomBarProps(),
+    props: BottomBarProps? = null,
     onAllowClick: () -> Unit,
 ) {
     val style = remember(scheme) {
@@ -51,6 +53,7 @@ fun BottomBar(
     }
     val tokens = defaultBottomBarTokens
     val context = LocalContext.current
+    val finalProps = props ?: remember { BottomBarProps.default(context) }
 
     ODSBox(
         modifier = modifier.fillMaxWidth(),
@@ -71,14 +74,14 @@ fun BottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 scheme = scheme,
                 props = ODSButtonProps(
-                    label = props.buttonLabel,
+                    label = finalProps.buttonLabel,
                     variant = ODSButtonVariant.SECONDARY, size = ODSButtonSize.SMALL
                 ),
                 onClick = onAllowClick
             )
 
             // Legal Links
-            if (props.showLegalLinks) {
+            if (finalProps.showLegalLinks) {
                 ODSRow(
                     horizontalArrangement = style.horizontalArrangement ?: Arrangement.spacedBy(
                         tokens.linkSpacing
@@ -88,13 +91,13 @@ fun BottomBar(
                     ODSLink(
                         scheme = scheme,
                         props = ODSLinkProps(
-                            label = "Privacy Policy"
+                            label = stringResource(R.string.privacy_policy)
                         ),
                         onClick = {
                             try {
                                 val intent = Intent(
                                     Intent.ACTION_VIEW,
-                                    props.privacyPolicyUrl.toUri()
+                                    finalProps.privacyPolicyUrl.toUri()
                                 )
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 context.startActivity(intent)
@@ -117,13 +120,13 @@ fun BottomBar(
                     ODSLink(
                         scheme = scheme,
                         props = ODSLinkProps(
-                            label = "Terms of Service"
+                            label = stringResource(R.string.terms_of_service)
                         ),
                         onClick = {
                             try {
                                 val intent = Intent(
                                     Intent.ACTION_VIEW,
-                                    props.termsOfServiceUrl.toUri()
+                                    finalProps.termsOfServiceUrl.toUri()
                                 )
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 context.startActivity(intent)

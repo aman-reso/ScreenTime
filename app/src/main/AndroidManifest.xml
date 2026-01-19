@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -19,6 +21,14 @@
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
+
+    <uses-permission
+        android:name="android.permission.SYSTEM_ALERT_WINDOW"
+        tools:ignore="ProtectedPermissions" />
+
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <uses-permission
         android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
@@ -32,14 +42,22 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/app_icon_round"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/app_icon_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ScreenTime">
-        
-        <!-- Google Mobile Ads App ID -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
+
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-5847819400812479~1194871943"/>
+            android:value="ca-app-pub-5847819400812479~1194871943" />
 
         <activity
             android:name=".MainActivity"
@@ -99,31 +117,18 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- App Widget Receiver -->
+
+        <!-- XML-based Widget Provider (Pure XML, not Glance) -->
         <receiver
-            android:name=".widget.ScreenTimeWidgetReceiver"
+            android:name=".widget.ScreenTimeXmlWidgetProvider"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/screentime_widget_info" />
+                android:resource="@xml/screentime_xml_widget_info" />
         </receiver>
-
-        <!-- Widget Refresh Receiver -->
-        <receiver
-            android:name=".widget.WidgetRefreshReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.app.screentime.widget.REFRESH" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name=".widget.WidgetPinResultReceiver"
-            android:exported="false" />
-
 
         <!-- Firebase Cloud Messaging Service -->
         <service
@@ -151,6 +156,23 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <!-- App Lock Monitoring Service -->
+        <service
+            android:name="com.app.screentime.applock.service.AppLockMonitoringService"
+            android:enabled="true"
+            android:exported="false"
+            android:process=":applock_service"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- App Lock Overlay Activity -->
+        <activity
+            android:name="com.app.screentime.applock.activity.AppLockOverlayActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
     </application>
 

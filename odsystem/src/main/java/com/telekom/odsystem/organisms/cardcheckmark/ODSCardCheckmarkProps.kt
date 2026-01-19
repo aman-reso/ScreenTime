@@ -36,6 +36,6 @@ data class ODSCardCheckmarkProps(
     var filled: Boolean = true,
     var readOnly: Boolean = false,
     var selected: Boolean = false,
-    var selectorAlignment: ODSCardCheckmarkSelectorAlignment = ODSCardCheckmarkSelectorAlignment.TOP,
+    var selectorAlignment: ODSCardCheckmarkSelectorAlignment = TOP,
     var subtle: Boolean = false,
 )

@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.app.screentime.consent.viewmodel.ConsentViewModel
 import com.telekom.odsystem.atoms.ODSText
 

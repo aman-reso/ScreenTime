@@ -1,7 +1,8 @@
 package com.app.screentime.landing.usecase
 
 import android.content.Context
-import com.app.screentime.R
+import android.util.Log
+import com.app.screentime.config.R
 import com.app.screentime.challenge.repository.ChallengeRepository
 import com.app.screentime.landing.mapper.LandingUiMapper
 import com.app.screentime.landing.model.CategoryUsage
@@ -11,6 +12,8 @@ import com.app.screentime.landing.util.AppCategoryUtils
 import com.app.screentime.network.model.UserChallenge
 import com.app.screentime.network.sync.DataSyncService
 import com.app.screentime.core.network.preferences.PreferencesManager
+import com.app.screentime.leaderboard.service.LeaderboardService
+import com.app.screentime.network.model.LeaderboardStatsUpdateRequest
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.record.repository.LocalAppUsageRepository
 import com.app.screentime.record.repository.toReadableDataSize
@@ -32,6 +35,7 @@ class LandingUsecase @Inject constructor(
     private val preferencesManager: PreferencesManager,
     private val dataSyncService: DataSyncService,
     private val challengeRepository: ChallengeRepository,
+    private val leaderboardService: LeaderboardService,
     @ApplicationContext private val context: Context
 ) {
     /**
@@ -231,6 +235,67 @@ class LandingUsecase @Inject constructor(
                 )
             } catch (e: Exception) {
                 emptyList()
+            }
+        }
+    }
+
+    /**
+     * Sync leaderboard stats to server
+     * Calculates total screen time from 12:00 AM (midnight) to current time
+     * Called from landing screen to update leaderboard stats
+     */
+    suspend fun syncLeaderboardStats() {
+        withContext(Dispatchers.IO) {
+            try {
+                if (!preferencesManager.isConsentScreenShown()) {
+                    return@withContext
+                }
+
+                val now = DateUtils.now()
+                val periodDate = DateUtils.format(now, "yyyy-MM-dd")
+                val startOfToday = DateUtils.startOfToday()
+                val startMillis = startOfToday.millis
+
+                val currentMillis = now.millis
+
+                val appUsageList = localAppUsageRepository.getAppsUsageForInterval(
+                    startMillis,
+                    currentMillis
+                )
+
+                val totalScreenTime = appUsageList.sumOf { it.appScreenTime }
+
+                if (totalScreenTime <= 0) {
+                    return@withContext
+                }
+
+                // Create request
+                val request = LeaderboardStatsUpdateRequest(
+                    period = "daily",
+                    periodDate = periodDate,
+                    totalScreenTime = totalScreenTime,
+                    replace = true
+                )
+                leaderboardService.updateStats(request).fold(
+                    onSuccess = {
+                        Log.d(
+                            "LandingUsecase",
+                            "Leaderboard stats synced successfully"
+                        )
+                    },
+                    onFailure = { exception ->
+                        Log.d(
+                            "LandingUsecase",
+                            "Failed to sync leaderboard stats: ${exception.message}"
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e(
+                    "LandingUsecase",
+                    "Error syncing leaderboard stats: ${e.message}",
+                    e
+                )
             }
         }
     }

@@ -10,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.RateReview
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,36 +36,44 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.R
+import com.app.screentime.config.R
+import com.app.screentime.R as AppR
+import com.app.screentime.config.data.Feature
+import com.app.screentime.config.featureflag.FeatureFlagHelper
 import com.app.screentime.ads.AdConfig
 import com.app.screentime.ads.BannerAd
 import com.app.screentime.ads.rememberBannerAd
 import com.app.screentime.battery.component.BatteryHealthSection
 import com.app.screentime.consent.screen.ConsentBottomSheetContent
-import com.app.screentime.landing.component.CategoryUsageSection
 import com.app.screentime.landing.component.DailyGoalBottomSheet
 import com.app.screentime.landing.component.GreetingUi
+import com.app.screentime.landing.component.quickActionsSection
 import com.app.screentime.landing.component.JoinedChallengesCardStack
+import com.app.screentime.profile.screen.FeedbackBottomSheetContent
 import com.app.screentime.landing.component.NetworkCard
 import com.app.screentime.landing.component.UsageSummaryCard
+import com.app.screentime.landing.component.rememberQuickActions
 import com.app.screentime.landing.viewmodel.LandingViewModel
 import com.app.screentime.network.component.NetworkHealthSection
 import com.app.screentime.ntoificationstack.OAServiceNotificationSingleProps
 import com.app.screentime.ntoificationstack.ODSCardNotificationModel
 import com.app.screentime.permission.PermissionUtils
 import com.app.screentime.permission.createPermissionManager
-import com.app.screentime.profile.screen.CraftedWithLoveSection
 import com.app.screentime.ui.atom.AppScreenShimmer
 import com.app.screentime.ui.atom.PullToRefreshBox
-import com.app.screentime.ui.atom.appUsageListUi
 import com.app.screentime.ui.theme.headerTheme
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSImage
+import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.ODSLazyColumn
 import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.link.ODSLinkAlignment
 import com.telekom.odsystem.atoms.link.ODSLinkProps
+import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
@@ -83,6 +94,12 @@ fun LandingScreenV2(
     onNavigateToSingleAppUsageDetail: (String) -> Unit = {},
     onNavigateToChallengeDetail: (String) -> Unit = {},
     onNavigateToChallenges: () -> Unit = {},
+    onNavigateToControlCenter: () -> Unit = {},
+    onNavigateToManageLocation: () -> Unit = {},
+    onNavigateToRecoverNotification: () -> Unit = {},
+    onNavigateToAppLock: () -> Unit = {},
+    onNavigateToFileManager: () -> Unit = {},
+    onNavigateToWallpaper: () -> Unit = {},
     viewModel: LandingViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
@@ -90,12 +107,12 @@ fun LandingScreenV2(
     val dailyGoalHours by viewModel.dailyGoalHours.collectAsState()
     val formattedDailyGoal = viewModel.getFormattedDailyGoal()
     val activity = LocalActivity.current ?: return
-    var isAppListExpanded by remember { mutableStateOf(false) }
 
     val bannerAd = rememberBannerAd(
         adUnitId = AdConfig.getBannerAdUnitId(),
     )
     var showDailyGoalBottomSheet by rememberSaveable { mutableStateOf(false) }
+    var showFeedbackBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     // Check if notification permission is denied (reactive)
     var showNotificationWarning by rememberSaveable { mutableStateOf(false) }
@@ -136,6 +153,15 @@ fun LandingScreenV2(
                 )
     }
 
+    val quickActions = rememberQuickActions(
+        onNavigateToControlCenter,
+        onNavigateToManageLocation,
+        onNavigateToRecoverNotification,
+        onNavigateToAppLock,
+        onNavigateToFileManager,
+        onNavigateToWallpaper
+    )
+
     fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             notificationPermissionLauncher.launch(
@@ -164,20 +190,6 @@ fun LandingScreenV2(
         }
     }
 
-
-    // Request permission function
-    val requestPermission: () -> Unit = {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            if (activity is ComponentActivity) {
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", activity.packageName, null)
-                }
-                activity.startActivity(intent)
-            }
-        }
-    }
 
     // Check permission status on app open and request if needed
     LaunchedEffect(permissionManager, activity) {
@@ -209,7 +221,7 @@ fun LandingScreenV2(
 
 
     // Dummy preview data for apptime notification stack
-    val dummyNotifications = remember {
+    remember {
         listOf(
             ODSCardNotificationModel(
                 notificationProps = OAServiceNotificationSingleProps(
@@ -258,7 +270,6 @@ fun LandingScreenV2(
 
     ODSBox(modifier = Modifier.fillMaxSize()) {
         ODSColumn(modifier = Modifier.fillMaxSize()) {
-            // Status bar padding
             ODSBox(
                 modifier = Modifier
                     .height(WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
@@ -281,9 +292,18 @@ fun LandingScreenV2(
                     item {
                         GreetingUi(
                             username = uiProps?.username,
-                            onLeaderboardClick = onNavigateToLeaderboard,
-                            onRewardClick = onNavigateToReward,
-                            onSearchClick = onNavigateToSearch
+                            onLeaderboardClick = {
+                                viewModel.trackLeaderboardClick()
+                                onNavigateToLeaderboard()
+                            },
+                            onRewardClick = {
+                                viewModel.trackRewardClick()
+                                onNavigateToReward()
+                            },
+                            onSearchClick = {
+                                viewModel.trackSearchClick()
+                                onNavigateToSearch()
+                            }
                         )
                     }
                     when {
@@ -308,7 +328,10 @@ fun LandingScreenV2(
                                         mode = ODSInlineNotificationMode.ERROR,
                                         title = stringResource(R.string.error),
                                         text = uiProps!!.error,
-                                        link1Props = ODSLinkProps(label = stringResource(R.string.retry)),
+                                        link1Props = ODSLinkProps(
+                                            label = stringResource(R.string.retry),
+                                            alignment = ODSLinkAlignment.LEFT
+                                        ),
                                         showCloseButton = false
                                     ),
                                     onFirstLinkClicked = {
@@ -386,7 +409,27 @@ fun LandingScreenV2(
                                 }
                             }
 
-                            uiProps?.let { it ->
+                            // Dummy image between usage card and network card
+                            item("dummy_image") {
+                                ODSBox(
+                                    modifier = Modifier.fillMaxWidth(), cornerRadius = ODSCorners(
+                                        DSVariables.spacingComponent4
+                                    ),
+                                    clipContent = true
+                                ) {
+                                    ODSImage(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        imageModel = ODSImageModel(
+                                            drawableRes = AppR.drawable.dummy,
+                                            contentDescription = "Dummy image"
+                                        ),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                            }
+
+                            uiProps?.let {
                                 item("network_card") {
                                     NetworkCard(
                                         modifier = Modifier.fillMaxWidth(),
@@ -400,11 +443,41 @@ fun LandingScreenV2(
                                 }
                             }
 
-                            item("category_usage") {
-                                CategoryUsageSection(
-                                    categoryUsage = uiProps!!.categoryUsage,
-                                    scheme = scheme
+                            quickActionsSection(
+                                modifier = Modifier.fillMaxWidth(),
+                                scheme = scheme,
+                                quickActions = quickActions
+                            )
+
+                            item("feedback_button") {
+                                com.telekom.odsystem.organisms.cardbasic.ODSCardBasic(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    scheme = scheme,
+                                    contentSlot = {
+                                        com.telekom.odsystem.atoms.ODSRow(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent4)
+                                        ) {
+                                            ODSIcon(
+                                                iconModel = com.telekom.odsystem.atoms.icon.ODSIconModel(
+                                                    imageVector = Icons.Outlined.RateReview,
+                                                    tint = scheme.functionalSuccessStandard,
+                                                    contentDescription = stringResource(R.string.feedback)
+                                                ),
+                                                width = DSVariables.sizingComponent10,
+                                                height = DSVariables.sizingComponent10
+                                            )
+                                            ODSText(
+                                                text = stringResource(R.string.feedback),
+                                                style = DSTextStyles.bodyMBold,
+                                                color = scheme.basicText
+                                            )
+                                        }
+                                    },
+                                    onClick = { showFeedbackBottomSheet = true },
                                 )
+                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                             }
 
                             item("battery_info") {
@@ -463,37 +536,6 @@ fun LandingScreenV2(
                                 }
                             }
 
-                            item {
-                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                            }
-                            item {
-                                ODSText(
-                                    text = stringResource(R.string.usage_detail_insight),
-                                    style = DSTextStyles.bodyMBold,
-                                    color = scheme.basicText
-                                )
-                            }
-
-                            appUsageListUi(
-                                appUsageList = uiProps!!.topUsedApps,
-                                scheme = scheme,
-                                onClick = { data ->
-                                    data.packageName?.let { packageName ->
-                                        onNavigateToSingleAppUsageDetail(packageName)
-                                    }
-                                },
-                                showExpandCollapse = true,
-                                initialItemCount = 10,
-                                isExpanded = isAppListExpanded,
-                                onExpandCollapseToggle = { isAppListExpanded = !isAppListExpanded }
-                            )
-
-                            item {
-                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                            }
-                            item {
-                                CraftedWithLoveSection(scheme = neutralScheme)
-                            }
                         }
                     }
                 }
@@ -511,4 +553,12 @@ fun LandingScreenV2(
         },
         scheme = neutralScheme
     )
+
+    // Feedback Bottom Sheet
+    if (showFeedbackBottomSheet) {
+        FeedbackBottomSheetContent(
+            onDismiss = { showFeedbackBottomSheet = false },
+            scheme = scheme
+        )
+    }
 }

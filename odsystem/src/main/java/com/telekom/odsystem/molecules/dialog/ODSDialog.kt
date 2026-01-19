@@ -1,8 +1,10 @@
 package com.telekom.odsystem.molecules.dialog
 
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
@@ -193,15 +196,6 @@ private fun ODSScrollContainer(
         horizontalAlignment = style.scrollContainerHorizontalAlignment,
         modifier = Modifier.fillMaxWidth()
     ) {
-        if (!props.bodyText.isNullOrEmpty()) {
-            item {
-                ODSTextSectionContainer(
-                    style = style,
-                    props = props
-                )
-            }
-        }
-
         if (contentSlot != null) {
             item {
                 ODSSlotContainer(
@@ -258,6 +252,7 @@ private fun ODSTextSectionContainer(style: ODSDialogStyle, props: ODSDialogProps
         horizontalAlignment = style.textSectionHorizontalAlignment,
         modifier = Modifier.fillMaxWidth()
     ) {
+        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
         ODSText(
             text = props.bodyText,
             style = style.textTextStyle,
@@ -307,6 +302,14 @@ private fun ODSHeaderContainer(
                 scheme = scheme,
                 onDismissRequest = onDismissRequest,
                 shouldShowDialog = shouldShowDialog
+            )
+        }
+
+
+        if (!props.bodyText.isNullOrEmpty()) {
+            ODSTextSectionContainer(
+                style = style,
+                props = props
             )
         }
 

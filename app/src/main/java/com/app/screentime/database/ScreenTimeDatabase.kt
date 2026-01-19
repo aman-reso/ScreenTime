@@ -5,37 +5,29 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import android.content.Context
-import com.app.screentime.database.dao.BlockedLinkDao
-import com.app.screentime.database.dao.FocusTimeDao
-import com.app.screentime.database.dao.JoinedChallengeDao
+// FocusTimeDao removed - server is source of truth
+// JoinedChallengeDao removed - server is source of truth
 import com.app.screentime.database.dao.CapturedNotificationDao
-import com.app.screentime.database.dao.NotificationDao
-import com.app.screentime.database.entity.BlockedLinkEntity
 import com.app.screentime.database.entity.CapturedNotificationEntity
-import com.app.screentime.database.entity.FocusTimeEntity
-import com.app.screentime.database.entity.JoinedChallengeEntity
-import com.app.screentime.database.entity.NotificationEntity
+// FocusTimeEntity removed - server is source of truth
+// JoinedChallengeEntity removed - server is source of truth
 
 /**
  * Room database for ScreenTime app
+ * 
+ * MIGRATION NOTE: FocusTimeEntity and JoinedChallengeEntity have been removed.
+ * Server is now the single source of truth for focus time and joined challenges.
+ * All repository operations are no-op for migration safety.
  */
 @Database(
     entities = [
-        FocusTimeEntity::class,
-        BlockedLinkEntity::class, // Kept for future use - currently not in use
-        NotificationEntity::class,
-        JoinedChallengeEntity::class,
         CapturedNotificationEntity::class
     ],
-    version = 6,
+    version = 8,
     exportSchema = false
 )
 abstract class ScreenTimeDatabase : RoomDatabase() {
     
-    abstract fun focusTimeDao(): FocusTimeDao
-    abstract fun blockedLinkDao(): BlockedLinkDao // Kept for future use - currently not in use
-    abstract fun notificationDao(): NotificationDao
-    abstract fun joinedChallengeDao(): JoinedChallengeDao
     abstract fun capturedNotificationDao(): CapturedNotificationDao
     
     companion object {

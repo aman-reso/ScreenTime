@@ -23,7 +23,7 @@ import setAll
  * @property titleComponent the title [TextComponent].
  * @property title the title text.
  */
-public abstract class BaseAxis<P : Axis.Position>(
+abstract class BaseAxis<P : Axis.Position>(
     protected val line: LineComponent?,
     protected val label: TextComponent?,
     protected val labelRotationDegrees: Float,
@@ -101,14 +101,14 @@ public abstract class BaseAxis<P : Axis.Position>(
      * - For [HorizontalAxis], this defines the height.
      */
     @Immutable
-    public sealed class Size {
+    sealed class Size {
         /**
          * Allows a [BaseAxis] to adopt its preferred size from the given range.
          *
          * @property minDp the minimum size (in dp).
          * @property maxDp the maximum size (in dp).
          */
-        public class Auto(public val minDp: Float = 0f, public val maxDp: Float = Float.MAX_VALUE) :
+        class Auto(val minDp: Float = 0f, val maxDp: Float = Float.MAX_VALUE) :
             Size() {
             override fun equals(other: Any?): Boolean =
                 this === other || other is Auto && minDp == other.minDp && maxDp == other.maxDp
@@ -121,7 +121,7 @@ public abstract class BaseAxis<P : Axis.Position>(
          *
          * @property valueDp the size (in dp).
          */
-        public class Fixed(public val valueDp: Float) : Size() {
+        class Fixed(val valueDp: Float) : Size() {
             override fun equals(other: Any?): Boolean =
                 this === other || other is Fixed && valueDp == other.valueDp
 
@@ -133,7 +133,7 @@ public abstract class BaseAxis<P : Axis.Position>(
          *
          * @property fraction the fraction of the available space that the axis should use.
          */
-        public class Fraction(public val fraction: Float) : Size() {
+        class Fraction(val fraction: Float) : Size() {
             init {
                 require(fraction in MIN..MAX) {
                     "Expected a value in the interval [$MIN, $MAX]. Got $fraction."
@@ -156,7 +156,7 @@ public abstract class BaseAxis<P : Axis.Position>(
          * ([text]), and it will use this size. In the case of [VerticalAxis], the width of the axis
          * line and the tick length will also be considered.
          */
-        public class Text(public val text: CharSequence) : Size() {
+        class Text(val text: CharSequence) : Size() {
             override fun equals(other: Any?): Boolean =
                 this === other || other is Text && text == other.text
 
@@ -164,6 +164,6 @@ public abstract class BaseAxis<P : Axis.Position>(
         }
 
         /** Provides access to [BaseAxis.Size] factory functions. */
-        public companion object
+        companion object
     }
 }

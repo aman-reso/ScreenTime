@@ -4,9 +4,9 @@ import com.telekom.odsystem.charts.core.cartesian.data.LineCartesianLayerModel
 import com.telekom.odsystem.charts.core.cartesian.layer.LineCartesianLayer
 
 /** Houses information on a set of [LineCartesianLayer] points to be marked. */
-public interface LineCartesianLayerMarkerTarget : CartesianMarker.Target {
+interface LineCartesianLayerMarkerTarget : CartesianMarker.Target {
     /** Holds [Point] instances, each of which houses information on a marked point. */
-    public val points: List<Point>
+    val points: List<Point>
 
     /**
      * Houses information on a [LineCartesianLayer] point to be marked.
@@ -15,7 +15,7 @@ public interface LineCartesianLayerMarkerTarget : CartesianMarker.Target {
      * @param canvasY the point’s pixel _y_ coordinate.
      * @param color the [LineCartesianLayer.Line]’s color for the point.
      */
-    public data class Point(
+    data class Point(
         val entry: LineCartesianLayerModel.Entry,
         val canvasY: Float,
         val color: Int,

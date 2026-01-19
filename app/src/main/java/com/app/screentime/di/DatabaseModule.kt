@@ -2,10 +2,8 @@ package com.app.screentime.di
 
 import android.content.Context
 import com.app.screentime.database.ScreenTimeDatabase
-import com.app.screentime.database.dao.BlockedLinkDao
-import com.app.screentime.database.dao.FocusTimeDao
-import com.app.screentime.database.dao.JoinedChallengeDao
-import com.app.screentime.database.dao.NotificationDao
+// FocusTimeDao removed - server is source of truth
+// JoinedChallengeDao removed - server is source of truth
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,26 +21,5 @@ object DatabaseModule {
         @ApplicationContext context: Context
     ): ScreenTimeDatabase {
         return ScreenTimeDatabase.getDatabase(context)
-    }
-
-    @Provides
-    fun provideFocusTimeDao(database: ScreenTimeDatabase): FocusTimeDao {
-        return database.focusTimeDao()
-    }
-    
-    // BlockedLinkDao kept for future use - currently not providing it to avoid dependency issues
-    // @Provides
-    // fun provideBlockedLinkDao(database: ScreenTimeDatabase): BlockedLinkDao {
-    //     return database.blockedLinkDao()
-    // }
-    
-    @Provides
-    fun provideNotificationDao(database: ScreenTimeDatabase): NotificationDao {
-        return database.notificationDao()
-    }
-    
-    @Provides
-    fun provideJoinedChallengeDao(database: ScreenTimeDatabase): JoinedChallengeDao {
-        return database.joinedChallengeDao()
     }
 }

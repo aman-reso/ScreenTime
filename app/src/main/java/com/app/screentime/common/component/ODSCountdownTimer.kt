@@ -76,16 +76,16 @@ data class ODSCountdownTimerProps(
     val showProgress: Boolean = true,
 
     /** Custom text style for the countdown text */
-    val textStyle: com.telekom.odsystem.foundations.ODSTextStyle? = null,
+    val textStyle: ODSTextStyle? = null,
 
     /** Custom text color */
-    val textColor: com.telekom.odsystem.foundations.HexColor? = null,
+    val textColor: HexColor? = null,
 
     /** Custom progress color */
-    val progressColor: com.telekom.odsystem.foundations.HexColor? = null,
+    val progressColor: HexColor? = null,
 
     /** Custom track color for progress indicator */
-    val trackColor: com.telekom.odsystem.foundations.HexColor? = null,
+    val trackColor: HexColor? = null,
 
     /** Label text to display above the timer (optional) */
     val label: String? = null,

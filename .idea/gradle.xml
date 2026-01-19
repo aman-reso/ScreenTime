@@ -10,15 +10,19 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/ads" />
+            <option value="$PROJECT_DIR$/analytics" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/applock" />
+            <option value="$PROJECT_DIR$/config" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core/network" />
+            <option value="$PROJECT_DIR$/filemanager" />
             <option value="$PROJECT_DIR$/odsystem" />
             <option value="$PROJECT_DIR$/wallpaper" />
           </set>
         </option>
       </GradleProjectSettings>
     </option>
-    <option name="offlineMode" value="true" />
   </component>
 </project>

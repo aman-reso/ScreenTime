@@ -2,6 +2,7 @@ package com.app.screentime.leaderboard.service
 
 import com.app.screentime.core.network.model.ApiResponse
 import com.app.screentime.network.model.LeaderboardResponse
+import com.app.screentime.network.model.LeaderboardStatsUpdateRequest
 
 /**
  * Service interface for Leaderboard operations
@@ -18,9 +19,11 @@ interface LeaderboardService {
      */
     suspend fun getWeeklyLeaderboard(): Result<ApiResponse<LeaderboardResponse>>
     
+
     /**
-     * Get monthly leaderboard
+     * Update leaderboard stats for a period
+     * @param request LeaderboardStatsUpdateRequest containing period, date, and screen time
      */
-    suspend fun getMonthlyLeaderboard(): Result<ApiResponse<LeaderboardResponse>>
+    suspend fun updateStats(request: LeaderboardStatsUpdateRequest): Result<ApiResponse<Unit>>
 }
 

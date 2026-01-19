@@ -398,7 +398,7 @@ private fun Modifier.selectiveBorder(
     style: ODSBarChartStyle,
     props: ODSBarChartProps,
 ): Modifier = this.drawBehind {
-    val (gridCount, gridStep) = getGridSteps(props = props)
+    val (_, _) = getGridSteps(props = props)
     val color = style.guideLineColor ?: Color.Transparent
     val strokePx = style.guideLineThickness?.toPx() ?: 1.dp.toPx()
     val width = size.width
@@ -438,7 +438,7 @@ private fun DrawScope.drawGrid(
     barCount: Int,
     props: ODSBarChartProps,
 ) {
-    val (gridCount, gridStep) = getGridSteps(props = props)
+    val (gridCount, _) = getGridSteps(props = props)
     val gridColor = style.guideLineColor ?: Color.Transparent
     val strokeWidth = 1.dp.toPx()
 

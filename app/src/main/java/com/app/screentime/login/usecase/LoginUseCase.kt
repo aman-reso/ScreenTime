@@ -25,10 +25,14 @@ class LoginUseCase @Inject constructor(
 
     // Device registration disabled - App works offline
     suspend fun registerDevice() {
-        val firebaseToken = fcmTokenManager.getCurrentToken()
-        loginRepository.registerDevice(firebaseToken).onFailure {
-        }.onSuccess {
-            preferencesManager.saveUserInformation(it)
+        try {
+            val firebaseToken = fcmTokenManager.getCurrentToken()
+            loginRepository.registerDevice(firebaseToken).onFailure {
+            }.onSuccess {
+                preferencesManager.saveUserInformation(it)
+            }
+        }catch (e: Throwable){
+
         }
     }
 

@@ -32,6 +32,10 @@ import com.app.screentime.network.service.user.UserService
 import com.app.screentime.network.service.user.UserServiceImpl
 import com.app.screentime.search.service.SearchService
 import com.app.screentime.search.service.SearchServiceImpl
+import com.app.screentime.controlcenter.service.ControlCenterService
+import com.app.screentime.controlcenter.service.ControlCenterServiceImpl
+import com.app.screentime.location.service.LocationService
+import com.app.screentime.location.service.LocationServiceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -75,35 +79,30 @@ abstract class NetworkModule {
      * Bind SearchService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindSearchService(searchServiceImpl: SearchServiceImpl): SearchService
 
     /**
      * Bind ProfileService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindProfileService(profileServiceImpl: ProfileServiceImpl): ProfileService
 
     /**
      * Bind TOTPService implementation (network package)
      */
     @Binds
-    @Singleton
     abstract fun bindTOTPService(totpServiceImpl: TOTPServiceImpl): TOTPService
 
     /**
      * Bind Profile TOTPService implementation (profile package)
      */
     @Binds
-    @Singleton
     abstract fun bindProfileTOTPService(profileTotpServiceImpl: ProfileTOTPServiceImpl): ProfileTOTPService
 
     /**
      * Bind ConsentService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindConsentService(consentServiceImpl: ConsentServiceImpl): ConsentService
 
     /**
@@ -117,50 +116,55 @@ abstract class NetworkModule {
      * Bind NotificationService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindNotificationService(notificationServiceImpl: NotificationServiceImpl): NotificationService
 
     /**
      * Bind LeaderboardService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindLeaderboardService(leaderboardServiceImpl: LeaderboardServiceImpl): LeaderboardService
 
     /**
      * Bind ChallengeService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindChallengeService(challengeServiceImpl: ChallengeServiceImpl): ChallengeService
 
     /**
      * Bind FocusService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindFocusService(focusServiceImpl: FocusServiceImpl): FocusService
 
     /**
      * Bind BlockedDomainService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindBlockedDomainService(blockedDomainServiceImpl: BlockedDomainServiceImpl): BlockedDomainService
 
     /**
      * Bind URLSearchService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindURLSearchService(urlSearchServiceImpl: URLSearchServiceImpl): URLSearchService
 
     /**
      * Bind RewardService implementation
      */
     @Binds
-    @Singleton
     abstract fun bindRewardService(rewardServiceImpl: RewardServiceImpl): RewardService
+
+    /**
+     * Bind ControlCenterService implementation
+     */
+    @Binds
+    abstract fun bindControlCenterService(controlCenterServiceImpl: ControlCenterServiceImpl): ControlCenterService
+
+    /**
+     * Bind LocationService implementation
+     */
+    @Binds
+    abstract fun bindLocationService(locationServiceImpl: LocationServiceImpl): LocationService
 
     companion object {
         /**

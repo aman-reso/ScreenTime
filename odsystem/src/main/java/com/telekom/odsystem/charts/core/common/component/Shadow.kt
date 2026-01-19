@@ -14,14 +14,14 @@ import com.telekom.odsystem.charts.core.common.MeasuringContext
  * @param color the color.
  */
 @Immutable
-public data class Shadow(
+data class Shadow(
   private val radiusDp: Float,
   private val xDp: Float = 0f,
   private val yDp: Float = 0f,
   private val color: Int = Defaults.SHADOW_COLOR,
 ) {
   /** Updates [paint]’s shadow layer. */
-  public fun updateShadowLayer(context: MeasuringContext, paint: Paint) {
+  fun updateShadowLayer(context: MeasuringContext, paint: Paint) {
     with(context) { paint.setShadowLayer(radiusDp.pixels, xDp.pixels, yDp.pixels, color) }
   }
 }

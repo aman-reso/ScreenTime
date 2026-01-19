@@ -13,30 +13,30 @@ import com.telekom.odsystem.charts.core.cartesian.data.MutableCartesianChartRang
  * Visualizes data on a Cartesian plane. [CartesianLayer]s are combined and drawn by
  * [CartesianChart]s.
  */
-public interface CartesianLayer<M : CartesianLayerModel> : CartesianLayerMarginUpdater<M> {
+interface CartesianLayer<M : CartesianLayerModel> : CartesianLayerMarginUpdater<M> {
     /** Links _x_ values to [CartesianMarker.Target]s. */
-    public val markerTargets: Map<Double, List<CartesianMarker.Target>>
+    val markerTargets: Map<Double, List<CartesianMarker.Target>>
 
     /** Draws the [CartesianLayer]. */
-    public fun draw(context: CartesianDrawingContext, model: M)
+    fun draw(context: CartesianDrawingContext, model: M)
 
     /** Updates [dimensions] to match this [CartesianLayer]’s dimensions. */
-    public fun updateDimensions(
+    fun updateDimensions(
       context: CartesianMeasuringContext,
       dimensions: MutableCartesianLayerDimensions,
       model: M,
     )
 
     /** Updates [chartRanges] in accordance with [model]. */
-    public fun updateChartRanges(chartRanges: MutableCartesianChartRanges, model: M)
+    fun updateChartRanges(chartRanges: MutableCartesianChartRanges, model: M)
 
     /** Prepares the [CartesianLayer] for a difference animation. */
-    public fun prepareForTransformation(
+    fun prepareForTransformation(
         model: M?,
         ranges: CartesianChartRanges,
         extraStore: MutableExtraStore,
     )
 
     /** Carries out the pending difference animation. */
-    public suspend fun transform(extraStore: MutableExtraStore, fraction: Float)
+    suspend fun transform(extraStore: MutableExtraStore, fraction: Float)
 }

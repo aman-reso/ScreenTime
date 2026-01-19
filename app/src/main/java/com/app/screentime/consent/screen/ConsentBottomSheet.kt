@@ -31,7 +31,7 @@ import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import androidx.compose.ui.res.stringResource
-import com.app.screentime.R
+import com.app.screentime.config.R
 import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
 
 import com.telekom.odsystem.atoms.button.ODSButtonSize
@@ -132,7 +132,7 @@ fun ConsentBottomSheetContent(
 
             if (uiState.error != null && !uiState.isSubmitting) {
                 ODSText(
-                    text = uiState.error ?: "Failed to submit consents",
+                    text = uiState.error ?: stringResource(R.string.failed_to_submit_consents),
                     style = DSTextStyles.bodySRegular,
                     color = scheme.functionalDestructiveStandard
                 )

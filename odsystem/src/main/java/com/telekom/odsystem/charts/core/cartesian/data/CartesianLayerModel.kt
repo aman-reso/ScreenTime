@@ -7,39 +7,39 @@ import com.telekom.odsystem.charts.core.common.gcdWith
 import kotlin.math.abs
 
 /** Stores a [CartesianLayer]’s data. */
-public interface CartesianLayerModel {
+interface CartesianLayerModel {
     /** Identifies this [CartesianLayerModel]. */
-    public val id: Int
+    val id: Int
 
     /** The minimum _x_ value. */
-    public val minX: Double
+    val minX: Double
 
     /** The maximum _x_ value. */
-    public val maxX: Double
+    val maxX: Double
 
     /** The minimum _y_ value. */
-    public val minY: Double
+    val minY: Double
 
     /** The maximum _y_ value. */
-    public val maxY: Double
+    val maxY: Double
 
     /** Stores auxiliary data, including [CartesianLayerDrawingModel]s. */
-    public val extraStore: ExtraStore
+    val extraStore: ExtraStore
 
     /** Returns the greatest common divisor of the _x_ values’ differences. */
-    public fun getXDeltaGcd(): Double
+    fun getXDeltaGcd(): Double
 
     /** Creates a copy of this [CartesianLayerModel] with the given [ExtraStore]. */
-    public fun copy(extraStore: ExtraStore): CartesianLayerModel
+    fun copy(extraStore: ExtraStore): CartesianLayerModel
 
     override fun equals(other: Any?): Boolean
 
     override fun hashCode(): Int
 
     /** Represents a single entity in a [CartesianLayerModel]. */
-    public interface Entry {
+    interface Entry {
         /** The _x_ coordinate. */
-        public val x: Double
+        val x: Double
 
         override fun equals(other: Any?): Boolean
 
@@ -50,9 +50,9 @@ public interface CartesianLayerModel {
      * Stores the minimum amount of data required to create a [CartesianLayerModel] and facilitates
      * this creation.
      */
-    public interface Partial {
+    interface Partial {
         /** Creates a full [CartesianLayerModel] with the given [ExtraStore] from this [Partial]. */
-        public fun complete(extraStore: ExtraStore = ExtraStore.Empty): CartesianLayerModel
+        fun complete(extraStore: ExtraStore = ExtraStore.Empty): CartesianLayerModel
     }
 }
 

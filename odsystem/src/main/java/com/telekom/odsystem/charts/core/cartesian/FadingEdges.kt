@@ -30,7 +30,7 @@ private const val NO_FADE: Int = 0x00000000
  *   the fading edges.
  */
 @Immutable
-public open class FadingEdges(
+open class FadingEdges(
     protected val startWidthDp: Float = FADING_EDGE_WIDTH_DP,
     protected val endWidthDp: Float = FADING_EDGE_WIDTH_DP,
     protected val visibilityThresholdDp: Float = FADING_EDGE_VISIBILITY_THRESHOLD_DP,
@@ -50,7 +50,7 @@ public open class FadingEdges(
      *   is a mapping of the degree to which [visibilityThresholdDp] has been satisfied to the opacity
      *   of the fading edges.
      */
-    public constructor(
+    constructor(
         widthDp: Float = FADING_EDGE_WIDTH_DP,
         visibilityThresholdDp: Float = FADING_EDGE_VISIBILITY_THRESHOLD_DP,
         visibilityInterpolator: TimeInterpolator = AccelerateDecelerateInterpolator(),

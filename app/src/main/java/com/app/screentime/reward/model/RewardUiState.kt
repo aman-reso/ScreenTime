@@ -6,6 +6,7 @@ package com.app.screentime.reward.model
 data class RewardUiState(
     val isLoading: Boolean = false,
     val totalCoins: Int = 0,
+    val coinHistory: List<CoinHistoryItem> = emptyList(),
     val totalPoints: Int = 0,
     val totalBadges: Int = 0,
     val totalTrophies: Int = 0,

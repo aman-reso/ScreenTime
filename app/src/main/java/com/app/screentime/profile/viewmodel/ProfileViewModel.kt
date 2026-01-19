@@ -8,6 +8,7 @@ import com.app.screentime.profile.model.SettingsItemClickResult
 import com.app.screentime.profile.usecase.ProfileUseCase
 import com.app.screentime.security.TOTP
 import com.app.screentime.utils.DateUtils
+import com.app.screentime.analytics.AnalyticsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -20,7 +21,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val profileUseCase: ProfileUseCase,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val analyticsUseCase: AnalyticsUseCase
 ) : ViewModel() {
 
     private val _uiProps = MutableStateFlow<ProfileUiProps?>(null)
@@ -30,9 +32,50 @@ class ProfileViewModel @Inject constructor(
     val totpState: StateFlow<TOTPState> = _totpState.asStateFlow()
 
     init {
+        analyticsUseCase.trackProfileScreen()
         loadProfile()
         startTOTPGeneration()
         startPeriodicUpdate()
+    }
+
+    fun trackLanguageChangeClick() {
+        analyticsUseCase.trackLanguageChangeClick()
+    }
+
+    fun trackThemeChange(theme: String? = null) {
+        analyticsUseCase.trackThemeChange(theme)
+    }
+
+    fun trackControlCenter() {
+        analyticsUseCase.trackControlCenter()
+    }
+
+    fun trackLocationScreen() {
+        analyticsUseCase.trackLocationScreen()
+    }
+
+    fun trackNotificationRecoverClick() {
+        analyticsUseCase.trackNotificationRecoverClick()
+    }
+
+    fun trackShareApp() {
+        analyticsUseCase.trackShareApp()
+    }
+
+    fun trackEditUsernameClick() {
+        analyticsUseCase.trackEditUsernameClick()
+    }
+
+    fun trackEditUsernameSuccess() {
+        analyticsUseCase.trackEditUsernameSuccess()
+    }
+
+    fun trackEditUsernameFailure() {
+        analyticsUseCase.trackEditUsernameFailure()
+    }
+
+    fun trackSetWidget() {
+        analyticsUseCase.trackSetWidget()
     }
 
     /**
@@ -86,7 +129,7 @@ class ProfileViewModel @Inject constructor(
         key: com.app.screentime.profile.model.ProfileSettingsKey,
         url: String
     ): SettingsItemClickResult {
-        val currentProps = _uiProps.value
+        _uiProps.value
         return profileUseCase.handleSettingsItemClick(key, url)
     }
 
@@ -94,6 +137,7 @@ class ProfileViewModel @Inject constructor(
      * Request widget setup
      */
     fun requestWidgetSetup() {
+        trackSetWidget()
         viewModelScope.launch {
             profileUseCase.requestWidgetSetup()
         }
@@ -158,6 +202,8 @@ class ProfileViewModel @Inject constructor(
             try {
                 val result = profileUseCase.updateUsername(newUsername)
                 if (result) {
+                    // Track success
+                    trackEditUsernameSuccess()
                     // Reload profile to reflect changes
                     val updatedProps = profileUseCase.getProfileUiProps(
                         isLoading = currentProps?.isLoading ?: false,
@@ -167,6 +213,8 @@ class ProfileViewModel @Inject constructor(
                     _uiProps.value = updatedProps
                     onSuccess() // Call success callback to dismiss bottom sheet
                 } else {
+                    // Track failure
+                    trackEditUsernameFailure()
                     _uiProps.value = currentProps?.copy(
                         isUpdating = false,
                         error = "Failed to update username"
