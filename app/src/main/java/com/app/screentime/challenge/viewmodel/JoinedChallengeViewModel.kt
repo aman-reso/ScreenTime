@@ -21,13 +21,14 @@ data class JoinedChallengesUiState(
     val error: String? = null,
     val joinedChallenges: List<UserChallenge> = emptyList(),
     val filteredChallenges: List<Challenge> = emptyList(),
-    val selectedFilter: ChallengeFilter = ChallengeFilter.CURRENT
+    val selectedFilter: ChallengeFilter = ChallengeFilter.ALL
 )
 
 /**
  * Filter options for joined challenges
  */
 enum class ChallengeFilter {
+    ALL,
     CURRENT,
     EXPIRED
 }
@@ -87,11 +88,17 @@ class JoinedChallengeViewModel @Inject constructor(
      * Apply current filter to challenges
      */
     private fun applyFilter() {
-        val showCurrent = _uiState.value.selectedFilter == ChallengeFilter.CURRENT
-        val filtered = joinedChallengeUseCase.filterChallengesByStatus(
-            _uiState.value.joinedChallenges,
-            showCurrent
-        )
+        val filtered = when (_uiState.value.selectedFilter) {
+            ChallengeFilter.ALL -> _uiState.value.joinedChallenges
+            ChallengeFilter.CURRENT -> joinedChallengeUseCase.filterChallengesByStatus(
+                _uiState.value.joinedChallenges,
+                showCurrent = true
+            )
+            ChallengeFilter.EXPIRED -> joinedChallengeUseCase.filterChallengesByStatus(
+                _uiState.value.joinedChallenges,
+                showCurrent = false
+            )
+        }
         val mappedChallenges = joinedChallengeMapper.toChallengeList(filtered)
         _uiState.value = _uiState.value.copy(filteredChallenges = mappedChallenges)
     }

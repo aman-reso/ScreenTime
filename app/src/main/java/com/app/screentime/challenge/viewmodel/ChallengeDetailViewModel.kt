@@ -21,9 +21,12 @@ import com.app.screentime.sync.ChallengeSyncManager
 import com.app.screentime.utils.DateUtils
 import com.app.screentime.analytics.AnalyticsUseCase
 import com.app.screentime.config.R
+import com.app.screentime.network.model.ChallengeRankingsResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,8 +38,9 @@ import kotlinx.coroutines.launch
 data class ChallengeDetailUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
+    val leaderboardError: String? = null,
     val challengeDetails: ChallengeDetails? = null,
-    val challengeRankings: com.app.screentime.network.model.ChallengeRankingsResponse? = null,
+    val challengeRankings: ChallengeRankingsResponse? = null,
     val isJoining: Boolean = false,
     val uiProps: ChallengeDetailUiProps? = null,
     val lastSyncTime: String? = null, // Formatted last sync time, null if never synced
@@ -78,62 +82,97 @@ class ChallengeDetailViewModel @Inject constructor(
     }
 
     /**
-     * Load challenge details and rankings
+     * Load challenge details and rankings in parallel
      */
     fun loadChallengeDetails(challengeId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 error = null,
+                leaderboardError = null,
                 challengeDetails = null,
                 challengeRankings = null,
                 uiProps = null
             )
 
-            // Load last sync time (non-blocking)
-            loadLastSyncTime(challengeId)
+            val detailsDeferred = async {
+                challengeRepository.getChallengeDetails(challengeId)
+            }
 
-            // Load challenge details
-            challengeRepository.getChallengeDetails(challengeId).fold(
+            val rankingsDeferred = async {
+                challengeRepository.getChallengeRankings(challengeId)
+            }
+
+            val lastSyncDeferred = async {
+                challengeRepository.getChallengeLastSyncTime(challengeId)
+            }
+
+            val detailsResult = detailsDeferred.await()
+            val rankingsResult = rankingsDeferred.await()
+            val lastSyncResult = lastSyncDeferred.await()
+            var challengeRankings: ChallengeRankingsResponse? = null
+            var leaderboardError: String? = null
+
+            val lastSyncTimeStr = lastSyncResult.getOrNull()?.data?.lastSyncTime
+            val formattedSyncTime = if (lastSyncTimeStr != null) {
+                try {
+                    DateUtils.format(lastSyncTimeStr, "MMM dd, yyyy 'at' HH:mm")
+                } catch (e: Exception) {
+                    null
+                }
+            } else {
+                null
+            }
+            rankingsResult.fold(
                 onSuccess = { response ->
                     if (response.success == true && response.data != null) {
-                        val challengeDetails = response.data
+                        challengeRankings = response.data
+                    } else {
+                        leaderboardError = response.message ?: "Failed to load leaderboard"
+                    }
+                },
+                onFailure = { throwable ->
+                    leaderboardError = throwable.message ?: "Failed to load leaderboard"
+                }
+            )
+
+            detailsResult.fold(
+                onSuccess = { response ->
+                    if (response.success == true && response.data != null) {
                         _uiState.value = _uiState.value.copy(
-                            challengeDetails = challengeDetails,
-                            isLoading = false
+                            isLoading = false,
+                            error = null,
+                            uiProps = challengeDetailUseCase.getChallengeDetailUiProps(
+                                challengeDetails = response.data!!,
+                                challengeRankings = challengeRankings,
+                                leaderboardError = leaderboardError,
+                                isJoining = false
+                            ),
+                            leaderboardError = leaderboardError,
+                            challengeDetails = response.data,
+                            challengeRankings = challengeRankings,
+                            lastSyncTime = formattedSyncTime
                         )
-                        // Update UI props after loading details
-                        updateUiProps(challengeDetails, _uiState.value.challengeRankings)
                     } else {
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = response.message ?: "Failed to load challenge details"
+                            error = response.error?.message,
+                            leaderboardError = leaderboardError,
+                            challengeDetails = response.data,
+                            challengeRankings = challengeRankings,
+                            lastSyncTime = formattedSyncTime
                         )
                     }
                 },
                 onFailure = { throwable ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = throwable.message ?: "Failed to load challenge details"
+                        error = throwable.message,
+                        leaderboardError = leaderboardError,
+                        challengeDetails = null,
+                        challengeRankings = challengeRankings,
+                        lastSyncTime = formattedSyncTime
                     )
-                }
-            )
-
-            // Load challenge rankings (non-blocking)
-            challengeRepository.getChallengeRankings(challengeId).fold(
-                onSuccess = { response ->
-                    if (response.success == true && response.data != null) {
-                        val rankings = response.data
-                        _uiState.value = _uiState.value.copy(
-                            challengeRankings = rankings
-                        )
-                        // Update UI props after loading rankings
-                        updateUiProps(_uiState.value.challengeDetails, rankings)
-                    }
-                },
-                onFailure = {
-                    // Rankings failure is not critical, just log it
-                    Log.w("ChallengeDetailViewModel", "Failed to load rankings", it)
                 }
             )
         }
@@ -163,7 +202,6 @@ class ChallengeDetailViewModel @Inject constructor(
                 }
                 if (!anyInstalled) {
                     val msg = context.getString(R.string.error_joining_required_app_not_installed)
-                    _uiState.value = _uiState.value.copy(error = msg)
                     onError(msg)
                     return
                 }
@@ -180,10 +218,6 @@ class ChallengeDetailViewModel @Inject constructor(
             challengeRepository.joinChallenge(challengeId).fold(
                 onSuccess = { response ->
                     if (response.success == true) {
-                        val challengeDetails = _uiState.value.challengeDetails
-                        if (challengeDetails != null && challengeDetails.id == challengeId) {
-                            saveChallengeAndScheduleSync(challengeDetails)
-                        }
                         loadChallengeDetails(challengeId)
                         onSuccess()
                     } else {
@@ -278,7 +312,11 @@ class ChallengeDetailViewModel @Inject constructor(
     /**
      * Manually sync challenge stats
      */
-    fun syncChallenge(challengeId: String, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+    fun syncChallenge(
+        challengeId: String,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
         if (_uiState.value.isSyncing) {
             return
         }
@@ -315,7 +353,7 @@ class ChallengeDetailViewModel @Inject constructor(
                 val currentTime = DateUtils.nowMillis()
 
                 // Check if challenge is active
-                if (currentTime < startTime || currentTime > endTime) {
+                if (currentTime !in startTime..endTime) {
                     _uiState.value = _uiState.value.copy(isSyncing = false)
                     onError("Challenge is not active")
                     return@launch
@@ -423,7 +461,11 @@ class ChallengeDetailViewModel @Inject constructor(
                         challengeId = challengeId,
                         appName = appName,
                         packageName = allPackageNames,
-                        startSyncTime = DateUtils.formatISO8601(DateUtils.fromMillis(effectiveLastSyncTime)),
+                        startSyncTime = DateUtils.formatISO8601(
+                            DateUtils.fromMillis(
+                                effectiveLastSyncTime
+                            )
+                        ),
                         endSyncTime = DateUtils.formatISO8601(DateUtils.fromMillis(syncEndTime)),
                         duration = totalDuration
                     )
@@ -465,35 +507,6 @@ class ChallengeDetailViewModel @Inject constructor(
                 onError(e.message ?: "Failed to sync challenge")
             }
         }
-    }
-
-    /**
-     * Update UI props based on current state
-     */
-    private fun updateUiProps(
-        challengeDetails: ChallengeDetails?,
-        challengeRankings: com.app.screentime.network.model.ChallengeRankingsResponse?
-    ) {
-        if (challengeDetails != null) {
-            val uiProps = challengeDetailUseCase.getChallengeDetailUiProps(
-                challengeDetails = challengeDetails,
-                challengeRankings = challengeRankings,
-                isJoining = _uiState.value.isJoining
-            )
-            _uiState.value = _uiState.value.copy(uiProps = uiProps)
-        }
-    }
-
-    /**
-     * Save challenge when joining
-     * 
-     * MIGRATION: Removed database operations. Server is the source of truth.
-     * When user joins a challenge, server handles it via joinChallenge API.
-     */
-    private suspend fun saveChallengeAndScheduleSync(challengeDetails: ChallengeDetails) {
-        // Server is the source of truth - joining is handled by server API
-        // This method is kept for compatibility but does nothing
-        Log.d("ChallengeDetailViewModel", "Challenge join is managed by server - no local DB save needed")
     }
 }
 

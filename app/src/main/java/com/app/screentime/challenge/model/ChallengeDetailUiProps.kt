@@ -44,6 +44,7 @@ data class ChallengeDetailUiProps(
     val topRankings: List<LeaderboardEntry>,
     val userRank: LeaderboardEntry?,
     val showLeaderboard: Boolean,
+    val leaderboardError: String? = null,
     
     // Content
     val rules: String?,

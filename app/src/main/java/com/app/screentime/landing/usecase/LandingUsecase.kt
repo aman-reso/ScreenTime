@@ -33,7 +33,6 @@ class LandingUsecase @Inject constructor(
     private val landingUiMapper: LandingUiMapper,
     private val preferencesUseCase: PreferencesUseCase,
     private val preferencesManager: PreferencesManager,
-    private val dataSyncService: DataSyncService,
     private val challengeRepository: ChallengeRepository,
     private val leaderboardService: LeaderboardService,
     @ApplicationContext private val context: Context

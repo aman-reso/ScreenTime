@@ -14,7 +14,39 @@ data class ScreenTimeNavigationTokens(
 /**
  * Default navigation tokens for ScreenTime app (phone).
  */
-val defaultScreenTimeNavigationTokens = ScreenTimeNavigationTokens(
+
+
+val mobileNotIndiaScreenTimeNavigationToken = ScreenTimeNavigationTokens(
+    routeToIndexMap = mapOf(
+        Screen.Landing to 0,
+        Screen.Statistics to 1,
+        Screen.Wallpaper to 2,
+        Screen.Profile to 3
+    ),
+    bottomNavigationRoutes = listOf(
+        Screen.Landing,
+        Screen.Statistics,
+        Screen.Wallpaper,
+        Screen.Profile
+    )
+)
+
+val tabletNotIndiaScreenTimeNavigationToken = ScreenTimeNavigationTokens(
+    routeToIndexMap = mapOf(
+        Screen.Landing to 0,
+        Screen.Leaderboard to 1,
+        Screen.Wallpaper to 2,
+        Screen.Profile to 3
+    ),
+    bottomNavigationRoutes = listOf(
+        Screen.Landing,
+        Screen.Leaderboard,
+        Screen.Wallpaper,
+        Screen.Profile
+    )
+)
+
+val mobileIndiaScreenTimeNavigationToken = ScreenTimeNavigationTokens(
     routeToIndexMap = mapOf(
         Screen.Landing to 0,
         Screen.Statistics to 1,
@@ -24,25 +56,23 @@ val defaultScreenTimeNavigationTokens = ScreenTimeNavigationTokens(
     bottomNavigationRoutes = listOf(
         Screen.Landing,
         Screen.Statistics,
-         Screen.Challenges,
+        Screen.Challenges,
         Screen.Profile
     )
 )
 
-/**
- * Navigation tokens for tablet devices (shows Leaderboard instead of Statistics).
- */
-val tabletScreenTimeNavigationTokens = ScreenTimeNavigationTokens(
+
+val tabletIndiaScreenTimeNavigationToken = ScreenTimeNavigationTokens(
     routeToIndexMap = mapOf(
         Screen.Landing to 0,
-        Screen.Leaderboard to 1,
-        Screen.Challenges to 2,
+        Screen.Challenges to 1,
+        Screen.Leaderboard to 2,
         Screen.Profile to 3
     ),
     bottomNavigationRoutes = listOf(
         Screen.Landing,
+        Screen.Challenges,
         Screen.Leaderboard,
-         Screen.Challenges,
         Screen.Profile
     )
 )

@@ -45,7 +45,7 @@ fun UsageSummaryCard(
     scheme: ODSTheme = neutralScheme
 ) {
     val editIconInteractionSource = remember { MutableInteractionSource() }
-    
+
     ODSCardBasic(
         onClick = onClick,
         contentPadding = ODSPadding(
@@ -57,108 +57,125 @@ fun UsageSummaryCard(
         scheme = scheme,
         props = ODSCardBasicProps(),
         contentSlot = {
-            ODSRow(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ODSColumn(
-                    modifier = Modifier.weight(1f),
-                    gap = DSVariables.spacingComponent1
+            ODSColumn(modifier = Modifier.fillMaxWidth()) {
+                ODSRow(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ODSRow(
-                        verticalAlignment = Alignment.CenterVertically,
-                        gap = DSVariables.spacingComponent2
+                    ODSColumn(
+                        modifier = Modifier.weight(1f),
+                        gap = DSVariables.spacingComponent1
                     ) {
                         ODSText(
                             text = stringResource(R.string.todays_total),
                             style = DSTextStyles.bodyMRegular,
                             color = scheme.basicTextRecessive
                         )
-                        percentageChange?.let { change ->
-                            val changeText = if (change > 0) {
-                                "+${change.toInt()}%"
-                            } else {
-                                "${change.toInt()}%"
-                            }
-                            val changeColor = if (change > 0) {
-                                scheme.basicTextDominant // Red for increase
-                            } else {
-                                scheme.basicTextDominant // Green for decrease
-                            }
-                            ODSText(
-                                text = changeText,
-                                style = DSTextStyles.bodySRegular,
-                                color = changeColor
-                            )
-                        }
-                    }
-                    ODSText(
-                        text = todayTotal,
-                        style = DSTextStyles.subtitle,
-                        color = scheme.basicText
-                    )
-                }
-
-                ODSColumn(
-                    modifier = Modifier.weight(1f),
-                    gap = DSVariables.spacingComponent1,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    ODSRow(
-                        verticalAlignment = Alignment.CenterVertically,
-                        gap = DSVariables.spacingComponent1
-                    ) {
                         ODSText(
-                            text = stringResource(R.string.daily_goal),
-                            style = DSTextStyles.bodyMRegular,
-                            color = scheme.basicTextRecessive
+                            text = todayTotal,
+                            style = DSTextStyles.subtitle,
+                            color = scheme.basicText
                         )
-                        onEditDailyGoal?.let {
-                            ODSIcon(
-                                modifier = Modifier.clickable(
-                                    interactionSource = editIconInteractionSource,
-                                    indication = null,
-                                    onClick = it
-                                ),
-                                iconModel = ODSIconModel(
-                                    drawableRes = com.telekom.odsystem.R.drawable.edit_type_standard,
-                                    contentDescription = "Edit daily goal",
-                                    tint = scheme.basicTextRecessive
-                                ),
-                                width = 20.dp,
-                                height = 20.dp
-                            )
-                        }
                     }
-                    ODSText(
-                        text = dailyGoal,
-                        style = DSTextStyles.subtitle,
-                        color = scheme.basicText
-                    )
-                }
 
-                notificationCount?.let { count ->
                     ODSColumn(
                         modifier = Modifier.weight(1f),
                         gap = DSVariables.spacingComponent1,
-                        horizontalAlignment = Alignment.End
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        ODSRow(
+                            verticalAlignment = Alignment.CenterVertically,
+                            gap = DSVariables.spacingComponent1
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.daily_goal),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.basicTextRecessive
+                            )
+                            onEditDailyGoal?.let {
+                                ODSIcon(
+                                    modifier = Modifier.clickable(
+                                        interactionSource = editIconInteractionSource,
+                                        indication = null,
+                                        onClick = it
+                                    ),
+                                    iconModel = ODSIconModel(
+                                        drawableRes = com.telekom.odsystem.R.drawable.edit_type_standard,
+                                        contentDescription = stringResource(com.app.screentime.config.R.string.edit_daily_goal),
+                                        tint = scheme.basicTextRecessive
+                                    ),
+                                    width = 20.dp,
+                                    height = 20.dp
+                                )
+                            }
+                        }
                         ODSText(
-                            text = stringResource(R.string.notifications),
-                            style = DSTextStyles.bodyMRegular,
-                            color = scheme.basicTextRecessive
-                        )
-                        ODSText(
-                            text = count.toString(),
-                            style = DSTextStyles.bodyMBold,
+                            text = dailyGoal,
+                            style = DSTextStyles.subtitle,
                             color = scheme.basicText
                         )
+                    }
+
+                    notificationCount?.let { count ->
+                        ODSColumn(
+                            modifier = Modifier.weight(1f),
+                            gap = DSVariables.spacingComponent1,
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.notifications),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.basicTextRecessive
+                            )
+                            ODSText(
+                                text = count.toString(),
+                                style = DSTextStyles.bodyMBold,
+                                color = scheme.basicText
+                            )
+                        }
+                    }
+                }
+                percentageChange?.let { change ->
+                    if (change != 0f) {
+                        val isIncrease = change > 0
+                        val changeText = "${kotlin.math.abs(change.toInt())}%"
+                        val arrowIcon = if (isIncrease) {
+                            com.telekom.odsystem.R.drawable.collapse_up_type_standard
+                        } else {
+                            com.telekom.odsystem.R.drawable.collapse_down_type_standard_size_standard
+                        }
+                        ODSRow(
+                            verticalAlignment = Alignment.CenterVertically,
+                            gap = 2.dp
+                        ) {
+                            ODSText(
+                                text = if (isIncrease) {
+                                    stringResource(com.app.screentime.config.R.string.more_than_yesterday, changeText)
+                                } else {
+                                    stringResource(com.app.screentime.config.R.string.less_than_yesterday, changeText)
+                                },
+                                style = DSTextStyles.bodySRegular,
+                                color = scheme.basicText
+                            )
+                            ODSIcon(
+                                iconModel = ODSIconModel(
+                                    drawableRes = arrowIcon,
+                                    contentDescription = if (isIncrease) {
+                                        stringResource(com.app.screentime.config.R.string.increased)
+                                    } else {
+                                        stringResource(com.app.screentime.config.R.string.decreased)
+                                    },
+                                    tint = scheme.basicText
+                                ),
+                                width = 14.dp,
+                                height = 14.dp
+                            )
+                        }
                     }
                 }
             }
         }
     )
 }
-

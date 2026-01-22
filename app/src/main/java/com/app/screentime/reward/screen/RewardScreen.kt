@@ -128,12 +128,12 @@ fun RewardScreen(
     }
 
     val uiState by viewModel.uiState.collectAsState()
-    
+
     // Reload data when screen is opened
     LaunchedEffect(Unit) {
         viewModel.loadRewardData()
     }
-    
+
     var showClaimDialog by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
     var showRewardInfoBottomSheet by remember { mutableStateOf(false) }
@@ -143,7 +143,6 @@ fun RewardScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isMenuExpanded by remember { mutableStateOf(false) }
     var showAdRewardSuccess by remember { mutableStateOf(false) }
-    var earnedCoinsFromAd by remember { mutableStateOf(0) }
     var showWatchAdSection by remember { mutableStateOf(true) }
     var isAdLoading by remember { mutableStateOf(false) }
     var adError by remember { mutableStateOf<String?>(null) }
@@ -171,7 +170,6 @@ fun RewardScreen(
             }
         }
     }
-
 
 
     // Reset header height measurement when watch ad section visibility changes
@@ -336,8 +334,8 @@ fun RewardScreen(
 
                                 ODSBox(
                                     modifier = Modifier
-                                    .fillMaxWidth()
-                                    .onSizeChanged { size ->
+                                        .fillMaxWidth()
+                                        .onSizeChanged { size ->
                                             val heightDiff = if (expandedHeaderHeightPx > 0) {
                                                 (expandedHeaderHeightPx - size.height).absoluteValue
                                             } else {
@@ -346,22 +344,22 @@ fun RewardScreen(
                                             // Update height if initial measurement or if height changed significantly
                                             if (expandedHeaderHeightPx == 0 || heightDiff > 10) {
                                                 val wasInitial = expandedHeaderHeightPx == 0
-                                            expandedHeaderHeightPx = size.height
+                                                expandedHeaderHeightPx = size.height
                                                 if (!wasInitial) {
                                                     headerOffsetPx = 0f
                                                 }
+                                            }
                                         }
-                                    }
-                                    .then(
-                                        if (expandedHeaderHeightPx > 0) {
-                                            Modifier.height(headerHeightDp)
-                                        } else {
-                                            Modifier // Let it measure naturally first
-                                        }
-                                    )
-                                    .graphicsLayer {
-                                        alpha = 1f - collapseFraction
-                                    }) {
+                                        .then(
+                                            if (expandedHeaderHeightPx > 0) {
+                                                Modifier.height(headerHeightDp)
+                                            } else {
+                                                Modifier // Let it measure naturally first
+                                            }
+                                        )
+                                        .graphicsLayer {
+                                            alpha = 1f - collapseFraction
+                                        }) {
                                     PointsHeader(
                                         points = uiState.totalCoins,
                                         coinHistory = uiState.coinHistory,
@@ -373,6 +371,7 @@ fun RewardScreen(
                                         showWatchAdSection = showWatchAdSection,
                                         isAdLoading = isAdLoading,
                                         adError = adError,
+                                        adPoint = uiState.adPoint,
                                         onWatchAdClick = {
                                             activity?.let {
                                                 isAdLoading = true
@@ -380,7 +379,6 @@ fun RewardScreen(
                                                 RewardedAdManager.showRewardedAd(
                                                     activity = it,
                                                     onRewardEarned = { rewardItem ->
-                                                        earnedCoinsFromAd = rewardItem.amount
                                                         // Add coins via API
                                                         viewModel.addCoinsForAdWatch(
                                                             onSuccess = {
@@ -416,7 +414,7 @@ fun RewardScreen(
                                 .weight(1f),
                             background = listOf(ODSColorModel(scheme.basicBackground))
                         ) {
-                            val isRefreshing = uiState.isLoading
+                            val isRefreshing = false
 
                             PullToRefreshBox(
                                 isRefreshing = isRefreshing,
@@ -424,69 +422,75 @@ fun RewardScreen(
                                     viewModel.loadRewardData()
                                 },
                                 modifier = Modifier.fillMaxSize()
-                        ) {
-                            ODSLazyColumn(
-                                state = listState,
-                                modifier = Modifier.fillMaxSize(),
-                                padding = ODSPadding(
-                                    top = DSVariables.spacingComponent4,
-                                    horizontal = DSVariables.spacingComponent4
-                                ),
-                                gap = DSVariables.spacingComponent3
                             ) {
+                                ODSLazyColumn(
+                                    state = listState,
+                                    modifier = Modifier.fillMaxSize(),
+                                    padding = ODSPadding(
+                                        top = DSVariables.spacingComponent4,
+                                        horizontal = DSVariables.spacingComponent4
+                                    ),
+                                    gap = DSVariables.spacingComponent3
+                                ) {
 
-                                item {
-                                    ODSText(
-                                            text = stringResource(ConfigR.string.available_rewards),
-                                        style = DSTextStyles.bodyMBold,
-                                        color = scheme.basicText
-                                    )
-                                }
-
-                                if (uiState.catalogPairs.isEmpty()) {
                                     item {
                                         ODSText(
-                                                text = stringResource(ConfigR.string.no_rewards_available),
-                                            style = DSTextStyles.bodyMRegular,
-                                            color = scheme.basicTextRecessive
+                                            text = stringResource(ConfigR.string.available_rewards),
+                                            style = DSTextStyles.bodyMBold,
+                                            color = scheme.basicText
                                         )
                                     }
-                                } else {
-                                    items(
-                                        items = uiState.catalogPairs,
-                                        key = { pair ->
-                                            pair.firstOrNull()?.id?.toString() ?: ""
-                                        }) { pair ->
-                                        ODSRow(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            gap = DSVariables.spacingComponent3
-                                        ) {
-                                            pair.forEach { catalogItem ->
-                                                RewardCardV1(
-                                                    onClick = {
-                                                        selectedReward = catalogItem
-                                                        showRewardInfoBottomSheet = true
-                                                    },
-                                                    title = catalogItem.title,
-                                                    imageTag = catalogItem.imageUrl?.let {
-                                                        ODSImageModel(
-                                                            url = it,
-                                                            contentDescription = catalogItem.title
-                                                        )
-                                                    },
-                                                        coinOrPrice = "${catalogItem.coinPrice} ${stringResource(ConfigR.string.coins)}",
-                                                        actionText = if (catalogItem.isActive && catalogItem.stockQuantity > 0) stringResource(ConfigR.string.claim) else null,
-                                                    onActionClick = {
-                                                        selectedReward = catalogItem
-                                                        showRewardInfoBottomSheet = true
-                                                    },
-                                                    modifier = Modifier.weight(1f),
-                                                    scheme = scheme
-                                                )
-                                            }
-                                            // Add spacer if odd number of items
-                                            if (pair.size == 1) {
-                                                Spacer(modifier = Modifier.weight(1f))
+
+                                    if (uiState.catalogPairs.isEmpty()) {
+                                        item {
+                                            ODSText(
+                                                text = stringResource(ConfigR.string.no_rewards_available),
+                                                style = DSTextStyles.bodyMRegular,
+                                                color = scheme.basicTextRecessive
+                                            )
+                                        }
+                                    } else {
+                                        items(
+                                            items = uiState.catalogPairs,
+                                            key = { pair ->
+                                                pair.firstOrNull()?.id?.toString() ?: ""
+                                            }) { pair ->
+                                            ODSRow(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                gap = DSVariables.spacingComponent3
+                                            ) {
+                                                pair.forEach { catalogItem ->
+                                                    RewardCardV1(
+                                                        onClick = {
+                                                            selectedReward = catalogItem
+                                                            showRewardInfoBottomSheet = true
+                                                        },
+                                                        title = catalogItem.title,
+                                                        imageTag = catalogItem.imageUrl?.let {
+                                                            ODSImageModel(
+                                                                url = it,
+                                                                contentDescription = catalogItem.title
+                                                            )
+                                                        },
+                                                        coinOrPrice = "${catalogItem.coinPrice} ${
+                                                            stringResource(
+                                                                ConfigR.string.coins
+                                                            )
+                                                        }",
+                                                        actionText = if (catalogItem.isActive && catalogItem.stockQuantity > 0) stringResource(
+                                                            ConfigR.string.claim
+                                                        ) else null,
+                                                        onActionClick = {
+                                                            selectedReward = catalogItem
+                                                            showRewardInfoBottomSheet = true
+                                                        },
+                                                        modifier = Modifier.weight(1f),
+                                                        scheme = scheme
+                                                    )
+                                                }
+                                                // Add spacer if odd number of items
+                                                if (pair.size == 1) {
+                                                    Spacer(modifier = Modifier.weight(1f))
                                                 }
                                             }
                                         }
@@ -508,7 +512,10 @@ fun RewardScreen(
                 selectedReward = null
             },
             title = stringResource(ConfigR.string.we_have_cash_reward),
-            description = stringResource(ConfigR.string.claim_reward_description, activity.coinPrice),
+            description = stringResource(
+                ConfigR.string.claim_reward_description,
+                activity.coinPrice
+            ),
             coin = activity.coinPrice.toString(),
             onConfirmClick = {
                 showClaimDialog = false
@@ -533,13 +540,12 @@ fun RewardScreen(
         showDialog = showAdRewardSuccess,
         onDismiss = {
             showAdRewardSuccess = false
-            earnedCoinsFromAd = 0
         },
         title = stringResource(ConfigR.string.coins_earned),
-        description = stringResource(ConfigR.string.coins_earned_description, earnedCoinsFromAd),
+        description = stringResource(ConfigR.string.coins_earned_description, uiState.adPoint),
         onKeepTradingClick = {
             showAdRewardSuccess = false
-            earnedCoinsFromAd = 0
+            onNavigateToCoinHistory.invoke()
         },
         scheme = scheme
     )
@@ -564,7 +570,7 @@ fun RewardScreen(
         isLoading = isClaimingReward,
         errorMessage = errorMessage,
         savedClaimDetails = savedClaimDetails,
-        onClaimClick = { name, email, phone, address, postalCode, saveDetails ->
+        onClaimClick = { name, email, phone, upiId, address, postalCode, saveDetails ->
             selectedReward?.let { reward ->
                 isClaimingReward = true
                 errorMessage = null
@@ -573,6 +579,7 @@ fun RewardScreen(
                     recipientName = name,
                     recipientEmail = email,
                     recipientPhone = phone,
+                    upiId = upiId,
                     shippingAddress = address,
                     postalCode = postalCode,
                     saveDetails = saveDetails,

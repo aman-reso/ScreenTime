@@ -95,6 +95,7 @@ fun LeaderboardScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     scheme: ODSTheme = neutralScheme,
+    isInBottomNav: Boolean = false,
     headerScheme: ODSTheme = headerTheme.current,
     viewModel: LeaderboardViewModel = hiltViewModel()
 ) {
@@ -134,16 +135,17 @@ fun LeaderboardScreen(
         modifier = modifier.fillMaxSize(),
         background = listOf(ODSColorModel(scheme.basicBackground))
     ) {
-        // Status bar padding
-        ODSBox(
-            modifier = Modifier
-                .height(
-                    WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-                )
-                .fillMaxWidth()
-        ) {}
+        if (!isInBottomNav) {
+            // Status bar padding
+            ODSBox(
+                modifier = Modifier
+                    .height(
+                        WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                    )
+                    .fillMaxWidth()
+            ) {}
 
-        // Header section with scheme background
+        }
         ODSBox(
             modifier = Modifier.fillMaxWidth(),
             background = listOf(ODSColorModel(scheme.basicBackground)),
@@ -165,7 +167,7 @@ fun LeaderboardScreen(
                             buttonIcon = ODSIconModel(
                                 drawableRes = com.telekom.odsystem.R.drawable.left_condensed_type_standard_size_standard,
                                 tint = scheme.basicText,
-                                contentDescription = "Back"
+                                contentDescription = stringResource(R.string.back)
                             ),
                             buttonType = ODSButtonButtonType.ICON_ONLY,
                             variant = ODSButtonVariant.GHOST,
@@ -174,7 +176,7 @@ fun LeaderboardScreen(
                     )
 
                     ODSText(
-                        text = "Leaderboard",
+                        text = stringResource(R.string.leaderboard),
                         style = DSTextStyles.bodyMBold,
                         color = scheme.basicText,
                         modifier = Modifier
@@ -241,7 +243,7 @@ fun LeaderboardPage(
             padding = ODSPadding(bottom = DSVariables.spacingComponent3)
         ) {
             ODSColumn(
-                modifier = Modifier.fillMaxWidth(), gap = DSVariables.spacingComponent3
+                modifier = Modifier.fillMaxWidth()
             ) {
                 ODSTabs(
                     modifier = Modifier
@@ -250,7 +252,7 @@ fun LeaderboardPage(
                             horizontal = DSVariables.spacingComponent3
                         ), scheme = scheme, props = ODSTabsProps(
                         tabElements = listOf(
-                            ODSTabItemModel(label = "Daily"), ODSTabItemModel(label = "Weekly")
+                            ODSTabItemModel(label = stringResource(R.string.daily)), ODSTabItemModel(label = stringResource(R.string.weekly))
                         ),
                         variant = ODSTabsVariant.FILL,
                         size = ODSTabsSize.SMALL,
@@ -292,7 +294,7 @@ fun LeaderboardPage(
                         props = ODSInlineNotificationProps(
                             mode = ODSInlineNotificationMode.ERROR,
                             title = stringResource(R.string.error),
-                            text = uiState.error ?: "Error loading leaderboard",
+                            text = uiState.error ?: stringResource(R.string.error_loading_leaderboard_fallback),
                             link1Props = ODSLinkProps(
                                 label = stringResource(R.string.retry),
                                 alignment = ODSLinkAlignment.LEFT
@@ -387,6 +389,7 @@ fun LeaderboardContent(
                     Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                 }
             }
+            Spacer(modifier = Modifier.height(DSVariables.spacingComponent7))
         } else {
             ODSColumn(
                 modifier = Modifier
@@ -452,7 +455,7 @@ fun LeaderboardItem(
                     modifier = Modifier.weight(1f), gap = DSVariables.spacingComponent0
                 ) {
                     ODSText(
-                        text = if (isCurrentUser) "You" else (entry.name ?: entry.username
+                        text = if (isCurrentUser) stringResource(R.string.you) else (entry.name ?: entry.username
                         ?: entry.userId), style = DSTextStyles.oxBodySBold, color = scheme.basicText
                     )
                 }
@@ -473,11 +476,11 @@ fun LeaderboardItem(
 private fun CurrentUserRankCard(
     rank: Int, duration: Long?, scheme: ODSTheme, onSyncClick: () -> Unit = {}
 ) {
-    val durationText = duration?.let { formatDuration(it) } ?: "N/A"
+    val durationText = duration?.let { formatDuration(it) } ?: stringResource(R.string.na)
     ODSInlineNotification(
         modifier = Modifier.fillMaxWidth(), scheme = scheme, props = ODSInlineNotificationProps(
-            title = "You’re ranked #$rank",
-            text = "Screen time: $durationText",
+        title = stringResource(R.string.you_are_ranked, rank),
+            text = stringResource(R.string.screen_time_value, durationText),
             mode = ODSInlineNotificationMode.INFORMATIVE,
             showCloseButton = false
         ), onFirstLinkClicked = onSyncClick, onDismiss = {})

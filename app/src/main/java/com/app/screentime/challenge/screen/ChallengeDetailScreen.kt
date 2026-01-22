@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -96,6 +97,9 @@ import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheetProps
 import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandard
 import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardProps
 import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardVariant
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
 import com.telekom.odsystem.tokens.tokens.ODSTheme
@@ -131,7 +135,6 @@ fun ChallengeDetailScreen(
     onBackClick: () -> Unit = {},
     viewModel: ChallengeDetailViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme,
-    headerScheme: ODSTheme = headerTheme.current
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -146,7 +149,7 @@ fun ChallengeDetailScreen(
 
     // Permission manager
     val permissionManager = remember {
-        if (activity is ComponentActivity) {
+        if (activity is AppCompatActivity) {
             activity.createPermissionManager()
         } else null
     }
@@ -159,22 +162,21 @@ fun ChallengeDetailScreen(
     val useDarkTheme = LocalThemeMode.current
 
     // Set edge-to-edge with header scheme color
-    SideEffect {
-        if (activity is ComponentActivity) {
-            activity.enableEdgeToEdge(
-                statusBarStyle = if (useDarkTheme) {
-                    SystemBarStyle.dark(headerScheme.basicBackgroundCard.getIntColor())
-                } else {
-                    SystemBarStyle.light(
-                        headerScheme.basicBackgroundCard.getIntColor(),
-                        darkScrim = headerScheme.basicBackgroundCard.getIntColor()
-                    )
-                }, navigationBarStyle = SystemBarStyle.auto(
-                    Color.TRANSPARENT, Color.TRANSPARENT
+    if (activity is AppCompatActivity) {
+        activity.enableEdgeToEdge(
+            statusBarStyle = if (useDarkTheme) {
+                SystemBarStyle.dark(scheme.basicBackgroundCard.getIntColor())
+            } else {
+                SystemBarStyle.light(
+                    scheme.basicBackgroundCard.getIntColor(),
+                    darkScrim = scheme.basicBackgroundCard.getIntColor()
                 )
+            }, navigationBarStyle = SystemBarStyle.auto(
+                Color.TRANSPARENT, Color.TRANSPARENT
             )
-        }
+        )
     }
+
     ODSColumn(
         modifier = modifier.fillMaxSize(),
         background = listOf(ODSColorModel(scheme.basicBackground))
@@ -185,7 +187,7 @@ fun ChallengeDetailScreen(
                     WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                 )
                 .fillMaxWidth(),
-            background = listOf(ODSColorModel(headerScheme.basicBackgroundCard))
+            background = listOf(ODSColorModel(scheme.basicBackgroundCard))
         ) {}
 
         // Always show header, even when loading
@@ -206,7 +208,7 @@ fun ChallengeDetailScreen(
                     }
                 }
             },
-            headerScheme = headerScheme
+            headerScheme = scheme
         )
 
         val isRefreshing = uiState.isLoading
@@ -266,10 +268,14 @@ fun ChallengeDetailScreen(
                                     showConsentSheet = true
                                 } else if (pendingJoinChallengeId != null) {
                                     // All checks passed, proceed with join challenge
-                                    viewModel.joinChallenge(pendingJoinChallengeId!!, onSuccess = {
-                                        viewModel.loadChallengeDetails(pendingJoinChallengeId!!)
-                                        pendingJoinChallengeId = null
-                                    })
+                                    viewModel.joinChallenge(
+                                        pendingJoinChallengeId!!,
+                                        onSuccess = {
+                                            viewModel.loadChallengeDetails(pendingJoinChallengeId!!)
+                                            pendingJoinChallengeId = null
+                                        },
+                                        onError = { ToastSnackbarManager.showErrorAsync(it) }
+                                    )
                                 }
                             },
                             scheme = scheme
@@ -289,10 +295,14 @@ fun ChallengeDetailScreen(
                             onAccept = {
                                 showConsentSheet = false
                                 if (pendingJoinChallengeId != null) {
-                                    viewModel.joinChallenge(pendingJoinChallengeId!!, onSuccess = {
-                                        viewModel.loadChallengeDetails(pendingJoinChallengeId!!)
-                                        pendingJoinChallengeId = null
-                                    })
+                                    viewModel.joinChallenge(
+                                        pendingJoinChallengeId!!,
+                                        onSuccess = {
+                                            viewModel.loadChallengeDetails(pendingJoinChallengeId!!)
+                                            pendingJoinChallengeId = null
+                                        },
+                                        onError = { ToastSnackbarManager.showErrorAsync(it) }
+                                    )
                                 }
                             }
                         )
@@ -320,9 +330,11 @@ fun ChallengeDetailScreen(
                                 showConsentSheet = true
                             } else {
                                 // All checks passed, proceed with join
-                                viewModel.joinChallenge(challengeId, onSuccess = {
-                                    viewModel.loadChallengeDetails(challengeId)
-                                })
+                                viewModel.joinChallenge(
+                                    challengeId,
+                                    onSuccess = { viewModel.loadChallengeDetails(challengeId) },
+                                    onError = { ToastSnackbarManager.showErrorAsync(it) }
+                                )
                             }
                         },
                         onSyncChallenge = {
@@ -333,7 +345,7 @@ fun ChallengeDetailScreen(
                         onBackClick = onBackClick,
                         viewModel = viewModel,
                         scheme = scheme,
-                        headerScheme = headerScheme
+                        headerScheme = scheme
                     )
                 }
             }
@@ -356,7 +368,7 @@ private fun ChallengeHeaderAndImageSection(
 ) {
     ODSBox(
         modifier = Modifier.fillMaxWidth(),
-        background = listOf(ODSColorModel(headerScheme.basicBackgroundCard)),
+        background = listOf(ODSColorModel(headerScheme.basicBackground)),
         cornerRadius = ODSCorners(
             bottomLeft = DSVariables.spacingComponent4, bottomRight = DSVariables.spacingComponent4
         )
@@ -399,9 +411,6 @@ internal fun ChallengeContent(
     scheme: ODSTheme = neutralScheme,
     headerScheme: ODSTheme = macawSecondaryScheme
 ) {
-    LocalContext.current
-    rememberCoroutineScope()
-
     ODSBox(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -829,16 +838,15 @@ private fun AboutTab(
             uiProps = uiProps,
             scheme = scheme,
             headerScheme = headerScheme,
-            currentUserId = currentUserId
+            currentUserId = currentUserId,
+            leaderboardError = uiProps.leaderboardError
         )
 
         item {
             Spacer(modifier = Modifier.height(DSVariables.spacingComponent5))
         }
-
     }
 
-// Rules Bottom Sheet
     if (!uiProps.rules.isNullOrEmpty()) {
         RulesBottomSheet(
             showBottomSheet = showRulesBottomSheet,
@@ -854,11 +862,30 @@ private fun LazyListScope.leaderboardTab(
     uiProps: ChallengeDetailUiProps,
     scheme: ODSTheme,
     headerScheme: ODSTheme,
-    currentUserId: String?
+    currentUserId: String?,
+    leaderboardError: String? = null
 ) {
     val rank1Scheme = ColorPalette.schemeGet(headerScheme)
     val rank2Scheme = ColorPalette.schemeGet(rank1Scheme)
     val rank3Scheme = ColorPalette.schemeGet(rank2Scheme)
+
+    // Show leaderboard error if present
+    if (leaderboardError != null) {
+        item {
+            ODSInlineNotification(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = DSVariables.spacingComponent4),
+                scheme = scheme,
+                props = ODSInlineNotificationProps(
+                    mode = ODSInlineNotificationMode.ERROR,
+                    title = stringResource(R.string.error),
+                    text = leaderboardError,
+                    showCloseButton = false
+                )
+            )
+        }
+    }
 
     if (uiProps.topRankings.isNotEmpty()) {
         uiProps.topRankings.forEachIndexed { index, entry ->
@@ -879,7 +906,7 @@ private fun LazyListScope.leaderboardTab(
                 }
             }
         }
-    } else {
+    } else if (leaderboardError == null) {
         item {
             ODSColumn(
                 modifier = Modifier

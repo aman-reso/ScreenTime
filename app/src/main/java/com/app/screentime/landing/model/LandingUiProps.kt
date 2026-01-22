@@ -24,6 +24,8 @@ data class LandingUiProps(
     val percentageChangeFromYesterday: Float? = null, // Percentage change from yesterday (null if no data)
     val categoryUsage: List<CategoryUsage> = emptyList(), // Category-wise usage data
     val joinedChallenges: List<UserChallenge> = emptyList(),
-    val totalNotificationCount: Int = 0
+    val totalNotificationCount: Int = 0,
+    val challengeBannerURL: String? = null,
+    val wallpaperBannerURL: String? = null,
 )
 

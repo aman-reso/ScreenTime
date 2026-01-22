@@ -21,7 +21,8 @@ class ChallengeDetailUseCase @Inject constructor() {
     fun getChallengeDetailUiProps(
         challengeDetails: ChallengeDetails,
         challengeRankings: ChallengeRankingsResponse?,
-        isJoining: Boolean
+        isJoining: Boolean,
+        leaderboardError: String? = null
     ): ChallengeDetailUiProps {
         // Determine hasJoined from API response (userRank in rankings indicates user has joined)
         // Check both hasJoined flag and userRank presence
@@ -58,34 +59,6 @@ class ChallengeDetailUseCase @Inject constructor() {
 
         val showJoinButton = !hasJoined && !isCompleted
 
-        // Get available rewards (for now, using dummy data - can be replaced with API data later)
-        val availableRewards = listOf(
-            ChallengeReward(
-                id = "1",
-                title = "Premium Subscription",
-                description = "Get 1 month free premium subscription",
-                coin = "500 coins",
-                imageUrl = null,
-                tagUrl = null
-            ),
-            ChallengeReward(
-                id = "2",
-                title = "Cash Reward",
-                description = "Win ₹500 cash prize",
-                coin = "1000 coins",
-                imageUrl = null,
-                tagUrl = null
-            ),
-            ChallengeReward(
-                id = "3",
-                title = "Gift Card",
-                description = "Amazon gift card worth ₹1000",
-                coin = "750 coins",
-                imageUrl = null,
-                tagUrl = null
-            )
-        )
-
         return ChallengeDetailUiProps(
             id = challengeDetails.id,
             title = challengeDetails.title,
@@ -106,9 +79,10 @@ class ChallengeDetailUseCase @Inject constructor() {
             topRankings = topRankings,
             userRank = userRank,
             showLeaderboard = showLeaderboard,
+            leaderboardError = leaderboardError,
             rules = challengeDetails.rules,
             sponsor = challengeDetails.sponsor,
-            availableRewards = availableRewards,
+            availableRewards = emptyList(),
             appDetails = challengeDetails.appdetail,
             showJoinButton = showJoinButton
         )

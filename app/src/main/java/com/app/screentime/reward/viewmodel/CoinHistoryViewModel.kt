@@ -28,9 +28,11 @@ class CoinHistoryViewModel @Inject constructor(
         loadCoinHistory()
     }
 
-    fun loadCoinHistory() {
+    fun loadCoinHistory(isRefresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = CoinHistoryMapper.toLoadingUiState()
+            if (!isRefresh) {
+                _uiState.value = CoinHistoryMapper.toLoadingUiState()
+            }
 
             coinHistoryUseCase.getCoinHistory().fold(
                 onSuccess = { (totalCoins, coinHistory) ->
@@ -47,6 +49,10 @@ class CoinHistoryViewModel @Inject constructor(
                 }
             )
         }
+    }
+    
+    fun refresh() {
+        loadCoinHistory(isRefresh = true)
     }
 
     fun setFilter(filter: CoinHistoryFilter) {

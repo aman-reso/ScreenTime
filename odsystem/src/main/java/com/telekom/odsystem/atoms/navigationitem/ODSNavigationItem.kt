@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -97,6 +98,15 @@ fun ODSNavigationItem(
             style = style,
             props = props,
         )
+        if (props.textRes != -1) {
+            ODSText(
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(props.textRes),
+                style = style.labelStyle,
+                color = style.labelColor,
+                textAlign = style.labelTextAlign
+            )
+        }
         if (!props.text.isNullOrEmpty()) {
             ODSText(
                 modifier = Modifier.fillMaxWidth(),

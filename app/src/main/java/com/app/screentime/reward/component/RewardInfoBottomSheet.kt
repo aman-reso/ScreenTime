@@ -101,6 +101,13 @@ private fun isValidPhoneNumber(phoneNumber: String): Boolean {
     return cleaned.all { it.isDigit() } && cleaned.length >= 10
 }
 
+private fun isValidUpiId(upiId: String): Boolean {
+    if (upiId.isBlank()) return false
+    // Basic UPI format: username@bank
+    val upiRegex = "^[A-Za-z0-9._-]{2,}@[A-Za-z]{2,}\$".toRegex()
+    return upiId.matches(upiRegex)
+}
+
 /**
  * Reward Info Bottom Sheet Component
  * Displays reward information and claim form
@@ -115,7 +122,7 @@ fun RewardInfoBottomSheet(
     isLoading: Boolean = false,
     errorMessage: String? = null,
     savedClaimDetails: SavedClaimDetails? = null,
-    onClaimClick: (String, String, String, String?, String?, Boolean) -> Unit = { _, _, _, _, _, _ -> },
+    onClaimClick: (String, String, String, String, String?, String?, Boolean) -> Unit = { _, _, _, _, _, _, _ -> },
     scheme: ODSTheme
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -124,6 +131,7 @@ fun RewardInfoBottomSheet(
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
+    var upiId by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var postalCode by remember { mutableStateOf("") }
     var saveDetails by remember { mutableStateOf(false) }
@@ -135,6 +143,7 @@ fun RewardInfoBottomSheet(
                 name = details.name
                 email = details.email
                 phoneNumber = details.phone
+                upiId = details.upiId
                 address = details.address ?: ""
                 postalCode = details.postalCode ?: ""
                 saveDetails = true // Auto-check if saved data exists
@@ -143,6 +152,7 @@ fun RewardInfoBottomSheet(
                 name = ""
                 email = ""
                 phoneNumber = ""
+                upiId = ""
                 address = ""
                 postalCode = ""
                 saveDetails = false
@@ -168,6 +178,8 @@ fun RewardInfoBottomSheet(
         remember(email) { if (email.isNotBlank() && !isValidEmail(email)) "Please enter a valid email address" else null }
     val phoneError =
         remember(phoneNumber) { if (phoneNumber.isNotBlank() && !isValidPhoneNumber(phoneNumber)) "Please enter a valid phone number (digits only)" else null }
+    val upiError =
+        remember(upiId) { if (upiId.isNotBlank() && !isValidUpiId(upiId)) "Please enter a valid UPI ID" else null }
     val addressError =
         remember(address) { if (isPhysical && address.isNotBlank() && !isValidAddress(address)) "Address cannot be empty" else null }
     val postalCodeError = remember(postalCode) {
@@ -181,6 +193,7 @@ fun RewardInfoBottomSheet(
     val isFormValid = isValidName(name) &&
             isValidEmail(email) &&
             isValidPhoneNumber(phoneNumber) &&
+            isValidUpiId(upiId) &&
             (!isPhysical || (isValidAddress(address) && isValidPostalCode(postalCode)))
 
     if (reward == null) return
@@ -246,45 +259,12 @@ fun RewardInfoBottomSheet(
                         )
                     }
 
-                    // Reward Description
+                    // Reward Details
                     ODSText(
-                        text = reward.description,
-                        style = DSTextStyles.bodyMRegular,
+                        text = stringResource(R.string.reward_price_coins, reward.coinPrice),
+                        style = DSTextStyles.bodyMBold,
                         color = scheme.basicText
                     )
-
-                    // Reward Details
-                    ODSColumn(
-                        gap = DSVariables.spacingComponent2
-                    ) {
-                        ODSText(
-                            text = "Price: ${reward.coinPrice} coins",
-                            style = DSTextStyles.bodyMBold,
-                            color = scheme.basicText
-                        )
-
-                        if (reward.stockQuantity > 0) {
-                            ODSText(
-                                text = "Stock: ${reward.stockQuantity} available",
-                                style = DSTextStyles.bodySRegular,
-                                color = scheme.basicTextRecessive
-                            )
-                        } else {
-                            ODSText(
-                                text = "Out of stock",
-                                style = DSTextStyles.bodySRegular,
-                                color = scheme.functionalDestructiveStandard
-                            )
-                        }
-
-                        if (reward.category.isNotEmpty()) {
-                            ODSText(
-                                text = "Category: ${reward.category}",
-                                style = DSTextStyles.bodySRegular,
-                                color = scheme.basicTextRecessive
-                            )
-                        }
-                    }
 
                     // Divider
                     if (reward.isActive && reward.stockQuantity > 0) {
@@ -297,7 +277,7 @@ fun RewardInfoBottomSheet(
 
                         // Claim Form
                         ODSText(
-                            text = "Claim Reward",
+                            text = stringResource(R.string.claim_reward),
                             style = DSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )
@@ -306,7 +286,7 @@ fun RewardInfoBottomSheet(
                         ODSTextField(
                             scheme = scheme,
                             props = ODSTextFieldProps(
-                                label = "Name",
+                                label = stringResource(R.string.name),
                                 inputText = name,
                                 size = ODSTextFieldSize.SMALL,
                                 mode = if (nameError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
@@ -321,7 +301,7 @@ fun RewardInfoBottomSheet(
                         ODSTextField(
                             scheme = scheme,
                             props = ODSTextFieldProps(
-                                label = "Email",
+                                label = stringResource(R.string.email),
                                 inputText = email,
                                 size = ODSTextFieldSize.SMALL,
                                 mode = if (emailError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
@@ -336,7 +316,7 @@ fun RewardInfoBottomSheet(
                         ODSTextField(
                             scheme = scheme,
                             props = ODSTextFieldProps(
-                                label = "Phone Number",
+                                label = stringResource(R.string.phone_number),
                                 inputText = phoneNumber,
                                 size = ODSTextFieldSize.SMALL,
                                 mode = if (phoneError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
@@ -351,12 +331,27 @@ fun RewardInfoBottomSheet(
                             }
                         )
 
+                        // UPI ID field (required)
+                        ODSTextField(
+                            scheme = scheme,
+                            props = ODSTextFieldProps(
+                                label = stringResource(R.string.upi_id),
+                                inputText = upiId,
+                                size = ODSTextFieldSize.SMALL,
+                                mode = if (upiError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
+                                supportMessageProps = upiError?.let {
+                                    ODSTextFieldSupportMessageProps(message = it)
+                                }
+                            ),
+                            onValueChange = { upiId = it }
+                        )
+
                         // Address fields (only if physical reward)
                         if (isPhysical) {
                             ODSTextField(
                                 scheme = scheme,
                                 props = ODSTextFieldProps(
-                                    label = "Address",
+                                    label = stringResource(R.string.address),
                                     inputText = address,
                                     size = ODSTextFieldSize.SMALL,
                                     mode = if (addressError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
@@ -370,7 +365,7 @@ fun RewardInfoBottomSheet(
                             ODSTextField(
                                 scheme = scheme,
                                 props = ODSTextFieldProps(
-                                    label = "Postal Code",
+                                    label = stringResource(R.string.postal_code),
                                     inputText = postalCode,
                                     size = ODSTextFieldSize.SMALL,
                                     mode = if (postalCodeError != null) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
@@ -389,7 +384,7 @@ fun RewardInfoBottomSheet(
                         ODSCheckbox(
                             scheme = scheme,
                             props = ODSCheckboxProps(
-                                label = "Save details for future reference",
+                                label = stringResource(R.string.save_details_for_future),
                                 selected = if (saveDetails) ODSCheckboxSelected.SELECTED else ODSCheckboxSelected.UNSELECTED,
                                 size = ODSCheckboxSize.SMALL
                             ),
@@ -407,7 +402,7 @@ fun RewardInfoBottomSheet(
                     modifier = Modifier.fillMaxWidth(),
                     scheme = scheme,
                     props = ODSButtonProps(
-                        label = "Claim Reward",
+                        label = stringResource(R.string.claim_reward),
                         variant = ODSButtonVariant.SECONDARY,
                         size = ODSButtonSize.SMALL,
                         disabled = !isFormValid
@@ -418,6 +413,7 @@ fun RewardInfoBottomSheet(
                                 name,
                                 email,
                                 phoneNumber,
+                                upiId,
                                 if (isPhysical) address else null,
                                 if (isPhysical) postalCode else null,
                                 saveDetails

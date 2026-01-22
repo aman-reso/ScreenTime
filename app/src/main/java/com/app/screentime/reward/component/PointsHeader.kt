@@ -57,7 +57,8 @@ fun PointsHeader(
     showWatchAdSection: Boolean = true,
     isAdLoading: Boolean = false,
     adError: String? = null,
-    onWatchAdClick: () -> Unit = {}
+    onWatchAdClick: () -> Unit = {},
+    adPoint: Int
 ) {
     val totalCoins = points ?: 0
     val currentLevel = CoinLevelCalculator.calculateLevel(totalCoins)
@@ -139,7 +140,8 @@ fun PointsHeader(
                 adError = adError,
                 onWatchAdClick = onWatchAdClick,
                 scheme = invertedScheme,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                adPoint
             )
         }
 
@@ -153,10 +155,10 @@ fun PointsHeader(
  */
 @Composable
 private fun PointsProgressBar(
+    modifier: Modifier = Modifier,
     currentLevel: Int = 3,
     progressInLevel: Float = 0.3f,
     scheme: ODSTheme,
-    modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center
@@ -222,7 +224,8 @@ private fun WatchAdSection(
     adError: String?,
     onWatchAdClick: () -> Unit,
     scheme: ODSTheme,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    adPoint: Int
 ) {
     ODSCardBasic(
         modifier = modifier,
@@ -243,7 +246,7 @@ private fun WatchAdSection(
                     gap = DSVariables.spacingComponent1
                 ) {
                     ODSText(
-                        text = stringResource(R.string.watch_ad_to_earn_coins),
+                        text = stringResource(R.string.watch_ad_to_earn_coins, adPoint),
                         style = DSTextStyles.bodyMBold,
                         color = scheme.basicText
                     )

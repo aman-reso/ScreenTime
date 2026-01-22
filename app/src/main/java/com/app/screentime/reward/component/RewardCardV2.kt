@@ -77,16 +77,6 @@ fun RewardCardV2(
                             color = scheme.basicText
                         )
                     }
-
-                    // Description
-                    description?.let {
-                        ODSText(
-                            text = it,
-                            style = com.telekom.odsystem.DSTextStyles.oxBodySRegular,
-                            color = scheme.basicTextRecessive,
-                            maxLines = 2
-                        )
-                    }
                 }
 
                 // Claim button on the right

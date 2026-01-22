@@ -1,25 +1,22 @@
 package com.app.screentime.reward.screen
 
 import android.graphics.Color
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -31,10 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.coroutines.launch
 import com.app.screentime.config.R
 import com.app.screentime.reward.component.RewardTransactionItem
 import com.app.screentime.reward.viewmodel.RewardTransactionViewModel
+import com.app.screentime.ui.atom.PullToRefreshBox
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -47,6 +44,8 @@ import com.telekom.odsystem.atoms.divider.ODSDividerProps
 import com.telekom.odsystem.atoms.divider.ODSDividerVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.atoms.link.ODSLinkAlignment
+import com.telekom.odsystem.atoms.link.ODSLinkProps
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerLabelAlignment
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
@@ -56,7 +55,11 @@ import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.foundations.customClickable
 import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
+import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import kotlinx.coroutines.launch
 
 /**
  * Reward Transaction History Screen
@@ -75,7 +78,7 @@ fun RewardTransactionScreen(
     // Get theme mode for status bar styling
     val useDarkTheme = LocalThemeMode.current
     SideEffect {
-        if (activity is ComponentActivity) {
+        if (activity is AppCompatActivity) {
             activity.enableEdgeToEdge(
                 statusBarStyle = if (useDarkTheme) {
                     SystemBarStyle.dark(scheme.basicBackground.getIntColor())
@@ -151,8 +154,8 @@ fun RewardTransactionScreen(
             }
 
             ODSText(
-                text = "Transaction History",
-                style = com.telekom.odsystem.DSTextStyles.bodyL,
+                text = stringResource(R.string.transaction_history),
+                style = com.telekom.odsystem.DSTextStyles.bodyMBold,
                 color = scheme.basicText
             )
         }
@@ -166,6 +169,7 @@ fun RewardTransactionScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RewardTransactionPage(
     modifier: Modifier = Modifier,
@@ -189,17 +193,22 @@ fun RewardTransactionPage(
         }
     }
 
-    ODSBox(
-        modifier = modifier.fillMaxSize(),
-        background = listOf(ODSColorModel(scheme.basicBackground))
+    PullToRefreshBox(
+        isRefreshing = uiState.isRefreshing,
+        onRefresh = { viewModel.refresh() },
+        modifier = modifier.fillMaxSize()
     ) {
-        // Transaction List
-        ODSLazyColumn(
-            state = listState,
+        ODSBox(
             modifier = Modifier.fillMaxSize(),
-            gap = 0.dp,
-            padding = ODSPadding(top = DSVariables.spacingComponent3)
+            background = listOf(ODSColorModel(scheme.basicBackground))
         ) {
+            // Transaction List
+            ODSLazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                gap = 0.dp,
+                padding = ODSPadding(top = DSVariables.spacingComponent3)
+            ) {
             if (uiState.isLoading) {
                 item {
                     ODSBox(
@@ -222,16 +231,27 @@ fun RewardTransactionPage(
                 }
             } else if (uiState.error != null) {
                 item {
-                    ODSText(
-                        text = uiState.error,
-                        style = com.telekom.odsystem.DSTextStyles.bodyMRegular,
-                        color = scheme.functionalDestructiveStandard
+                    ODSInlineNotification(
+                        modifier = Modifier.fillMaxWidth(),
+                        scheme = scheme,
+                        props = ODSInlineNotificationProps(
+                            mode = ODSInlineNotificationMode.ERROR,
+                            title = stringResource(R.string.error),
+                            text = uiState.error,
+                            link1Props = ODSLinkProps(
+                                label = stringResource(R.string.retry),
+                                alignment = ODSLinkAlignment.LEFT
+                            )
+                        ),
+                        onFirstLinkClicked = {
+                            viewModel.loadTransactions()
+                        }
                     )
                 }
             } else if (uiState.transactions.isEmpty()) {
                 item {
                     ODSText(
-                        text = "No transactions found",
+                        text = stringResource(R.string.no_transactions_found),
                         style = com.telekom.odsystem.DSTextStyles.bodyMRegular,
                         color = scheme.basicTextRecessive
                     )
@@ -258,6 +278,7 @@ fun RewardTransactionPage(
                     }
                 }
             }
+        }
         }
     }
 }

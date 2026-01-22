@@ -653,13 +653,13 @@ private fun QuickActionsCard(
         modifier = Modifier.fillMaxWidth(), gap = DSVariables.spacingComponent3
     ) {
         ODSText(
-            text = "Quick actions", style = DSTextStyles.bodyMRegular, color = scheme.basicText
+            text = stringResource(R.string.quick_actions), style = DSTextStyles.bodyMRegular, color = scheme.basicText
         )
         if (packageName != context.packageName) {
             ActionCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.AutoMirrored.Filled.ArrowForward,
-                text = "Launch",
+                text = stringResource(R.string.launch),
                 onClick = onLaunchClick,
                 scheme = scheme
             )
@@ -667,7 +667,7 @@ private fun QuickActionsCard(
             ActionCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Timer,
-                text = "Set timer",
+                text = stringResource(R.string.set_timer),
                 onClick = onSetTimerClick,
                 scheme = scheme
             )
@@ -677,7 +677,7 @@ private fun QuickActionsCard(
             ActionCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Block,
-                text = "Block",
+                text = stringResource(R.string.block),
                 onClick = onBlockClick,
                 scheme = scheme
             )
@@ -687,7 +687,7 @@ private fun QuickActionsCard(
         ActionCard(
             modifier = Modifier.weight(1f),
             icon = Icons.Default.Settings,
-            text = "Settings",
+            text = stringResource(R.string.settings),
             onClick = onSettingsClick,
             scheme = scheme
         )
@@ -697,7 +697,7 @@ private fun QuickActionsCard(
         ActionCard(
             modifier = Modifier.weight(1f),
             icon = Icons.Default.EditNotifications,
-            text = "Recover Notification",
+            text = stringResource(R.string.recover_notification),
             onClick = onBlockClick,
             scheme = scheme
         )

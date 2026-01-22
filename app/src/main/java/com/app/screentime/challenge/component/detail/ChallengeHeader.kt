@@ -52,7 +52,7 @@ fun ChallengeHeader(
 
         ODSText(
             text = title,
-            style = DSTextStyles.oxBodyL,
+            style = DSTextStyles.bodyMBold,
             color = scheme.basicText,
             modifier = Modifier.weight(1f)
         )

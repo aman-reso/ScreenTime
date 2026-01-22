@@ -4,8 +4,6 @@ import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
-import android.net.Uri
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -24,38 +22,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.permission.component.bottombar.BottomBar
 import com.app.screentime.permission.component.bottombar.BottomBarProps
 import com.app.screentime.permission.component.herosection.HeroSection
 import com.app.screentime.permission.component.herosection.HeroSectionProps
 import com.app.screentime.permission.component.infocard.InfoCardList
-import com.app.screentime.permission.component.infocard.InfoCardProps
+import com.app.screentime.permission.viewmodel.PermissionViewModel
 import com.app.screentime.profile.dialog.LanguageSelectionDialog
 import com.app.screentime.ui.language.LanguageViewModel
 import com.app.screentime.ui.theme.LocalThemeMode
-import com.app.screentime.permission.viewmodel.PermissionViewModel
-import com.telekom.odsystem.atoms.icon.ODSIcon
-import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
-import com.telekom.odsystem.foundations.HexColor
-import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * App Permission Screen - Complete permission request screen using component architecture.
@@ -81,8 +68,7 @@ fun AppPermissionScreen(
                     )
                 },
                 navigationBarStyle = SystemBarStyle.auto(
-                    Color.TRANSPARENT,
-                    Color.TRANSPARENT
+                    android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT
                 )
             )
         }

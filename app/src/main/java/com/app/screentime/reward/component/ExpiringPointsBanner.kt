@@ -1,23 +1,11 @@
 package com.app.screentime.reward.component
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.telekom.odsystem.DSVariables
-import com.telekom.odsystem.R
-import com.telekom.odsystem.atoms.ODSBox
-import com.telekom.odsystem.atoms.ODSRow
-import com.telekom.odsystem.atoms.ODSText
-import com.telekom.odsystem.atoms.button.ODSButton
-import com.telekom.odsystem.atoms.button.ODSButtonProps
-import com.telekom.odsystem.atoms.button.ODSButtonSize
-import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.foundations.ODSColorModel
-import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandard
 import com.telekom.odsystem.molecules.listrowstandard.ODSListRowStandardProps
@@ -48,12 +36,12 @@ fun ExpiringPointsBanner(
                 scheme = scheme,
                 props = ODSListRowStandardProps(
                     icon = ODSIconModel(
-                        drawableRes = R.drawable.warning_type_standard,
+                        drawableRes = com.telekom.odsystem.R.drawable.warning_type_standard,
                         tint = scheme.functionalWarningStandard
                     ),
                     showDescriptionTitle = false,
                     variant = ODSListRowStandardVariant.ICON,
-                    labelText = "$expiringPoints coins will expire soon, please use as soon as possible."
+                    labelText = stringResource(R.string.expiring_coins_warning, expiringPoints)
                 )
             )
         }

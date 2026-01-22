@@ -10,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -31,8 +32,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.times
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -62,6 +65,7 @@ import com.app.screentime.permission.createPermissionManager
 import com.app.screentime.ui.atom.AppScreenShimmer
 import com.app.screentime.ui.atom.PullToRefreshBox
 import com.app.screentime.ui.theme.headerTheme
+import com.app.screentime.utils.CountryUtils
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -69,6 +73,7 @@ import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSImage
 import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.ODSLazyColumn
+import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.link.ODSLinkAlignment
@@ -76,6 +81,7 @@ import com.telekom.odsystem.atoms.link.ODSLinkProps
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
@@ -219,31 +225,6 @@ fun LandingScreenV2(
         }
     }
 
-
-    // Dummy preview data for apptime notification stack
-    remember {
-        listOf(
-            ODSCardNotificationModel(
-                notificationProps = OAServiceNotificationSingleProps(
-                    actionText = "App Usage Alert",
-                    titleLabel = "You've spent 2 hours on Instagram today. Consider taking a break!"
-                )
-            ),
-            ODSCardNotificationModel(
-                notificationProps = OAServiceNotificationSingleProps(
-                    actionText = "App Usage Alert",
-                    titleLabel = "You've spent 2 hours on Instagram today. Consider taking a break!"
-                )
-            ),
-            ODSCardNotificationModel(
-                notificationProps = OAServiceNotificationSingleProps(
-                    actionText = "App Usage Alert",
-                    titleLabel = "You've spent 2 hours on Instagram today. Consider taking a break!"
-                )
-            ),
-        )
-    }
-
     // Consent bottom sheet state
     var showConsentSheet by remember { mutableStateOf(false) }
 
@@ -364,18 +345,6 @@ fun LandingScreenV2(
                                 Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                             }
 
-//                        // Show apptime notification stack
-//                        item {
-//                            ManageServiceNotificationStack(
-//                                modifier = Modifier.fillMaxWidth(),
-//                                scheme = jacuzziSecondaryScheme,
-//                                notifications = dummyNotifications,
-//                                viewAllText = "View All",
-//                                collapseAllText = "Collapse"
-//                            )
-//                            Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-//                        }
-
                             // Show joined challenges CardStack notification if available
                             uiProps?.joinedChallenges?.takeIf { it.isNotEmpty() }
                                 ?.let { challenges ->
@@ -403,30 +372,64 @@ fun LandingScreenV2(
                                         percentageChange = uiProps!!.percentageChangeFromYesterday,
                                         onClick = onNavigateToStatistics,
                                         onEditDailyGoal = { showDailyGoalBottomSheet = true },
-                                        scheme = headerTheme.current // Use frog scheme for today's total card
+                                        scheme = headerTheme.current
                                     )
                                     Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                                 }
                             }
-
-                            // Dummy image between usage card and network card
-                            item("dummy_image") {
-                                ODSBox(
-                                    modifier = Modifier.fillMaxWidth(), cornerRadius = ODSCorners(
-                                        DSVariables.spacingComponent4
-                                    ),
-                                    clipContent = true
-                                ) {
-                                    ODSImage(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        imageModel = ODSImageModel(
-                                            drawableRes = AppR.drawable.dummy,
-                                            contentDescription = "Dummy image"
+                            if (uiProps?.challengeBannerURL.isNullOrEmpty() && CountryUtils.isUserInIndia(
+                                    context
+                                )
+                            ) {
+                                item("challenge_banner") {
+                                    ODSBox(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                onNavigateToChallenges.invoke()
+                                            },
+                                        cornerRadius = ODSCorners(
+                                            DSVariables.spacingComponent4
                                         ),
-                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                                    )
+                                        clipContent = true,
+                                    ) {
+                                        ODSImage(
+                                            height = DSVariables.sizingComponent18 + DSVariables.spacingLayout7,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            imageModel = ODSImageModel(
+                                                drawableRes = com.app.screentime.R.drawable.challengeimage,
+                                                contentDescription = "Challenge Banner"
+                                            ),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                                 }
-                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                            } else {
+                                item("challenge_banner") {
+                                    ODSBox(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                onNavigateToChallenges.invoke()
+                                            },
+                                        cornerRadius = ODSCorners(
+                                            DSVariables.spacingComponent4
+                                        ),
+                                        clipContent = true,
+                                    ) {
+                                        ODSImage(
+                                            height = DSVariables.sizingComponent18,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            imageModel = ODSImageModel(
+                                                url = uiProps?.challengeBannerURL!!,
+                                                contentDescription = "Challenge Banner"
+                                            ),
+                                            contentScale = ContentScale.FillWidth
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                                }
                             }
 
                             uiProps?.let {
@@ -450,11 +453,11 @@ fun LandingScreenV2(
                             )
 
                             item("feedback_button") {
-                                com.telekom.odsystem.organisms.cardbasic.ODSCardBasic(
+                                ODSCardBasic(
                                     modifier = Modifier.fillMaxWidth(),
                                     scheme = scheme,
                                     contentSlot = {
-                                        com.telekom.odsystem.atoms.ODSRow(
+                                        ODSRow(
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent4)
@@ -462,11 +465,11 @@ fun LandingScreenV2(
                                             ODSIcon(
                                                 iconModel = com.telekom.odsystem.atoms.icon.ODSIconModel(
                                                     imageVector = Icons.Outlined.RateReview,
-                                                    tint = scheme.functionalSuccessStandard,
+                                                    tint = scheme.basicText,
                                                     contentDescription = stringResource(R.string.feedback)
                                                 ),
-                                                width = DSVariables.sizingComponent10,
-                                                height = DSVariables.sizingComponent10
+                                                width = DSVariables.spacingComponent6,
+                                                height = DSVariables.spacingComponent6
                                             )
                                             ODSText(
                                                 text = stringResource(R.string.feedback),

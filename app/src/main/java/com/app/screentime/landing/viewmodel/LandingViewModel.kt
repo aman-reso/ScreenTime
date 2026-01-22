@@ -9,6 +9,7 @@ import com.app.screentime.core.network.model.DeviceRegistrationResponse
 import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.analytics.AnalyticsUseCase
+import com.app.screentime.config.ConfigManager
 import com.app.screentime.sync.DataSyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Provider
 
 @HiltViewModel
 class LandingViewModel @Inject constructor(
@@ -81,7 +83,7 @@ class LandingViewModel @Inject constructor(
 
             // Sync leaderboard stats
             landingUsecase.syncLeaderboardStats()
-            
+
             // Sync app stats using new /api/app-stats endpoint
             dataSyncManager.syncAppStats()
         }

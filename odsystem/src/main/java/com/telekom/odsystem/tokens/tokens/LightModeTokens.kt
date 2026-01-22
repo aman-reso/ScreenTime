@@ -6,7 +6,7 @@ import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSEffect
 import com.telekom.odsystem.foundations.ODSElevation
 import com.telekom.odsystem.foundations.ODSElevationType
-
+//val AppBackground = Color(0xFFF9EDE2)
 //#e8e9e8
 val lightMode = ODSTheme(
     name = "lightMode",

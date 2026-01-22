@@ -9,7 +9,9 @@ import kotlinx.serialization.Serializable
 data class RewardClaimRequest(
     val rewardCatalogId: Int,
     val recipientName: String,
+    val recipientEmail: String,
     val recipientPhone: String,
+    val upiId: String,
     val shippingAddress: String? = null,
     val city: String? = null,
     val state: String? = null,

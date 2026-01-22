@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import com.app.screentime.reward.model.CoinHistoryItem
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.atoms.ODSColumn
@@ -39,9 +41,9 @@ fun CoinHistoryItem(
     }
 
     val amountText = if (coinHistoryItem.amount > 0) {
-        "+ ₹${coinHistoryItem.amount}"
+        "+ ${coinHistoryItem.amount} 🪙"
     } else {
-        "- ₹${kotlin.math.abs(coinHistoryItem.amount)}"
+        "- ${kotlin.math.abs(coinHistoryItem.amount)} 🪙"
     }
 
     val amountColor = if (coinHistoryItem.amount > 0) {

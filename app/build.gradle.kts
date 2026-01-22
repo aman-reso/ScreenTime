@@ -26,8 +26,8 @@ android {
         applicationId = "com.app.screentime"
         minSdk = 24
         targetSdk = 36
-        versionCode = 71
-        versionName = "7.1"
+        versionCode = 73
+        versionName = "7.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -40,7 +40,7 @@ android {
         buildConfigField(
             "String",
             "API_DEV_BASE_URL",
-            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://f30aa0d35e07.ngrok-free.app")}\""
+            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://abd310e69b89.ngrok-free.app")}\""
         )
         buildConfigField(
             "String",
@@ -125,7 +125,7 @@ dependencies {
     implementation(project(":applock"))
     
     // FileManager module
-    implementation(project(":filemanager"))
+  //  implementation(project(":filemanager"))
 
     // Ads module
     implementation(project(":ads"))
@@ -189,6 +189,9 @@ dependencies {
 
     // Coil for image loading
     implementation(libs.coil.compose)
+
+    // Lottie for animations
+    implementation("com.airbnb.android:lottie-compose:6.3.0")
 
     // Google Play In-App Updates
     implementation(libs.play.app.update)

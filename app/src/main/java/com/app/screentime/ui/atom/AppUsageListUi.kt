@@ -64,7 +64,7 @@ fun LazyListScope.appUsageListUi(
 
     itemsIndexed(
         items = displayList,
-        key = { _, appUsage -> appUsage.packageName ?: appUsage.id.toString() },
+        key = { index, appUsage -> "${appUsage.packageName.orEmpty()}_${appUsage.id}_$index" },
         contentType = { _, _ -> "app_usage_item" }
     ) { index, appUsage ->
         ODSBox(

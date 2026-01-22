@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import com.app.screentime.reward.model.RewardTransaction
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
@@ -78,7 +80,7 @@ fun RewardTransactionItem(
             gap = DSVariables.spacingComponent1
         ) {
             ODSText(
-                text = "-${transaction.coinPrice} coins",
+                text = stringResource(R.string.coins_spent_format, transaction.coinPrice),
                 style = DSTextStyles.bodyMBold,
                 color = scheme.functionalDestructiveStandard
             )

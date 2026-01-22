@@ -8,10 +8,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.Coil.imageLoader
+import coil.annotation.ExperimentalCoilApi
 import com.app.screentime.statistics.screen.StatisticsScreen
 import com.app.screentime.statistics.viewmodel.StatisticsViewModel
 import com.app.screentime.landing.viewmodel.LandingViewModel
@@ -27,6 +31,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
  * - Single pane (LandingScreen) on phones/compact screens
  * - Two panes (LandingScreen + StatisticsScreen) on tablets/expanded screens
  */
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun AdaptiveLandingScreen(
     modifier: Modifier = Modifier,
@@ -48,6 +53,7 @@ fun AdaptiveLandingScreen(
     openSearchScreen: () -> Unit = {},
     scheme: ODSTheme = neutralScheme
 ) {
+    val context = LocalContext.current
     val activity = LocalActivity.current
     // Get theme mode for status bar styling
     val useDarkTheme = LocalThemeMode.current
@@ -91,8 +97,8 @@ fun AdaptiveLandingScreen(
                     modifier = Modifier.fillMaxSize(),
                     onNavigateToLeaderboard = onNavigateToLeaderboard,
                     onNavigateToReward = {
-                    onNavigateToReward()
-                },
+                        onNavigateToReward()
+                    },
                     onNavigateToSearch = onNavigateToSearch,
                     onNavigateToStatistics = onNavigateToStatistics,
                     onNavigateToSingleAppUsageDetail = onNavigateToSingleAppUsageDetail,
@@ -151,6 +157,14 @@ fun AdaptiveLandingScreen(
             viewModel = landingViewModel,
             scheme = scheme
         )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            val imageLoader = imageLoader(context)
+            imageLoader.memoryCache?.clear()
+            imageLoader.diskCache?.clear()
+        }
     }
 }
 

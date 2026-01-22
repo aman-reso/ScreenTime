@@ -43,6 +43,7 @@ play-app-update = "2.1.0"
 play-services-ads = "24.9.0"
 play-services-location = "21.3.0"
 appcompat = "1.7.1"
+adaptive = "1.2.0"
 
 [libraries]
 androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutComposeVersion" }
@@ -124,6 +125,7 @@ play-app-update-ktx = { group = "com.google.android.play", name = "app-update-kt
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "play-services-ads" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-compose-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "adaptive" }
 
 
 

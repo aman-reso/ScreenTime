@@ -32,6 +32,7 @@ data class ODSBottomNavigationItemProps(
     var iconActive: ODSIconModel? = null,
     var icon: ODSIconModel? = null,
     var text: String? = null,
+    var textRes: Int,
     var badgeNumberProps: ODSNavigationItemBadgeNumberProps? = null,
 )
 
@@ -49,7 +50,8 @@ internal fun ODSBottomNavigationItemProps.toODSNavigationItemProps(showLabel: Bo
         iconActive = iconActive,
         icon = icon,
         text = if (showLabel) text else null,
-        badgeNumberProps = badgeNumberProps
+        badgeNumberProps = badgeNumberProps,
+        textRes = textRes
     )
 }
 
@@ -66,6 +68,7 @@ internal fun ODSBottomNavigationItemProps.toODSNavigationItemProps(
     active: Boolean,
 ): ODSNavigationItemProps {
     return ODSNavigationItemProps(
+        textRes = this.textRes,
         active = active,
         disabled = disabled,
         iconActive = iconActive,

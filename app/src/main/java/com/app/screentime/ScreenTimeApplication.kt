@@ -15,6 +15,7 @@ import com.app.screentime.messaging.FCMTokenManager
 import com.app.screentime.messaging.NotificationHelper
 import com.app.screentime.sync.ChallengeSyncWorker
 import com.app.screentime.sync.DataSyncWorker
+import com.app.screentime.utils.EmulatorDetector
 import com.app.screentime.ui.theme.ThemeRepository
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
@@ -87,7 +88,6 @@ class ScreenTimeApplication : Application(), Configuration.Provider {
     private fun initBackground() {
         appScope.launch {
             configManagerProvider.get().initialize()
-            registerDevice()
             initFirebase()
             initAds()
         }

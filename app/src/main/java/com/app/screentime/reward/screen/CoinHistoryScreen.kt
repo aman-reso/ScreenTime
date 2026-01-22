@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -34,6 +35,7 @@ import com.app.screentime.config.R
 import com.app.screentime.reward.component.CoinHistoryItem
 import com.app.screentime.reward.model.CoinHistoryFilter
 import com.app.screentime.reward.viewmodel.CoinHistoryViewModel
+import com.app.screentime.ui.atom.PullToRefreshBox
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBox
@@ -203,6 +205,7 @@ fun CoinHistoryScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CoinHistoryList(
     filter: CoinHistoryFilter,
@@ -230,14 +233,19 @@ fun CoinHistoryList(
         }
     }
 
-    ODSLazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        gap = 0.dp,
-        padding = ODSPadding(
-            top = DSVariables.spacingComponent3,
-            horizontal = DSVariables.spacingComponent4
-        )
+    PullToRefreshBox(
+        isRefreshing = uiState.isLoading && uiState.coinHistory.isNotEmpty(),
+        onRefresh = { viewModel.refresh() },
+        modifier = Modifier.fillMaxSize()
     ) {
+        ODSLazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            gap = 0.dp,
+            padding = ODSPadding(
+                top = DSVariables.spacingComponent3,
+                horizontal = DSVariables.spacingComponent4
+            )
+        ) {
         if (uiState.isLoading) {
             item {
                 ODSBox(
@@ -301,6 +309,7 @@ fun CoinHistoryList(
                     )
                 }
             }
+        }
         }
     }
 }

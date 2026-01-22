@@ -31,10 +31,12 @@ class LoginUseCase @Inject constructor(
             }.onSuccess {
                 preferencesManager.saveUserInformation(it)
             }
-        }catch (e: Throwable){
+        } catch (e: Throwable) {
 
         }
     }
+
+    fun isLoginRequired() = preferencesManager.getUserId().isNullOrEmpty()
 
 }
 

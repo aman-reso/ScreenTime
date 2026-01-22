@@ -2,14 +2,20 @@ package com.app.screentime.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Wallpaper
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import com.app.screentime.config.R
 import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigationItemProps
 
@@ -21,63 +27,90 @@ import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigationItemPr
  */
 data class ScreenTimeNavigationProps(
     var showBottomNavigation: Boolean = true,
-    var navigationItems: List<ODSBottomNavigationItemProps> = defaultNavigationItems
+    var navigationItems: List<ODSBottomNavigationItemProps> = emptyList()
 )
 
 /**
  * Default navigation items for ScreenTime app (phone - shows Statistics).
  */
-val defaultNavigationItems = listOf(
+
+val defaultNavigationMobileNotIndiaItems = listOf(
     ODSBottomNavigationItemProps(
-        text = "Home",
-        icon = ODSIconModel(imageVector = Icons.Default.Home),
+        textRes = R.string.nav_home,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Home),
         iconActive = ODSIconModel(imageVector = Icons.Default.Home)
-    ),
-    ODSBottomNavigationItemProps(
-        text = "Statistics",
-        icon = ODSIconModel(imageVector = Icons.Default.BarChart),
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_statistics,
+        icon = ODSIconModel(imageVector = Icons.Outlined.BarChart),
         iconActive = ODSIconModel(imageVector = Icons.Default.Analytics)
-    ),
-//    ODSBottomNavigationItemProps(
-//        text = "Focus",
-//        icon = ODSIconModel(imageVector = Icons.Default.Timer),
-//        iconActive = ODSIconModel(imageVector = Icons.Default.Timer)
-//    ),
-    // Challenge feature disabled
-    ODSBottomNavigationItemProps(
-        text = "Challenges",
-        icon = ODSIconModel(imageVector = Icons.Default.Flag),
-        iconActive = ODSIconModel(imageVector = Icons.Default.Flag)
-    ),
-    ODSBottomNavigationItemProps(
-        text = "Profile",
-        icon = ODSIconModel(imageVector = Icons.Default.Person),
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_wallpaper,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Wallpaper),
+        iconActive = ODSIconModel(imageVector = Icons.Default.Wallpaper)
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_profile,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Person),
         iconActive = ODSIconModel(imageVector = Icons.Default.Person)
     )
 )
 
-/**
- * Navigation items for tablet devices (shows Leaderboard instead of Statistics).
- */
-val tabletNavigationItems = listOf(
+val tabletNavigationNotIndiaItems = listOf(
     ODSBottomNavigationItemProps(
-        text = "Home",
-        icon = ODSIconModel(imageVector = Icons.Default.Home),
+        textRes = R.string.nav_home,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Home),
         iconActive = ODSIconModel(imageVector = Icons.Default.Home)
-    ),
-    ODSBottomNavigationItemProps(
-        text = "Leaderboard",
-        icon = ODSIconModel(imageVector = Icons.Default.EmojiEvents),
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_leaderboard,
+        icon = ODSIconModel(imageVector = Icons.Outlined.EmojiEvents),
         iconActive = ODSIconModel(imageVector = Icons.Default.EmojiEvents)
-    ),
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_wallpaper,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Wallpaper),
+        iconActive = ODSIconModel(imageVector = Icons.Default.Wallpaper)
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_profile,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Person),
+        iconActive = ODSIconModel(imageVector = Icons.Default.Person)
+    )
+)
+
+
+val tabletNavigationIndiaItems = listOf(
     ODSBottomNavigationItemProps(
-        text = "Challenges",
-        icon = ODSIconModel(imageVector = Icons.Default.Flag),
+        textRes = R.string.nav_home,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Home),
+        iconActive = ODSIconModel(imageVector = Icons.Default.Home)
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_challenges,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Flag),
         iconActive = ODSIconModel(imageVector = Icons.Default.Flag)
-    ),
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_leaderboard,
+        icon = ODSIconModel(imageVector = Icons.Outlined.EmojiEvents),
+        iconActive = ODSIconModel(imageVector = Icons.Default.EmojiEvents)
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_profile,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Person),
+        iconActive = ODSIconModel(imageVector = Icons.Default.Person)
+    )
+)
+
+val MobileNavigationIndiaItems = listOf(
     ODSBottomNavigationItemProps(
-        text = "Profile",
-        icon = ODSIconModel(imageVector = Icons.Default.Person),
+        textRes = R.string.nav_home,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Home),
+        iconActive = ODSIconModel(imageVector = Icons.Default.Home)
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_statistics,
+        icon = ODSIconModel(imageVector = Icons.Outlined.BarChart),
+        iconActive = ODSIconModel(imageVector = Icons.Default.Analytics)
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_challenges,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Flag),
+        iconActive = ODSIconModel(imageVector = Icons.Default.Flag)
+    ), ODSBottomNavigationItemProps(
+        textRes = R.string.nav_profile,
+        icon = ODSIconModel(imageVector = Icons.Outlined.Person),
         iconActive = ODSIconModel(imageVector = Icons.Default.Person)
     )
 )
@@ -86,13 +119,21 @@ val tabletNavigationItems = listOf(
  * Get navigation items based on device type (tablet or phone).
  */
 @Composable
-fun getNavigationItems(): List<ODSBottomNavigationItemProps> {
+fun getNavigationItems(isIndia: Boolean): List<ODSBottomNavigationItemProps> {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val isExpandedScreen = windowSizeClass.isWidthAtLeastBreakpoint(840)
     return if (isExpandedScreen) {
-        tabletNavigationItems
+        if (isIndia) {
+            tabletNavigationIndiaItems
+        } else {
+            tabletNavigationNotIndiaItems
+        }
     } else {
-        defaultNavigationItems
+        if (isIndia) {
+            MobileNavigationIndiaItems
+        } else {
+            defaultNavigationMobileNotIndiaItems
+        }
     }
 }
 
@@ -100,13 +141,21 @@ fun getNavigationItems(): List<ODSBottomNavigationItemProps> {
  * Get navigation tokens based on device type (tablet or phone).
  */
 @Composable
-fun getNavigationTokens(): ScreenTimeNavigationTokens {
+fun getNavigationTokens(isIndia: Boolean): ScreenTimeNavigationTokens {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val isExpandedScreen = windowSizeClass.isWidthAtLeastBreakpoint(840)
     return if (isExpandedScreen) {
-        tabletScreenTimeNavigationTokens
+        if (isIndia) {
+            tabletIndiaScreenTimeNavigationToken
+        } else {
+            tabletNotIndiaScreenTimeNavigationToken
+        }
     } else {
-        defaultScreenTimeNavigationTokens
+        if (isIndia) {
+            mobileIndiaScreenTimeNavigationToken
+        } else {
+            mobileNotIndiaScreenTimeNavigationToken
+        }
     }
 }
 

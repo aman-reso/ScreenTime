@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.outlined.CardGiftcard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -23,12 +22,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.LocalActivity
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
-import com.app.screentime.ads.InterstitialAdManager
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.app.screentime.appdetail.screen.SingleAppUsageDetailScreen
@@ -44,7 +40,6 @@ import com.app.screentime.permission.AppPermissionScreen
 import com.app.screentime.permission.checkUsageStatsPermission
 import com.app.screentime.profile.screen.ProfileScreen
 import com.app.screentime.controlcenter.screen.ControlCenterScreen
-import com.app.screentime.filemanager.screen.FileManagerScreen
 import com.app.screentime.location.screen.LocationManagementScreen
 import com.app.screentime.record.screen.RecordDetailScreen
 import com.app.screentime.reward.screen.CoinHistoryScreen
@@ -68,7 +63,6 @@ import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigation
 import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigationItemProps
 import com.telekom.odsystem.organisms.bottomnavigation.ODSBottomNavigationProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
-import kotlinx.serialization.json.Json
 
 /**
  * Main navigation composable for ScreenTime app.
@@ -82,15 +76,15 @@ import kotlinx.serialization.json.Json
 fun ScreenTimeNavigation(
     scheme: ODSTheme = neutralScheme,
     props: ScreenTimeNavigationProps = ScreenTimeNavigationProps(),
-    tokens: ScreenTimeNavigationTokens = getNavigationTokens(),
     style: ScreenTimeNavigationStyle = ScreenTimeNavigationStyle().getStyle(scheme),
+    isUserInIndia: Boolean = true,
     deeplinkUri: android.net.Uri? = null
 ) {
     val context = LocalContext.current
-    LocalActivity.current
     val isUsagePermission = checkUsageStatsPermission(context)
-    val navigationItems = getNavigationItems()
-    val navigationTokens = getNavigationTokens()
+    val navigationTokens = getNavigationTokens(isUserInIndia)
+    val navigationItems = getNavigationItems(isUserInIndia)
+
     val backStack = retain {
         mutableStateListOf(
             if (isUsagePermission) {
@@ -154,7 +148,8 @@ fun ScreenTimeNavigation(
     Scaffold(
         floatingActionButton = {
             val currentScreen = backStack.lastOrNull()
-            if (currentScreen == Screen.Landing || currentScreen == Screen.Challenges || currentScreen is Screen.ChallengeDetail || currentScreen == Screen.Profile) {
+            // Only show Reward FAB if user is in India AND on allowed screens
+            if (isUserInIndia && (currentScreen == Screen.Landing || currentScreen == Screen.Challenges || currentScreen is Screen.ChallengeDetail || currentScreen == Screen.Profile)) {
                 ODSFloatingActionButton(
                     modifier = Modifier
                         .padding(
@@ -185,10 +180,16 @@ fun ScreenTimeNavigation(
         topBar = {},
         bottomBar = {
             val currentScreen = backStack.lastOrNull()
+            val currentRoutes = if (isUserInIndia) {
+                navigationTokens.bottomNavigationRoutes
+            } else {
+                navigationTokens.bottomNavigationRoutes.filter { it != Screen.Challenges }
+            }
+
             if (
                 props.showBottomNavigation &&
                 currentScreen != null &&
-                currentScreen in navigationTokens.bottomNavigationRoutes
+                currentScreen in currentRoutes
             ) {
                 BottomNavigationBar(
                     scheme = scheme,
@@ -217,7 +218,11 @@ fun ScreenTimeNavigation(
             .navigationBarsPadding()
     ) { paddingValues ->
         NavigationHost(
-            scheme = scheme, paddingValues = paddingValues, backStack, navigationTokens
+            scheme = scheme,
+            paddingValues = paddingValues,
+            backStack,
+            navigationTokens,
+            navigationItems
         )
     }
 }
@@ -251,7 +256,8 @@ private fun NavigationHost(
     scheme: ODSTheme,
     paddingValues: PaddingValues,
     backStack: SnapshotStateList<Screen>,
-    tokens: ScreenTimeNavigationTokens
+    tokens: ScreenTimeNavigationTokens,
+    navigationItems: List<ODSBottomNavigationItemProps>
 ) {
     val activity = LocalActivity.current
     NavDisplay(backStack = backStack, onBack = {
@@ -393,15 +399,14 @@ private fun NavigationHost(
         }
 
         entry<Screen.FileManager> {
-//            StorageDashboardScreen()
-            FileManagerScreen(
-                onBackClick = {
-                    if (backStack.size > 1) {
-                        backStack.removeLastOrNull()
-                    }
-                },
-                scheme = scheme
-            )
+//            FileManagerScreen(
+//                onBackClick = {
+//                    if (backStack.size > 1) {
+//                        backStack.removeLastOrNull()
+//                    }
+//                },
+//                scheme = scheme
+//            )
         }
 
         entry<Screen.Statistics> {
@@ -430,7 +435,8 @@ private fun NavigationHost(
                         backStack.removeLastOrNull()
                     }
                 },
-                scheme = scheme
+                scheme = scheme,
+                isInBottomNav = tokens.bottomNavigationRoutes.any { it == Screen.Leaderboard }
             )
         }
 

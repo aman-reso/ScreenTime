@@ -11,8 +11,10 @@ import com.app.screentime.reward.usecase.CoinHistoryUseCase
 import com.app.screentime.reward.usecase.CreateRewardUseCase
 import com.app.screentime.reward.usecase.RewardCatalogUseCase
 import com.app.screentime.analytics.AnalyticsUseCase
+import com.app.screentime.config.ConfigManager
 import com.app.screentime.preferences.usecase.PreferencesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +28,8 @@ class RewardViewModel @Inject constructor(
     private val claimRewardUseCase: ClaimRewardUseCase,
     private val createRewardUseCase: CreateRewardUseCase,
     private val preferencesUseCase: PreferencesUseCase,
-    private val analyticsUseCase: AnalyticsUseCase
+    private val analyticsUseCase: AnalyticsUseCase,
+    private val configManager: ConfigManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RewardUiState(isLoading = true))
@@ -43,8 +46,12 @@ class RewardViewModel @Inject constructor(
     fun loadRewardData() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            val coinsResult = coinHistoryUseCase.getCoinHistory()
-            val catalogResult = rewardCatalogUseCase.getRewardCatalog()
+            val coinsResult = async {
+                coinHistoryUseCase.getCoinHistory()
+            }.await()
+            val catalogResult = async {
+                rewardCatalogUseCase.getRewardCatalog()
+            }.await()
 
             // Handle both results
             coinsResult.fold(
@@ -57,7 +64,8 @@ class RewardViewModel @Inject constructor(
                                 coinHistory = coinHistory,
                                 catalog = catalogItems,
                                 catalogPairs = catalogItems.chunked(2), // Chunk into pairs for 2 items per row
-                                error = null
+                                error = null,
+                                adPoint = configManager.getConfig().adWeightage ?: 1
                             )
                         },
                         onFailure = { catalogException ->
@@ -132,6 +140,7 @@ class RewardViewModel @Inject constructor(
         recipientName: String,
         recipientEmail: String,
         recipientPhone: String,
+        upiId: String,
         shippingAddress: String?,
         postalCode: String?,
         saveDetails: Boolean = false,
@@ -146,6 +155,7 @@ class RewardViewModel @Inject constructor(
                         name = recipientName,
                         email = recipientEmail,
                         phone = recipientPhone,
+                        upiId = upiId,
                         address = shippingAddress,
                         postalCode = postalCode
                     )
@@ -158,7 +168,9 @@ class RewardViewModel @Inject constructor(
             val request = RewardClaimRequest(
                 rewardCatalogId = rewardCatalogId,
                 recipientName = recipientName,
+                recipientEmail = recipientEmail,
                 recipientPhone = recipientPhone,
+                upiId = upiId,
                 shippingAddress = shippingAddress,
                 city = null,
                 state = null,
@@ -182,16 +194,19 @@ class RewardViewModel @Inject constructor(
                             msg.contains("\"message\"") -> {
                                 // Try to extract message from JSON string
                                 try {
-                                    val messageMatch = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(msg)
+                                    val messageMatch =
+                                        Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(msg)
                                     messageMatch?.groupValues?.get(1) ?: msg
                                 } catch (e: Exception) {
                                     msg
                                 }
                             }
+
                             msg.contains("message") && msg.length > 200 -> {
                                 // If message is too long, try to extract just the relevant part
                                 msg.substringBefore("\n").substringBefore("\\n").take(200)
                             }
+
                             else -> msg
                         }
                     } ?: "Failed to claim reward"
@@ -223,7 +238,7 @@ class RewardViewModel @Inject constructor(
 
             val request = AddCoinsRequest(
                 userId = userId,
-                amount = 10L,
+                amount = uiState.value.adPoint,
                 source = "OTHER",
                 description = "Earned coins by watching ad",
                 challengeId = null,
@@ -235,7 +250,6 @@ class RewardViewModel @Inject constructor(
 
             createRewardUseCase.addCoins(request).fold(
                 onSuccess = {
-                    // Reload coin history to update the UI
                     loadTotalCoins()
                     onSuccess()
                 },
@@ -244,15 +258,18 @@ class RewardViewModel @Inject constructor(
                         when {
                             msg.contains("\"message\"") -> {
                                 try {
-                                    val messageMatch = Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(msg)
+                                    val messageMatch =
+                                        Regex("\"message\"\\s*:\\s*\"([^\"]+)\"").find(msg)
                                     messageMatch?.groupValues?.get(1) ?: msg
                                 } catch (e: Exception) {
                                     msg
                                 }
                             }
+
                             msg.length > 200 -> {
                                 msg.substringBefore("\n").substringBefore("\\n").take(200)
                             }
+
                             else -> msg
                         }
                     } ?: "Failed to add coins"

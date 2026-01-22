@@ -1,5 +1,6 @@
 package com.app.screentime.landing.mapper
 
+import com.app.screentime.config.ConfigManager
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.landing.model.LandingUiProps
 import com.app.screentime.landing.model.TodayUsageData
@@ -12,7 +13,7 @@ import javax.inject.Inject
  * Mapper that converts use case results to UI Props
  * This is the only way the UI layer should receive data
  */
-class LandingUiMapper @Inject constructor() {
+class LandingUiMapper @Inject constructor(private val configManager: dagger.Lazy<ConfigManager>) {
 
     /**
      * Map TodayUsageData and username to UI Props
@@ -53,7 +54,9 @@ class LandingUiMapper @Inject constructor() {
             percentageChangeFromYesterday = percentageChangeFromYesterday,
             categoryUsage = todayUsageData.categoryUsage,
             joinedChallenges = joinedChallenges,
-            totalNotificationCount = todayUsageData.notificationCount
+            totalNotificationCount = todayUsageData.notificationCount,
+            challengeBannerURL = configManager.get().getConfig().challengeBannerURL,
+            wallpaperBannerURL = configManager.get().getConfig().wallpaperBannerURL
         )
     }
 

@@ -13,6 +13,7 @@ import javax.inject.Inject
 
 data class RewardTransactionUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val transactions: List<RewardTransaction> = emptyList(),
     val error: String? = null
 )
@@ -29,13 +30,19 @@ class RewardTransactionViewModel @Inject constructor(
         loadTransactions()
     }
 
-    fun loadTransactions() {
+    fun loadTransactions(isRefresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            if (isRefresh) {
+                _uiState.value = _uiState.value.copy(isRefreshing = true, error = null)
+            } else {
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            }
+            
             rewardTransactionUseCase.getRewardTransactions().fold(
                 onSuccess = { transactions ->
                     _uiState.value = RewardTransactionUiState(
                         isLoading = false,
+                        isRefreshing = false,
                         transactions = transactions,
                         error = null
                     )
@@ -43,12 +50,17 @@ class RewardTransactionViewModel @Inject constructor(
                 onFailure = { exception ->
                     _uiState.value = RewardTransactionUiState(
                         isLoading = false,
-                        transactions = emptyList(),
+                        isRefreshing = false,
+                        transactions = if (isRefresh) _uiState.value.transactions else emptyList(),
                         error = exception.message ?: "Failed to load transactions"
                     )
                 }
             )
         }
+    }
+    
+    fun refresh() {
+        loadTransactions(isRefresh = true)
     }
 
     fun clearError() {
