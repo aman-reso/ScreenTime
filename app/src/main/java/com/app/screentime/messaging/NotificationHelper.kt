@@ -190,61 +190,36 @@ object NotificationHelper {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
-        // Handle deeplink
-        when {
-            !deeplink.isNullOrEmpty() -> {
-                // Parse deeplink and add navigation route
-                intent.putExtra("deeplink", deeplink)
+        // Extract deeplink from parameter or data payload
+        val deeplinkUrl = when {
+            !deeplink.isNullOrEmpty() -> deeplink
+            data?.containsKey("deeplink") == true -> data["deeplink"]
+            else -> null
+        }
 
-                // Parse deeplink format: apptime://screen/route?param1=value1&param2=value2
-                // or simple route format: challenges, challenge_detail/123, etc.
-                when {
-                    deeplink.startsWith("apptime://") -> {
-                        // Full deeplink format
-                        val uri = deeplink.toUri()
-                        val route = uri.host ?: ""
-                        intent.putExtra("route", route)
-
-                        // Add query parameters
-                        uri.queryParameterNames.forEach { key ->
-                            uri.getQueryParameter(key)?.let { value ->
-                                intent.putExtra(key, value)
-                            }
-                        }
-                    }
-
-                    deeplink.contains("/") -> {
-                        // Route with parameters: challenge_detail/123
-                        val parts = deeplink.split("/")
-                        intent.putExtra("route", parts[0])
-                        if (parts.size > 1) {
-                            // Extract parameter name from route (e.g., challengeId from challenge_detail)
-                            val paramName = when (parts[0]) {
-                                "challenge_detail" -> "challengeId"
-                                "app_usage_detail" -> "packageName"
-                                "record_detail" -> "username"
-                                else -> "id"
-                            }
-                            intent.putExtra(paramName, parts[1])
-                        }
-                    }
-
-                    else -> {
-                        // Simple route: challenges, statistics, etc.
-                        intent.putExtra("route", deeplink)
-                    }
+        // Set deeplink as intent data (URI) for proper navigation
+        if (!deeplinkUrl.isNullOrEmpty()) {
+            when {
+                // Full deeplink format: apptime://screen/route or https://apptime.in/route
+                deeplinkUrl.startsWith("apptime://") || deeplinkUrl.startsWith("https://") -> {
+                    intent.data = deeplinkUrl.toUri()
                 }
-            }
 
-            data?.containsKey("deeplink") == true -> {
-                // Deeplink in data payload
-                val link = data["deeplink"] ?: ""
-                intent.putExtra("deeplink", link)
-                intent.putExtra("route", link)
+                // Route with parameters: challenge_detail/123
+                deeplinkUrl.contains("/") -> {
+                    // Convert to proper deeplink URI
+                    intent.data = "apptime://screen/$deeplinkUrl".toUri()
+                }
+
+                // Simple route: challenges, statistics, etc.
+                else -> {
+                    // Convert to proper deeplink URI
+                    intent.data = "apptime://screen/$deeplinkUrl".toUri()
+                }
             }
         }
 
-        // Add all data extras
+        // Add all data extras (for backward compatibility)
         data?.forEach { (key, value) ->
             if (key != "deeplink" && key != "image" && key != "image_url") {
                 intent.putExtra(key, value)

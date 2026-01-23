@@ -1,6 +1,7 @@
 package com.app.screentime.navigation
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.LocalActivity
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.app.screentime.appdetail.screen.SingleAppUsageDetailScreen
 import com.app.screentime.applock.screen.AppLockScreen
@@ -50,6 +54,7 @@ import com.app.screentime.statistics.screen.StatisticsScreen
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.wallpaper.screen.WallpaperScreen
 import com.app.screentime.wallpaper.screen.FullScreenWallpaperScreen
+import com.app.screentime.wallpaper.screen.WallpaperSearchScreen
 // import com.app.screentime.wallpaper.screen.WallpaperScreen // Removed - Wallpaper feature disabled
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButton
@@ -78,22 +83,20 @@ fun ScreenTimeNavigation(
     props: ScreenTimeNavigationProps = ScreenTimeNavigationProps(),
     style: ScreenTimeNavigationStyle = ScreenTimeNavigationStyle().getStyle(scheme),
     isUserInIndia: Boolean = true,
-    deeplinkUri: android.net.Uri? = null
+    deeplinkUri: Uri? = null
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val isUsagePermission = checkUsageStatsPermission(context)
     val navigationTokens = getNavigationTokens(isUserInIndia)
     val navigationItems = getNavigationItems(isUserInIndia)
-
-    val backStack = retain {
-        mutableStateListOf(
-            if (isUsagePermission) {
-                Screen.Landing
-            } else {
-                Screen.Permission
-            }
-        )
-    }
+    val backStack = rememberNavBackStack(
+        if (isUsagePermission) {
+            Screen.Landing
+        } else {
+            Screen.Permission
+        }
+    )
     var selectedIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(backStack.toList(), navigationTokens) {
@@ -106,27 +109,20 @@ fun ScreenTimeNavigation(
         if (deeplinkUri != null) {
             val deeplinkScreen = DeeplinkParser.parseDeeplink(deeplinkUri)
             if (deeplinkScreen != null) {
-                // Clear back stack if navigating to Landing
                 if (DeeplinkParser.shouldClearBackStack(deeplinkScreen)) {
                     backStack.clear()
                     backStack.add(deeplinkScreen)
-                }
-                // Add Landing to back stack first if needed
-                else if (DeeplinkParser.shouldAddLandingToBackStack(deeplinkScreen)) {
+                } else if (DeeplinkParser.shouldAddLandingToBackStack(deeplinkScreen)) {
                     backStack.clear()
                     backStack.add(Screen.Landing)
                     backStack.add(deeplinkScreen)
-                }
-                // Just navigate to the screen
-                else {
+                } else {
                     backStack.clear()
                     backStack.add(deeplinkScreen)
                 }
             }
         }
     }
-
-    val snackbarHostState = remember { SnackbarHostState() }
 
     val navigationHandlers = remember(navigationTokens) {
         object {
@@ -255,7 +251,7 @@ private fun BottomNavigationBar(
 private fun NavigationHost(
     scheme: ODSTheme,
     paddingValues: PaddingValues,
-    backStack: SnapshotStateList<Screen>,
+    backStack: NavBackStack<NavKey>,
     tokens: ScreenTimeNavigationTokens,
     navigationItems: List<ODSBottomNavigationItemProps>
 ) {
@@ -411,7 +407,7 @@ private fun NavigationHost(
 
         entry<Screen.Statistics> {
             StatisticsScreen(
-                modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding()),
+                modifier = Modifier.fillMaxSize(),
                 onNavigateToSingleAppUsageDetail = { packageName ->
                     backStack.add(
                         Screen.SingleAppUsageDetail(
@@ -428,8 +424,7 @@ private fun NavigationHost(
         entry<Screen.Leaderboard> {
             LeaderboardScreen(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = paddingValues.calculateBottomPadding()),
+                    .fillMaxSize(),
                 onBackClick = {
                     if (backStack.size > 1) {
                         backStack.removeLastOrNull()
@@ -533,8 +528,7 @@ private fun NavigationHost(
             key.params?.username?.let {
                 RecordDetailScreen(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = paddingValues.calculateBottomPadding()),
+                        .fillMaxSize(),
                     username = it,
                     onBackClick = {
                         if (backStack.size > 1) {
@@ -585,8 +579,7 @@ private fun NavigationHost(
         entry<Screen.Wallpaper> {
             WallpaperScreen(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = paddingValues.calculateBottomPadding()),
+                    .fillMaxSize(),
                 onBackClick = {
                     if (backStack.size > 1) {
                         backStack.removeLastOrNull()
@@ -600,6 +593,11 @@ private fun NavigationHost(
                                 imageItemJson = imageItem
                             )
                         )
+                    )
+                },
+                onNavigateToSearch = {
+                    backStack.add(
+                        Screen.WallPaperSearch
                     )
                 }
             )
@@ -618,6 +616,28 @@ private fun NavigationHost(
                     scheme = scheme
                 )
             }
+        }
+
+        entry<Screen.WallPaperSearch> {
+            WallpaperSearchScreen(
+                onNavigateToFullScreen = { wallpaperId, imageItem ->
+                    backStack.add(
+                        Screen.FullScreenWallpaper(
+                            FullScreenWallpaperParams(
+                                wallpaperId = wallpaperId,
+                                imageItemJson = imageItem
+                            )
+                        )
+                    )
+                },
+                modifier = Modifier.fillMaxSize(),
+                onBackClick = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                scheme = scheme
+            )
         }
     })
 }

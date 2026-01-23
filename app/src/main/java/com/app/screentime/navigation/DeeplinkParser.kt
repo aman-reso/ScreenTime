@@ -42,9 +42,22 @@ object DeeplinkParser {
             "statistics" -> Screen.Statistics
             "focus_mode" -> Screen.FocusMode
             "permission" -> Screen.Permission
+            "leaderboard" -> Screen.Leaderboard
+            "challenges", "challenge_list" -> Screen.Challenges
+            "rewards", "reward" -> Screen.Reward
+            "coin_history" -> Screen.CoinHistory
+            "wallpaper", "wallpapers" -> Screen.Wallpaper
+            "wallpaper_search" -> Screen.WallPaperSearch
+            "notifications", "captured_notifications" -> Screen.CapturedNotifications
+            "control_center" -> Screen.ControlCenter
+            "manage_location", "location" -> Screen.ManageLocation
+            "file_manager", "files" -> Screen.FileManager
+            "app_lock" -> Screen.AppLock
 
             "app_usage_detail", "app_details" -> {
                 val packageName = pathSegments.getOrNull(1)
+                    ?: uri.getQueryParameter("packageName")
+                    ?: uri.getQueryParameter("package")
                 if (packageName != null) {
                     Screen.SingleAppUsageDetail(SingleAppUsageDetailParams(packageName))
                 } else {
@@ -55,12 +68,33 @@ object DeeplinkParser {
 
             "record_detail" -> {
                 val username = pathSegments.getOrNull(1)
+                    ?: uri.getQueryParameter("username")
+                    ?: uri.getQueryParameter("user")
                 if (username != null) {
                     Screen.RecordDetail(RecordDetailParams(username))
                 } else {
                     Log.w(TAG, "Missing username for record_detail route")
                     null
                 }
+            }
+
+            "challenge_detail" -> {
+                val challengeId = pathSegments.getOrNull(1)
+                    ?: uri.getQueryParameter("challengeId")
+                    ?: uri.getQueryParameter("id")
+                if (challengeId != null) {
+                    Screen.ChallengeDetail(ChallengeDetailParams(challengeId))
+                } else {
+                    Log.w(TAG, "Missing challengeId for challenge_detail route")
+                    null
+                }
+            }
+
+            "reward_transaction" -> {
+                val transactionId = pathSegments.getOrNull(1)?.toIntOrNull()
+                    ?: uri.getQueryParameter("transactionId")?.toIntOrNull()
+                    ?: uri.getQueryParameter("id")?.toIntOrNull()
+                Screen.RewardTransaction(transactionId)
             }
 
             else -> {

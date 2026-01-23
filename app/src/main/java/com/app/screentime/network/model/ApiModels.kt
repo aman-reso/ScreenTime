@@ -337,6 +337,22 @@ data class ExtendAccessRequest(
 )
 
 /**
+ * Accessible users data model
+ */
+@Serializable
+data class AccessibleUsersData(
+    val accessibleUserIds: List<String> = emptyList()
+)
+
+/**
+ * Accessible users response model
+ */
+@Serializable
+data class AccessibleUsersResponse(
+    val data: AccessibleUsersData = AccessibleUsersData()
+)
+
+/**
  * App Usage Submission Request
  * For submitting app usage data (appname, package name, opened at, duration, isSystemApp, total screentime)
  */
