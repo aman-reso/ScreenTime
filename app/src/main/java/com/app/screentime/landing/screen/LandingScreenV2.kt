@@ -377,58 +377,57 @@ fun LandingScreenV2(
                                     Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                                 }
                             }
-                            if (uiProps?.challengeBannerURL.isNullOrEmpty() && CountryUtils.isUserInIndia(
-                                    context
-                                )
-                            ) {
-                                item("challenge_banner") {
-                                    ODSBox(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                onNavigateToChallenges.invoke()
-                                            },
-                                        cornerRadius = ODSCorners(
-                                            DSVariables.spacingComponent4
-                                        ),
-                                        clipContent = true,
-                                    ) {
-                                        ODSImage(
-                                            height = DSVariables.sizingComponent18 + DSVariables.spacingLayout7,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            imageModel = ODSImageModel(
-                                                drawableRes = com.app.screentime.R.drawable.challengeimage,
-                                                contentDescription = "Challenge Banner"
+                            if (CountryUtils.isUserInIndia(context)) {
+                                if (!uiProps?.challengeBannerURL.isNullOrEmpty()) {
+                                    item("challenge_banner") {
+                                        ODSBox(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    onNavigateToChallenges.invoke()
+                                                },
+                                            cornerRadius = ODSCorners(
+                                                DSVariables.spacingComponent4
                                             ),
-                                            contentScale = ContentScale.FillWidth
-                                        )
+                                            clipContent = true,
+                                        ) {
+                                            ODSImage(
+                                                height = DSVariables.sizingComponent18,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                imageModel = ODSImageModel(
+                                                    url = uiProps?.challengeBannerURL!!,
+                                                    contentDescription = "Challenge Banner"
+                                                ),
+                                                contentScale = ContentScale.FillWidth
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                                     }
-                                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                                }
-                            } else {
-                                item("challenge_banner") {
-                                    ODSBox(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                onNavigateToChallenges.invoke()
-                                            },
-                                        cornerRadius = ODSCorners(
-                                            DSVariables.spacingComponent4
-                                        ),
-                                        clipContent = true,
-                                    ) {
-                                        ODSImage(
-                                            height = DSVariables.sizingComponent18,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            imageModel = ODSImageModel(
-                                                url = uiProps?.challengeBannerURL!!,
-                                                contentDescription = "Challenge Banner"
+                                } else {
+                                    item("challenge_banner") {
+                                        ODSBox(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    onNavigateToChallenges.invoke()
+                                                },
+                                            cornerRadius = ODSCorners(
+                                                DSVariables.spacingComponent4
                                             ),
-                                            contentScale = ContentScale.FillWidth
-                                        )
+                                            clipContent = true,
+                                        ) {
+                                            ODSImage(
+                                                height = DSVariables.sizingComponent18 + DSVariables.spacingLayout7,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                imageModel = ODSImageModel(
+                                                    drawableRes = com.app.screentime.R.drawable.challengeimage,
+                                                    contentDescription = "Challenge Banner"
+                                                ),
+                                                contentScale = ContentScale.FillWidth
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                                     }
-                                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                                 }
                             }
 
