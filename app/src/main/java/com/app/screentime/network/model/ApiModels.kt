@@ -336,20 +336,13 @@ data class ExtendAccessRequest(
     val additionalSeconds: Long
 )
 
-/**
- * Accessible users data model
- */
-@Serializable
-data class AccessibleUsersData(
-    val accessibleUserIds: List<String> = emptyList()
-)
 
 /**
  * Accessible users response model
  */
 @Serializable
 data class AccessibleUsersResponse(
-    val data: AccessibleUsersData = AccessibleUsersData()
+    val accessibleUserIds: List<String> = emptyList()
 )
 
 /**

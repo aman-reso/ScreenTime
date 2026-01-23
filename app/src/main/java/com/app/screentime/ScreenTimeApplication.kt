@@ -2,6 +2,8 @@ package com.app.screentime
 
 import android.app.Activity
 import android.app.Application
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.app.screentime.BuildConfig
@@ -13,6 +15,7 @@ import com.app.screentime.di.ApplicationScope
 import com.app.screentime.login.usecase.LoginUseCase
 import com.app.screentime.messaging.FCMTokenManager
 import com.app.screentime.messaging.NotificationHelper
+import com.app.screentime.registrations.screen.AuthManager
 import com.app.screentime.sync.ChallengeSyncWorker
 import com.app.screentime.sync.DataSyncWorker
 import com.app.screentime.utils.EmulatorDetector
@@ -52,11 +55,20 @@ class ScreenTimeApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var themeRepository: ThemeRepository
 
+    private val authManager: AuthManager by lazy { AuthManager() }
+
     override fun onCreate() {
         super.onCreate()
         initCritical()
         initBackground()
         scheduleWorkers()
+        Handler(Looper.getMainLooper()).postDelayed({
+            authManager.init(
+                scope = appScope,
+                useCase = loginUseCaseProvider.get()
+            )
+
+        }, 100)
     }
 
     override val workManagerConfiguration: Configuration
@@ -90,16 +102,12 @@ class ScreenTimeApplication : Application(), Configuration.Provider {
             configManagerProvider.get().initialize()
             initFirebase()
             initAds()
+            registerDevice()
         }
     }
 
-
     private fun initAds() {
         val requestConfig = RequestConfiguration.Builder()
-//        if (BuildConfig.DEBUG) {
-//            requestConfig.setTestDeviceIds(listOf("A07F51EE923FAFD06D2B957DFE6AF83E"))
-//        }
-
         MobileAds.setRequestConfiguration(requestConfig.build())
         MobileAds.initialize(this)
     }
