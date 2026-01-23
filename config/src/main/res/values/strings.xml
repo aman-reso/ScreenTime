@@ -1,0 +1,710 @@
+<resources>
+    <!-- App Name -->
+    <string name="app_name">AppTime</string>
+    <string name="widget_description">Monitor your daily screen time and app usage</string>
+    <string name="set_widget">Set Widget</string>
+
+    <!-- Common Actions -->
+    <string name="close">Close</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="retry">Retry</string>
+    <string name="try_again">Try Again</string>
+    <string name="cancel">Cancel</string>
+    <string name="error">Error</string>
+    <string name="coming_soon">Coming Soon</string>
+    <string name="app_not_available_on_emulator">This app cannot be used on an emulator. Please use a physical device.</string>
+
+    <!-- Theme Selection Dialog -->
+    <string name="select_theme">Select Theme</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">System</string>
+
+    <!-- Language Selection Dialog -->
+    <string name="select_language">Select Language</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">Hindi</string>
+    <string name="language_bengali">Bengali</string>
+    <string name="language_tamil">Tamil</string>
+    <string name="language_telugu">Telugu</string>
+    <string name="language_marathi">Marathi</string>
+    <string name="language_gujarati">Gujarati</string>
+    <string name="language_kannada">Kannada</string>
+    <string name="language_malayalam">Malayalam</string>
+    <string name="language_punjabi">Punjabi</string>
+    <string name="language_urdu">Urdu</string>
+    <string name="language_french">French</string>
+    <string name="language_spanish">Spanish</string>
+    <string name="language_german">German</string>
+    <string name="language_italian">Italian</string>
+    <string name="language_dutch">Dutch</string>
+    <string name="language_portuguese">Portuguese</string>
+    <string name="language_portuguese_brazil">Portuguese (Brazil)</string>
+    <string name="language_russian">Russian</string>
+    <string name="language_chinese_simplified">Chinese (Simplified)</string>
+    <string name="language_chinese_traditional">Chinese (Traditional)</string>
+    <string name="language_japanese">Japanese</string>
+    <string name="language_korean">Korean</string>
+    <string name="language_indonesian">Indonesian</string>
+    <string name="language_thai">Thai</string>
+    <string name="language_vietnamese">Vietnamese</string>
+    <string name="language_arabic">Arabic</string>
+    <string name="language_hebrew">Hebrew</string>
+    <string name="language_persian">Persian</string>
+
+    <!-- Profile Screen -->
+    <string name="one_time_password">One-Time Password</string>
+    <string name="otp_regenerate_message">This code regenerates every 60 seconds.</string>
+    <string name="theme">Theme</string>
+    <string name="language">Language</string>
+    <string name="profile">Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="username_min_length_error">Username must be at least 3 characters</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="about">About</string>
+    <string name="about_app">About App</string>
+    <string name="share_app">Share App</string>
+    <string name="help_support">Help &amp; Support</string>
+    <string name="appearance">Appearance</string>
+    <string name="features">Features</string>
+    <string name="features_subtitle">Quick access to essential tools and settings</string>
+    <string name="set_wallpaper">Set Wallpaper</string>
+    <string name="set_wallpaper_description">Wallpapers from our collection</string>
+    <string name="wallpaper_set_home_screen">Wallpaper set on home screen</string>
+    <string name="wallpaper_set_lock_screen">Wallpaper set on lock screen</string>
+    <string name="wallpaper_set_both_screens">Wallpaper set on both screens</string>
+    <string name="new_tab">New</string>
+    <string name="search_wallpapers">Search Wallpapers</string>
+    <string name="search_placeholder">Search for wallpapers…</string>
+    <string name="clear_search">Clear search</string>
+    <string name="search_failed">Search failed</string>
+    <string name="no_results_found">No results found</string>
+    <string name="try_different_search">Try a different search term</string>
+    <string name="search_wallpapers_prompt">Enter a search term to find wallpapers</string>
+    <string name="restriction">Restriction</string>
+    <string name="admin">Admin</string>
+    <string name="app_blocking">App blocking</string>
+    <string name="app_blocking_permissions_title">App Blocking Permissions</string>
+    <string name="app_blocking_permissions_description">To enable app blocking, we need the following permissions to ensure your focus is protected.</string>
+    <string name="accessibility_service_title">Accessibility Service</string>
+    <string name="accessibility_service_description">Required to detect app launches and usage.</string>
+    <string name="display_overlay_title">Display Over Other Apps</string>
+    <string name="display_overlay_description">Required to show blocking overlay when limits are exceeded.</string>
+    <string name="app_lock_overlay_description">Required to show lock screen overlay when locked apps are accessed.</string>
+    <string name="permission_granted">Granted</string>
+    <string name="permission_action_required">Action Required</string>
+    <string name="continue_label">Continue</string>
+    <string name="shorts_blocking">Shorts blocking</string>
+    <string name="website_blocking">Website blocking</string>
+    <string name="ad_blocking">Ad Blocking</string>
+    <string name="ad_blocking_description">Block ads and trackers</string>
+    <string name="block_app">Block App</string>
+    <string name="set_app_limit">Set App Limit</string>
+    <string name="set_app_launch_limit">Set App Launch Limit</string>
+    <string name="app_lock">App Lock</string>
+    <string name="app_lock_description">Lock apps with PIN or biometrics</string>
+    <string name="file_manager">File Manager</string>
+    <string name="file_manager_description">Browse files &amp; free up space</string>
+    <string name="app_lock_permissions_title">App Lock Permissions</string>
+    <string name="app_lock_permissions_description">To enable app lock, we need the following permissions to protect your apps.</string>
+    <string name="usage_access_title">Usage Access</string>
+    <string name="usage_access_description">Required to detect which app is currently in use.</string>
+    <string name="app_restrictions">App Restrictions</string>
+
+    <!-- Focus Mode -->
+    <string name="all_day_focus_mode">All Day Focus Mode</string>
+    <string name="all_day_focus_description">Timer won\'t reset when switching apps</string>
+    <string name="session_time">Session Time</string>
+    <string name="total_day_time">Total Today</string>
+    <string name="countdown_mode">Countdown Mode</string>
+    <string name="countdown_mode_description">25 minute Pomodoro timer</string>
+    <string name="session_duration">Session Duration</string>
+    <string name="session_duration_description">Set focus session duration in minutes</string>
+    <string name="minutes">minutes</string>
+    <string name="focus_history">Focus History</string>
+    <string name="no_history">No focus sessions yet</string>
+    <string name="completed">Completed</string>
+    <string name="duration">Duration</string>
+    <string name="failed_to_load_profile">Failed to load profile: %1$s</string>
+    <string name="failed_to_update_profile">Failed to update profile: %1$s</string>
+    <string name="failed_to_update_consent">Failed to update consent: %1$s</string>
+    <string name="failed_to_clear_profile">Failed to clear profile: %1$s</string>
+    <string name="failed_to_load_weekly_data">Failed to load weekly data: %1$s</string>
+
+    <!-- Landing Screen -->
+    <string name="today_screen_time">Today\'s Screen Time</string>
+    <string name="good_morning">Good Morning ☀️</string>
+    <string name="good_afternoon">Good Afternoon 🌤️</string>
+    <string name="good_evening">Good Evening 🌇</string>
+    <string name="good_night">Good Night 🌙</string>
+
+    <!-- Weekly Usage Chart -->
+    <string name="this_week">This week</string>
+    <string name="per_day_avg">%1$dm per day</string>
+    <string name="minutes_format">%1$dm</string>
+
+    <!-- Statistics Screen -->
+    <string name="home">Home</string>
+    <string name="statistics">Statistics</string>
+    <string name="no_data_available">No data available</string>
+    <string name="no_app_usage_for_day">No app usage for this day</string>
+
+    <!-- App Detail Screen -->
+    <string name="weekly_screen_time">Weekly Screen Time</string>
+    <string name="weekly_network_usage">Weekly Network Usage</string>
+    <string name="actions">Actions</string>
+    <string name="launch_app">Launch App</string>
+    <string name="set_app_timer">Set App Timer</string>
+    <string name="block_for_minutes">Block for 5 Min</string>
+    <string name="internet_access">Internet Access</string>
+    <string name="app_settings">App Settings</string>
+    <string name="failed_to_load_app_usage">Failed to load app usage data: %1$s</string>
+    <string name="failed_to_load_usage_data">Failed to load usage data: %1$s</string>
+    <string name="permission_denied">Permission denied: %1$s</string>
+
+    <!-- App Usage Card -->
+    <string name="zero_bytes">0 bytes</string>
+
+    <!-- AppPermissionCard Strings -->
+    <string name="permissions_required">App Usage Permission Required</string>
+    <string name="permissions_card_description">ScreenTime needs the following permissions to track your app usage:</string>
+
+    <!-- Detailed Permission Explanation -->
+    <string name="permission_explanation_title">Why We Need App Usage Data</string>
+    <string name="permission_explanation_detail">To provide you with accurate insights into your digital habits, ScreenTime requires access to your app usage statistics. This permission allows us to track which applications you use and how much time you spend on each one.</string>
+
+    <string name="permission_why_required">Why This Permission is Essential</string>
+    <string name="permission_why_required_detail">Without this permission, we cannot accurately measure your screen time, identify your most-used apps, or provide meaningful insights about your digital wellness. This data is the foundation of all features in ScreenTime, including daily usage reports, app usage trends, and personalized recommendations.</string>
+
+    <string name="permission_what_we_track">What We Track</string>
+    <string name="permission_what_we_track_detail">We only track essential information: app names, usage duration, and timestamps. We do NOT access your personal data, messages, passwords, or any sensitive information within apps. Your privacy is our top priority.</string>
+
+    <string name="permission_privacy_assurance">Your Privacy is Protected</string>
+    <string name="permission_privacy_assurance_detail">All usage data is stored locally on your device and is only used to generate your personal screen time reports. We never share your data with third parties, and you can revoke this permission at any time through your device settings.</string>
+
+    <!-- Permission Item: App Usage -->
+    <string name="permission_usage_stats_title">App Usage Access</string>
+    <string name="permission_usage_stats_description">Track which apps you use and for how long</string>
+
+    <!-- Permission Item: Notifications -->
+    <string name="permission_notifications_title">Notifications</string>
+    <string name="permission_notifications_description">Show usage alerts and reminders</string>
+
+
+    <!-- General Actions -->
+    <string name="action_grant">Grant</string>
+    <string name="action_allow">Allow</string>
+    <string name="permission_granted_symbol">✓</string>
+    <string name="content_description_permissions_icon">Permissions Icon</string>
+
+    <!-- NetworkCard Strings -->
+    <string name="network_card_title">Network</string>
+    <string name="network_wifi_label">WiFi</string>
+    <string name="network_cellular_label">Cellular</string>
+    <string name="content_description_network_icon">Network type icon</string>
+
+    <!-- Consent Bottom Sheet -->
+    <string name="privacy_consent">Privacy &amp; Consent</string>
+
+    <!-- TOTP Verification -->
+    <string name="verify_totp">Verify TOTP</string>
+    <string name="enter_otp">Enter OTP</string>
+    <string name="verify">Verify</string>
+    <string name="verifying">Verifying…</string>
+    <string name="enter_otp_for_user">Enter the OTP code for %1$s to verify</string>
+    <string name="enter_otp_to_verify">Enter the OTP code to verify</string>
+    <string name="otp_code_description">This code allows you to securely share your app usage with someone you trust. It regenerates every 60 seconds and can only be used for this purpose.</string>
+    <string name="remaining_seconds">%1$d s</string>
+
+    <!-- Widget -->
+    <string name="screen_time">Screen Time</string>
+    <string name="network_usage">Network Usage</string>
+    <string name="refresh">Refresh</string>
+    <string name="no_app_data_available">No app data available</string>
+
+    <!-- Leaderboard -->
+    <string name="no_leaderboard_data_available">No leaderboard data available</string>
+
+    <!-- Consent -->
+    <string name="no_consents_available">No consents available</string>
+
+    <!-- Widget Setup -->
+    <string name="widget_setup_message">Please long-press on home screen and select Widgets to add Screen Time widget</string>
+
+    <!-- Notification Permission Warning -->
+    <string name="notification_permission_warning_message">Please enable notification permission in settings to receive alerts and reminders</string>
+    <string name="enable">Enable</string>
+
+    <!-- Username Editing -->
+    <string name="edit_username">Edit Username</string>
+    <string name="username">Username</string>
+    <string name="enter_username">Enter username</string>
+    <string name="save">Save</string>
+    <string name="username_change_description">Change new user name it will be visible to everyone</string>
+    <string name="failed_to_update_username">Failed to update username: %1$s</string>
+    <string name="username_already_taken">Username already taken. Please choose a different username.</string>
+
+    <!-- Permission Dialog -->
+    <string name="usage_access_permission_message">To track your screen time accurately, this app needs Usage Access permission. Please enable it in Settings.</string>
+    <string name="open_settings">Open Settings</string>
+
+    <!-- Statistics Screen -->
+    <string name="activity">Activity</string>
+
+    <!-- Help & Support -->
+    <string name="help_support_description">We\'re here to help! If you have any questions, issues, or feedback, please reach out to us using the email below.</string>
+    <string name="email_support">Email Support</string>
+    <string name="send_your_query">Send your query</string>
+    <string name="send_query_description">Click on the email card above to open your email client and send us your query. We typically respond within 24-48 hours.</string>
+
+    <!-- Feedback -->
+    <string name="feedback">Feedback</string>
+    <string name="feedback_subtitle">Your feedback is valuable for us</string>
+    <string name="feedback_placeholder">Enter your feedback here...</string>
+    <string name="submit">Submit</string>
+    <string name="feedback_submitted">Thank you for your feedback!</string>
+    <string name="feedback_error">Failed to send feedback. Please try again.</string>
+
+    <!-- Consent -->
+    <string name="privacy_consent_description">We value your privacy and want to be transparent about how we use your data. Please review and accept the following:</string>
+    <string name="allow_screentime_access">Allow ScreenTime to access your app usage</string>
+    <string name="screentime_data_collection">ScreenTime collects and uses your app usage data and your list of installed apps to show your daily usage, app activity history, and screen time insights.</string>
+    <string name="data_usage_disclosure">This data is used only for displaying your usage information and is not shared with third parties.</string>
+    <string name="deny">Deny</string>
+    <string name="submitting">Submitting…</string>
+
+    <!-- Consent Items -->
+    <string name="consent_data_collection">Data Collection</string>
+    <string name="consent_data_collection_description">We collect your app usage data to provide screen time insights and statistics.</string>
+    <string name="consent_data_sharing">Data Sharing</string>
+    <string name="consent_data_sharing_description">Your data may be shared with third-party services for analytics and improvement purposes.</string>
+    <string name="consent_analytics">Analytics</string>
+    <string name="consent_analytics_description">We use analytics to understand how you use the app and improve our services.</string>
+
+    <!-- Common UI States -->
+    <string name="loading">Loading…</string>
+    <string name="downloading">Downloading…</string>
+    <string name="loading_percentage">Loading %d%%</string>
+    <string name="failed_to_load_consents">Failed to load consents</string>
+    <string name="failed_to_submit_consents">Failed to submit consents</string>
+    <string name="accept">Accept</string>
+
+    <!-- App Usage Detail -->
+    <string name="usage_insight">Usage Insight</string>
+    <string name="usage_insight_description">Track your app usage patterns and set limits to maintain a healthy digital balance.</string>
+
+    <!-- Challenges -->
+    <string name="challenges">Challenges</string>
+    <string name="joined">Joined</string>
+    <string name="current">Current</string>
+    <string name="expired">Expired</string>
+    <string name="all">All</string>
+    <string name="fitness">Fitness</string>
+    <string name="mindfulness">Mindfulness</string>
+    <string name="coding">Coding</string>
+    <string name="featured_challenge">Featured Challenge</string>
+    <string name="trending_now">Trending Now</string>
+    <string name="special_events">Special Events</string>
+    <string name="quick_join">Quick Join</string>
+    <string name="past">Past</string>
+    <string name="starts_in">Starts in</string>
+    <string name="ends_in">Ends in</string>
+    <string name="no_current_challenges">No current challenges</string>
+    <string name="no_challenges">No challenges</string>
+    <string name="no_expired_challenges">No expired challenges</string>
+    <string name="no_active_challenges_message">You don\'t have any active challenges right now.</string>
+    <string name="no_expired_challenges_message">You don\'t have any expired challenges.</string>
+
+    <!-- Coin History -->
+    <string name="coin_history_title">Coin History</string>
+    <string name="earned">Earned</string>
+    <string name="used">Used</string>
+    <string name="no_transactions">No transactions found</string>
+    <string name="see_detail">See Detail</string>
+    <string name="search">Search</string>
+    <string name="usage_detail_insight">Usage Detail Insight</string>
+    <string name="app_wise">AppWise</string>
+    <string name="recover_deleted_notifications">Recover Deleted Notifications</string>
+    <string name="recover_deleted_notifications_description">Restore dismissed notifications</string>
+    <string name="recovered_notification">Recovered Notification</string>
+    <string name="please_allow_consents">Please allow app usage permissions and consents to join challenges</string>
+    <string name="enable_notification_access_recovery">Please enable Notification Access to recover deleted notifications</string>
+    <string name="no_notifications_found_for_app">No notifications found for selected app</string>
+    <string name="no_notifications_captured_yet">No notifications captured yet</string>
+    <string name="choose_app">Choose App</string>
+    <string name="notification">Notification</string>
+    <string name="all_notifications">All Notifications</string>
+    <string name="no_apps_found">No apps found</string>
+    <string name="filter">Filter</string>
+    <string name="delete_notification_confirmation">Are you sure you want to delete this notification? This action cannot be undone.</string>
+
+    <!-- Device Admin Policy -->
+    <string name="device_admin_policy">Device Admin Policy</string>
+    <string name="device_admin_policy_description">Device admin policy allows enhanced device management features for better control over your device settings and restrictions. This feature is optional and can be disabled at any time.</string>
+    <string name="device_admin_policy_explanation">ScreenTime uses device admin to provide focus mode features like locking your screen and temporarily disabling the camera during focus sessions. This helps you stay focused and reduce distractions. You can disable this feature at any time from Settings.</string>
+    <string name="device_admin_policy_info">Device admin policy provides focus mode features like screen lock and camera control. This is completely optional and you can disable it at any time from this screen or from Android Settings > Security > Device Admin Apps. ScreenTime will never prevent you from uninstalling the app or disabling device admin.</string>
+    <string name="device_admin_active">Device Admin Active</string>
+    <string name="device_admin_inactive">Device Admin Inactive</string>
+    <string name="device_admin_active_description">Device admin policy is currently active. You have enhanced device management capabilities enabled.</string>
+    <string name="device_admin_inactive_description">Device admin policy is not active. Enable it to access advanced device management features.</string>
+    <string name="enable_device_admin">Enable Device Admin</string>
+    <string name="disable_device_admin">Disable Device Admin</string>
+    <string name="device_admin_disable_warning">Disabling device admin will remove enhanced device management features. Are you sure you want to continue?</string>
+
+    <!-- Device Admin Actions -->
+    <string name="device_admin_actions">Device Admin Actions</string>
+    <string name="device_admin_actions_description">Use these features to manage your device. These actions require device admin to be enabled.</string>
+    <string name="lock_screen">Lock Screen</string>
+    <string name="lock_screen_confirmation">This will immediately lock your device screen. Continue?</string>
+    <string name="disable_camera">Disable Camera</string>
+    <string name="enable_camera">Enable Camera</string>
+    <string name="disable_camera_confirmation">This will disable the camera on your device. You can enable it again later.</string>
+    <string name="enable_camera_confirmation">This will enable the camera on your device.</string>
+    <string name="unfortunately_this_content_is_blocked_please_take_a_break_or_try_again_later">Unfortunately, this content is blocked. Please take a break or try again later.</string>
+
+    <!-- Challenge Sync -->
+    <string name="last_sync">Last Sync</string>
+    <string name="never_synced">Never synced</string>
+    <string name="sync_now">Sync Now</string>
+    <string name="syncing">Syncing…</string>
+
+    <!-- Challenge Detail Screen -->
+    <string name="failed_to_load_challenge_details">Failed to load challenge details.</string>
+    <string name="challenge_not_found">Challenge not found.</string>
+    <string name="error_joining_required_app_not_installed">Error while joining. Required app not installed.</string>
+    <string name="challenge">Challenge</string>
+    <string name="total_prize_pool">Total Prize Pool</string>
+    <string name="reward">Reward</string>
+    <string name="date_range">Date Range</string>
+    <string name="date">Date</string>
+    <string name="sync">Sync</string>
+    <string name="description">Description</string>
+    <string name="joined_member">Joined Member</string>
+    <string name="participants">Participants</string>
+    <string name="included_app">Included App</string>
+    <string name="open_url">Open URL</string>
+    <string name="sponsor">Sponsor</string>
+    <string name="rules">Rules</string>
+    <string name="view_rules">View Rules</string>
+    <string name="leaderboard">Leaderboard</string>
+    <string name="available_rewards">Available rewards</string>
+    <string name="reward_tag">Reward tag</string>
+    <string name="no_rewards_available">No rewards available</string>
+
+    <!-- Control Center -->
+    <string name="control_center">Control Center</string>
+    <string name="control_center_description">Control who sees your data</string>
+    <string name="who_can_see_timeline">Who Can See Your Timeline</string>
+    <string name="allowed_usernames">Allowed Usernames</string>
+    <string name="add_username">Add Username</string>
+    <string name="remove">Remove</string>
+    <string name="no_allowed_users">No users allowed yet. Add usernames to control who can see your timeline.</string>
+    <string name="username_added">Username added successfully</string>
+    <string name="username_removed">Username removed successfully</string>
+    <string name="failed_to_add_username">Failed to add username</string>
+    <string name="failed_to_remove_username">Failed to remove username</string>
+    <string name="select_duration">Select Duration</string>
+    <string name="duration_1_hour">1 Hour</string>
+    <string name="duration_6_hours">6 Hours</string>
+    <string name="duration_1_day">1 Day</string>
+    <string name="duration_permanent">Permanent</string>
+    <string name="expires_at">Expires at</string>
+    <string name="permanent_access">Permanent access</string>
+    <string name="manage">Manage</string>
+    <string name="grant_permanent">Grant Permanent</string>
+    <string name="for_this_week">For This Week</string>
+    <string name="duration_24_hours">24 Hours</string>
+    <string name="update_duration">Update Duration</string>
+    <string name="manage_location">Manage Location</string>
+    <string name="manage_location_description">Location sharing &amp; privacy</string>
+    <string name="location_details">Location Details</string>
+    <string name="current_location">Current Location</string>
+    <string name="last_location">Last Location</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="last_updated">Last Updated</string>
+    <string name="share_location">Share Location</string>
+    <string name="fetching_location">Fetching location…</string>
+    <string name="location_not_available">Location not available</string>
+    <string name="enable_location_sharing">Enable Location Sharing</string>
+    <string name="location_permission_denied">Location permission denied</string>
+    <string name="location_permission_required">Location permission is required to fetch your current location. Please grant location permission in settings.</string>
+    <string name="location_not_enabled">Location services not enabled</string>
+
+    <!-- Network Health Section -->
+    <string name="network_health">Network Health</string>
+    <string name="wifi">WiFi</string>
+    <string name="mobile_data">Mobile Data</string>
+    <string name="ethernet">Ethernet</string>
+    <string name="vpn">VPN</string>
+    <string name="no_connection">No Connection</string>
+    <string name="network_information">Network Information</string>
+    <string name="connection_type">Connection Type</string>
+    <string name="ip_address">IP Address</string>
+    <string name="na">N/A</string>
+    <string name="not_connected">Not Connected</string>
+    <string name="connected">Connected</string>
+    <string name="excellent">Excellent</string>
+    <string name="good">Good</string>
+    <string name="fair">Fair</string>
+    <string name="poor">Poor</string>
+    <string name="network_status">Network Status</string>
+    <string name="signal_strength">Signal Strength</string>
+    <string name="wifi_network">WiFi Network</string>
+    <string name="network_operator">Network Operator</string>
+    <string name="unknown_wifi">Unknown WiFi</string>
+    <string name="unknown_operator">Unknown Operator</string>
+    <string name="connection_details">Connection Details</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="roaming">Roaming</string>
+    <string name="active">Active</string>
+    <string name="inactive">Inactive</string>
+    <string name="connection">Connection</string>
+    <string name="network_speed">Network Speed</string>
+    <string name="total_download">Total Download</string>
+    <string name="total_upload">Total Upload</string>
+    <string name="wifi_download">WiFi Download</string>
+    <string name="wifi_upload">WiFi Upload</string>
+    <string name="mobile_download">Mobile Download</string>
+    <string name="mobile_upload">Mobile Upload</string>
+    <string name="esim_compatibility">eSIM Compatibility</string>
+    <string name="device_support">Device Support</string>
+    <string name="supported">Supported</string>
+    <string name="not_supported">Not Supported</string>
+    <string name="status">Status</string>
+
+    <!-- Additional Strings -->
+    <string name="made_with_love_india">Made with ❤️ in India</string>
+    <string name="share_app_chooser">Share App</string>
+    <string name="share_app_message">Check out %1$s - Track your screen time and manage your app usage!\n\n%2$s</string>
+    <string name="share_app_subject">Check out %1$s</string>
+    <string name="device_not_registered">Device not registered</string>
+    <string name="failed_to_fetch_location">Failed to fetch location</string>
+    <string name="failed_to_update_location">Failed to update location</string>
+    <string name="failed_to_update_share_location">Failed to update share location</string>
+    <string name="failed_to_sync_location">Failed to sync location</string>
+    <string name="failed_to_load_coin_history">Failed to load coin history</string>
+    <string name="unknown">Unknown</string>
+
+    <!-- Reward Components -->
+    <string name="total_earned_points">TOTAL EARNED POINTS</string>
+    <string name="points">POINTS</string>
+    <string name="rupees">RUPEES</string>
+    <string name="voucher_details">Voucher Details</string>
+    <string name="claim">Claim</string>
+    <string name="confirm_claim">Confirm Claim</string>
+    <string name="confirm_claim_message">Are you sure you want to proceed with this claim?</string>
+    <string name="confirm">Confirm</string>
+    <string name="coins">coins</string>
+    <string name="back">Back</string>
+    <string name="menu">Menu</string>
+    <string name="info">Info</string>
+    <string name="coin_history">Coin History</string>
+    <string name="order_history">Order History</string>
+    <string name="available_coin">Available Coin</string>
+    <string name="watch_ad_to_earn_coins">Watch Ad to Earn %1$d Coins</string>
+    <string name="watch_ad_subtitle">Watch a short video ad to earn bonus coins</string>
+    <string name="watch_ad">Watch Ad</string>
+    <string name="we_have_cash_reward">We have a cash reward for you!</string>
+    <string name="claim_reward_description">Click the button below to claim your %1$d Leaderboard bonus</string>
+    <string name="coins_earned">Coins Earned!</string>
+    <string name="coins_earned_description">You earned %1$d coins for watching the ad!</string>
+    <string name="pincode">Pincode</string>
+    <string name="address">Address</string>
+    <string name="proceed_next">Proceed next</string>
+
+    <!-- File Manager Date Labels -->
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="day_before_yesterday">Day before yesterday</string>
+    <string name="previous_30_days">Previous 30 Days</string>
+
+    <!-- Record Components -->
+    <string name="no_usage_records_found">No usage records found</string>
+    <string name="usage_summary">Usage Summary</string>
+
+    <!-- Battery Components -->
+    <string name="battery_information_unavailable">Battery information unavailable</string>
+    <string name="battery_information">Battery Information</string>
+    <string name="battery_level">Battery Level</string>
+    <string name="battery_status">Battery Status</string>
+    <string name="health">Health</string>
+    <string name="electric_current">Electric Current</string>
+    <string name="current_ma">Current: %1$d mA</string>
+    <string name="max_ma">Max: %1$d mA</string>
+    <string name="no_data_available_battery">No data available</string>
+    <string name="battery_metrics">Battery Metrics</string>
+    <string name="temperature">Temperature</string>
+    <string name="discharge_rate">Discharge Rate</string>
+    <string name="battery_usage_by_app">Battery Usage by App</string>
+
+    <!-- TOTP -->
+    <string name="totp_countdown">TOTP Countdown</string>
+
+    <!-- Additional Strings -->
+    <string name="joined_on">Joined On %1$s</string>
+    <string name="allow_access">Allow Access</string>
+    <string name="home_screen">Home Screen</string>
+    <string name="both">Both</string>
+    <string name="view_all_challenge">View all challenge</string>
+
+    <!-- Battery Status Strings -->
+    <string name="charging">Charging…</string>
+    <string name="calculating">Calculating…</string>
+    <string name="time_to_full">Time to Full</string>
+    <string name="time_remaining">Time Remaining</string>
+    <string name="not_charging">Not Charging</string>
+    <string name="charging_via_usb">Charging via USB</string>
+    <string name="charging_via_ac">Charging via AC</string>
+    <string name="charging_wirelessly">Charging Wirelessly</string>
+    <string name="fully_charged">Fully Charged</string>
+
+    <!-- Battery Health Status Strings -->
+    <string name="battery_health_good">Good</string>
+    <string name="battery_health_overheating">Overheating</string>
+    <string name="battery_health_dead">Dead</string>
+    <string name="battery_health_over_voltage">Over Voltage</string>
+    <string name="battery_health_failure">Failure</string>
+    <string name="battery_health_cold">Cold</string>
+    <string name="battery_health_unknown">Unknown</string>
+
+    <!-- File Manager -->
+    <string name="storage">Storage</string>
+    <string name="loading_files">Loading files…</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="file_manager_all">All</string>
+    <string name="file_manager_photos">Photos</string>
+    <string name="file_manager_videos">Videos</string>
+    <string name="file_manager_audio">Audio</string>
+    <string name="file_manager_apps">Apps</string>
+    <string name="file_manager_documents">Documents</string>
+    <string name="file_manager_games">Games</string>
+    <string name="file_manager_duplicates">Duplicates</string>
+    <string name="scanning_for_duplicates">Scanning for duplicates…</string>
+    <string name="no_duplicates_found">No duplicates found</string>
+    <string name="scan_for_duplicates">Scan for Duplicates</string>
+    <string name="found_duplicate_groups">Found %1$d duplicate groups</string>
+    <string name="can_free_up_space">You can free up %1$s by removing duplicates</string>
+    <string name="delete_all_files">Delete All (%1$d files)</string>
+    <string name="rescan">Rescan</string>
+    <string name="copies_each">%1$d copies • %2$s each</string>
+    <string name="can_free">Can free: %1$s</string>
+    <string name="keep">✓ Keep</string>
+    <string name="delete_duplicate">✗ Delete</string>
+    <string name="storage_permission_required">Storage Permission Required</string>
+    <string name="file_manager_manage_storage_permission">File Manager needs access to manage all files to browse your folders and files.</string>
+    <string name="file_manager_storage_permission">File Manager needs storage permission to browse your folders and files.</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="register_device">Register Device</string>
+    <string name="connecting_to_server">Connecting to server…</string>
+    <string name="grant_permissions">Grant Permissions</string>
+    <string name="allow_app_usage_access">Allow app usage access</string>
+    <string name="reward_price_coins">Price: %1$d coins</string>
+    <string name="reward_stock_available">Stock: %1$d available</string>
+    <string name="out_of_stock">Out of stock</string>
+    <string name="reward_category">Category: %1$s</string>
+    <string name="claim_reward">Claim Reward</string>
+    <string name="name">Name</string>
+    <string name="email">Email</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="upi_id">UPI ID</string>
+    <string name="postal_code">Postal Code</string>
+    <string name="save_details_for_future">Save details for future reference</string>
+    <string name="quick_actions">Quick actions</string>
+    <string name="launch">Launch</string>
+    <string name="set_timer">Set timer</string>
+    <string name="block">Block</string>
+    <string name="settings">Settings</string>
+    <string name="recover_notification">Recover Notification</string>
+    <string name="control_center_add_person_description">Add a person who can view your AppTime and location. You can manage access anytime.</string>
+    <string name="control_center_extend_or_revoke_access">Extend access duration or revoke access</string>
+    <string name="you_have_access_to_users">You can view this user’s activity</string>
+    <string name="tap_to_view_details">Tap to view details</string>
+    <string name="transaction_history">Transaction History</string>
+    <string name="no_transactions_found">No transactions found</string>
+    <string name="expiring_coins_warning">%1$d coins will expire soon, please use as soon as possible.</string>
+    <string name="coins_spent_format">-%1$d coins</string>
+    <string name="storage_used_total">%1$.1f GB / %2$.1f GB</string>
+    <string name="storage_available">%1$.1f GB available</string>
+    <string name="selected_count">%1$d selected</string>
+    <string name="select_all">Select All</string>
+    <string name="clear">Clear</string>
+    <string name="delete">Delete</string>
+    <string name="no_files_found">No files found</string>
+    <string name="selected">Selected</string>
+    <string name="not_selected">Not selected</string>
+    <string name="folder">Folder</string>
+    <string name="file">File</string>
+    <string name="delete_file_question">Delete File?</string>
+    <string name="delete_folder_question">Delete Folder?</string>
+    <string name="delete_confirmation_message">Are you sure you want to delete \"%1$s\"? This action cannot be undone.</string>
+    <string name="navigate">Navigate</string>
+    <string name="file_size_bytes">%1$d B</string>
+    <string name="file_size_kb">%1$.1f KB</string>
+    <string name="file_size_mb">%1$.1f MB</string>
+    <string name="file_size_gb">%1$.1f GB</string>
+
+    <!-- App Lock Screen -->
+    <string name="permission_required">Permission Required</string>
+    <string name="app_lock_all">All</string>
+    <string name="app_lock_locked_apps">Locked apps</string>
+    <string name="app_lock_search">Search</string>
+    <string name="app_lock_loading_apps">Loading apps…</string>
+    <string name="app_lock_no_apps_found">No apps found</string>
+    <string name="app_lock_no_locked_apps">No locked apps</string>
+    <string name="app_lock_locked">Locked</string>
+    <string name="app_lock_unlocked">Unlocked</string>
+    <string name="notification_permission_required">Notification Permission Required</string>
+
+    <!-- Battery Health -->
+    <string name="battery_health">Battery Health</string>
+
+    <!-- Usage Summary Card -->
+    <string name="todays_total">Today\'s Screen Time</string>
+    <string name="more_than_yesterday">%s More than yesterday</string>
+    <string name="less_than_yesterday">%s Less than yesterday</string>
+    <string name="edit_daily_goal">Edit daily goal</string>
+    <string name="increased">Increased</string>
+    <string name="decreased">Decreased</string>
+    <string name="daily_goal">Daily Goal</string>
+    <string name="notifications">Notifications</string>
+
+    <!-- Daily Goal Bottom Sheet -->
+    <string name="set_daily_goal">Set Daily Goal</string>
+    <string name="enter_daily_goal_description">Enter your daily screen time goal in hours</string>
+    <string name="daily_goal_hours">Daily Goal (hours)</string>
+    <string name="daily_goal_invalid_number">Daily goal must be between 1 and 24 hours</string>
+    <string name="daily_goal_exceeds_limit">Daily goal must be between 1 and 24 hours</string>
+
+    <!-- Search Screen -->
+    <string name="search_user_placeholder">@ Search User name …</string>
+    <string name="please_wait">Please wait…</string>
+    <string name="no_users_found">No users found</string>
+    <string name="search_results">Search Results</string>
+
+    <!-- Category Usage -->
+    <string name="category_usage">Category Usage</string>
+
+    <string name="preparing_your_app_experience">Preparing your app experience…</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_statistics">Statistics</string>
+    <string name="nav_leaderboard">Leaderboard</string>
+    <string name="nav_challenges">Challenges</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_wallpaper">Wallpaper</string>
+
+    <!-- Leaderboard Screen -->
+    <string name="daily">Daily</string>
+    <string name="weekly">Weekly</string>
+    <string name="hola">Hola,</string>
+    <string name="welcome">Welcome</string>
+    <string name="error_loading_leaderboard_fallback">Error loading leaderboard</string>
+    <string name="you">You</string>
+    <string name="you_are_ranked">You’re ranked #%1$d</string>
+    <string name="screen_time_value">Screen time: %1$s</string>
+
+
+</resources>

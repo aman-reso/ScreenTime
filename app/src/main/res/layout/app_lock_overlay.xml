@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlay_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="32dp"
+    android:fitsSystemWindows="false">
+
+    <ImageView
+        android:id="@+id/privacy_icon"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginBottom="32dp"
+        android:contentDescription="App Locked"
+        android:src="@drawable/rounded_privacy_24"
+        android:tint="#FFFFFF" />
+
+    <!-- App Name -->
+    <TextView
+        android:id="@+id/app_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="48dp"
+        android:text="App Name"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/oxanium_medium" />
+
+    <!-- PIN Circles Container -->
+    <LinearLayout
+        android:id="@+id/pin_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="64dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/pin_circle_1"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_margin="16dp"
+            android:src="@drawable/pin_circle_empty" />
+
+        <ImageView
+            android:id="@+id/pin_circle_2"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_margin="16dp"
+            android:src="@drawable/pin_circle_empty" />
+
+        <ImageView
+            android:id="@+id/pin_circle_3"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_margin="16dp"
+            android:src="@drawable/pin_circle_empty" />
+
+        <ImageView
+            android:id="@+id/pin_circle_4"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_margin="16dp"
+            android:src="@drawable/pin_circle_empty" />
+    </LinearLayout>
+
+    <!-- Error Message -->
+    <TextView
+        android:id="@+id/error_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:text=""
+        android:textColor="#FF6B6B"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:gravity="center"
+        android:fontFamily="@font/tasaexplorer_semibold" />
+
+    <!-- Custom Numeric Keypad -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Row 1: 1, 2, 3 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btn_1"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="1"
+                android:textColor="#000000"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/oxanium_medium"
+                style="@android:style/Widget.Material.Button.Borderless" />
+
+            <Button
+                android:id="@+id/btn_2"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="2"
+                android:textColor="#000000"
+                android:fontFamily="@font/oxanium_medium"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+
+            <Button
+                android:id="@+id/btn_3"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="3"
+                android:textColor="#000000"
+                android:textSize="32sp"
+                android:fontFamily="@font/oxanium_medium"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+        </LinearLayout>
+
+        <!-- Row 2: 4, 5, 6 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btn_4"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="4"
+                android:fontFamily="@font/oxanium_medium"
+                android:textColor="#000000"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+
+            <Button
+                android:id="@+id/btn_5"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="5"
+                android:fontFamily="@font/oxanium_medium"
+                android:textColor="#000000"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+
+            <Button
+                android:id="@+id/btn_6"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="6"
+                android:fontFamily="@font/oxanium_medium"
+                android:textColor="#000000"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+        </LinearLayout>
+
+        <!-- Row 3: 7, 8, 9 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btn_7"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="7"
+                android:fontFamily="@font/oxanium_medium"
+                android:textColor="#000000"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+
+            <Button
+                android:id="@+id/btn_8"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="8"
+                android:fontFamily="@font/oxanium_medium"
+                android:textColor="#000000"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+
+            <Button
+                android:id="@+id/btn_9"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="9"
+                android:fontFamily="@font/oxanium_medium"
+                android:textColor="#000000"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+        </LinearLayout>
+
+        <!-- Row 4: Empty, 0, Delete -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <View
+                android:layout_width="72dp"
+                android:layout_height="72dp" />
+
+            <Button
+                android:id="@+id/btn_0"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="0"
+                android:fontFamily="@font/oxanium_medium"
+                android:textColor="#000000"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+
+            <Button
+                android:id="@+id/btn_delete"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/keypad_button_selector"
+                android:text="⌫"
+                android:textColor="#000000"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                style="@android:style/Widget.Material.Button.Borderless" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Cancel Button -->
+    <Button
+        android:id="@+id/btn_cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:background="@android:color/transparent"
+        android:padding="16dp"
+        android:text="@string/cancel"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/oxanium_medium"
+        style="@android:style/Widget.Material.Button.Borderless" />
+
+</LinearLayout>
+

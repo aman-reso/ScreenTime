@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "features": {
+    "challenges": true,
+    "rewards": true,
+    "wallpaper": true,
+    "leaderboard": true,
+    "focus_mode": true,
+    "app_lock": true
+  },
+  "settings": {
+    "min_sync_interval_seconds": 300,
+    "max_retry_attempts": 3,
+    "cache_expiration_hours": 24
+  },
+  "ui": {
+    "show_ads": false,
+    "enable_dark_mode": true,
+    "default_theme": "system"
+  },
+  "api": {
+    "timeout_seconds": 30,
+    "retry_delay_seconds": 2
+  }
+}
+

@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Rounded background -->
+    <path
+        android:fillColor="#3B82F6"
+        android:pathData="M8,2h8c3.31,0 6,2.69 6,6v8c0,3.31 -2.69,6 -6,6H8c-3.31,0 -6,-2.69 -6,-6V8c0,-3.31 2.69,-6 6,-6z"/>
+    <!-- Briefcase icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,8h-1V6c0,-1.1 -0.9,-2 -2,-2h-2c-1.1,0 -2,0.9 -2,2v2H8c-1.1,0 -2,0.9 -2,2v6c0,1.1 0.9,2 2,2h8c1.1,0 2,-0.9 2,-2v-6c0,-1.1 -0.9,-2 -2,-2zM11,6h2v2h-2V6zM16,16H8v-5h8v5z"/>
+</vector>

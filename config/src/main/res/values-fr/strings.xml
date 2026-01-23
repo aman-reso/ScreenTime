@@ -1,0 +1,431 @@
+<resources>
+    <!-- App Name -->
+    <string name="app_name">AppTime</string>
+    <string name="widget_description">Surveillez votre temps d\'écran quotidien et l\'utilisation des applications</string>
+    <string name="set_widget">Configurer le widget</string>
+
+    <!-- Common Actions -->
+    <string name="close">Fermer</string>
+    <string name="dismiss">Rejeter</string>
+    <string name="retry">Réessayer</string>
+    <string name="try_again">Réessayer</string>
+    <string name="cancel">Annuler</string>
+    <string name="error">Erreur</string>
+    <string name="coming_soon">Bientôt disponible</string>
+
+    <!-- Theme Selection Dialog -->
+    <string name="select_theme">Sélectionner le thème</string>
+    <string name="theme_light">Clair</string>
+    <string name="theme_dark">Sombre</string>
+    <string name="theme_system">Système</string>
+
+    <!-- Language Selection Dialog -->
+    <string name="select_language">Sélectionner la langue</string>
+    <string name="language_english">Anglais</string>
+    <string name="language_hindi">Hindi</string>
+    <string name="language_bengali">Bengali</string>
+
+    <!-- Profile Screen -->
+    <string name="one_time_password">Mot de passe à usage unique</string>
+    <string name="otp_regenerate_message">Ce code se régénère toutes les 60 secondes.</string>
+    <string name="theme">Thème</string>
+    <string name="language">Langue</string>
+    <string name="profile">Profil</string>
+    <string name="edit_profile">Modifier le profil</string>
+    <string name="username_min_length_error">Le nom d\'utilisateur doit contenir au moins 3 caractères</string>
+    <string name="privacy_policy">Politique de confidentialité</string>
+    <string name="terms_of_service">Conditions d\'utilisation</string>
+    <string name="about">À propos</string>
+    <string name="about_app">À propos de l\'application</string>
+    <string name="share_app">Partager l\'application</string>
+    <string name="help_support">Aide et support</string>
+    <string name="appearance">Apparence</string>
+    <string name="features">Fonctionnalités</string>
+    <string name="set_wallpaper">Définir le fond d\'écran</string>
+    <string name="restriction">Restriction</string>
+    <string name="admin">Administrateur</string>
+    <string name="app_blocking">Blocage d\'applications</string>
+    <string name="app_blocking_permissions_title">Autorisations de blocage d\'applications</string>
+    <string name="app_blocking_permissions_description">Pour activer le blocage d\'applications, nous avons besoin des autorisations suivantes pour garantir que votre concentration est protégée.</string>
+    <string name="accessibility_service_title">Service d\'accessibilité</string>
+    <string name="accessibility_service_description">Requis pour détecter le lancement et l\'utilisation des applications.</string>
+    <string name="display_overlay_title">Afficher au-dessus des autres applications</string>
+    <string name="display_overlay_description">Requis pour afficher la superposition de blocage lorsque les limites sont dépassées.</string>
+    <string name="app_lock_overlay_description">Requis pour afficher la superposition d\'écran de verrouillage lorsque les applications verrouillées sont accessibles.</string>
+    <string name="permission_granted">Accordé</string>
+    <string name="permission_action_required">Action requise</string>
+    <string name="continue_label">Continuer</string>
+    <string name="shorts_blocking">Blocage des vidéos courtes</string>
+    <string name="website_blocking">Blocage de sites web</string>
+    <string name="ad_blocking">Blocage des publicités</string>
+    <string name="ad_blocking_description">Bloquer les publicités et les traqueurs</string>
+    <string name="block_app">Bloquer l\'application</string>
+    <string name="set_app_limit">Définir la limite d\'application</string>
+    <string name="set_app_launch_limit">Définir la limite de lancement d\'application</string>
+    <string name="app_lock">Verrouillage d\'application</string>
+    <string name="app_lock_permissions_title">Autorisations de verrouillage d\'application</string>
+    <string name="app_lock_permissions_description">Pour activer le verrouillage d\'application, nous avons besoin des autorisations suivantes pour protéger vos applications.</string>
+    <string name="usage_access_title">Accès à l\'utilisation</string>
+    <string name="usage_access_description">Requis pour détecter quelle application est actuellement utilisée.</string>
+    <string name="app_restrictions">Restrictions d\'application</string>
+    
+    <!-- Focus Mode -->
+    <string name="all_day_focus_mode">Mode concentration toute la journée</string>
+    <string name="all_day_focus_description">Le minuteur ne se réinitialisera pas lors du changement d\'applications</string>
+    <string name="session_time">Temps de session</string>
+    <string name="total_day_time">Total aujourd\'hui</string>
+    <string name="countdown_mode">Mode compte à rebours</string>
+    <string name="countdown_mode_description">Minuteur Pomodoro de 25 minutes</string>
+    <string name="session_duration">Durée de session</string>
+    <string name="session_duration_description">Définir la durée de la session de concentration en minutes</string>
+    <string name="minutes">minutes</string>
+    <string name="focus_history">Historique de concentration</string>
+    <string name="no_history">Aucune session de concentration pour le moment</string>
+    <string name="completed">Terminé</string>
+    <string name="duration">Durée</string>
+    <string name="failed_to_load_profile">Échec du chargement du profil : %1$s</string>
+    <string name="failed_to_update_profile">Échec de la mise à jour du profil : %1$s</string>
+    <string name="failed_to_update_consent">Échec de la mise à jour du consentement : %1$s</string>
+    <string name="failed_to_clear_profile">Échec de l\'effacement du profil : %1$s</string>
+    <string name="failed_to_load_weekly_data">Échec du chargement des données hebdomadaires : %1$s</string>
+
+    <!-- Landing Screen -->
+    <string name="today_screen_time">Temps d\'écran d\'aujourd\'hui</string>
+    <string name="good_morning">Bonjour ☀️</string>
+    <string name="good_afternoon">Bon après-midi 🌤️</string>
+    <string name="good_evening">Bonsoir 🌇</string>
+    <string name="good_night">Bonne nuit 🌙</string>
+
+    <!-- Weekly Usage Chart -->
+    <string name="this_week">Cette semaine</string>
+    <string name="per_day_avg">%1$dm par jour</string>
+    <string name="minutes_format">%1$dm</string>
+
+    <!-- Statistics Screen -->
+    <string name="no_data_available">Aucune donnée disponible</string>
+    <string name="no_app_usage_for_day">Aucune utilisation d\'application pour ce jour</string>
+
+    <!-- App Detail Screen -->
+    <string name="weekly_screen_time">Temps d\'écran hebdomadaire</string>
+    <string name="weekly_network_usage">Utilisation réseau hebdomadaire</string>
+    <string name="actions">Actions</string>
+    <string name="launch_app">Ouvrir l\'application</string>
+    <string name="set_app_timer">Définir le minuteur d\'application</string>
+    <string name="block_for_minutes">Bloquer pendant 5 min</string>
+    <string name="internet_access">Accès Internet</string>
+    <string name="app_settings">Paramètres de l\'application</string>
+    <string name="failed_to_load_app_usage">Échec du chargement des données d\'utilisation de l\'application : %1$s</string>
+    <string name="failed_to_load_usage_data">Échec du chargement des données d\'utilisation : %1$s</string>
+    <string name="permission_denied">Autorisation refusée : %1$s</string>
+
+    <!-- App Usage Card -->
+    <string name="zero_bytes">0 octets</string>
+
+    <!-- AppPermissionCard Strings -->
+    <string name="permissions_required">Autorisation d\'utilisation d\'application requise</string>
+    <string name="permissions_card_description">ScreenTime a besoin des autorisations suivantes pour suivre votre utilisation des applications :</string>
+
+    <!-- Detailed Permission Explanation -->
+    <string name="permission_explanation_title">Pourquoi nous avons besoin des données d\'utilisation d\'application</string>
+    <string name="permission_explanation_detail">Pour vous fournir des informations précises sur vos habitudes numériques, ScreenTime nécessite l\'accès à vos statistiques d\'utilisation d\'applications. Cette autorisation nous permet de suivre quelles applications vous utilisez et combien de temps vous passez sur chacune.</string>
+
+    <string name="permission_why_required">Pourquoi cette autorisation est essentielle</string>
+    <string name="permission_why_required_detail">Sans cette autorisation, nous ne pouvons pas mesurer avec précision votre temps d\'écran, identifier vos applications les plus utilisées ou fournir des informations significatives sur votre bien-être numérique. Ces données sont la base de toutes les fonctionnalités de ScreenTime, y compris les rapports d\'utilisation quotidiens, les tendances d\'utilisation des applications et les recommandations personnalisées.</string>
+
+    <string name="permission_what_we_track">Ce que nous suivons</string>
+    <string name="permission_what_we_track_detail">Nous suivons uniquement les informations essentielles : les noms des applications, la durée d\'utilisation et les horodatages. Nous n\'accédons PAS à vos données personnelles, messages, mots de passe ou toute information sensible dans les applications. Votre confidentialité est notre priorité absolue.</string>
+
+    <string name="permission_privacy_assurance">Votre confidentialité est protégée</string>
+    <string name="permission_privacy_assurance_detail">Toutes les données d\'utilisation sont stockées localement sur votre appareil et ne sont utilisées que pour générer vos rapports personnels de temps d\'écran. Nous ne partageons jamais vos données avec des tiers, et vous pouvez révoquer cette autorisation à tout moment via les paramètres de votre appareil.</string>
+
+    <!-- Permission Item: App Usage -->
+    <string name="permission_usage_stats_title">Accès à l\'utilisation d\'application</string>
+    <string name="permission_usage_stats_description">Suivre quelles applications vous utilisez et pendant combien de temps</string>
+
+    <!-- Permission Item: Notifications -->
+    <string name="permission_notifications_title">Notifications</string>
+    <string name="permission_notifications_description">Afficher les alertes et rappels d\'utilisation</string>
+
+
+    <!-- General Actions -->
+    <string name="action_grant">Accorder</string>
+    <string name="action_allow">Autoriser</string>
+    <string name="permission_granted_symbol">✓</string>
+    <string name="content_description_permissions_icon">Icône des autorisations</string>
+
+    <!-- NetworkCard Strings -->
+    <string name="network_card_title">Réseau</string>
+    <string name="network_wifi_label">WiFi</string>
+    <string name="network_cellular_label">Cellulaire</string>
+    <string name="content_description_network_icon">Icône de type de réseau</string>
+
+    <!-- Consent Bottom Sheet -->
+    <string name="privacy_consent">Confidentialité et consentement</string>
+
+    <!-- TOTP Verification -->
+    <string name="verify_totp">Vérifier TOTP</string>
+    <string name="enter_otp">Entrer OTP</string>
+    <string name="verify">Vérifier</string>
+    <string name="verifying">Vérification…</string>
+    <string name="enter_otp_for_user">Entrez le code OTP pour %1$s pour vérifier</string>
+    <string name="enter_otp_to_verify">Entrez le code OTP pour vérifier</string>
+    <string name="otp_code_description">Ce code vous permet de partager en toute sécurité votre utilisation d\'application avec une personne de confiance. Il se régénère toutes les 60 secondes et ne peut être utilisé que dans ce but.</string>
+    <string name="remaining_seconds">%1$d s</string>
+    
+    <!-- Widget -->
+    <string name="screen_time">Temps d\'écran</string>
+    <string name="network_usage">Utilisation réseau</string>
+    <string name="refresh">Actualiser</string>
+    <string name="no_app_data_available">Aucune donnée d\'application disponible</string>
+    
+    <!-- Leaderboard -->
+    <string name="no_leaderboard_data_available">Aucune donnée de classement disponible</string>
+    
+    <!-- Consent -->
+    <string name="no_consents_available">Aucun consentement disponible</string>
+    
+    <!-- Widget Setup -->
+    <string name="widget_setup_message">Veuillez appuyer longuement sur l\'écran d\'accueil et sélectionner Widgets pour ajouter le widget Temps d\'écran</string>
+    
+    <!-- Notification Permission Warning -->
+    <string name="notification_permission_required">Autorisation de notification requise</string>
+    <string name="notification_permission_warning_message">Veuillez activer l\'autorisation de notification dans les paramètres pour recevoir des alertes et rappels</string>
+    <string name="enable">Activer</string>
+    
+    <!-- Username Editing -->
+    <string name="edit_username">Modifier le nom d\'utilisateur</string>
+    <string name="username">Nom d\'utilisateur</string>
+    <string name="enter_username">Entrer le nom d\'utilisateur</string>
+    <string name="save">Enregistrer</string>
+    <string name="username_change_description">Changer le nouveau nom d\'utilisateur sera visible pour tous</string>
+    <string name="failed_to_update_username">Échec de la mise à jour du nom d\'utilisateur : %1$s</string>
+    <string name="username_already_taken">Le nom d\'utilisateur est déjà pris. Veuillez choisir un nom d\'utilisateur différent.</string>
+    
+    <!-- Permission Dialog -->
+    <string name="permission_required">Autorisation requise</string>
+    <string name="usage_access_permission_message">Pour suivre avec précision votre temps d\'écran, cette application nécessite l\'autorisation d\'accès à l\'utilisation. Veuillez l\'activer dans les paramètres.</string>
+    <string name="open_settings">Ouvrir les paramètres</string>
+    
+    <!-- Statistics Screen -->
+    <string name="activity">Activité</string>
+    
+    <!-- Help & Support -->
+    <string name="help_support_description">Nous sommes là pour vous aider ! Si vous avez des questions, des problèmes ou des commentaires, veuillez nous contacter en utilisant l\'e-mail ci-dessous.</string>
+    <string name="email_support">Support par e-mail</string>
+    <string name="send_your_query">Envoyer votre demande</string>
+    <string name="send_query_description">Cliquez sur la carte e-mail ci-dessus pour ouvrir votre client de messagerie et nous envoyer votre demande. Nous répondons généralement dans les 24 à 48 heures.</string>
+    
+    <!-- Consent -->
+    <string name="privacy_consent_description">Nous valorisons votre confidentialité et souhaitons être transparents sur la façon dont nous utilisons vos données. Veuillez examiner et accepter ce qui suit :</string>
+    <string name="allow_screentime_access">Autoriser ScreenTime à accéder à votre utilisation d\'application</string>
+    <string name="screentime_data_collection">ScreenTime collecte et utilise vos données d\'utilisation d\'application et votre liste d\'applications installées pour afficher votre utilisation quotidienne, l\'historique d\'activité des applications et les informations sur le temps d\'écran.</string>
+    <string name="data_usage_disclosure">Ces données sont utilisées uniquement pour afficher vos informations d\'utilisation et ne sont pas partagées avec des tiers.</string>
+    <string name="deny">Refuser</string>
+    <string name="submitting">Envoi…</string>
+    
+    <!-- Consent Items -->
+    <string name="consent_data_collection">Collecte de données</string>
+    <string name="consent_data_collection_description">Nous collectons vos données d\'utilisation d\'application pour fournir des informations et statistiques sur le temps d\'écran.</string>
+    <string name="consent_data_sharing">Partage de données</string>
+    <string name="consent_data_sharing_description">Vos données peuvent être partagées avec des services tiers à des fins d\'analyse et d\'amélioration.</string>
+    <string name="consent_analytics">Analyses</string>
+    <string name="consent_analytics_description">Nous utilisons des analyses pour comprendre comment vous utilisez l\'application et améliorer nos services.</string>
+    
+    <!-- Common UI States -->
+    <string name="loading">Chargement…</string>
+    <string name="failed_to_load_consents">Échec du chargement des consentements</string>
+    <string name="failed_to_submit_consents">Échec de l\'envoi des consentements</string>
+    <string name="accept">Accepter</string>
+    
+    <!-- App Usage Detail -->
+    <string name="usage_insight">Informations d\'utilisation</string>
+    <string name="usage_insight_description">Suivez vos modèles d\'utilisation d\'application et définissez des limites pour maintenir un équilibre numérique sain.</string>
+    
+    <!-- Challenges -->
+    <string name="challenges">Défis</string>
+    <string name="joined">Rejoint</string>
+    <string name="current">Actuel</string>
+    <string name="expired">Expiré</string>
+    <string name="all">Tous</string>
+    <string name="fitness">Fitness</string>
+    <string name="mindfulness">Pleine conscience</string>
+    <string name="coding">Programmation</string>
+    <string name="featured_challenge">Défi en vedette</string>
+    <string name="trending_now">Tendances maintenant</string>
+    <string name="special_events">Événements spéciaux</string>
+    <string name="quick_join">Rejoindre rapidement</string>
+    <string name="no_current_challenges">Aucun défi actuel</string>
+    <string name="no_expired_challenges">Aucun défi expiré</string>
+    <string name="no_active_challenges_message">Vous n\'avez aucun défi actif pour le moment.</string>
+    <string name="no_expired_challenges_message">Vous n\'avez aucun défi expiré.</string>
+
+    <!-- Coin History -->
+    <string name="coin_history_title">Historique des pièces</string>
+    <string name="earned">Gagné</string>
+    <string name="used">Utilisé</string>
+    <string name="no_transactions">Aucune transaction trouvée</string>
+    <string name="see_detail">Voir les détails</string>
+    <string name="search">Rechercher</string>
+    <string name="usage_detail_insight">Informations détaillées d\'utilisation</string>
+    <string name="app_wise">Par application</string>
+    <string name="recover_deleted_notifications">Récupérer les notifications supprimées</string>
+    <string name="please_allow_consents">Veuillez autoriser les autorisations d\'utilisation d\'application et les consentements pour rejoindre les défis</string>
+    <string name="enable_notification_access_recovery">Veuillez activer l\'accès aux notifications pour récupérer les notifications supprimées</string>
+    
+    <!-- Device Admin Policy -->
+    <string name="device_admin_policy">Politique d\'administration d\'appareil</string>
+    <string name="device_admin_policy_description">La politique d\'administration d\'appareil permet des fonctionnalités améliorées de gestion d\'appareil pour un meilleur contrôle sur les paramètres et restrictions de votre appareil. Cette fonctionnalité est optionnelle et peut être désactivée à tout moment.</string>
+    <string name="device_admin_policy_explanation">ScreenTime utilise l\'administration d\'appareil pour fournir des fonctionnalités de mode concentration comme le verrouillage de votre écran et la désactivation temporaire de la caméra pendant les sessions de concentration. Cela vous aide à rester concentré et à réduire les distractions. Vous pouvez désactiver cette fonctionnalité à tout moment depuis les paramètres.</string>
+    <string name="device_admin_policy_info">La politique d\'administration d\'appareil fournit des fonctionnalités de mode concentration comme le verrouillage d\'écran et le contrôle de la caméra. C\'est complètement optionnel et vous pouvez le désactiver à tout moment depuis cet écran ou depuis Paramètres Android > Sécurité > Applications d\'administration d\'appareil. ScreenTime ne vous empêchera jamais de désinstaller l\'application ou de désactiver l\'administration d\'appareil.</string>
+    <string name="device_admin_active">Administration d\'appareil active</string>
+    <string name="device_admin_inactive">Administration d\'appareil inactive</string>
+    <string name="device_admin_active_description">La politique d\'administration d\'appareil est actuellement active. Vous avez des capacités améliorées de gestion d\'appareil activées.</string>
+    <string name="device_admin_inactive_description">La politique d\'administration d\'appareil n\'est pas active. Activez-la pour accéder aux fonctionnalités avancées de gestion d\'appareil.</string>
+    <string name="enable_device_admin">Activer l\'administration d\'appareil</string>
+    <string name="disable_device_admin">Désactiver l\'administration d\'appareil</string>
+    <string name="device_admin_disable_warning">La désactivation de l\'administration d\'appareil supprimera les fonctionnalités améliorées de gestion d\'appareil. Êtes-vous sûr de vouloir continuer ?</string>
+    
+    <!-- Device Admin Actions -->
+    <string name="device_admin_actions">Actions d\'administration d\'appareil</string>
+    <string name="device_admin_actions_description">Utilisez ces fonctionnalités pour gérer votre appareil. Ces actions nécessitent que l\'administration d\'appareil soit activée.</string>
+    <string name="lock_screen">Verrouiller l\'écran</string>
+    <string name="lock_screen_confirmation">Cela verrouillera immédiatement l\'écran de votre appareil. Continuer ?</string>
+    <string name="disable_camera">Désactiver la caméra</string>
+    <string name="enable_camera">Activer la caméra</string>
+    <string name="disable_camera_confirmation">Cela désactivera la caméra sur votre appareil. Vous pourrez l\'activer à nouveau plus tard.</string>
+    <string name="enable_camera_confirmation">Cela activera la caméra sur votre appareil.</string>
+    <string name="unfortunately_this_content_is_blocked_please_take_a_break_or_try_again_later">Malheureusement, ce contenu est bloqué. Veuillez faire une pause ou réessayer plus tard.</string>
+
+    <!-- Challenge Sync -->
+    <string name="last_sync">Dernière synchronisation</string>
+    <string name="never_synced">Jamais synchronisé</string>
+    <string name="sync_now">Synchroniser maintenant</string>
+    <string name="syncing">Synchronisation…</string>
+    
+    <!-- Control Center -->
+    <string name="control_center">Centre de contrôle</string>
+    <string name="who_can_see_timeline">Qui peut voir votre chronologie</string>
+    <string name="allowed_usernames">Noms d\'utilisateur autorisés</string>
+    <string name="add_username">Ajouter un nom d\'utilisateur</string>
+    <string name="remove">Supprimer</string>
+    <string name="no_allowed_users">Aucun utilisateur autorisé pour le moment. Ajoutez des noms d\'utilisateur pour contrôler qui peut voir votre chronologie.</string>
+    <string name="username_added">Nom d\'utilisateur ajouté avec succès</string>
+    <string name="username_removed">Nom d\'utilisateur supprimé avec succès</string>
+    <string name="failed_to_add_username">Échec de l\'ajout du nom d\'utilisateur</string>
+    <string name="failed_to_remove_username">Échec de la suppression du nom d\'utilisateur</string>
+    <string name="select_duration">Sélectionner la durée</string>
+    <string name="duration_1_hour">1 heure</string>
+    <string name="duration_6_hours">6 heures</string>
+    <string name="duration_1_day">1 jour</string>
+    <string name="duration_permanent">Permanent</string>
+    <string name="expires_at">Expire à</string>
+    <string name="permanent_access">Accès permanent</string>
+    <string name="manage">Gérer</string>
+    <string name="grant_permanent">Accorder permanent</string>
+    <string name="for_this_week">Pour cette semaine</string>
+    <string name="duration_24_hours">24 heures</string>
+    <string name="update_duration">Mettre à jour la durée</string>
+    <string name="manage_location">Gérer l\'emplacement</string>
+    <string name="location_details">Détails de l\'emplacement</string>
+    <string name="current_location">Emplacement actuel</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="last_updated">Dernière mise à jour</string>
+    <string name="share_location">Partager l\'emplacement</string>
+    <string name="fetching_location">Récupération de l\'emplacement…</string>
+    <string name="location_not_available">Emplacement non disponible</string>
+    <string name="enable_location_sharing">Activer le partage d\'emplacement</string>
+    
+    <!-- Network Health Section -->
+    <string name="network_health">Santé du réseau</string>
+    <string name="wifi">WiFi</string>
+    <string name="mobile_data">Données mobiles</string>
+    <string name="ethernet">Ethernet</string>
+    <string name="vpn">VPN</string>
+    <string name="no_connection">Aucune connexion</string>
+    <string name="network_information">Informations réseau</string>
+    <string name="connection_type">Type de connexion</string>
+    <string name="ip_address">Adresse IP</string>
+    <string name="na">N/D</string>
+    <string name="not_connected">Non connecté</string>
+    <string name="connected">Connecté</string>
+    <string name="excellent">Excellent</string>
+    <string name="good">Bon</string>
+    <string name="fair">Moyen</string>
+    <string name="poor">Faible</string>
+    <string name="network_status">État du réseau</string>
+    <string name="signal_strength">Force du signal</string>
+    <string name="wifi_network">Réseau WiFi</string>
+    <string name="network_operator">Opérateur réseau</string>
+    <string name="unknown_wifi">WiFi inconnu</string>
+    <string name="unknown_operator">Opérateur inconnu</string>
+    <string name="connection_details">Détails de connexion</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+    <string name="roaming">Itinérance</string>
+    <string name="active">Actif</string>
+    <string name="inactive">Inactif</string>
+    <string name="connection">Connexion</string>
+    <string name="network_speed">Vitesse du réseau</string>
+    <string name="total_download">Téléchargement total</string>
+    <string name="total_upload">Téléversement total</string>
+    <string name="wifi_download">Téléchargement WiFi</string>
+    <string name="wifi_upload">Téléversement WiFi</string>
+    <string name="mobile_download">Téléchargement mobile</string>
+    <string name="mobile_upload">Téléversement mobile</string>
+    <string name="esim_compatibility">Compatibilité eSIM</string>
+    <string name="device_support">Support de l\'appareil</string>
+    <string name="supported">Pris en charge</string>
+    <string name="not_supported">Non pris en charge</string>
+    <string name="status">État</string>
+    
+    <!-- Additional Strings -->
+    <string name="made_with_love_india">Fait avec ❤️ en Inde</string>
+    <string name="share_app_chooser">Partager l\'application</string>
+    <string name="share_app_message">Découvrez %1$s - Suivez votre temps d\'écran et gérez votre utilisation d\'applications !\n\n%2$s</string>
+    <string name="share_app_subject">Découvrez %1$s</string>
+    <string name="device_not_registered">Appareil non enregistré</string>
+    <string name="failed_to_fetch_location">Échec de la récupération de l\'emplacement</string>
+    <string name="failed_to_update_location">Échec de la mise à jour de l\'emplacement</string>
+    <string name="failed_to_update_share_location">Échec de la mise à jour du partage d\'emplacement</string>
+    <string name="failed_to_load_coin_history">Échec du chargement de l\'historique des pièces</string>
+    <string name="unknown">Inconnu</string>
+    
+    <!-- Reward Components -->
+    <string name="total_earned_points">POINTS TOTAUX GAGNÉS</string>
+    <string name="points">POINTS</string>
+    <string name="rupees">ROUPIES</string>
+    <string name="voucher_details">Détails du bon</string>
+    <string name="claim">Réclamer</string>
+    <string name="confirm_claim">Confirmer la réclamation</string>
+    <string name="confirm_claim_message">Êtes-vous sûr de vouloir procéder à cette réclamation ?</string>
+    <string name="confirm">Confirmer</string>
+    <string name="claim_reward">Réclamer la récompense</string>
+    <string name="name">Nom</string>
+    <string name="phone_number">Numéro de téléphone</string>
+    <string name="pincode">Code postal</string>
+    <string name="address">Adresse</string>
+    <string name="proceed_next">Continuer suivant</string>
+    
+    <!-- Record Components -->
+    <string name="no_usage_records_found">Aucun enregistrement d\'utilisation trouvé</string>
+    <string name="usage_summary">Résumé d\'utilisation</string>
+    
+    <!-- Battery Components -->
+    <string name="battery_information_unavailable">Informations sur la batterie non disponibles</string>
+    <string name="battery_information">Informations sur la batterie</string>
+    <string name="battery_level">Niveau de batterie</string>
+    <string name="battery_status">État de la batterie</string>
+    <string name="health">Santé</string>
+    <string name="electric_current">Courant électrique</string>
+    <string name="current_ma">Courant : %1$d mA</string>
+    <string name="max_ma">Max : %1$d mA</string>
+    <string name="no_data_available_battery">Aucune donnée disponible</string>
+    <string name="battery_metrics">Métriques de batterie</string>
+    <string name="temperature">Température</string>
+    <string name="discharge_rate">Taux de décharge</string>
+    <string name="battery_usage_by_app">Utilisation de la batterie par application</string>
+    
+    <!-- TOTP -->
+    <string name="totp_countdown">Compte à rebours TOTP</string>
+</resources>

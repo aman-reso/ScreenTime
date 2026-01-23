@@ -1,0 +1,587 @@
+<resources>
+    <!-- App Name -->
+    <string name="app_name">AppTime</string>
+    <string name="widget_description">Überwachen Sie Ihre tägliche Bildschirmzeit und App-Nutzung</string>
+    <string name="set_widget">Widget einrichten</string>
+
+    <!-- Common Actions -->
+    <string name="close">Schließen</string>
+    <string name="dismiss">Verwerfen</string>
+    <string name="retry">Wiederholen</string>
+    <string name="try_again">Erneut versuchen</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="error">Fehler</string>
+    <string name="coming_soon">Bald verfügbar</string>
+
+    <!-- Usage Summary -->
+    <string name="todays_total">Heutige Bildschirmzeit</string>
+    <string name="more_than_yesterday">%s Mehr als gestern</string>
+    <string name="less_than_yesterday">%s Weniger als gestern</string>
+    <string name="edit_daily_goal">Tägliches Ziel bearbeiten</string>
+    <string name="increased">Erhöht</string>
+    <string name="decreased">Verringert</string>
+
+    <!-- Wallpaper Search -->
+    <string name="new_tab">Neu</string>
+    <string name="search_wallpapers">Hintergrundbilder suchen</string>
+    <string name="search_placeholder">Hintergrundbilder suchen…</string>
+    <string name="clear_search">Suche löschen</string>
+    <string name="search_failed">Suche fehlgeschlagen</string>
+    <string name="no_results_found">Keine Ergebnisse gefunden</string>
+    <string name="try_different_search">Versuchen Sie einen anderen Suchbegriff</string>
+    <string name="search_wallpapers_prompt">Geben Sie einen Suchbegriff ein, um Hintergrundbilder zu finden</string>
+
+    <!-- Theme Selection Dialog -->
+    <string name="select_theme">Thema auswählen</string>
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
+    <string name="theme_system">System</string>
+
+    <!-- Language Selection Dialog -->
+    <string name="select_language">Sprache auswählen</string>
+    <string name="language_english">Englisch</string>
+    <string name="language_hindi">Hindi</string>
+    <string name="language_bengali">Bengalisch</string>
+    <string name="language_tamil">Tamil</string>
+    <string name="language_telugu">Telugu</string>
+    <string name="language_marathi">Marathi</string>
+    <string name="language_gujarati">Gujarati</string>
+    <string name="language_kannada">Kannada</string>
+    <string name="language_malayalam">Malayalam</string>
+    <string name="language_punjabi">Punjabi</string>
+    <string name="language_urdu">Urdu</string>
+    <string name="language_french">Französisch</string>
+    <string name="language_spanish">Spanisch</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_italian">Italienisch</string>
+    <string name="language_dutch">Niederländisch</string>
+    <string name="language_portuguese">Portugiesisch</string>
+    <string name="language_portuguese_brazil">Portugiesisch (Brasilien)</string>
+    <string name="language_russian">Russisch</string>
+    <string name="language_chinese_simplified">Chinesisch (Vereinfacht)</string>
+    <string name="language_chinese_traditional">Chinesisch (Traditionell)</string>
+    <string name="language_japanese">Japanisch</string>
+    <string name="language_korean">Koreanisch</string>
+    <string name="language_indonesian">Indonesisch</string>
+    <string name="language_thai">Thailändisch</string>
+    <string name="language_vietnamese">Vietnamesisch</string>
+    <string name="language_arabic">Arabisch</string>
+    <string name="language_hebrew">Hebräisch</string>
+    <string name="language_persian">Persisch</string>
+
+    <!-- Profile Screen -->
+    <string name="one_time_password">Einmalpasswort</string>
+    <string name="otp_regenerate_message">Dieser Code wird alle 60 Sekunden neu generiert.</string>
+    <string name="theme">Thema</string>
+    <string name="language">Sprache</string>
+    <string name="profile">Profil</string>
+    <string name="edit_profile">Profil bearbeiten</string>
+    <string name="username_min_length_error">Benutzername muss mindestens 3 Zeichen lang sein</string>
+    <string name="privacy_policy">Datenschutzrichtlinie</string>
+    <string name="terms_of_service">Nutzungsbedingungen</string>
+    <string name="about">Über</string>
+    <string name="about_app">Über die App</string>
+    <string name="share_app">App teilen</string>
+    <string name="help_support">Hilfe &amp; Support</string>
+    <string name="appearance">Erscheinungsbild</string>
+    <string name="features">Funktionen</string>
+    <string name="set_wallpaper">Hintergrundbild einstellen</string>
+    <string name="restriction">Einschränkung</string>
+    <string name="admin">Admin</string>
+    <string name="app_blocking">App-Blockierung</string>
+    <string name="app_blocking_permissions_title">Berechtigungen für App-Blockierung</string>
+    <string name="app_blocking_permissions_description">Um die App-Blockierung zu aktivieren, benötigen wir die folgenden Berechtigungen, um Ihren Fokus zu schützen.</string>
+    <string name="accessibility_service_title">Barrierefreiheitsdienst</string>
+    <string name="accessibility_service_description">Erforderlich, um App-Starts und -Nutzung zu erkennen.</string>
+    <string name="display_overlay_title">Über anderen Apps anzeigen</string>
+    <string name="display_overlay_description">Erforderlich, um eine Blockierungsüberlagerung anzuzeigen, wenn Limits überschritten werden.</string>
+    <string name="app_lock_overlay_description">Erforderlich, um eine Sperrbildschirmüberlagerung anzuzeigen, wenn gesperrte Apps aufgerufen werden.</string>
+    <string name="permission_granted">Erteilt</string>
+    <string name="permission_action_required">Aktion erforderlich</string>
+    <string name="continue_label">Fortfahren</string>
+    <string name="shorts_blocking">Shorts-Blockierung</string>
+    <string name="website_blocking">Website-Blockierung</string>
+    <string name="ad_blocking">Werbeblockierung</string>
+    <string name="ad_blocking_description">Werbung und Tracker blockieren</string>
+    <string name="block_app">App blockieren</string>
+    <string name="set_app_limit">App-Limit einstellen</string>
+    <string name="set_app_launch_limit">App-Start-Limit einstellen</string>
+    <string name="app_lock">App-Sperre</string>
+    <string name="file_manager">Dateimanager</string>
+    <string name="app_lock_permissions_title">Berechtigungen für App-Sperre</string>
+    <string name="app_lock_permissions_description">Um die App-Sperre zu aktivieren, benötigen wir die folgenden Berechtigungen, um Ihre Apps zu schützen.</string>
+    <string name="usage_access_title">Nutzungszugriff</string>
+    <string name="usage_access_description">Erforderlich, um zu erkennen, welche App gerade verwendet wird.</string>
+    <string name="app_restrictions">App-Einschränkungen</string>
+
+    <!-- Focus Mode -->
+    <string name="all_day_focus_mode">Ganztägiger Fokusmodus</string>
+    <string name="all_day_focus_description">Timer wird nicht zurückgesetzt, wenn Apps gewechselt werden</string>
+    <string name="session_time">Sitzungszeit</string>
+    <string name="total_day_time">Gesamt heute</string>
+    <string name="countdown_mode">Countdown-Modus</string>
+    <string name="countdown_mode_description">25-minütiger Pomodoro-Timer</string>
+    <string name="session_duration">Sitzungsdauer</string>
+    <string name="session_duration_description">Fokussitzungsdauer in Minuten einstellen</string>
+    <string name="minutes">Minuten</string>
+    <string name="focus_history">Fokusverlauf</string>
+    <string name="no_history">Noch keine Fokussitzungen</string>
+    <string name="completed">Abgeschlossen</string>
+    <string name="duration">Dauer</string>
+    <string name="failed_to_load_profile">Profil konnte nicht geladen werden: %1$s</string>
+    <string name="failed_to_update_profile">Profil konnte nicht aktualisiert werden: %1$s</string>
+    <string name="failed_to_update_consent">Einwilligung konnte nicht aktualisiert werden: %1$s</string>
+    <string name="failed_to_clear_profile">Profil konnte nicht gelöscht werden: %1$s</string>
+    <string name="failed_to_load_weekly_data">Wöchentliche Daten konnten nicht geladen werden: %1$s</string>
+
+    <!-- Landing Screen -->
+    <string name="today_screen_time">Heutige Bildschirmzeit</string>
+    <string name="good_morning">Guten Morgen ☀️</string>
+    <string name="good_afternoon">Guten Nachmittag 🌤️</string>
+    <string name="good_evening">Guten Abend 🌇</string>
+    <string name="good_night">Gute Nacht 🌙</string>
+
+    <!-- Weekly Usage Chart -->
+    <string name="this_week">Diese Woche</string>
+    <string name="per_day_avg">%1$dm pro Tag</string>
+    <string name="minutes_format">%1$dm</string>
+
+    <!-- Statistics Screen -->
+    <string name="no_data_available">Keine Daten verfügbar</string>
+    <string name="no_app_usage_for_day">Keine App-Nutzung für diesen Tag</string>
+
+    <!-- App Detail Screen -->
+    <string name="weekly_screen_time">Wöchentliche Bildschirmzeit</string>
+    <string name="weekly_network_usage">Wöchentliche Netzwerknutzung</string>
+    <string name="actions">Aktionen</string>
+    <string name="launch_app">App starten</string>
+    <string name="set_app_timer">App-Timer einstellen</string>
+    <string name="block_for_minutes">Für 5 Min blockieren</string>
+    <string name="internet_access">Internetzugriff</string>
+    <string name="app_settings">App-Einstellungen</string>
+    <string name="failed_to_load_app_usage">App-Nutzungsdaten konnten nicht geladen werden: %1$s</string>
+    <string name="failed_to_load_usage_data">Nutzungsdaten konnten nicht geladen werden: %1$s</string>
+    <string name="permission_denied">Berechtigung verweigert: %1$s</string>
+
+    <!-- App Usage Card -->
+    <string name="zero_bytes">0 Bytes</string>
+
+    <!-- AppPermissionCard Strings -->
+    <string name="permissions_required">App-Nutzungsberechtigung erforderlich</string>
+    <string name="permissions_card_description">ScreenTime benötigt die folgenden Berechtigungen, um Ihre App-Nutzung zu verfolgen:</string>
+
+    <!-- Detailed Permission Explanation -->
+    <string name="permission_explanation_title">Warum wir App-Nutzungsdaten benötigen</string>
+    <string name="permission_explanation_detail">Um Ihnen genaue Einblicke in Ihre digitalen Gewohnheiten zu geben, benötigt ScreenTime Zugriff auf Ihre App-Nutzungsstatistiken. Diese Berechtigung erlaubt es uns, zu verfolgen, welche Anwendungen Sie verwenden und wie viel Zeit Sie mit jeder verbringen.</string>
+
+    <string name="permission_why_required">Warum diese Berechtigung essenziell ist</string>
+    <string name="permission_why_required_detail">Ohne diese Berechtigung können wir Ihre Bildschirmzeit nicht genau messen, Ihre am häufigsten genutzten Apps identifizieren oder sinnvolle Einblicke in Ihr digitales Wohlbefinden geben. Diese Daten sind die Grundlage aller Funktionen in ScreenTime, einschließlich täglicher Nutzungsberichte, App-Nutzungstrends und personalisierter Empfehlungen.</string>
+
+    <string name="permission_what_we_track">Was wir verfolgen</string>
+    <string name="permission_what_we_track_detail">Wir verfolgen nur wesentliche Informationen: App-Namen, Nutzungsdauer und Zeitstempel. Wir greifen NICHT auf Ihre persönlichen Daten, Nachrichten, Passwörter oder sensible Informationen in Apps zu. Ihre Privatsphäre hat höchste Priorität.</string>
+
+    <string name="permission_privacy_assurance">Ihre Privatsphäre ist geschützt</string>
+    <string name="permission_privacy_assurance_detail">Alle Nutzungsdaten werden lokal auf Ihrem Gerät gespeichert und nur verwendet, um Ihre persönlichen Bildschirmzeitberichte zu generieren. Wir teilen Ihre Daten nie mit Dritten, und Sie können diese Berechtigung jederzeit in den Geräteeinstellungen widerrufen.</string>
+
+    <!-- Permission Item: App Usage -->
+    <string name="permission_usage_stats_title">App-Nutzungszugriff</string>
+    <string name="permission_usage_stats_description">Verfolgen, welche Apps Sie verwenden und wie lange</string>
+
+    <!-- Permission Item: Notifications -->
+    <string name="permission_notifications_title">Benachrichtigungen</string>
+    <string name="permission_notifications_description">Nutzungswarnungen und Erinnerungen anzeigen</string>
+
+
+    <!-- General Actions -->
+    <string name="action_grant">Erteilen</string>
+    <string name="action_allow">Erlauben</string>
+    <string name="permission_granted_symbol">✓</string>
+    <string name="content_description_permissions_icon">Berechtigungs-Icon</string>
+
+    <!-- NetworkCard Strings -->
+    <string name="network_card_title">Netzwerk</string>
+    <string name="network_wifi_label">WiFi</string>
+    <string name="network_cellular_label">Mobilfunk</string>
+    <string name="content_description_network_icon">Netzwerktyp-Icon</string>
+
+    <!-- Consent Bottom Sheet -->
+    <string name="privacy_consent">Datenschutz &amp; Einwilligung</string>
+
+    <!-- TOTP Verification -->
+    <string name="verify_totp">TOTP überprüfen</string>
+    <string name="enter_otp">OTP eingeben</string>
+    <string name="verify">Überprüfen</string>
+    <string name="verifying">Überprüfen…</string>
+    <string name="enter_otp_for_user">Geben Sie den OTP-Code für %1$s ein, um zu überprüfen</string>
+    <string name="enter_otp_to_verify">Geben Sie den OTP-Code ein, um zu überprüfen</string>
+    <string name="otp_code_description">Dieser Code ermöglicht es Ihnen, Ihre App-Nutzung sicher mit jemandem zu teilen, dem Sie vertrauen. Er wird alle 60 Sekunden neu generiert und kann nur für diesen Zweck verwendet werden.</string>
+    <string name="remaining_seconds">%1$d s</string>
+
+    <!-- Widget -->
+    <string name="screen_time">Bildschirmzeit</string>
+    <string name="network_usage">Netzwerknutzung</string>
+    <string name="refresh">Aktualisieren</string>
+    <string name="no_app_data_available">Keine App-Daten verfügbar</string>
+
+    <!-- Leaderboard -->
+    <string name="no_leaderboard_data_available">Keine Ranglistendaten verfügbar</string>
+
+    <!-- Consent -->
+    <string name="no_consents_available">Keine Einwilligungen verfügbar</string>
+
+    <!-- Widget Setup -->
+    <string name="widget_setup_message">Bitte drücken Sie lange auf den Startbildschirm und wählen Sie Widgets aus, um das Screen Time-Widget hinzuzufügen</string>
+
+    <!-- Notification Permission Warning -->
+    <string name="notification_permission_warning_message">Bitte aktivieren Sie die Benachrichtigungsberechtigung in den Einstellungen, um Warnungen und Erinnerungen zu erhalten</string>
+    <string name="enable">Aktivieren</string>
+
+    <!-- Username Editing -->
+    <string name="edit_username">Benutzernamen bearbeiten</string>
+    <string name="username">Benutzername</string>
+    <string name="enter_username">Benutzernamen eingeben</string>
+    <string name="save">Speichern</string>
+    <string name="username_change_description">Ändern Sie den neuen Benutzernamen, er wird für alle sichtbar</string>
+    <string name="failed_to_update_username">Benutzername konnte nicht aktualisiert werden: %1$s</string>
+    <string name="username_already_taken">Benutzername bereits vergeben. Bitte wählen Sie einen anderen Benutzernamen.</string>
+
+    <!-- Permission Dialog -->
+    <string name="usage_access_permission_message">Um Ihre Bildschirmzeit genau zu verfolgen, benötigt diese App die Nutzungszugriffsberechtigung. Bitte aktivieren Sie sie in den Einstellungen.</string>
+    <string name="open_settings">Einstellungen öffnen</string>
+
+    <!-- Statistics Screen -->
+    <string name="activity">Aktivität</string>
+
+    <!-- Help & Support -->
+    <string name="help_support_description">Wir sind hier, um zu helfen! Wenn Sie Fragen, Probleme oder Feedback haben, kontaktieren Sie uns bitte über die unten stehende E-Mail.</string>
+    <string name="email_support">E-Mail-Support</string>
+    <string name="send_your_query">Ihre Anfrage senden</string>
+    <string name="send_query_description">Klicken Sie auf die E-Mail-Karte oben, um Ihren E-Mail-Client zu öffnen und uns Ihre Anfrage zu senden. Wir antworten normalerweise innerhalb von 24-48 Stunden.</string>
+
+    <!-- Consent -->
+    <string name="privacy_consent_description">Wir schätzen Ihre Privatsphäre und möchten transparent über die Nutzung Ihrer Daten sein. Bitte überprüfen und akzeptieren Sie das Folgende:</string>
+    <string name="allow_screentime_access">ScreenTime den Zugriff auf Ihre App-Nutzung erlauben</string>
+    <string name="screentime_data_collection">ScreenTime sammelt und verwendet Ihre App-Nutzungsdaten und Ihre Liste installierter Apps, um Ihre tägliche Nutzung, App-Aktivitätsverlauf und Bildschirmzeiteinblicke anzuzeigen.</string>
+    <string name="data_usage_disclosure">Diese Daten werden nur verwendet, um Ihre Nutzungsinformationen anzuzeigen und werden nicht mit Dritten geteilt.</string>
+    <string name="deny">Ablehnen</string>
+    <string name="submitting">Senden…</string>
+
+    <!-- Consent Items -->
+    <string name="consent_data_collection">Datenerfassung</string>
+    <string name="consent_data_collection_description">Wir erfassen Ihre App-Nutzungsdaten, um Bildschirmzeiteinblicke und Statistiken bereitzustellen.</string>
+    <string name="consent_data_sharing">Datenweitergabe</string>
+    <string name="consent_data_sharing_description">Ihre Daten können mit Drittdiensten für Analysen und Verbesserungszwecke geteilt werden.</string>
+    <string name="consent_analytics">Analysen</string>
+    <string name="consent_analytics_description">Wir verwenden Analysen, um zu verstehen, wie Sie die App nutzen und unsere Dienste zu verbessern.</string>
+
+    <!-- Common UI States -->
+    <string name="loading">Laden…</string>
+    <string name="failed_to_load_consents">Einwilligungen konnten nicht geladen werden</string>
+    <string name="failed_to_submit_consents">Einwilligungen konnten nicht übermittelt werden</string>
+    <string name="accept">Akzeptieren</string>
+
+    <!-- App Usage Detail -->
+    <string name="usage_insight">Nutzungseinblick</string>
+    <string name="usage_insight_description">Verfolgen Sie Ihre App-Nutzungsmuster und setzen Sie Limits, um ein gesundes digitales Gleichgewicht zu halten.</string>
+
+    <!-- Challenges -->
+    <string name="challenges">Herausforderungen</string>
+    <string name="joined">Beigetreten</string>
+    <string name="current">Aktuell</string>
+    <string name="expired">Abgelaufen</string>
+    <string name="all">Alle</string>
+    <string name="fitness">Fitness</string>
+    <string name="mindfulness">Achtsamkeit</string>
+    <string name="coding">Programmieren</string>
+    <string name="featured_challenge">Ausgewählte Herausforderung</string>
+    <string name="trending_now">Jetzt im Trend</string>
+    <string name="special_events">Spezielle Ereignisse</string>
+    <string name="quick_join">Schnell beitreten</string>
+    <string name="no_current_challenges">Keine aktuellen Herausforderungen</string>
+    <string name="no_expired_challenges">Keine abgelaufenen Herausforderungen</string>
+    <string name="no_active_challenges_message">Sie haben derzeit keine aktiven Herausforderungen.</string>
+    <string name="no_expired_challenges_message">Sie haben keine abgelaufenen Herausforderungen.</string>
+
+    <!-- Coin History -->
+    <string name="coin_history_title">Münzverlauf</string>
+    <string name="earned">Verdient</string>
+    <string name="used">Verwendet</string>
+    <string name="no_transactions">Keine Transaktionen gefunden</string>
+    <string name="see_detail">Details anzeigen</string>
+    <string name="search">Suchen</string>
+    <string name="usage_detail_insight">Nutzungsdetail-Einblick</string>
+    <string name="app_wise">App-weise</string>
+    <string name="recover_deleted_notifications">Gelöschte Benachrichtigungen wiederherstellen</string>
+    <string name="please_allow_consents">Bitte erlauben Sie App-Nutzungsberechtigungen und Einwilligungen, um an Herausforderungen teilzunehmen</string>
+    <string name="enable_notification_access_recovery">Bitte aktivieren Sie den Benachrichtigungszugriff, um gelöschte Benachrichtigungen wiederherzustellen</string>
+
+    <!-- Device Admin Policy -->
+    <string name="device_admin_policy">Geräte-Admin-Richtlinie</string>
+    <string name="device_admin_policy_description">Geräte-Admin-Richtlinie ermöglicht erweiterte Geräteverwaltungsfunktionen für bessere Kontrolle über Ihre Geräteeinstellungen und -Einschränkungen. Diese Funktion ist optional und kann jederzeit deaktiviert werden.</string>
+    <string name="device_admin_policy_explanation">ScreenTime verwendet Geräte-Admin, um Fokusmodus-Funktionen wie das Sperren Ihres Bildschirms und das vorübergehende Deaktivieren der Kamera während Fokussitzungen bereitzustellen. Dies hilft Ihnen, fokussiert zu bleiben und Ablenkungen zu reduzieren. Sie können diese Funktion jederzeit in den Einstellungen deaktivieren.</string>
+    <string name="device_admin_policy_info">Geräte-Admin-Richtlinie bietet Fokusmodus-Funktionen wie Bildschirmsperre und Kamerakontrolle. Dies ist vollständig optional und Sie können es jederzeit von diesem Bildschirm oder aus den Android-Einstellungen > Sicherheit > Geräte-Admin-Apps deaktivieren. ScreenTime wird Sie niemals daran hindern, die App zu deinstallieren oder Geräte-Admin zu deaktivieren.</string>
+    <string name="device_admin_active">Geräte-Admin aktiv</string>
+    <string name="device_admin_inactive">Geräte-Admin inaktiv</string>
+    <string name="device_admin_active_description">Geräte-Admin-Richtlinie ist derzeit aktiv. Sie haben erweiterte Geräteverwaltungsfunktionen aktiviert.</string>
+    <string name="device_admin_inactive_description">Geräte-Admin-Richtlinie ist nicht aktiv. Aktivieren Sie sie, um auf erweiterte Geräteverwaltungsfunktionen zuzugreifen.</string>
+    <string name="enable_device_admin">Geräte-Admin aktivieren</string>
+    <string name="disable_device_admin">Geräte-Admin deaktivieren</string>
+    <string name="device_admin_disable_warning">Das Deaktivieren von Geräte-Admin entfernt erweiterte Geräteverwaltungsfunktionen. Sind Sie sicher, dass Sie fortfahren möchten?</string>
+
+    <!-- Device Admin Actions -->
+    <string name="device_admin_actions">Geräte-Admin-Aktionen</string>
+    <string name="device_admin_actions_description">Verwenden Sie diese Funktionen, um Ihr Gerät zu verwalten. Diese Aktionen erfordern, dass Geräte-Admin aktiviert ist.</string>
+    <string name="lock_screen">Bildschirm sperren</string>
+    <string name="lock_screen_confirmation">Dies sperrt Ihren Gerätebildschirm sofort. Fortfahren?</string>
+    <string name="disable_camera">Kamera deaktivieren</string>
+    <string name="enable_camera">Kamera aktivieren</string>
+    <string name="disable_camera_confirmation">Dies deaktiviert die Kamera auf Ihrem Gerät. Sie können sie später wieder aktivieren.</string>
+    <string name="enable_camera_confirmation">Dies aktiviert die Kamera auf Ihrem Gerät.</string>
+    <string name="unfortunately_this_content_is_blocked_please_take_a_break_or_try_again_later">Leider ist dieser Inhalt blockiert. Bitte machen Sie eine Pause oder versuchen Sie es später erneut.</string>
+
+    <!-- Challenge Sync -->
+    <string name="last_sync">Letzte Synchronisation</string>
+    <string name="never_synced">Nie synchronisiert</string>
+    <string name="sync_now">Jetzt synchronisieren</string>
+    <string name="syncing">Synchronisieren…</string>
+
+    <!-- Control Center -->
+    <string name="control_center">Kontrollzentrum</string>
+    <string name="who_can_see_timeline">Wer kann Ihre Zeitleiste sehen</string>
+    <string name="allowed_usernames">Erlaubte Benutzernamen</string>
+    <string name="add_username">Benutzernamen hinzufügen</string>
+    <string name="remove">Entfernen</string>
+    <string name="no_allowed_users">Noch keine Benutzer erlaubt. Fügen Sie Benutzernamen hinzu, um zu kontrollieren, wer Ihre Zeitleiste sehen kann.</string>
+    <string name="username_added">Benutzername erfolgreich hinzugefügt</string>
+    <string name="username_removed">Benutzername erfolgreich entfernt</string>
+    <string name="failed_to_add_username">Benutzername konnte nicht hinzugefügt werden</string>
+    <string name="failed_to_remove_username">Benutzername konnte nicht entfernt werden</string>
+    <string name="select_duration">Dauer auswählen</string>
+    <string name="duration_1_hour">1 Stunde</string>
+    <string name="duration_6_hours">6 Stunden</string>
+    <string name="duration_1_day">1 Tag</string>
+    <string name="duration_permanent">Permanent</string>
+    <string name="expires_at">Läuft ab am</string>
+    <string name="permanent_access">Permanenter Zugriff</string>
+    <string name="manage">Verwalten</string>
+    <string name="grant_permanent">Permanent gewähren</string>
+    <string name="for_this_week">Für diese Woche</string>
+    <string name="duration_24_hours">24 Stunden</string>
+    <string name="update_duration">Dauer aktualisieren</string>
+    <string name="manage_location">Standort verwalten</string>
+    <string name="location_details">Standortdetails</string>
+    <string name="current_location">Aktueller Standort</string>
+    <string name="last_location">Letzter Standort</string>
+    <string name="latitude">Breitengrad</string>
+    <string name="longitude">Längengrad</string>
+    <string name="last_updated">Zuletzt aktualisiert</string>
+    <string name="share_location">Standort teilen</string>
+    <string name="fetching_location">Standort abrufen…</string>
+    <string name="location_not_available">Standort nicht verfügbar</string>
+    <string name="enable_location_sharing">Standortfreigabe aktivieren</string>
+
+    <!-- Network Health Section -->
+    <string name="network_health">Netzwerkgesundheit</string>
+    <string name="wifi">WiFi</string>
+    <string name="mobile_data">Mobile Daten</string>
+    <string name="ethernet">Ethernet</string>
+    <string name="vpn">VPN</string>
+    <string name="no_connection">Keine Verbindung</string>
+    <string name="network_information">Netzwerkinformationen</string>
+    <string name="connection_type">Verbindungstyp</string>
+    <string name="ip_address">IP-Adresse</string>
+    <string name="na">N/V</string>
+    <string name="not_connected">Nicht verbunden</string>
+    <string name="connected">Verbunden</string>
+    <string name="excellent">Ausgezeichnet</string>
+    <string name="good">Gut</string>
+    <string name="fair">Mäßig</string>
+    <string name="poor">Schlecht</string>
+    <string name="network_status">Netzwerkstatus</string>
+    <string name="signal_strength">Signalstärke</string>
+    <string name="wifi_network">WiFi-Netzwerk</string>
+    <string name="network_operator">Netzbetreiber</string>
+    <string name="unknown_wifi">Unbekanntes WiFi</string>
+    <string name="unknown_operator">Unbekannter Betreiber</string>
+    <string name="connection_details">Verbindungsdetails</string>
+    <string name="yes">Ja</string>
+    <string name="no">Nein</string>
+    <string name="roaming">Roaming</string>
+    <string name="active">Aktiv</string>
+    <string name="inactive">Inaktiv</string>
+    <string name="connection">Verbindung</string>
+    <string name="network_speed">Netzwerkgeschwindigkeit</string>
+    <string name="total_download">Gesamter Download</string>
+    <string name="total_upload">Gesamter Upload</string>
+    <string name="wifi_download">WiFi-Download</string>
+    <string name="wifi_upload">WiFi-Upload</string>
+    <string name="mobile_download">Mobil-Download</string>
+    <string name="mobile_upload">Mobil-Upload</string>
+    <string name="esim_compatibility">eSIM-Kompatibilität</string>
+    <string name="device_support">Geräteunterstützung</string>
+    <string name="supported">Unterstützt</string>
+    <string name="not_supported">Nicht unterstützt</string>
+    <string name="status">Status</string>
+
+    <!-- Additional Strings -->
+    <string name="made_with_love_india">Mit ❤️ in Indien gemacht</string>
+    <string name="share_app_chooser">App teilen</string>
+    <string name="share_app_message">Schauen Sie sich %1$s an - Verfolgen Sie Ihre Bildschirmzeit und verwalten Sie Ihre App-Nutzung!\n\n%2$s</string>
+    <string name="share_app_subject">Schauen Sie sich %1$s an</string>
+    <string name="device_not_registered">Gerät nicht registriert</string>
+    <string name="failed_to_fetch_location">Standort konnte nicht abgerufen werden</string>
+    <string name="failed_to_update_location">Standort konnte nicht aktualisiert werden</string>
+    <string name="failed_to_update_share_location">Standortfreigabe konnte nicht aktualisiert werden</string>
+    <string name="failed_to_sync_location">Standort konnte nicht synchronisiert werden</string>
+    <string name="failed_to_load_coin_history">Münzverlauf konnte nicht geladen werden</string>
+    <string name="unknown">Unbekannt</string>
+
+    <!-- Reward Components -->
+    <string name="total_earned_points">GESAMT VERDIENTE PUNKTE</string>
+    <string name="points">PUNKTE</string>
+    <string name="rupees">RUPIEN</string>
+    <string name="voucher_details">Gutschein-Details</string>
+    <string name="claim">Einlösen</string>
+    <string name="confirm_claim">Einlösung bestätigen</string>
+    <string name="confirm_claim_message">Sind Sie sicher, dass Sie mit dieser Einlösung fortfahren möchten?</string>
+    <string name="confirm">Bestätigen</string>
+    <string name="pincode">PLZ</string>
+    <string name="address">Adresse</string>
+    <string name="proceed_next">Weiter</string>
+
+    <!-- Record Components -->
+    <string name="no_usage_records_found">Keine Nutzungsaufzeichnungen gefunden</string>
+    <string name="usage_summary">Nutzungszusammenfassung</string>
+
+    <!-- Battery Components -->
+    <string name="battery_information_unavailable">Batterieinformationen nicht verfügbar</string>
+    <string name="battery_information">Batterieinformationen</string>
+    <string name="battery_level">Batteriestand</string>
+    <string name="battery_status">Batteriestatus</string>
+    <string name="health">Zustand</string>
+    <string name="electric_current">Stromstärke</string>
+    <string name="current_ma">Aktuell: %1$d mA</string>
+    <string name="max_ma">Max: %1$d mA</string>
+    <string name="no_data_available_battery">Keine Daten verfügbar</string>
+    <string name="battery_metrics">Batteriemetriken</string>
+    <string name="temperature">Temperatur</string>
+    <string name="discharge_rate">Entladerate</string>
+    <string name="battery_usage_by_app">Batterienutzung nach App</string>
+
+    <!-- TOTP -->
+    <string name="totp_countdown">TOTP-Countdown</string>
+
+    <!-- Additional Strings -->
+    <string name="joined_on">Beigetreten am %1$s</string>
+    <string name="allow_access">Zugriff erlauben</string>
+    <string name="home_screen">Startbildschirm</string>
+    <string name="both">Beides</string>
+    <string name="view_all_challenge">Alle Herausforderungen anzeigen</string>
+
+    <!-- Battery Status Strings -->
+    <string name="charging">Laden…</string>
+    <string name="calculating">Berechnen…</string>
+    <string name="time_to_full">Zeit bis voll</string>
+    <string name="time_remaining">Verbleibende Zeit</string>
+    <string name="not_charging">Nicht laden</string>
+    <string name="charging_via_usb">Laden über USB</string>
+    <string name="charging_via_ac">Laden über AC</string>
+    <string name="charging_wirelessly">Kabelloses Laden</string>
+    <string name="fully_charged">Vollständig geladen</string>
+
+    <!-- Battery Health Status Strings -->
+    <string name="battery_health_good">Gut</string>
+    <string name="battery_health_overheating">Überhitzung</string>
+    <string name="battery_health_dead">Tot</string>
+    <string name="battery_health_over_voltage">Überspannung</string>
+    <string name="battery_health_failure">Fehler</string>
+    <string name="battery_health_cold">Kalt</string>
+    <string name="battery_health_unknown">Unbekannt</string>
+
+    <!-- File Manager -->
+    <string name="storage">Speicher</string>
+    <string name="loading_files">Dateien laden…</string>
+    <string name="error_occurred">Ein Fehler ist aufgetreten</string>
+    <string name="file_manager_all">Alle</string>
+    <string name="file_manager_photos">Fotos</string>
+    <string name="file_manager_videos">Videos</string>
+    <string name="file_manager_audio">Audio</string>
+    <string name="file_manager_apps">Apps</string>
+    <string name="file_manager_documents">Dokumente</string>
+    <string name="file_manager_games">Spiele</string>
+    <string name="file_manager_duplicates">Duplikate</string>
+    <string name="scanning_for_duplicates">Nach Duplikaten scannen…</string>
+    <string name="no_duplicates_found">Keine Duplikate gefunden</string>
+    <string name="scan_for_duplicates">Nach Duplikaten scannen</string>
+    <string name="found_duplicate_groups">%1$d Duplikatgruppen gefunden</string>
+    <string name="can_free_up_space">Sie können %1$s freimachen, indem Sie Duplikate entfernen</string>
+    <string name="delete_all_files">Alle löschen (%1$d Dateien)</string>
+    <string name="rescan">Neu scannen</string>
+    <string name="copies_each">%1$d Kopien • %2$s jeweils</string>
+    <string name="can_free">Kann freimachen: %1$s</string>
+    <string name="keep">✓ Behalten</string>
+    <string name="delete_duplicate">✗ Duplikat löschen</string>
+    <string name="storage_permission_required">Speicherberechtigung erforderlich</string>
+    <string name="file_manager_manage_storage_permission">Dateimanager benötigt Zugriff, um alle Dateien zu verwalten, um Ihre Ordner und Dateien zu durchsuchen.</string>
+    <string name="file_manager_storage_permission">Dateimanager benötigt Speicherberechtigung, um Ihre Ordner und Dateien zu durchsuchen.</string>
+    <string name="grant_permission">Berechtigung erteilen</string>
+    <string name="register_device">Gerät registrieren</string>
+    <string name="connecting_to_server">Verbindung zum Server wird hergestellt…</string>
+    <string name="grant_permissions">Berechtigungen erteilen</string>
+    <string name="allow_app_usage_access">App-Nutzungszugriff erlauben</string>
+    <string name="reward_price_coins">Preis: %1$d Münzen</string>
+    <string name="reward_stock_available">Lagerbestand: %1$d verfügbar</string>
+    <string name="out_of_stock">Nicht auf Lager</string>
+    <string name="reward_category">Kategorie: %1$s</string>
+    <string name="claim_reward">Belohnung einfordern</string>
+    <string name="name">Name</string>
+    <string name="email">E-Mail</string>
+    <string name="phone_number">Telefonnummer</string>
+    <string name="upi_id">UPI-ID</string>
+    <string name="postal_code">Postleitzahl</string>
+    <string name="save_details_for_future">Details für zukünftige Referenz speichern</string>
+    <string name="quick_actions">Schnellaktionen</string>
+    <string name="launch">Starten</string>
+    <string name="set_timer">Timer einstellen</string>
+    <string name="block">Blockieren</string>
+    <string name="settings">Einstellungen</string>
+    <string name="recover_notification">Benachrichtigung wiederherstellen</string>
+    <string name="control_center_add_person_description">Fügen Sie eine Person hinzu, die Ihre App-Zeit und Ihren Standort sehen kann. Sie können den Zugriff jederzeit verwalten.</string>
+    <string name="control_center_extend_or_revoke_access">Zugriffsdauer verlängern oder widerrufen</string>
+    <string name="transaction_history">Transaktionsverlauf</string>
+    <string name="no_transactions_found">Keine Transaktionen gefunden</string>
+    <string name="expiring_coins_warning">%1$d Münzen laufen bald ab, bitte verwenden Sie sie so schnell wie möglich.</string>
+    <string name="coins_spent_format">-%1$d Münzen</string>
+    <string name="storage_used_total">%1$.1f GB / %2$.1f GB</string>
+    <string name="storage_available">%1$.1f GB verfügbar</string>
+    <string name="selected_count">%1$d ausgewählt</string>
+    <string name="select_all">Alle auswählen</string>
+    <string name="clear">Löschen</string>
+    <string name="delete">Löschen</string>
+    <string name="no_files_found">Keine Dateien gefunden</string>
+    <string name="selected">Ausgewählt</string>
+    <string name="not_selected">Nicht ausgewählt</string>
+    <string name="folder">Ordner</string>
+    <string name="file">Datei</string>
+    <string name="delete_file_question">Datei löschen?</string>
+    <string name="delete_folder_question">Ordner löschen?</string>
+    <string name="delete_confirmation_message">Sind Sie sicher, dass Sie \"%1$s\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="navigate">Navigieren</string>
+    <string name="file_size_bytes">%1$d B</string>
+    <string name="file_size_kb">%1$.1f KB</string>
+    <string name="file_size_mb">%1$.1f MB</string>
+    <string name="file_size_gb">%1$.1f GB</string>
+
+    <!-- App Lock Screen -->
+    <string name="permission_required">Berechtigung erforderlich</string>
+    <string name="app_lock_all">Alle</string>
+    <string name="app_lock_locked_apps">Gesperrte Apps</string>
+    <string name="app_lock_search">Suchen</string>
+    <string name="app_lock_loading_apps">Apps laden…</string>
+    <string name="app_lock_no_apps_found">Keine Apps gefunden</string>
+    <string name="app_lock_no_locked_apps">Keine gesperrten Apps</string>
+    <string name="app_lock_locked">Gesperrt</string>
+    <string name="app_lock_unlocked">Entsperrt</string>
+    <string name="notification_permission_required">Benachrichtigungsberechtigung erforderlich</string>
+
+</resources>
