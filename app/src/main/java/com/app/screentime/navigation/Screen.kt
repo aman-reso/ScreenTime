@@ -73,4 +73,7 @@ sealed class Screen : NavKey {
 
     @Serializable
     object WallPaperSearch : Screen()
+
+    @Serializable
+    object Customisation : Screen()
 }

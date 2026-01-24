@@ -153,36 +153,54 @@ fun SingleAppUsageDetailScreen(
         }
     }
 
-    // Calculate today's usage (most recent day or current day)
-    val todayUsage = remember(uiState.weeklyUsageData) {
+    var selectedDayIndex by remember { mutableStateOf<Int?>(null) }
+    
+    // Get the selected day or default to the most recent day
+    val selectedDayData = remember(uiState.weeklyUsageData, selectedDayIndex) {
         if (uiState.weeklyUsageData.isNotEmpty()) {
-            uiState.weeklyUsageData.lastOrNull()?.screenTime ?: 0L
+            if (selectedDayIndex != null && selectedDayIndex!! < uiState.weeklyUsageData.size) {
+                uiState.weeklyUsageData[selectedDayIndex!!]
+            } else {
+                uiState.weeklyUsageData.lastOrNull()
+            }
         } else {
-            0L
+            null
         }
-    }
-    val todayUsageFormatted = remember(todayUsage) {
-        formatDuration(todayUsage)
     }
     
-    // Calculate today's notification count
-    val todayNotificationCount = remember(uiState.weeklyUsageData) {
-        if (uiState.weeklyUsageData.isNotEmpty()) {
-            uiState.weeklyUsageData.lastOrNull()?.notificationCount ?: 0
+    // Check if selected day is today (last item in the list)
+    val isToday = remember(selectedDayIndex, uiState.weeklyUsageData) {
+        selectedDayIndex == null || selectedDayIndex == uiState.weeklyUsageData.size - 1
+    }
+    
+    // Format date label for non-today dates
+    val dateLabel = remember(selectedDayData, isToday) {
+        if (isToday || selectedDayData == null) {
+            null // Will use default "Today's Total"
         } else {
-            0
+            selectedDayData.date // e.g., "21 Jan"
         }
     }
+    
+    // Calculate selected day's usage
+    val selectedUsage = selectedDayData?.screenTime ?: 0L
+    val selectedUsageFormatted = remember(selectedUsage) {
+        formatDuration(selectedUsage)
+    }
+    
+    // Calculate selected day's notification count
+    val selectedNotificationCount = selectedDayData?.notificationCount ?: 0
 
-    // Calculate percentage change (compare today with previous day)
-    val percentageChange = remember(uiState.weeklyUsageData) {
-        if (uiState.weeklyUsageData.size >= 2) {
-            val today = uiState.weeklyUsageData.lastOrNull()?.screenTime ?: 0L
-            val yesterday = uiState.weeklyUsageData[uiState.weeklyUsageData.size - 2].screenTime
-            if (yesterday > 0) {
-                ((today - yesterday).toFloat() / yesterday * 100f)
-            } else if (today > 0) {
-                100f // If yesterday is 0 but today has usage, show 100% increase
+    // Calculate percentage change (compare selected day with previous day)
+    val percentageChange = remember(uiState.weeklyUsageData, selectedDayIndex) {
+        val currentIndex = selectedDayIndex ?: (uiState.weeklyUsageData.size - 1)
+        if (uiState.weeklyUsageData.size >= 2 && currentIndex > 0) {
+            val currentDay = uiState.weeklyUsageData[currentIndex].screenTime
+            val previousDay = uiState.weeklyUsageData[currentIndex - 1].screenTime
+            if (previousDay > 0) {
+                ((currentDay - previousDay).toFloat() / previousDay * 100f)
+            } else if (currentDay > 0) {
+                100f // If previous day is 0 but current has usage, show 100% increase
             } else {
                 null
             }
@@ -220,8 +238,6 @@ fun SingleAppUsageDetailScreen(
             )
         }
     }
-
-    var selectedDayIndex by remember { mutableStateOf<Int?>(null) }
 
     // Create bar chart data from weekly reports
     val chartOrientation = ODSBarItemDirection.VERTICAL
@@ -261,13 +277,13 @@ fun SingleAppUsageDetailScreen(
         )
     }
 
-    // Calculate network usage (in bytes)
-    val totalWifiData = uiState.weeklyUsageData.sumOf { it.wifiDataUsage }
-    val totalCellularData = uiState.weeklyUsageData.sumOf { it.mobileDataUsage }
-    val totalData = totalWifiData + totalCellularData
-    val wifiDataDisplay = totalWifiData.toReadableDataSize()
-    val cellularDataDisplay = totalCellularData.toReadableDataSize()
-    val totalDataDisplay = totalData.toReadableDataSize()
+    // Calculate network usage for selected day (not 7-day sum)
+    val selectedWifiData = selectedDayData?.wifiDataUsage ?: 0L
+    val selectedCellularData = selectedDayData?.mobileDataUsage ?: 0L
+    val selectedTotalData = selectedWifiData + selectedCellularData
+    val selectedWifiDataDisplay = selectedWifiData.toReadableDataSize()
+    val selectedCellularDataDisplay = selectedCellularData.toReadableDataSize()
+    val selectedTotalDataDisplay = selectedTotalData.toReadableDataSize()
 
     // Bottom sheet states
     // var showBlockBottomSheet by remember { mutableStateOf(false) } // Removed - App Blocking feature disabled
@@ -403,24 +419,25 @@ fun SingleAppUsageDetailScreen(
                         ) {
                             item {
                                 UsageSummaryCard(
-                                    todayTotal = todayUsageFormatted,
-                                    dailyGoal = "6h",
-                                    notificationCount = todayNotificationCount.takeIf { it > 0 },
+                                    todayTotal = selectedUsageFormatted,
+                                    dailyGoal = if (isToday) "6h" else null, // Hide goal for historical dates
+                                    notificationCount = selectedNotificationCount.takeIf { it > 0 },
                                     percentageChange = percentageChange,
                                     onClick = {},
-                                    scheme = headerTheme.current
+                                    scheme = headerTheme.current,
+                                    dateLabel = dateLabel
                                 )
                             }
 
-                            if (totalData > 0) {
+                            if (selectedTotalData > 0) {
                                 item {
                                     NetworkCard(
                                         modifier = Modifier.fillMaxWidth(),
-                                        wifiDataUsage = totalWifiData,
-                                        wifiDataUsageDisplay = wifiDataDisplay,
-                                        cellularDataUsage = totalCellularData,
-                                        cellularDataUsageDisplay = cellularDataDisplay,
-                                        totalDataDisplayName = totalDataDisplay,
+                                        wifiDataUsage = selectedWifiData,
+                                        wifiDataUsageDisplay = selectedWifiDataDisplay,
+                                        cellularDataUsage = selectedCellularData,
+                                        cellularDataUsageDisplay = selectedCellularDataDisplay,
+                                        totalDataDisplayName = selectedTotalDataDisplay,
                                         scheme = scheme
                                     )
                                 }
@@ -503,24 +520,25 @@ fun SingleAppUsageDetailScreen(
 
                         item {
                             UsageSummaryCard(
-                                todayTotal = todayUsageFormatted,
-                                dailyGoal = "6h",
-                                notificationCount = todayNotificationCount.takeIf { it > 0 },
+                                todayTotal = selectedUsageFormatted,
+                                dailyGoal = if (isToday) "6h" else null, // Hide goal for historical dates
+                                notificationCount = selectedNotificationCount.takeIf { it > 0 },
                                 percentageChange = percentageChange,
                                 onClick = {},
-                                scheme = frogSecondaryScheme
+                                scheme = frogSecondaryScheme,
+                                dateLabel = dateLabel
                             )
                         }
 
-                        if (totalData > 0) {
+                        if (selectedTotalData > 0) {
                             item {
                                 NetworkCard(
                                     modifier = Modifier.fillMaxWidth(),
-                                    wifiDataUsage = totalWifiData,
-                                    wifiDataUsageDisplay = wifiDataDisplay,
-                                    cellularDataUsage = totalCellularData,
-                                    cellularDataUsageDisplay = cellularDataDisplay,
-                                    totalDataDisplayName = totalDataDisplay,
+                                    wifiDataUsage = selectedWifiData,
+                                    wifiDataUsageDisplay = selectedWifiDataDisplay,
+                                    cellularDataUsage = selectedCellularData,
+                                    cellularDataUsageDisplay = selectedCellularDataDisplay,
+                                    totalDataDisplayName = selectedTotalDataDisplay,
                                     scheme = scheme
                                 )
                             }

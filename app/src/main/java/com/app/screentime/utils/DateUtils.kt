@@ -214,6 +214,18 @@ object DateUtils {
     }
 
     /**
+     * Get start of year (midnight of January 1st) for a given DateTime in IST
+     * @param dateTime The DateTime to get the year start from
+     * @return DateTime representing the start of the year (January 1st at midnight)
+     */
+    fun startOfYear(dateTime: DateTime): DateTime {
+        return dateTime
+            .withMonthOfYear(1)
+            .withDayOfMonth(1)
+            .withTimeAtStartOfDay()
+    }
+
+    /**
      * Add days to a DateTime
      */
     fun addDays(dateTime: DateTime, days: Int): DateTime {

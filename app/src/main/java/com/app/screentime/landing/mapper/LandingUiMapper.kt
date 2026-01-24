@@ -1,6 +1,7 @@
 package com.app.screentime.landing.mapper
 
 import com.app.screentime.config.ConfigManager
+import com.app.screentime.customisation.model.ColorOption
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.landing.model.LandingUiProps
 import com.app.screentime.landing.model.TodayUsageData
@@ -26,7 +27,11 @@ class LandingUiMapper @Inject constructor(private val configManager: dagger.Lazy
         error: String? = null,
         chartColors: List<HexColor>,
         percentageChangeFromYesterday: Float? = null,
-        joinedChallenges: List<com.app.screentime.network.model.UserChallenge> = emptyList()
+        joinedChallenges: List<com.app.screentime.network.model.UserChallenge> = emptyList(),
+        yearlyUsageDays: Int = 0,
+        dailyScreenTimeFormatted: String = "0h 0m",
+        yearlyScreenTimeFormatted: String = "0h",
+        customColorOption: ColorOption? = null
     ): LandingUiProps {
         val usageDonutData = if (todayUsageData.topUsedApps.isNotEmpty()) {
             createUsageDonutData(
@@ -56,7 +61,11 @@ class LandingUiMapper @Inject constructor(private val configManager: dagger.Lazy
             joinedChallenges = joinedChallenges,
             totalNotificationCount = todayUsageData.notificationCount,
             challengeBannerURL = configManager.get().getConfig().challengeBannerURL,
-            wallpaperBannerURL = configManager.get().getConfig().wallpaperBannerURL
+            wallpaperBannerURL = configManager.get().getConfig().wallpaperBannerURL,
+            yearlyUsageDays = yearlyUsageDays,
+            dailyScreenTimeFormatted = dailyScreenTimeFormatted,
+            yearlyScreenTimeFormatted = yearlyScreenTimeFormatted,
+            customColorOption = customColorOption
         )
     }
 

@@ -11,12 +11,15 @@ import com.app.screentime.preferences.usecase.PreferencesUseCase
 import com.app.screentime.analytics.AnalyticsUseCase
 import com.app.screentime.config.ConfigManager
 import com.app.screentime.sync.DataSyncManager
+import com.app.screentime.customisation.manager.CustomisationRefreshManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Provider
@@ -40,6 +43,18 @@ class LandingViewModel @Inject constructor(
     init {
         analyticsUseCase.trackHomeScreen()
         loadLandingData()
+        observeCustomisationChanges()
+    }
+    
+    /**
+     * Observe customisation changes and reload data when triggered
+     */
+    private fun observeCustomisationChanges() {
+        CustomisationRefreshManager.refreshTrigger
+            .onEach {
+                loadLandingData()
+            }
+            .launchIn(viewModelScope)
     }
 
     fun trackLeaderboardClick() {
@@ -64,14 +79,11 @@ class LandingViewModel @Inject constructor(
     fun loadLandingData() {
         viewModelScope.launch(Dispatchers.Default) {
             val username = preferencesManager.getUsername()
-
-            // Show loading state
             _uiProps.value = landingUsecase.getLandingUiProps(
                 username = username,
                 isLoading = true
             )
 
-            // Load actual data
             val props = landingUsecase.getLandingUiProps(
                 username = username,
                 isLoading = false
@@ -81,10 +93,7 @@ class LandingViewModel @Inject constructor(
             val recentData = _uiProps.value?.copy(joinedChallenges = joinedChallenges)
             _uiProps.value = recentData
 
-            // Sync leaderboard stats
             landingUsecase.syncLeaderboardStats()
-
-            // Sync app stats using new /api/app-stats endpoint
             dataSyncManager.syncAppStats()
         }
     }

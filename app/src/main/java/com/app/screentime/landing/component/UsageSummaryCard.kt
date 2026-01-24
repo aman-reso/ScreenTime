@@ -37,12 +37,13 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun UsageSummaryCard(
     modifier: Modifier = Modifier,
     todayTotal: String,
-    dailyGoal: String = "6h",
+    dailyGoal: String? = "6h",
     notificationCount: Int? = null,
     percentageChange: Float? = null,
     onClick: () -> Unit = {},
     onEditDailyGoal: (() -> Unit)? = null,
-    scheme: ODSTheme = neutralScheme
+    scheme: ODSTheme = neutralScheme,
+    dateLabel: String? = null // NEW: Custom date label (e.g., "21 Jan" or null for "Today's Total")
 ) {
     val editIconInteractionSource = remember { MutableInteractionSource() }
 
@@ -69,7 +70,7 @@ fun UsageSummaryCard(
                         gap = DSVariables.spacingComponent1
                     ) {
                         ODSText(
-                            text = stringResource(R.string.todays_total),
+                            text = dateLabel ?: stringResource(R.string.todays_total),
                             style = DSTextStyles.bodyMRegular,
                             color = scheme.basicTextRecessive
                         )
@@ -80,21 +81,23 @@ fun UsageSummaryCard(
                         )
                     }
 
-                    ODSColumn(
-                        modifier = Modifier.weight(1f),
-                        gap = DSVariables.spacingComponent1,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        ODSRow(
-                            verticalAlignment = Alignment.CenterVertically,
-                            gap = DSVariables.spacingComponent1
+                    // Only show daily goal if not null
+                    if (dailyGoal != null) {
+                        ODSColumn(
+                            modifier = Modifier.weight(1f),
+                            gap = DSVariables.spacingComponent1,
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            ODSText(
-                                text = stringResource(R.string.daily_goal),
-                                style = DSTextStyles.bodyMRegular,
-                                color = scheme.basicTextRecessive
-                            )
-                            onEditDailyGoal?.let {
+                            ODSRow(
+                                verticalAlignment = Alignment.CenterVertically,
+                                gap = DSVariables.spacingComponent1
+                            ) {
+                                ODSText(
+                                    text = stringResource(R.string.daily_goal),
+                                    style = DSTextStyles.bodyMRegular,
+                                    color = scheme.basicTextRecessive
+                                )
+                                onEditDailyGoal?.let {
                                 ODSIcon(
                                     modifier = Modifier.clickable(
                                         interactionSource = editIconInteractionSource,
@@ -111,11 +114,12 @@ fun UsageSummaryCard(
                                 )
                             }
                         }
-                        ODSText(
-                            text = dailyGoal,
-                            style = DSTextStyles.subtitle,
-                            color = scheme.basicText
-                        )
+                            ODSText(
+                                text = dailyGoal,
+                                style = DSTextStyles.subtitle,
+                                color = scheme.basicText
+                            )
+                        }
                     }
 
                     notificationCount?.let { count ->

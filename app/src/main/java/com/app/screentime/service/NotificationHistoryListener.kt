@@ -71,19 +71,6 @@ class NotificationHistoryListener : NotificationListenerService() {
         }
     }
 
-    override fun onNotificationRemoved(sbn: StatusBarNotification) {
-        serviceScope.launch {
-            try {
-//                database.capturedNotificationDao()
-//                    .markLatestAsRemoved(sbn.packageName)
-
-                Log.d(TAG, "Marked notification removed: ${sbn.packageName}")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error marking notification removed", e)
-            }
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()

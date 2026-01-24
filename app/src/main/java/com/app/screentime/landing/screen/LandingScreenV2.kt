@@ -35,14 +35,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.times
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.config.R
-import com.app.screentime.R as AppR
-import com.app.screentime.config.data.Feature
-import com.app.screentime.config.featureflag.FeatureFlagHelper
 import com.app.screentime.ads.AdConfig
 import com.app.screentime.ads.BannerAd
 import com.app.screentime.ads.rememberBannerAd
@@ -55,11 +51,10 @@ import com.app.screentime.landing.component.JoinedChallengesCardStack
 import com.app.screentime.profile.screen.FeedbackBottomSheetContent
 import com.app.screentime.landing.component.NetworkCard
 import com.app.screentime.landing.component.UsageSummaryCard
+import com.app.screentime.landing.component.YearlyUsageStatsCard
 import com.app.screentime.landing.component.rememberQuickActions
 import com.app.screentime.landing.viewmodel.LandingViewModel
 import com.app.screentime.network.component.NetworkHealthSection
-import com.app.screentime.ntoificationstack.OAServiceNotificationSingleProps
-import com.app.screentime.ntoificationstack.ODSCardNotificationModel
 import com.app.screentime.permission.PermissionUtils
 import com.app.screentime.permission.createPermissionManager
 import com.app.screentime.ui.atom.AppScreenShimmer
@@ -106,6 +101,7 @@ fun LandingScreenV2(
     onNavigateToAppLock: () -> Unit = {},
     onNavigateToFileManager: () -> Unit = {},
     onNavigateToWallpaper: () -> Unit = {},
+    onNavigateToCustomisation: () -> Unit = {},
     viewModel: LandingViewModel = hiltViewModel(),
     scheme: ODSTheme = neutralScheme
 ) {
@@ -373,6 +369,20 @@ fun LandingScreenV2(
                                         onClick = onNavigateToStatistics,
                                         onEditDailyGoal = { showDailyGoalBottomSheet = true },
                                         scheme = headerTheme.current
+                                    )
+                                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
+                                }
+                            }
+
+                            // Yearly Usage Stats Card
+                            if (uiProps?.yearlyUsageDays != null && uiProps!!.yearlyUsageDays > 0) {
+                                item("yearly_stats_card") {
+                                    YearlyUsageStatsCard(
+                                        dailyScreenTime = uiProps!!.dailyScreenTimeFormatted,
+                                        yearlyScreenTime = uiProps!!.yearlyScreenTimeFormatted,
+                                        customColor = uiProps!!.customColorOption,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = onNavigateToCustomisation
                                     )
                                     Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                                 }

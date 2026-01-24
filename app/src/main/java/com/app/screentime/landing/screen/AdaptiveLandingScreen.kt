@@ -48,6 +48,7 @@ fun AdaptiveLandingScreen(
     onNavigateToAppLock: () -> Unit = {},
     onNavigateToFileManager: () -> Unit = {},
     onNavigateToWallpaper: () -> Unit = {},
+    onNavigateToCustomisation: () -> Unit = {},
     landingViewModel: LandingViewModel = hiltViewModel(),
     statisticsViewModel: StatisticsViewModel = hiltViewModel(),
     openSearchScreen: () -> Unit = {},
@@ -110,6 +111,7 @@ fun AdaptiveLandingScreen(
                     onNavigateToAppLock = onNavigateToAppLock,
                     onNavigateToFileManager = onNavigateToFileManager,
                     onNavigateToWallpaper = onNavigateToWallpaper,
+                    onNavigateToCustomisation = onNavigateToCustomisation,
                     viewModel = landingViewModel,
                     scheme = scheme
                 )
@@ -154,6 +156,7 @@ fun AdaptiveLandingScreen(
             onNavigateToAppLock = onNavigateToAppLock,
             onNavigateToFileManager = onNavigateToFileManager,
             onNavigateToWallpaper = onNavigateToWallpaper,
+            onNavigateToCustomisation = onNavigateToCustomisation,
             viewModel = landingViewModel,
             scheme = scheme
         )

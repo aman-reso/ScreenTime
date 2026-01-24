@@ -55,6 +55,7 @@ import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.wallpaper.screen.WallpaperScreen
 import com.app.screentime.wallpaper.screen.FullScreenWallpaperScreen
 import com.app.screentime.wallpaper.screen.WallpaperSearchScreen
+import com.app.screentime.customisation.screen.CustomisationScreen
 // import com.app.screentime.wallpaper.screen.WallpaperScreen // Removed - Wallpaper feature disabled
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButton
@@ -216,9 +217,9 @@ fun ScreenTimeNavigation(
         NavigationHost(
             scheme = scheme,
             paddingValues = paddingValues,
-            backStack,
-            navigationTokens,
-            navigationItems
+            backStack = backStack,
+            tokens = navigationTokens,
+            navigationItems = navigationItems
         )
     }
 }
@@ -253,7 +254,7 @@ private fun NavigationHost(
     paddingValues: PaddingValues,
     backStack: NavBackStack<NavKey>,
     tokens: ScreenTimeNavigationTokens,
-    navigationItems: List<ODSBottomNavigationItemProps>
+    navigationItems: List<ODSBottomNavigationItemProps>,
 ) {
     val activity = LocalActivity.current
     NavDisplay(backStack = backStack, onBack = {
@@ -283,36 +284,36 @@ private fun NavigationHost(
 
         entry<Screen.Landing> {
             AdaptiveLandingScreen(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = paddingValues.calculateBottomPadding()),
-                onNavigateToLeaderboard = {
-                    backStack.add(Screen.Leaderboard)
-                },
-                onNavigateToReward = {
-                    backStack.add(Screen.Reward)
-                },
-                onNavigateToSearch = { backStack.add(Screen.Search) },
-                onNavigateToStatistics = {
-                    backStack.add(Screen.Statistics)
-                },
-                onNavigateToSingleAppUsageDetail = { packageName ->
-                    backStack.add(
-                        Screen.SingleAppUsageDetail(
-                            SingleAppUsageDetailParams(
-                                packageName
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = paddingValues.calculateBottomPadding()),
+                    onNavigateToLeaderboard = {
+                        backStack.add(Screen.Leaderboard)
+                    },
+                    onNavigateToReward = {
+                        backStack.add(Screen.Reward)
+                    },
+                    onNavigateToSearch = { backStack.add(Screen.Search) },
+                    onNavigateToStatistics = {
+                        backStack.add(Screen.Statistics)
+                    },
+                    onNavigateToSingleAppUsageDetail = { packageName ->
+                        backStack.add(
+                            Screen.SingleAppUsageDetail(
+                                SingleAppUsageDetailParams(
+                                    packageName
+                                )
                             )
                         )
-                    )
-                },
-                onNavigateToChallengeDetail = { challengeId ->
-                    backStack.add(
-                        Screen.ChallengeDetail(
-                            ChallengeDetailParams(
-                                challengeId
+                    },
+                    onNavigateToChallengeDetail = { challengeId ->
+                        backStack.add(
+                            Screen.ChallengeDetail(
+                                ChallengeDetailParams(
+                                    challengeId
+                                )
                             )
                         )
-                    )
                 },
                 onNavigateToChallenges = {
                     backStack.add(Screen.Challenges)
@@ -323,6 +324,7 @@ private fun NavigationHost(
                 onNavigateToAppLock = { backStack.add(Screen.AppLock) },
                 onNavigateToFileManager = { backStack.add(Screen.FileManager) },
                 onNavigateToWallpaper = { backStack.add(Screen.Wallpaper) },
+                onNavigateToCustomisation = { backStack.add(Screen.Customisation) },
                 openSearchScreen = {
                     backStack.add(Screen.Search)
                 },
@@ -636,6 +638,18 @@ private fun NavigationHost(
                         backStack.removeLastOrNull()
                     }
                 },
+                scheme = scheme
+            )
+        }
+
+        entry<Screen.Customisation> {
+            CustomisationScreen(
+                onNavigateBack = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
                 scheme = scheme
             )
         }

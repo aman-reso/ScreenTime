@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.app.screentime.config.R
 import com.app.screentime.challenge.repository.ChallengeRepository
+import com.app.screentime.customisation.model.ColorOption
 import com.app.screentime.landing.mapper.LandingUiMapper
 import com.app.screentime.landing.model.CategoryUsage
 import com.app.screentime.landing.model.LandingUiProps
@@ -54,6 +55,78 @@ class LandingUsecase @Inject constructor(
                 if (yesterdayTotal > 0) yesterdayTotal else null
             } catch (e: Exception) {
                 null
+            }
+        }
+    }
+
+    /**
+     * Format screen time in milliseconds to human-readable string
+     * @param millis Screen time in milliseconds
+     * @return Formatted string like "5h 30m" or "240h"
+     */
+    private fun formatScreenTime(millis: Long): String {
+        val hours = (millis / (60 * 60 * 1000)).toInt()
+        val minutes = ((millis % (60 * 60 * 1000)) / (60 * 1000)).toInt()
+        
+        return when {
+            hours > 0 && minutes > 0 -> "${hours}h ${minutes}m"
+            hours > 0 -> "${hours}h"
+            minutes > 0 -> "${minutes}m"
+            else -> "0m"
+        }
+    }
+
+    /**
+     * Load custom color from preferences
+     * @return ColorOption if saved, null otherwise
+     */
+    private suspend fun getCustomColor(): ColorOption? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val colorId = preferencesManager.getString("custom_service_color_id", null)
+                colorId?.let { id ->
+                    ColorOption.DEFAULT_PALETTE.find { it.id == id }
+                }
+            } catch (e: Exception) {
+                Log.e("LandingUsecase", "Error loading custom color: ${e.message}", e)
+                null
+            }
+        }
+    }
+
+    /**
+     * Calculate total screen time accumulated in the current year and convert to days
+     * Sums all app usage screen time and converts milliseconds to days
+     * @return Triple of (days, formatted yearly time, total yearly millis)
+     */
+    private suspend fun getYearlyUsageStats(): Triple<Int, String, Long> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val now = DateUtils.now()
+                val yearStart = DateUtils.startOfYear(now)
+                val yearStartMillis = yearStart.millis
+                val nowMillis = now.millis
+
+                // Get all app usage data for the current year
+                val yearlyReport = localAppUsageRepository.getAppsUsageForInterval(
+                    yearStartMillis,
+                    nowMillis
+                )
+                
+                // Sum all screen time for the year
+                val totalScreenTimeMs = yearlyReport.sumOf { it.appScreenTime }
+                
+                // Convert milliseconds to days
+                // 1 day = 24 hours = 24 * 60 * 60 * 1000 milliseconds = 86,400,000 ms
+                val totalDays = (totalScreenTimeMs / (24 * 60 * 60 * 1000)).toInt()
+                
+                // Format the yearly screen time
+                val formattedYearly = formatScreenTime(totalScreenTimeMs)
+                
+                Triple(totalDays, formattedYearly, totalScreenTimeMs)
+            } catch (e: Exception) {
+                Log.e("LandingUsecase", "Error calculating yearly usage days: ${e.message}", e)
+                Triple(0, "0h", 0L)
             }
         }
     }
@@ -170,6 +243,15 @@ class LandingUsecase @Inject constructor(
                     }
                 }
 
+                // Calculate yearly usage stats
+                val (yearlyUsageDays, yearlyScreenTimeFormatted, _) = getYearlyUsageStats()
+                
+                // Format daily screen time
+                val dailyScreenTimeFormatted = formatScreenTime(todayUsageData.todayTotalScreenTime)
+                
+                // Load custom color
+                val customColor = getCustomColor()
+
                 landingUiMapper.toUiProps(
                     todayUsageData = todayUsageData,
                     username = username,
@@ -178,7 +260,11 @@ class LandingUsecase @Inject constructor(
                     error = null,
                     chartColors = chartColors,
                     percentageChangeFromYesterday = percentageChange,
-                    joinedChallenges = emptyList()
+                    joinedChallenges = emptyList(),
+                    yearlyUsageDays = yearlyUsageDays,
+                    dailyScreenTimeFormatted = dailyScreenTimeFormatted,
+                    yearlyScreenTimeFormatted = yearlyScreenTimeFormatted,
+                    customColorOption = customColor
                 )
             },
             onFailure = { exception ->

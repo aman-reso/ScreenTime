@@ -12,6 +12,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -123,7 +124,7 @@ fun CapturedNotificationsScreen(
     // Get theme mode for status bar styling
     val useDarkTheme = LocalThemeMode.current
     SideEffect {
-        if (activity is ComponentActivity) {
+        if (activity is AppCompatActivity) {
             activity.enableEdgeToEdge(
                 statusBarStyle = if (useDarkTheme) {
                     SystemBarStyle.dark(scheme.basicBackground.getIntColor())

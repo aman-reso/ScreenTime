@@ -11,6 +11,7 @@
     <string name="try_again">Erneut versuchen</string>
     <string name="cancel">Abbrechen</string>
     <string name="error">Fehler</string>
+    <string name="apply_changes">Änderungen übernehmen</string>
     <string name="coming_soon">Bald verfügbar</string>
 
     <!-- Usage Summary -->
@@ -583,5 +584,22 @@
     <string name="app_lock_locked">Gesperrt</string>
     <string name="app_lock_unlocked">Entsperrt</string>
     <string name="notification_permission_required">Benachrichtigungsberechtigung erforderlich</string>
+
+    <!-- Yearly Usage Stats Card -->
+    <string name="yearly_usage_stats_title">Im Jahr %1$d</string>
+    <string name="days_used_label">Du hast das Handy verwendet</string>
+    <string name="days_count">%1$d Tage</string>
+    <string name="yearly_usage_description">Verfolge deine digitale Wellness-Reise</string>
+    <string name="daily_screen_time">Tägliche Bildschirmzeit</string>
+    <string name="yearly_screen_time">Jährliche Bildschirmzeit</string>
+    
+    <!-- Customisation Screen -->
+    <string name="customisation">Anpassung</string>
+    <string name="customisation_description">Du kannst deine Dienste mit einem Foto, Gerät und Farbe für einfache Erkennung anpassen!</string>
+    <string name="change_colour">Farbe ändern</string>
+    <string name="rename">Umbenennen</string>
+    <string name="rename_service">Dienst umbenennen</string>
+    <string name="enter_service_name">Gib einen Namen zur einfachen Erkennung ein</string>
+    <string name="service_name_placeholder">z.B. Johns Internet</string>
 
 </resources>

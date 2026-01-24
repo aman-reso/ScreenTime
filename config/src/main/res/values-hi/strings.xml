@@ -11,6 +11,7 @@
     <string name="try_again">फिर से प्रयास करें</string>
     <string name="cancel">रद्द करें</string>
     <string name="error">त्रुटि</string>
+    <string name="apply_changes">परिवर्तन लागू करें</string>
     <string name="coming_soon">जल्द आ रहा है</string>
     <string name="app_not_available_on_emulator">यह ऐप एम्युलेटर पर उपयोग नहीं किया जा सकता। कृपया भौतिक डिवाइस का उपयोग करें।</string>
 
@@ -666,5 +667,22 @@
 
     <!-- Category Usage -->
     <string name="category_usage">श्रेणी उपयोग</string>
+
+    <!-- Yearly Usage Stats Card -->
+    <string name="yearly_usage_stats_title">%1$d में</string>
+    <string name="days_used_label">आपने मोबाइल का उपयोग किया है</string>
+    <string name="days_count">%1$d दिन</string>
+    <string name="yearly_usage_description">अपनी डिजिटल कल्याण यात्रा को ट्रैक करें</string>
+    <string name="daily_screen_time">दैनिक स्क्रीन समय</string>
+    <string name="yearly_screen_time">वार्षिक स्क्रीन समय</string>
+    
+    <!-- Customisation Screen -->
+    <string name="customisation">अनुकूलन</string>
+    <string name="customisation_description">आप आसान पहचान के लिए फोटो, डिवाइस और रंग के साथ अपनी सेवाओं को अनुकूलित कर सकते हैं!</string>
+    <string name="change_colour">रंग बदलें</string>
+    <string name="rename">नाम बदलें</string>
+    <string name="rename_service">सेवा का नाम बदलें</string>
+    <string name="enter_service_name">आसान पहचान के लिए एक नाम दर्ज करें</string>
+    <string name="service_name_placeholder">उदा., जॉन का इंटरनेट</string>
 
 </resources>

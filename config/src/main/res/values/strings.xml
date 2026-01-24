@@ -12,6 +12,7 @@
     <string name="cancel">Cancel</string>
     <string name="error">Error</string>
     <string name="coming_soon">Coming Soon</string>
+    <string name="apply_changes">Apply Changes</string>
     <string name="app_not_available_on_emulator">This app cannot be used on an emulator. Please use a physical device.</string>
 
     <!-- Theme Selection Dialog -->
@@ -707,4 +708,21 @@
     <string name="screen_time_value">Screen time: %1$s</string>
 
 
+    
+    <!-- Yearly Usage Stats Card -->
+    <string name="yearly_usage_stats_title">In %1$d</string>
+    <string name="days_used_label">You have used mobile</string>
+    <string name="days_count">%1$d days</string>
+    <string name="yearly_usage_description">Track your digital wellness journey</string>
+    <string name="daily_screen_time">Daily Screen Time</string>
+    <string name="yearly_screen_time">Yearly Screen Time</string>
+    
+    <!-- Customisation Screen -->
+    <string name="customisation">Customisation</string>
+    <string name="customisation_description">You can customise your services with a photo, device and color for easy recognition!</string>
+    <string name="change_colour">Change colour</string>
+    <string name="rename">Rename</string>
+    <string name="rename_service">Rename Service</string>
+    <string name="enter_service_name">Enter a name for easy recognition</string>
+    <string name="service_name_placeholder">e.g., John\'s Internet</string>
 </resources>

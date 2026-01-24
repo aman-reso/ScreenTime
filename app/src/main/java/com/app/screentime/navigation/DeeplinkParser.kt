@@ -48,6 +48,7 @@ object DeeplinkParser {
             "coin_history" -> Screen.CoinHistory
             "wallpaper", "wallpapers" -> Screen.Wallpaper
             "wallpaper_search" -> Screen.WallPaperSearch
+            "customisation", "customize", "settings_customize" -> Screen.Customisation
             "notifications", "captured_notifications" -> Screen.CapturedNotifications
             "control_center" -> Screen.ControlCenter
             "manage_location", "location" -> Screen.ManageLocation
