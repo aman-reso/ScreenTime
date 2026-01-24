@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 data class AppNameInfo(
@@ -91,6 +92,27 @@ class CapturedNotificationsViewModel @Inject constructor(
     
     fun deleteNotification(notification: CapturedNotificationEntity) {
         viewModelScope.launch {
+            // Delete associated image files if they exist
+            notification.imagePath?.let { path ->
+                try {
+                    val file = File(path)
+                    if (file.exists()) {
+                        file.delete()
+                    }
+                } catch (e: Exception) {
+                    // Ignore file deletion errors
+                }
+            }
+            notification.profileImagePath?.let { path ->
+                try {
+                    val file = File(path)
+                    if (file.exists()) {
+                        file.delete()
+                    }
+                } catch (e: Exception) {
+                    // Ignore file deletion errors
+                }
+            }
             dao.deleteNotification(notification)
         }
     }

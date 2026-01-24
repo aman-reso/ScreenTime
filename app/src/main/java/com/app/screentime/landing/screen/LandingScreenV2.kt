@@ -359,20 +359,6 @@ fun LandingScreenV2(
                                     }
                                 }
 
-                            item("usage_card") {
-                                uiProps?.usageDonutData?.let { donutData ->
-                                    UsageSummaryCard(
-                                        todayTotal = donutData.formattedTotalTime,
-                                        dailyGoal = formattedDailyGoal,
-                                        notificationCount = uiProps!!.totalNotificationCount.takeIf { it > 0 },
-                                        percentageChange = uiProps!!.percentageChangeFromYesterday,
-                                        onClick = onNavigateToStatistics,
-                                        onEditDailyGoal = { showDailyGoalBottomSheet = true },
-                                        scheme = headerTheme.current
-                                    )
-                                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
-                                }
-                            }
 
                             // Yearly Usage Stats Card
                             if (uiProps?.yearlyUsageDays != null && uiProps!!.yearlyUsageDays > 0) {
@@ -382,7 +368,11 @@ fun LandingScreenV2(
                                         yearlyScreenTime = uiProps!!.yearlyScreenTimeFormatted,
                                         customColor = uiProps!!.customColorOption,
                                         modifier = Modifier.fillMaxWidth(),
-                                        onClick = onNavigateToCustomisation
+                                        onClick = onNavigateToStatistics,
+                                        dailyGoal = formattedDailyGoal,
+                                        percentageChange = uiProps!!.percentageChangeFromYesterday,
+                                        onEditDailyGoal = { showDailyGoalBottomSheet = true },
+                                        navigateToCustomisation = onNavigateToCustomisation
                                     )
                                     Spacer(modifier = Modifier.height(DSVariables.spacingComponent3))
                                 }

@@ -23,7 +23,7 @@ import com.app.screentime.database.entity.CapturedNotificationEntity
     entities = [
         CapturedNotificationEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class ScreenTimeDatabase : RoomDatabase() {

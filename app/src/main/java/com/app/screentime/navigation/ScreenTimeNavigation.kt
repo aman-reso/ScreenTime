@@ -56,6 +56,7 @@ import com.app.screentime.wallpaper.screen.WallpaperScreen
 import com.app.screentime.wallpaper.screen.FullScreenWallpaperScreen
 import com.app.screentime.wallpaper.screen.WallpaperSearchScreen
 import com.app.screentime.customisation.screen.CustomisationScreen
+import com.app.screentime.navigation.Screen
 // import com.app.screentime.wallpaper.screen.WallpaperScreen // Removed - Wallpaper feature disabled
 import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.floatingactionbutton.ODSFloatingActionButton

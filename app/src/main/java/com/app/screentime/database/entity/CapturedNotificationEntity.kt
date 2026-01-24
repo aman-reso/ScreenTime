@@ -14,5 +14,7 @@ data class CapturedNotificationEntity(
     val title: String?,
     val text: String?,
     val timestamp: Long = System.currentTimeMillis(),
-    val isRemoved: Boolean = false
+    val isRemoved: Boolean = false,
+    val imagePath: String? = null,  // Local path to saved notification image
+    val profileImagePath: String? = null  // Local path to sender profile image (WhatsApp)
 )

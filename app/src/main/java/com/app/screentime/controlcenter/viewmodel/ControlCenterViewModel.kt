@@ -17,6 +17,7 @@ import javax.inject.Inject
 
 data class ControlCenterUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val allowedUsers: List<AllowedUser> = emptyList(),
     val accessibleUsers: List<String> = emptyList(),
     val error: String? = null,
@@ -30,23 +31,23 @@ class ControlCenterViewModel @Inject constructor(
     private val analyticsUseCase: AnalyticsUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ControlCenterUiState(isLoading = true))
+    private val _uiState = MutableStateFlow(ControlCenterUiState())
     val uiState: StateFlow<ControlCenterUiState> = _uiState.asStateFlow()
 
     init {
         analyticsUseCase.trackControlCenter()
     }
 
-    init {
-        loadData() // Load both APIs in parallel
-    }
-
     /**
      * Load all data in parallel (control panel + accessible users)
      */
-    private fun loadData() {
+    private fun loadData(isRefresh: Boolean = false) {
         viewModelScope.launch(Dispatchers.Default) {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(
+                isLoading = !isRefresh,
+                isRefreshing = isRefresh,
+                error = null
+            )
 
             // Load both APIs in parallel using async
             val controlPanelDeferred = async { repository.getControlPanel() }.await()
@@ -64,6 +65,7 @@ class ControlCenterViewModel @Inject constructor(
                     }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
+                        isRefreshing = false,
                         allowedUsers = allowedUsers,
                         error = null,
                         accessibleUsers = accessibleUsersDeferred.getOrNull() ?: emptyList()
@@ -72,6 +74,7 @@ class ControlCenterViewModel @Inject constructor(
                 onFailure = { exception ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
+                        isRefreshing = false,
                         error = exception.message ?: "Failed to load control panel"
                     )
                 }
@@ -81,10 +84,17 @@ class ControlCenterViewModel @Inject constructor(
 
     /**
      * Load control panel data (active TOTP sessions)
-     * Public method for manual refresh
+     * Public method for initial load
      */
     fun loadControlPanel() {
-        loadData()
+        loadData(isRefresh = false)
+    }
+
+    /**
+     * Refresh data (for pull-to-refresh)
+     */
+    fun refresh() {
+        loadData(isRefresh = true)
     }
 
     /**

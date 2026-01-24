@@ -339,6 +339,8 @@
     <string name="no_apps_found">No apps found</string>
     <string name="filter">Filter</string>
     <string name="delete_notification_confirmation">Are you sure you want to delete this notification? This action cannot be undone.</string>
+    <string name="profile_image">Profile image</string>
+    <string name="notification_image">Notification image</string>
 
     <!-- Device Admin Policy -->
     <string name="device_admin_policy">Device Admin Policy</string>
@@ -718,6 +720,7 @@
     <string name="yearly_screen_time">Yearly Screen Time</string>
     
     <!-- Customisation Screen -->
+    <string name="customize">Customize</string>
     <string name="customisation">Customisation</string>
     <string name="customisation_description">You can customise your services with a photo, device and color for easy recognition!</string>
     <string name="change_colour">Change colour</string>

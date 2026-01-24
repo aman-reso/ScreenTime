@@ -6,6 +6,8 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.graphics.Color
+import coil.compose.AsyncImage
+import java.io.File
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
@@ -452,11 +454,30 @@ private fun NotificationItem(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ODSText(
-                        text = viewModel.getAppName(notification.packageName),
-                        style = DSTextStyles.bodySRegular,
-                        color = scheme.functionalSuccessStandard
-                    )
+                    // Profile image and app name row
+                    ODSRow(
+                        verticalAlignment = Alignment.CenterVertically,
+                        gap = DSVariables.spacingComponent2
+                    ) {
+                        // Show profile image if available (WhatsApp profile picture)
+                        notification.profileImagePath?.let { path ->
+                            val file = File(path)
+                            if (file.exists()) {
+                                AsyncImage(
+                                    model = file,
+                                    contentDescription = stringResource(R.string.profile_image),
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .padding(end = 4.dp)
+                                )
+                            }
+                        }
+                        ODSText(
+                            text = viewModel.getAppName(notification.packageName),
+                            style = DSTextStyles.bodySRegular,
+                            color = scheme.functionalSuccessStandard
+                        )
+                    }
                     ODSRow(
                         horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent2),
                         verticalAlignment = Alignment.CenterVertically
@@ -501,6 +522,21 @@ private fun NotificationItem(
                         style = DSTextStyles.microcopyRegular,
                         color = scheme.basicTextRecessive
                     )
+                }
+
+                // Show notification image if available (WhatsApp shared images)
+                notification.imagePath?.let { path ->
+                    val file = File(path)
+                    if (file.exists()) {
+                        AsyncImage(
+                            model = file,
+                            contentDescription = stringResource(R.string.notification_image),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .padding(top = DSVariables.spacingComponent2)
+                        )
+                    }
                 }
             }
         })

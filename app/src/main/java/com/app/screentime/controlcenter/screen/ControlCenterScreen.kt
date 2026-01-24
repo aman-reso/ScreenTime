@@ -47,6 +47,7 @@ import com.app.screentime.config.featureflag.FeatureFlagHelper
 import com.app.screentime.controlcenter.viewmodel.ControlCenterViewModel
 import com.app.screentime.navigation.ToastSnackbarManager
 import com.app.screentime.network.model.AllowedUser
+import com.app.screentime.ui.atom.PullToRefreshBox
 import com.app.screentime.ui.theme.LocalThemeMode
 import com.app.screentime.utils.DateUtils
 import com.telekom.odsystem.DSTextStyles
@@ -200,6 +201,13 @@ fun ControlCenterScreen(
         previousIsRemoving = uiState.isRemoving
     }
 
+    // Load data on screen entry
+    LaunchedEffect(Unit) {
+        viewModel.loadControlPanel()
+    }
+
+    val isRefreshing = uiState.isRefreshing
+
     ODSColumn(
         modifier = Modifier.fillMaxSize(),
         background = listOf(ODSColorModel(scheme.basicBackground))
@@ -248,112 +256,118 @@ fun ControlCenterScreen(
                 }
             )
 
-            // Content
-            when {
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ODSLoadingSpinner(
-                            scheme = scheme,
-                            props = ODSLoadingSpinnerProps(
-                                size = ODSLoadingSpinnerSize.SMALL,
-                                variant = ODSLoadingSpinnerVariant.STANDARD,
-                                labelAlignment = ODSLoadingSpinnerLabelAlignment.NONE
+            // Content with Pull to Refresh
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refresh() },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when {
+                    uiState.isLoading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSLoadingSpinner(
+                                scheme = scheme,
+                                props = ODSLoadingSpinnerProps(
+                                    size = ODSLoadingSpinnerSize.SMALL,
+                                    variant = ODSLoadingSpinnerVariant.STANDARD,
+                                    labelAlignment = ODSLoadingSpinnerLabelAlignment.NONE
+                                )
                             )
-                        )
+                        }
                     }
-                }
 
-                uiState.error != null -> {
-                    ODSColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(
-                                horizontal = DSVariables.spacingComponent4,
-                                vertical = DSVariables.spacingComponent7
-                            ),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        ODSInlineNotification(
-                            modifier = Modifier.fillMaxWidth(),
-                            scheme = scheme,
-                            props = ODSInlineNotificationProps(
-                                mode = ODSInlineNotificationMode.ERROR,
-                                title = stringResource(R.string.error),
-                                text = uiState.error ?: "Failed to load control panel",
-                                link1Props = ODSLinkProps(
-                                    alignment = ODSLinkAlignment.LEFT,
-                                    label = stringResource(R.string.retry)
+                    uiState.error != null -> {
+                        ODSColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    horizontal = DSVariables.spacingComponent4,
+                                    vertical = DSVariables.spacingComponent7
                                 ),
-                                showCloseButton = false
-                            ),
-                            onFirstLinkClicked = { viewModel.loadControlPanel() }
-                        )
-                    }
-                }
-
-                uiState.allowedUsers.isEmpty() -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(DSVariables.spacingComponent4),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ODSText(
-                            text = stringResource(R.string.no_allowed_users),
-                            style = DSTextStyles.bodyMRegular,
-                            color = scheme.basicText,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-
-                else -> {
-                    ODSLazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        padding = ODSPadding(
-                            horizontal = DSVariables.spacingComponent4,
-                            vertical = DSVariables.spacingComponent3
-                        ),
-                        gap = DSVariables.spacingComponent3
-                    ) {
-                        item {
-                            Spacer(modifier = Modifier.height(DSVariables.spacingComponent2))
-                            ODSText(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            ODSInlineNotification(
                                 modifier = Modifier.fillMaxWidth(),
-                                text = stringResource(R.string.control_center_description),
-                                style = DSTextStyles.microcopyRegular,
-                                color = scheme.basicText
+                                scheme = scheme,
+                                props = ODSInlineNotificationProps(
+                                    mode = ODSInlineNotificationMode.ERROR,
+                                    title = stringResource(R.string.error),
+                                    text = uiState.error ?: "Failed to load control panel",
+                                    link1Props = ODSLinkProps(
+                                        alignment = ODSLinkAlignment.LEFT,
+                                        label = stringResource(R.string.retry)
+                                    ),
+                                    showCloseButton = false
+                                ),
+                                onFirstLinkClicked = { viewModel.loadControlPanel() }
                             )
                         }
+                    }
 
-                        item {
-                            AppLargeSectionTitle(title = stringResource(R.string.allowed_usernames))
-                        }
-
-                        items(uiState.allowedUsers) { user ->
-                            AllowedUserItem(
-                                user = user,
-                                isRemoving = uiState.isRemoving.contains(user.username),
-                                onManageClick = { showManageDialog = user },
-                                onCardClick = { onNavigateToRecordDetail(user.username) },
-                                scheme = scheme
+                    uiState.allowedUsers.isEmpty() -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(DSVariables.spacingComponent4),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.no_allowed_users),
+                                style = DSTextStyles.bodyMRegular,
+                                color = scheme.basicText,
+                                textAlign = TextAlign.Center
                             )
                         }
+                    }
 
-                        if (uiState.accessibleUsers.isNotEmpty()) {
+                    else -> {
+                        ODSLazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            padding = ODSPadding(
+                                horizontal = DSVariables.spacingComponent4,
+                                vertical = DSVariables.spacingComponent3
+                            ),
+                            gap = DSVariables.spacingComponent3
+                        ) {
                             item {
-                                AppLargeSectionTitle(title = stringResource(R.string.you_have_access_to_users))
+                                Spacer(modifier = Modifier.height(DSVariables.spacingComponent2))
+                                ODSText(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = stringResource(R.string.control_center_description),
+                                    style = DSTextStyles.microcopyRegular,
+                                    color = scheme.basicText
+                                )
                             }
 
-                            items(uiState.accessibleUsers) { username ->
-                                AccessibleUserItem(
-                                    username = username,
-                                    onCardClick = { onNavigateToRecordDetail(username) },
+                            item {
+                                AppLargeSectionTitle(title = stringResource(R.string.allowed_usernames))
+                            }
+
+                            items(uiState.allowedUsers) { user ->
+                                AllowedUserItem(
+                                    user = user,
+                                    isRemoving = uiState.isRemoving.contains(user.username),
+                                    onManageClick = { showManageDialog = user },
+                                    onCardClick = { onNavigateToRecordDetail(user.username) },
                                     scheme = scheme
                                 )
+                            }
+
+                            if (uiState.accessibleUsers.isNotEmpty()) {
+                                item {
+                                    AppLargeSectionTitle(title = stringResource(R.string.you_have_access_to_users))
+                                }
+
+                                items(uiState.accessibleUsers) { username ->
+                                    AccessibleUserItem(
+                                        username = username,
+                                        onCardClick = { onNavigateToRecordDetail(username) },
+                                        scheme = scheme
+                                    )
+                                }
                             }
                         }
                     }
