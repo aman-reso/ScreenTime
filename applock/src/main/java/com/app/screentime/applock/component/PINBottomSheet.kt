@@ -73,7 +73,7 @@ fun PINBottomSheet(
             ) {
                 ODSText(
                     text = if (isSettingPin) "Set PIN" else "Enter PIN",
-                    style = DSTextStyles.titleM,
+                    style = DSTextStyles.bodyMBold,
                     color = scheme.basicText
                 )
                 ODSText(
@@ -82,7 +82,7 @@ fun PINBottomSheet(
                     } else {
                         "Enter your PIN to lock this app"
                     },
-                    style = DSTextStyles.bodyMRegular,
+                    style = DSTextStyles.bodySRegular,
                     color = scheme.basicTextRecessive
                 )
             }
@@ -141,7 +141,7 @@ fun PINBottomSheet(
         },
         actionSlot = {
             ODSButton(
-                modifier = Modifier,
+                modifier = Modifier.fillMaxWidth(),
                 scheme = scheme,
                 props = ODSButtonProps(
                     label = if (isSettingPin) "Set PIN" else "Confirm",

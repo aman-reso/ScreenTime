@@ -25,32 +25,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Timelapse
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,10 +52,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.appdetail.component.AppLaunchLimitBottomSheet
+import com.app.screentime.appdetail.component.AppLimitBottomSheet
 import com.app.screentime.appdetail.viewmodel.SingleAppUsageDetailViewModel
 import com.app.screentime.config.R
-import com.app.screentime.config.data.Feature
-import com.app.screentime.config.featureflag.FeatureFlagHelper
 import com.app.screentime.data.entity.AppUsage
 import com.app.screentime.data.uiModel.WeeklyDataReport
 import com.app.screentime.landing.component.NetworkCard
@@ -98,7 +88,6 @@ import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotification
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationMode
 import com.telekom.odsystem.organisms.inlinenotification.ODSInlineNotificationProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
-import com.telekom.odsystem.tokens.tokens.frogSecondaryScheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,7 +118,6 @@ fun SingleAppUsageDetailScreen(
         }
     }
     val context = LocalContext.current
-    rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
 
     // Get app info for icon
@@ -154,7 +142,7 @@ fun SingleAppUsageDetailScreen(
     }
 
     var selectedDayIndex by remember { mutableStateOf<Int?>(null) }
-    
+
     // Get the selected day or default to the most recent day
     val selectedDayData = remember(uiState.weeklyUsageData, selectedDayIndex) {
         if (uiState.weeklyUsageData.isNotEmpty()) {
@@ -167,12 +155,12 @@ fun SingleAppUsageDetailScreen(
             null
         }
     }
-    
+
     // Check if selected day is today (last item in the list)
     val isToday = remember(selectedDayIndex, uiState.weeklyUsageData) {
         selectedDayIndex == null || selectedDayIndex == uiState.weeklyUsageData.size - 1
     }
-    
+
     // Format date label for non-today dates
     val dateLabel = remember(selectedDayData, isToday) {
         if (isToday || selectedDayData == null) {
@@ -181,13 +169,13 @@ fun SingleAppUsageDetailScreen(
             selectedDayData.date // e.g., "21 Jan"
         }
     }
-    
+
     // Calculate selected day's usage
     val selectedUsage = selectedDayData?.screenTime ?: 0L
     val selectedUsageFormatted = remember(selectedUsage) {
         formatDuration(selectedUsage)
     }
-    
+
     // Calculate selected day's notification count
     val selectedNotificationCount = selectedDayData?.notificationCount ?: 0
 
@@ -288,6 +276,8 @@ fun SingleAppUsageDetailScreen(
     // Bottom sheet states
     // var showBlockBottomSheet by remember { mutableStateOf(false) } // Removed - App Blocking feature disabled
     var showTimerBottomSheet by remember { mutableStateOf(false) }
+    var showAppLimitBottomSheet by remember { mutableStateOf(false) }
+    var showAppLaunchLimitBottomSheet by remember { mutableStateOf(false) }
 
     ODSColumn(
         modifier = Modifier.fillMaxSize(),
@@ -379,7 +369,7 @@ fun SingleAppUsageDetailScreen(
                                         mode = ODSInlineNotificationMode.INFORMATIVE,
                                         title = stringResource(R.string.usage_insight),
                                         text = stringResource(R.string.usage_insight_description),
-                                        showCloseButton = true
+                                        showCloseButton = false
                                     ),
                                     onDismiss = {
                                         // Handle dismiss if needed
@@ -387,21 +377,10 @@ fun SingleAppUsageDetailScreen(
                             }
 
                             item {
-                                QuickActionsCard(
-                                    onLaunchClick = { launchApp(context, packageName) },
-                                    onSetTimerClick = { showTimerBottomSheet = true },
-                                    // onBlockClick = { showBlockBottomSheet = true }, // Removed - App Blocking feature disabled
-                                    onSettingsClick = { openAppSettings(context, packageName) },
-                                    scheme = scheme,
-                                    packageName = packageName
-                                )
-                            }
-                            item {
                                 Spacer(modifier = Modifier.height(DSVariables.spacingComponent3 * 3))
                             }
                         }
 
-                        // Divider
                         ODSBox(
                             modifier = Modifier
                                 .width(1.dp)
@@ -420,7 +399,6 @@ fun SingleAppUsageDetailScreen(
                             item {
                                 UsageSummaryCard(
                                     todayTotal = selectedUsageFormatted,
-                                    dailyGoal = if (isToday) "6h" else null, // Hide goal for historical dates
                                     notificationCount = selectedNotificationCount.takeIf { it > 0 },
                                     percentageChange = percentageChange,
                                     onClick = {},
@@ -442,7 +420,7 @@ fun SingleAppUsageDetailScreen(
                                     )
                                 }
                             }
-                            
+
                             item {
                                 ODSText(
                                     text = stringResource(R.string.activity),
@@ -511,21 +489,18 @@ fun SingleAppUsageDetailScreen(
                                     mode = ODSInlineNotificationMode.INFORMATIVE,
                                     title = stringResource(R.string.usage_insight),
                                     text = stringResource(R.string.usage_insight_description),
-                                    showCloseButton = true
-                                ),
-                                onDismiss = {
-                                    // Handle dismiss if needed
-                                })
+                                    showCloseButton = false
+                                )
+                            )
                         }
 
                         item {
                             UsageSummaryCard(
                                 todayTotal = selectedUsageFormatted,
-                                dailyGoal = if (isToday) "6h" else null, // Hide goal for historical dates
                                 notificationCount = selectedNotificationCount.takeIf { it > 0 },
                                 percentageChange = percentageChange,
                                 onClick = {},
-                                scheme = frogSecondaryScheme,
+                                scheme = headerTheme.current,
                                 dateLabel = dateLabel
                             )
                         }
@@ -564,12 +539,14 @@ fun SingleAppUsageDetailScreen(
                             QuickActionsCard(
                                 onLaunchClick = { launchApp(context, packageName) },
                                 onSetTimerClick = { showTimerBottomSheet = true },
-                                // onBlockClick = { showBlockBottomSheet = true }, // Removed - App Blocking feature disabled
+                                onSetAppLimitClick = { showAppLimitBottomSheet = true },
+                                onSetAppLaunchLimitClick = { showAppLaunchLimitBottomSheet = true },
                                 onSettingsClick = { openAppSettings(context, packageName) },
                                 scheme = scheme,
-                                packageName
+                                packageName = packageName
                             )
                         }
+
                         item {
                             Spacer(modifier = Modifier.height(DSVariables.spacingComponent3 * 3))
                         }
@@ -578,46 +555,29 @@ fun SingleAppUsageDetailScreen(
             }
         }
 
-        // Block App Bottom Sheet - Removed - App Blocking feature disabled
-        /*
-        if (showBlockBottomSheet) {
-            AddBlockingRuleBottomSheet(
-                selectedAppName = uiState.appName.ifEmpty { packageName },
-                selectedPackageName = packageName,
-                onDismiss = { showBlockBottomSheet = false },
-                onBlockInstantly = { pkgName, appName ->
-                    coroutineScope.launch {
-                        try {
-                            AppBlockManager.blockApp(pkgName, 0L) // 0L means instant block
-                            showBlockBottomSheet = false
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-                },
-                onBlockAfterLaunches = { pkgName, appName, maxLaunches ->
-                    // This will be handled by the blocking system
-                    showBlockBottomSheet = false
-                },
-                onBlockAfterDuration = { pkgName, appName, maxDurationMinutes ->
-                    // This will be handled by the blocking system
-                    showBlockBottomSheet = false
-                },
-                scheme = neutralScheme
-            )
-        }
-        */
-
-        // Timer Bottom Sheet
-        if (showTimerBottomSheet) {
-            TimerBottomSheet(
+        // App Limit Bottom Sheet
+        if (showAppLimitBottomSheet) {
+            AppLimitBottomSheet(
                 appName = uiState.appName.ifEmpty { packageName },
                 packageName = packageName,
-                onDismiss = { showTimerBottomSheet = false },
-                onSetTimer = { minutes ->
-                    // Set timer logic here
-                    showTimerBottomSheet = false
-                })
+                title = stringResource(R.string.set_app_limit),
+                onDismiss = { showAppLimitBottomSheet = false },
+                onSetLimit = { _, _ ->
+                    showAppLimitBottomSheet = false
+                }
+            )
+        }
+
+        // App Launch Limit Bottom Sheet
+        if (showAppLaunchLimitBottomSheet) {
+            AppLaunchLimitBottomSheet(
+                appName = uiState.appName.ifEmpty { packageName },
+                packageName = packageName,
+                onDismiss = { showAppLaunchLimitBottomSheet = false },
+                onSetLimit = { _ ->
+                    showAppLaunchLimitBottomSheet = false
+                }
+            )
         }
     }
 }
@@ -626,7 +586,6 @@ fun SingleAppUsageDetailScreen(
 private fun HeaderSection(
     appName: String, onBackClick: () -> Unit, onMoreClick: () -> Unit, scheme: ODSTheme
 ) {
-
     ODSRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
@@ -645,8 +604,8 @@ private fun HeaderSection(
         }
 
         ODSText(
-            text = appName, 
-            style = DSTextStyles.bodyL, 
+            text = appName,
+            style = DSTextStyles.bodyL,
             color = scheme.basicText,
             modifier = Modifier
                 .weight(1f)
@@ -660,7 +619,8 @@ private fun HeaderSection(
 private fun QuickActionsCard(
     onLaunchClick: () -> Unit,
     onSetTimerClick: () -> Unit,
-    // onBlockClick: () -> Unit, // Removed - App Blocking feature disabled
+    onSetAppLimitClick: () -> Unit,
+    onSetAppLaunchLimitClick: () -> Unit,
     onSettingsClick: () -> Unit,
     scheme: ODSTheme,
     packageName: String
@@ -668,14 +628,17 @@ private fun QuickActionsCard(
     val context = LocalContext.current
 
     ODSColumn(
-        modifier = Modifier.fillMaxWidth(), gap = DSVariables.spacingComponent3
+        modifier = Modifier.fillMaxWidth(),
+        gap = DSVariables.spacingComponent3
     ) {
         ODSText(
-            text = stringResource(R.string.quick_actions), style = DSTextStyles.bodyMRegular, color = scheme.basicText
+            text = stringResource(R.string.quick_actions),
+            style = DSTextStyles.bodyMRegular,
+            color = scheme.basicText
         )
         if (packageName != context.packageName) {
             ActionCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 icon = Icons.AutoMirrored.Filled.ArrowForward,
                 text = stringResource(R.string.launch),
                 onClick = onLaunchClick,
@@ -683,43 +646,28 @@ private fun QuickActionsCard(
             )
 
             ActionCard(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Default.Timer,
-                text = stringResource(R.string.set_timer),
-                onClick = onSetTimerClick,
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Default.Timelapse,
+                text = stringResource(R.string.set_app_limit),
+                onClick = onSetAppLimitClick,
                 scheme = scheme
             )
 
-            // Block - Removed - App Blocking feature disabled
-            /*
             ActionCard(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Default.Block,
-                text = stringResource(R.string.block),
-                onClick = onBlockClick,
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Default.RocketLaunch,
+                text = stringResource(R.string.set_app_launch_limit),
+                onClick = onSetAppLaunchLimitClick,
                 scheme = scheme
             )
-            */
-
         }
         ActionCard(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth(),
             icon = Icons.Default.Settings,
             text = stringResource(R.string.settings),
             onClick = onSettingsClick,
             scheme = scheme
         )
-
-        // Recover Notification - Removed - Notification recovery feature disabled
-        /*
-        ActionCard(
-            modifier = Modifier.weight(1f),
-            icon = Icons.Default.EditNotifications,
-            text = stringResource(R.string.recover_notification),
-            onClick = onBlockClick,
-            scheme = scheme
-        )
-        */
     }
 }
 
@@ -729,7 +677,7 @@ private fun ActionCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     text: String,
     onClick: () -> Unit,
-    scheme: ODSTheme
+    scheme: ODSTheme = neutralScheme
 ) {
     ODSCardQuickAction(
         modifier = modifier, scheme = scheme, props = ODSCardQuickActionProps(
@@ -800,165 +748,31 @@ private fun openAppTimerSettings(context: Context, packageName: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TimerBottomSheet(
-    appName: String, packageName: String, onDismiss: () -> Unit, onSetTimer: (Int) -> Unit
-) {
-    val context = LocalContext.current
-    val scrollState = rememberScrollState()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scheme = neutralScheme
-
-    var selectedMinutes by remember { mutableIntStateOf(30) }
-
-    remember(packageName) {
-        try {
-            context.packageManager.getApplicationInfo(packageName, 0)
-        } catch (e: Exception) {
-            null
+private fun openAppLimitSettings(context: Context, packageName: String) {
+    try {
+        // Try Digital Wellbeing app time limit settings
+        val intent = Intent("android.settings.action.APP_USAGE_SETTINGS").apply {
+            putExtra(Intent.EXTRA_PACKAGE_NAME, packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-    }
-
-    val timeOptions = listOf(15, 30, 45, 60, 90, 120) // minutes
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = scheme.basicBackgroundCard.getColor(),
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    ) {
-        ODSColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-        ) {
-            // Header
-            ODSRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ODSRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-//                    AppIcon(
-//                        appInfo = appInfo,
-//                        size = 64.dp,
-//                        modifier = Modifier.size(64.dp)
-//                    )
-                    ODSColumn {
-                        ODSText(
-                            text = "Set Timer",
-                            style = DSTextStyles.bodyMRegular,
-                            color = scheme.basicText
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ODSText(
-                            text = appName,
-                            style = DSTextStyles.bodyMBold,
-                            color = scheme.basicTextRecessive
-                        )
-                    }
-                }
-                IconButton(
-                    onClick = onDismiss, modifier = Modifier.size(40.dp)
-                ) {
-                    ODSIcon(
-                        iconModel = ODSIconModel(
-                            imageVector = Icons.Default.Close,
-                            tint = scheme.basicText,
-                            contentDescription = "Close"
-                        ), width = 24.dp, height = 24.dp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Section Label
-            ODSText(
-                text = "TIME OPTIONS",
-                style = DSTextStyles.bodyMBold,
-                color = scheme.basicTextRecessive,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            // Time Options Chips
-            ODSRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                timeOptions.forEach { minutes ->
-                    FilterChip(
-                        selected = selectedMinutes == minutes,
-                        onClick = { selectedMinutes = minutes },
-                        label = {
-                            ODSText(
-                                text = "${minutes}m",
-                                style = DSTextStyles.bodyMBold,
-                                color = if (selectedMinutes == minutes) scheme.basicTextOnAccent else scheme.basicText
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = scheme.basicAccent.getColor(),
-                            containerColor = scheme.basicBackgroundCard.getColor(),
-                            selectedLabelColor = scheme.basicTextOnAccent.getColor(),
-                            labelColor = scheme.basicText.getColor()
-                        ),
-                        shape = RoundedCornerShape(9999.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Custom Time Input (Optional)
-            ODSText(
-                text = "Custom Time (minutes)",
-                style = DSTextStyles.bodyMRegular,
-                color = scheme.basicText,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            // Slider for custom time
-            ODSColumn {
-                ODSText(
-                    text = "$selectedMinutes minutes",
-                    style = DSTextStyles.bodyMRegular,
-                    color = scheme.basicAccent,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                Slider(
-                    value = selectedMinutes.toFloat(),
-                    onValueChange = { selectedMinutes = it.toInt() },
-                    valueRange = 5f..180f,
-                    steps = 34, // 5-minute steps from 5 to 180
-                    colors = SliderDefaults.colors(
-                        thumbColor = scheme.basicAccent.getColor(),
-                        activeTrackColor = scheme.basicAccent.getColor(),
-                        inactiveTrackColor = scheme.basicStroke.getColor()
-                    ),
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Set Timer Button
-//            AppPrimaryButton(
-//                modifier = Modifier.fillMaxWidth(),
-//                text = "Set Timer",
-//                onClick = {
-//                    onSetTimer(selectedMinutes)
-//                }
-//            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-        }
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        // Fallback to app timer settings or app settings
+        openAppTimerSettings(context, packageName)
     }
 }
+
+private fun openAppLaunchLimitSettings(context: Context, packageName: String) {
+    try {
+        // Try to open app launch limit settings (Digital Wellbeing)
+        val intent = Intent("android.settings.action.APP_OPEN_BY_DEFAULT_SETTINGS").apply {
+            putExtra(Intent.EXTRA_PACKAGE_NAME, packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        // Fallback to app usage settings or app settings
+        openAppLimitSettings(context, packageName)
+    }
+}
+

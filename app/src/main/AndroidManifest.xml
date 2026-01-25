@@ -163,7 +163,6 @@
             android:name="com.app.screentime.applock.service.AppLockMonitoringService"
             android:enabled="true"
             android:exported="false"
-            android:process=":applock_service"
             android:foregroundServiceType="specialUse" />
 
         <!-- App Lock Overlay Activity -->

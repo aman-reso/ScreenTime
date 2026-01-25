@@ -37,7 +37,6 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun UsageSummaryCard(
     modifier: Modifier = Modifier,
     todayTotal: String,
-    dailyGoal: String? = "6h",
     notificationCount: Int? = null,
     percentageChange: Float? = null,
     onClick: () -> Unit = {},
@@ -81,47 +80,6 @@ fun UsageSummaryCard(
                         )
                     }
 
-                    // Only show daily goal if not null
-                    if (dailyGoal != null) {
-                        ODSColumn(
-                            modifier = Modifier.weight(1f),
-                            gap = DSVariables.spacingComponent1,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            ODSRow(
-                                verticalAlignment = Alignment.CenterVertically,
-                                gap = DSVariables.spacingComponent1
-                            ) {
-                                ODSText(
-                                    text = stringResource(R.string.daily_goal),
-                                    style = DSTextStyles.bodyMRegular,
-                                    color = scheme.basicTextRecessive
-                                )
-                                onEditDailyGoal?.let {
-                                ODSIcon(
-                                    modifier = Modifier.clickable(
-                                        interactionSource = editIconInteractionSource,
-                                        indication = null,
-                                        onClick = it
-                                    ),
-                                    iconModel = ODSIconModel(
-                                        drawableRes = com.telekom.odsystem.R.drawable.edit_type_standard,
-                                        contentDescription = stringResource(com.app.screentime.config.R.string.edit_daily_goal),
-                                        tint = scheme.basicTextRecessive
-                                    ),
-                                    width = 20.dp,
-                                    height = 20.dp
-                                )
-                            }
-                        }
-                            ODSText(
-                                text = dailyGoal,
-                                style = DSTextStyles.subtitle,
-                                color = scheme.basicText
-                            )
-                        }
-                    }
-
                     notificationCount?.let { count ->
                         ODSColumn(
                             modifier = Modifier.weight(1f),
@@ -137,44 +95,6 @@ fun UsageSummaryCard(
                                 text = count.toString(),
                                 style = DSTextStyles.bodyMBold,
                                 color = scheme.basicText
-                            )
-                        }
-                    }
-                }
-                percentageChange?.let { change ->
-                    if (change != 0f) {
-                        val isIncrease = change > 0
-                        val changeText = "${kotlin.math.abs(change.toInt())}%"
-                        val arrowIcon = if (isIncrease) {
-                            com.telekom.odsystem.R.drawable.collapse_up_type_standard
-                        } else {
-                            com.telekom.odsystem.R.drawable.collapse_down_type_standard_size_standard
-                        }
-                        ODSRow(
-                            verticalAlignment = Alignment.CenterVertically,
-                            gap = 2.dp
-                        ) {
-                            ODSText(
-                                text = if (isIncrease) {
-                                    stringResource(com.app.screentime.config.R.string.more_than_yesterday, changeText)
-                                } else {
-                                    stringResource(com.app.screentime.config.R.string.less_than_yesterday, changeText)
-                                },
-                                style = DSTextStyles.bodySRegular,
-                                color = scheme.basicText
-                            )
-                            ODSIcon(
-                                iconModel = ODSIconModel(
-                                    drawableRes = arrowIcon,
-                                    contentDescription = if (isIncrease) {
-                                        stringResource(com.app.screentime.config.R.string.increased)
-                                    } else {
-                                        stringResource(com.app.screentime.config.R.string.decreased)
-                                    },
-                                    tint = scheme.basicText
-                                ),
-                                width = 14.dp,
-                                height = 14.dp
                             )
                         }
                     }

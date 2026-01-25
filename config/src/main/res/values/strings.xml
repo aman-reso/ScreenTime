@@ -721,11 +721,14 @@
     
     <!-- Customisation Screen -->
     <string name="customize">Customize</string>
-    <string name="customisation">Customisation</string>
-    <string name="customisation_description">You can customise your services with a photo, device and color for easy recognition!</string>
-    <string name="change_colour">Change colour</string>
+    <string name="customisation">Customize Card</string>
+    <string name="customisation_description">Personalize your usage stats card by choosing a color that matches your style!</string>
+    <string name="change_colour">Choose color</string>
     <string name="rename">Rename</string>
     <string name="rename_service">Rename Service</string>
     <string name="enter_service_name">Enter a name for easy recognition</string>
     <string name="service_name_placeholder">e.g., John\'s Internet</string>
+    <string name="preview">Preview</string>
+    <string name="sample_daily_time">5h 30m</string>
+    <string name="sample_yearly_time">240h</string>
 </resources>

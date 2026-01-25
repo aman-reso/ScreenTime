@@ -27,10 +27,29 @@ object AppLockServiceManager {
     }
 
     /**
-     * Check if service should be running based on locked apps
+     * Check if service should be running based on locked apps and app limits
      */
     fun shouldServiceRun(hasLockedApps: Boolean, hasOverlayPermission: Boolean, hasUsageStatsPermission: Boolean): Boolean {
         return hasLockedApps && hasOverlayPermission && hasUsageStatsPermission
+    }
+
+    /**
+     * Check if service should be running based on repository state
+     */
+    fun shouldServiceRun(context: Context): Boolean {
+        val repository = com.app.screentime.applock.repository.AppLockRepository(context)
+        val hasOverlayPermission = PermissionHelper.hasOverlayPermission(context)
+        val hasUsageStatsPermission = PermissionHelper.hasUsageStatsPermission(context)
+        return repository.shouldServiceRun() && hasOverlayPermission && hasUsageStatsPermission
+    }
+
+    /**
+     * Start service if needed based on app limits or locked apps
+     */
+    fun startServiceIfNeeded(context: Context) {
+        if (shouldServiceRun(context)) {
+            startService(context)
+        }
     }
 }
 

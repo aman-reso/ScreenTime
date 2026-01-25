@@ -5,6 +5,8 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
+import android.util.Log
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -27,6 +29,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import com.app.screentime.analytics.AnalyticsUseCase
+import com.app.screentime.applock.repository.AppLockRepository
+import com.app.screentime.applock.util.AppLockServiceManager
+import com.app.screentime.applock.util.PermissionHelper
 import com.app.screentime.config.language.AppLanguageManager
 import com.app.screentime.navigation.ScreenTimeNavigation
 import com.app.screentime.permission.EmulatorBlockScreen
@@ -67,6 +72,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         installSplashScreen()
         analyticsUseCase.trackAppOpen()
+        
+        // Start App Lock service if at least one app is locked
+        startAppLockServiceIfNeeded()
         
         // Handle deeplink from intent (URI format or from notification)
         deeplinkUriState.value = extractDeeplinkUri(intent)
@@ -173,5 +181,33 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return null
+    }
+    
+    /**
+     * Start App Lock Monitoring Service if at least one app is locked
+     * and required permissions are granted
+     */
+    private fun startAppLockServiceIfNeeded() {
+        try {
+            val appLockRepository = AppLockRepository(this)
+            val hasLockedApps = appLockRepository.getLockedApps().isNotEmpty()
+            
+            if (!hasLockedApps) {
+                Log.d("MainActivity", "No locked apps, skipping app lock service")
+                return
+            }
+            
+            val hasOverlayPermission = PermissionHelper.hasOverlayPermission(this)
+            val hasUsageStatsPermission = PermissionHelper.hasUsageStatsPermission(this)
+            
+            Log.d("MainActivity", "AppLock check - locked apps: $hasLockedApps, overlay: $hasOverlayPermission, usage: $hasUsageStatsPermission")
+            
+            if (hasOverlayPermission && hasUsageStatsPermission) {
+                Log.d("MainActivity", "Starting AppLockMonitoringService")
+                AppLockServiceManager.startService(this)
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error starting app lock service: ${e.message}")
+        }
     }
 }

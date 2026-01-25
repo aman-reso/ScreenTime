@@ -1,6 +1,7 @@
 package com.app.screentime.applock.activity
 
 import android.app.ActivityManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -10,13 +11,27 @@ import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.RocketLaunch
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.app.screentime.applock.component.PINPad
 import com.app.screentime.applock.component.PatternLockView
@@ -25,16 +40,21 @@ import com.app.screentime.applock.repository.AppLockRepository
 import com.app.screentime.applock.repository.AppLockRepository.LockType
 import com.telekom.odsystem.DSTextStyles
 import com.telekom.odsystem.DSVariables
-import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonButtonType
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * Overlay activity that shows PIN entry screen when a locked app is accessed
@@ -48,15 +68,24 @@ class AppLockOverlayActivity : ComponentActivity() {
 
     private var lockedPackageName: String? = null
     private var appName: String = "App"
+    private var blockReason: String? = null
+    private var launchLimit: Int = 0
+    private var launchCount: Int = 0
 
     companion object {
         private const val TAG = "AppLockOverlayActivity"
+        const val BLOCK_REASON_LAUNCH_LIMIT = "launch_limit"
+        const val BLOCK_REASON_TIME_LIMIT = "time_limit"
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lockedPackageName = intent.getStringExtra("locked_package")
+        blockReason = intent.getStringExtra("block_reason")
+        launchLimit = intent.getIntExtra("launch_limit", 0)
+        launchCount = intent.getIntExtra("launch_count", 0)
+        
         if (lockedPackageName == null) {
             Log.e(TAG, "No locked_package provided in intent. Finishing.")
             finish()
@@ -71,32 +100,53 @@ class AppLockOverlayActivity : ComponentActivity() {
         }
 
         setContent {
-            @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-            val lockType = appLockRepository.getLockType()
-            AppLockOverlayScreen(
-                appName = appName,
-                lockedPackageName = lockedPackageName ?: "",
-                lockType = lockType,
-                onPinVerified = { pin ->
-                    if (appLockRepository.validatePin(pin)) {
-                        lockedPackageName?.let { pkg ->
-                            AppLockManager.unlockApp(pkg)
-                            finish()
-                        }
-                    }
-                },
-                onPatternVerified = { pattern ->
-                    if (appLockRepository.validatePattern(pattern)) {
-                        lockedPackageName?.let { pkg ->
-                            AppLockManager.unlockApp(pkg)
-                            finish()
-                        }
-                    }
-                },
-                onDismiss = {
-                    // Cannot dismiss - must enter PIN or Pattern
+            when (blockReason) {
+                BLOCK_REASON_LAUNCH_LIMIT -> {
+                    // Show launch limit exceeded screen (no PIN required)
+                    LaunchLimitExceededScreen(
+                        appName = appName,
+                        launchLimit = launchLimit,
+                        launchCount = launchCount,
+                        onGoBack = { closeLockedApp() }
+                    )
                 }
-            )
+                BLOCK_REASON_TIME_LIMIT -> {
+                    // Show time limit exceeded screen (no PIN required)
+                    TimeLimitExceededScreen(
+                        appName = appName,
+                        onGoBack = { closeLockedApp() }
+                    )
+                }
+                else -> {
+                    // Regular app lock - show PIN/Pattern screen
+                    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+                    val lockType = appLockRepository.getLockType()
+                    AppLockOverlayScreen(
+                        appName = appName,
+                        lockedPackageName = lockedPackageName ?: "",
+                        lockType = lockType,
+                        onPinVerified = { pin ->
+                            if (appLockRepository.validatePin(pin)) {
+                                lockedPackageName?.let { pkg ->
+                                    AppLockManager.unlockApp(pkg)
+                                    finish()
+                                }
+                            }
+                        },
+                        onPatternVerified = { pattern ->
+                            if (appLockRepository.validatePattern(pattern)) {
+                                lockedPackageName?.let { pkg ->
+                                    AppLockManager.unlockApp(pkg)
+                                    finish()
+                                }
+                            }
+                        },
+                        onDismiss = {
+                            // Cannot dismiss - must enter PIN or Pattern
+                        }
+                    )
+                }
+            }
         }
     }
 
@@ -154,10 +204,13 @@ class AppLockOverlayActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        // Keep activity on top even when paused
-        if (!isFinishing) {
-            moveTaskToBack(false)
-        }
+        // Don't moveTaskToBack - it can cause issues on some devices
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // Reset lock screen flag when activity is destroyed
+        AppLockManager.isLockScreenShown.set(false)
     }
 
     override fun onUserLeaveHint() {
@@ -181,21 +234,21 @@ class AppLockOverlayActivity : ComponentActivity() {
             try {
                 val activityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
 
-                // Force stop the locked app
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    // Android 9+ requires usage of killBackgroundProcesses or forceStopPackage
-                    // Note: forceStopPackage requires system app or device admin
-                    activityManager.killBackgroundProcesses(packageName)
-                } else {
-                    @Suppress("DEPRECATION")
-                    activityManager.killBackgroundProcesses(packageName)
-                }
+                // Kill background processes of the locked app
+                activityManager.killBackgroundProcesses(packageName)
 
                 Log.d(TAG, "Closed locked app: $packageName")
             } catch (e: Exception) {
                 Log.e(TAG, "Error closing locked app: ${e.message}", e)
             }
         }
+
+        // Navigate to home screen to ensure we leave the blocked app
+        val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        startActivity(homeIntent)
 
         // Finish this overlay activity
         finish()
@@ -327,3 +380,162 @@ private fun AppLockOverlayScreen(
     }
 }
 
+/**
+ * Screen shown when app launch limit is exceeded
+ */
+@Composable
+private fun LaunchLimitExceededScreen(
+    appName: String,
+    launchLimit: Int,
+    launchCount: Int,
+    onGoBack: () -> Unit,
+    scheme: ODSTheme = neutralScheme
+) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = scheme.basicBackground.getColor()
+    ) { paddingValues ->
+        ODSColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            gap = DSVariables.spacingComponent4,
+            padding = ODSPadding(all = DSVariables.spacingComponent4)
+        ) {
+            // Icon
+            ODSIcon(
+                iconModel = ODSIconModel(
+                    imageVector = Icons.Default.RocketLaunch,
+                    tint = scheme.functionalDestructiveStandard,
+                    contentDescription = "Launch limit"
+                ),
+                width = 64.dp,
+                height = 64.dp
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Title
+            ODSText(
+                text = "Launch Limit Reached",
+                style = DSTextStyles.titleM,
+                color = scheme.basicText
+            )
+
+            // App name
+            ODSText(
+                text = appName,
+                style = DSTextStyles.bodyL,
+                color = scheme.basicTextRecessive
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Message
+            ODSText(
+                text = "You've opened this app $launchCount times today.",
+                style = DSTextStyles.bodyMRegular,
+                color = scheme.basicTextRecessive
+            )
+            
+            ODSText(
+                text = "Daily limit: $launchLimit launches",
+                style = DSTextStyles.bodyMBold,
+                color = scheme.functionalDestructiveStandard
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Go Back button
+            ODSButton(
+                modifier = Modifier.fillMaxWidth(0.6f),
+                scheme = scheme,
+                props = ODSButtonProps(
+                    label = "Go Back",
+                    variant = ODSButtonVariant.SECONDARY,
+                    size = ODSButtonSize.LARGE,
+                    buttonType = ODSButtonButtonType.STANDARD
+                ),
+                onClick = onGoBack
+            )
+        }
+    }
+}
+
+/**
+ * Screen shown when app time limit is exceeded
+ */
+@Composable
+private fun TimeLimitExceededScreen(
+    appName: String,
+    onGoBack: () -> Unit,
+    scheme: ODSTheme = neutralScheme
+) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = scheme.basicBackground.getColor()
+    ) { paddingValues ->
+        ODSColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            gap = DSVariables.spacingComponent4,
+            padding = ODSPadding(all = DSVariables.spacingComponent4)
+        ) {
+            // Icon
+            ODSIcon(
+                iconModel = ODSIconModel(
+                    imageVector = Icons.Default.Timer,
+                    tint = scheme.functionalDestructiveStandard,
+                    contentDescription = "Time limit"
+                ),
+                width = 64.dp,
+                height = 64.dp
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Title
+            ODSText(
+                text = "Time Limit Reached",
+                style = DSTextStyles.titleM,
+                color = scheme.basicText
+            )
+
+            // App name
+            ODSText(
+                text = appName,
+                style = DSTextStyles.bodyL,
+                color = scheme.basicTextRecessive
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Message
+            ODSText(
+                text = "You've reached your daily time limit for this app.",
+                style = DSTextStyles.bodyMRegular,
+                color = scheme.basicTextRecessive
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Go Back button
+            ODSButton(
+                modifier = Modifier.fillMaxWidth(0.6f),
+                scheme = scheme,
+                props = ODSButtonProps(
+                    label = "Go Back",
+                    variant = ODSButtonVariant.SECONDARY,
+                    size = ODSButtonSize.LARGE,
+                    buttonType = ODSButtonButtonType.STANDARD
+                ),
+                onClick = onGoBack
+            )
+        }
+    }
+}

@@ -78,8 +78,8 @@ class AppLockMonitoringService : Service() {
     }
 
     private fun shouldStartService(): Boolean {
-        val hasLockedApps = appLockRepository.getLockedApps().isNotEmpty()
-        if (!hasLockedApps) {
+        // Check if there are any locked apps OR any app limits set
+        if (!appLockRepository.shouldServiceRun()) {
             return false
         }
 
@@ -116,7 +116,15 @@ class AppLockMonitoringService : Service() {
 
                 if (currentPackage == triggeringPackage) return
 
-                checkAndLockApp(currentPackage, triggeringPackage, System.currentTimeMillis())
+                val currentTime = System.currentTimeMillis()
+                
+                // Check launch limit first
+                if (checkAndBlockForLaunchLimit(currentPackage, triggeringPackage)) {
+                    return
+                }
+                
+                // Then check app lock
+                checkAndLockApp(currentPackage, triggeringPackage, currentTime)
             }
         }, 0, POLLING_INTERVAL_MS)
     }
@@ -159,6 +167,53 @@ class AppLockMonitoringService : Service() {
             recentApp = Pair(event.packageName, event.className)
         }
         return recentApp
+    }
+
+    /**
+     * Check if app has exceeded launch limit and show blocking overlay
+     * Returns true if blocked, false otherwise
+     */
+    private fun checkAndBlockForLaunchLimit(packageName: String, triggeringPackage: String): Boolean {
+        val launchLimit = appLockRepository.getAppLaunchLimit(packageName) ?: return false
+
+        // Increment launch count and check
+        val currentCount = appLockRepository.incrementDailyLaunchCount(packageName)
+        
+        Log.d(TAG, "Launch limit check: pkg=$packageName, limit=$launchLimit, currentCount=$currentCount")
+
+        if (currentCount > launchLimit) {
+            Log.d(TAG, "Launch limit exceeded for $packageName ($currentCount > $launchLimit)")
+            
+            if (AppLockManager.isLockScreenShown.get()) {
+                Log.d(TAG, "Block screen already shown, skipping")
+                return true
+            }
+
+            AppLockManager.isLockScreenShown.set(true)
+
+            val intent = Intent(this, AppLockOverlayActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or
+                        Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                        Intent.FLAG_FROM_BACKGROUND or
+                        Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                putExtra("locked_package", packageName)
+                putExtra("triggering_package", triggeringPackage)
+                putExtra("block_reason", "launch_limit")
+                putExtra("launch_limit", launchLimit)
+                putExtra("launch_count", currentCount)
+            }
+
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error starting overlay for launch limit: $packageName", e)
+                AppLockManager.isLockScreenShown.set(false)
+            }
+            return true
+        }
+        
+        return false
     }
 
     private fun checkAndLockApp(packageName: String, triggeringPackage: String, currentTime: Long) {

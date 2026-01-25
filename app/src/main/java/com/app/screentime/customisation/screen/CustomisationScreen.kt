@@ -4,24 +4,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.border
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,18 +39,11 @@ import com.telekom.odsystem.atoms.button.ODSButtonSize
 import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.atoms.textfield.ODSTextField
-import com.telekom.odsystem.atoms.textfield.ODSTextFieldProps
 import com.telekom.odsystem.atoms.ODSBorder
-import com.telekom.odsystem.extensions.onClick
-import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
-import com.telekom.odsystem.molecules.dialog.ODSDialog
-import com.telekom.odsystem.molecules.dialog.ODSDialogProps
 import com.telekom.odsystem.neutralScheme
-import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
 import com.telekom.odsystem.organisms.pageheader.ODSPageHeader
 import com.telekom.odsystem.organisms.pageheader.ODSPageHeaderProps
 import com.telekom.odsystem.organisms.pageheader.ODSPageHeaderType
@@ -79,7 +65,7 @@ fun CustomisationScreen(
     }
 
     SideEffect {
-        if (activity is ComponentActivity) {
+        if (activity is AppCompatActivity) {
             activity.enableEdgeToEdge(
                 statusBarStyle = if (useDarkTheme) {
                     SystemBarStyle.dark(scheme.basicBackground.getIntColor())
@@ -94,7 +80,6 @@ fun CustomisationScreen(
     }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showRenameDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
@@ -147,9 +132,7 @@ fun CustomisationScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     CustomisationPreviewCard(
-                        serviceName = uiState.serviceName,
                         selectedColorOption = uiState.selectedColorOption,
-                        onRenameClick = { showRenameDialog = true },
                         scheme = scheme
                     )
                     ODSBox(
@@ -240,9 +223,7 @@ fun CustomisationScreen(
                 )
 
                 CustomisationPreviewCard(
-                    serviceName = uiState.serviceName,
                     selectedColorOption = uiState.selectedColorOption,
-                    onRenameClick = { showRenameDialog = true },
                     scheme = scheme
                 )
 
@@ -297,83 +278,101 @@ fun CustomisationScreen(
         }
     }
 
-    // Rename Dialog
-    if (showRenameDialog) {
-        RenameDialog(
-            currentName = uiState.serviceName,
-            onDismiss = { showRenameDialog = false },
-            onConfirm = { newName ->
-                viewModel.updateServiceName(newName)
-                showRenameDialog = false
-            },
-            scheme = scheme
-        )
-    }
 }
 
+/**
+ * Preview card that matches the YearlyUsageStatsCard layout
+ * Shows how the card will look with the selected color
+ */
 @Composable
 private fun CustomisationPreviewCard(
-    serviceName: String,
     selectedColorOption: ColorOption,
-    onRenameClick: () -> Unit,
     scheme: ODSTheme
 ) {
+    val activeScheme = selectedColorOption.scheme
+    val year = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
 
-    ODSBox(
-        modifier = Modifier.fillMaxWidth(),
-        background = listOf(ODSColorModel(selectedColorOption.scheme.basicBackgroundCard)),
-        cornerRadius = ODSCorners(DSVariables.radiusMedium),
-        padding = ODSPadding(all = DSVariables.spacingComponent7)
+    ODSColumn(
+        gap = DSVariables.spacingComponent2
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Content
+        ODSText(
+            text = stringResource(R.string.preview),
+            style = DSTextStyles.bodySBold,
+            color = scheme.basicTextRecessive
+        )
+
+        ODSBox(
+            modifier = Modifier.fillMaxWidth(),
+            background = listOf(ODSColorModel(activeScheme.basicBackgroundCard)),
+            cornerRadius = ODSCorners(DSVariables.radiusMedium),
+            padding = ODSPadding(all = DSVariables.spacingComponent5)
+        ) {
             ODSColumn(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                gap = DSVariables.spacingComponent5
+                modifier = Modifier.fillMaxWidth(),
+                gap = DSVariables.spacingComponent3
             ) {
-                ODSText(
-                    text = serviceName,
-                    style = DSTextStyles.titleL,
-                    color = selectedColorOption.scheme.basicText
-                )
+                // Top row: Today's Screen Time and Daily Goal
+                ODSRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    ODSColumn(
+                        modifier = Modifier.weight(1f),
+                        gap = DSVariables.spacingComponent1
+                    ) {
+                        ODSText(
+                            text = stringResource(R.string.todays_total),
+                            style = DSTextStyles.bodyMRegular,
+                            color = activeScheme.basicTextRecessive
+                        )
+                        ODSText(
+                            text = stringResource(R.string.sample_daily_time),
+                            style = DSTextStyles.subtitle,
+                            color = activeScheme.basicText
+                        )
+                    }
 
-                ODSButton(
-                    props = ODSButtonProps(
-                        label = stringResource(R.string.rename),
-                        variant = ODSButtonVariant.PRIMARY,
-                        size = ODSButtonSize.SMALL,
-                        buttonType = ODSButtonButtonType.STANDARD,
-                        buttonIcon = ODSIconModel(
-                            imageVector = Icons.Default.Edit,
-                            tint = selectedColorOption.scheme.basicTextOnAccent,
-                            contentDescription = "Edit"
-                        ),
-                        leftIcon = true
-                    ),
-                    onClick = onRenameClick,
-                    scheme = selectedColorOption.scheme
-                )
-            }
+                    ODSColumn(
+                        gap = DSVariables.spacingComponent1,
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        ODSText(
+                            text = stringResource(R.string.daily_goal),
+                            style = DSTextStyles.bodyMRegular,
+                            color = activeScheme.basicText
+                        )
+                        ODSText(
+                            text = "6h",
+                            style = DSTextStyles.subtitle,
+                            color = activeScheme.basicText
+                        )
+                    }
+                }
 
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        imageVector = Icons.Default.PhoneAndroid,
-                        tint = selectedColorOption.scheme.basicTextRecessive,
-                        contentDescription = "Device"
-                    ),
-                    modifier = Modifier
-                        .size(80.dp)
-                        .graphicsLayer(
-                            rotationZ = 15f
-                        ),
-                    width = 80.dp,
-                    height = 80.dp
-                )
+                Spacer(modifier = Modifier.height(DSVariables.spacingComponent2))
+
+                // Bottom row: Yearly Usage and Customize link
+                ODSRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ODSColumn(
+                        gap = DSVariables.spacingComponent1
+                    ) {
+                        ODSText(
+                            text = stringResource(R.string.yearly_usage_stats_title, year),
+                            style = DSTextStyles.bodySRegular,
+                            color = activeScheme.basicText
+                        )
+                        ODSText(
+                            text = stringResource(R.string.sample_yearly_time),
+                            style = DSTextStyles.bodyMBold,
+                            color = activeScheme.basicText
+                        )
+                    }
+                }
             }
         }
     }
@@ -446,80 +445,3 @@ private fun ColorOptionItem(
     }
 }
 
-@Composable
-private fun RenameDialog(
-    currentName: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit,
-    scheme: ODSTheme
-) {
-    var newName by remember { mutableStateOf(currentName) }
-
-    ODSDialog(
-        modifier = Modifier.fillMaxWidth(),
-        scheme = scheme,
-        onDismissRequest = onDismiss,
-        props = ODSDialogProps(
-            title = stringResource(R.string.rename_service),
-            showCloseButton = true
-        ),
-        contentSlot = {
-            ODSColumn(
-                modifier = Modifier.fillMaxWidth(),
-                gap = DSVariables.spacingComponent4
-            ) {
-                ODSText(
-                    text = stringResource(R.string.enter_service_name),
-                    style = DSTextStyles.bodyMRegular,
-                    color = scheme.basicTextRecessive
-                )
-
-                ODSTextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    scheme = scheme,
-                    props = ODSTextFieldProps(
-                        inputText = newName,
-                        placeholderText = stringResource(R.string.service_name_placeholder),
-                        label = stringResource(R.string.rename_service)
-                    ),
-                    onValueChange = { newName = it }
-                )
-            }
-        },
-        actionSlot = {
-            ODSRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(DSVariables.spacingComponent3),
-                gap = DSVariables.spacingComponent3
-            ) {
-                ODSButton(
-                    modifier = Modifier.weight(1f),
-                    props = ODSButtonProps(
-                        label = stringResource(com.app.screentime.config.R.string.cancel),
-                        variant = ODSButtonVariant.SECONDARY,
-                        size = ODSButtonSize.LARGE,
-                        buttonType = ODSButtonButtonType.STANDARD
-                    ),
-                    onClick = onDismiss,
-                    scheme = scheme
-                )
-
-                ODSButton(
-                    modifier = Modifier.weight(1f),
-                    props = ODSButtonProps(
-                        label = stringResource(com.app.screentime.config.R.string.save),
-                        variant = ODSButtonVariant.PRIMARY,
-                        size = ODSButtonSize.LARGE,
-                        buttonType = ODSButtonButtonType.STANDARD
-                    ),
-                    onClick = {
-                        if (newName.isNotBlank()) {
-                            onConfirm(newName.trim())
-                        }
-                    },
-                    scheme = scheme
-                )
-            }
-        }
-    )
-}

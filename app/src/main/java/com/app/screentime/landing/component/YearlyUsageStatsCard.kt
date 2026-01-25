@@ -32,9 +32,11 @@ import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.atoms.link.ODSLink
 import com.telekom.odsystem.atoms.link.ODSLinkAlignment
 import com.telekom.odsystem.atoms.link.ODSLinkProps
+import com.telekom.odsystem.atoms.link.ODSLinkType
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.organisms.cardbasic.ODSCardBasic
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import com.telekom.odsystem.tokens.tokens.jacuzziSecondaryScheme
 import java.util.Calendar
@@ -59,190 +61,167 @@ fun YearlyUsageStatsCard(
     dailyGoal: String? = "6h",
     onEditDailyGoal: (() -> Unit)? = null,
 ) {
-    // Use custom scheme if provided, otherwise use default scheme
     val activeScheme = customColor?.scheme ?: scheme
 
-    ODSBox(
+    ODSCardBasic(
+        scheme = activeScheme,
         modifier = modifier
-            .fillMaxWidth()
-            .clickable {
-                onClick.invoke()
-            },
-        background = listOf(ODSColorModel(activeScheme.basicBackgroundCard)),
-        cornerRadius = ODSCorners(DSVariables.radiusMedium),
-        padding = ODSPadding(all = DSVariables.spacingComponent5)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min)
-        ) {
-            ODSColumn(
+            .fillMaxWidth(),
+        onClick = onClick,
+        contentSlot = {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                gap = DSVariables.spacingComponent3,
-                horizontalAlignment = Alignment.Start
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min)
             ) {
-
-                ODSRow(
+                ODSColumn(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    gap = DSVariables.spacingComponent3,
+                    horizontalAlignment = Alignment.Start
                 ) {
-                    ODSColumn(
-                        modifier = Modifier.weight(1f),
-                        gap = DSVariables.spacingComponent1
+                    ODSRow(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ODSText(
-                            text = stringResource(R.string.todays_total),
-                            style = DSTextStyles.bodyMRegular,
-                            color = scheme.basicTextRecessive
-                        )
-                        ODSText(
-                            text = dailyScreenTime,
-                            style = DSTextStyles.subtitle,
-                            color = scheme.basicText
-                        )
-                        percentageChange?.let { change ->
-                            if (change != 0f) {
-                                val isIncrease = change > 0
-                                val changeText = "${kotlin.math.abs(change.toInt())}%"
-                                val arrowIcon = if (isIncrease) {
-                                    com.telekom.odsystem.R.drawable.collapse_up_type_standard
-                                } else {
-                                    com.telekom.odsystem.R.drawable.collapse_down_type_standard_size_standard
-                                }
-                                ODSRow(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    gap = 2.dp
-                                ) {
-                                    ODSText(
-                                        text = if (isIncrease) {
-                                            stringResource(
-                                                com.app.screentime.config.R.string.more_than_yesterday,
-                                                changeText
-                                            )
-                                        } else {
-                                            stringResource(
-                                                com.app.screentime.config.R.string.less_than_yesterday,
-                                                changeText
-                                            )
-                                        },
-                                        style = DSTextStyles.bodySRegular,
-                                        color = scheme.basicText
-                                    )
-                                    ODSIcon(
-                                        iconModel = ODSIconModel(
-                                            drawableRes = arrowIcon,
-                                            contentDescription = if (isIncrease) {
-                                                stringResource(com.app.screentime.config.R.string.increased)
+                        ODSColumn(
+                            modifier = Modifier.weight(1f),
+                            gap = DSVariables.spacingComponent1
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.todays_total),
+                                style = DSTextStyles.bodyMRegular,
+                                color = activeScheme.basicText
+                            )
+                            ODSText(
+                                text = dailyScreenTime,
+                                style = DSTextStyles.subtitle,
+                                color = activeScheme.basicText
+                            )
+                            percentageChange?.let { change ->
+                                if (change != 0f) {
+                                    val isIncrease = change > 0
+                                    val changeText = "${kotlin.math.abs(change.toInt())}%"
+                                    val arrowIcon = if (isIncrease) {
+                                        com.telekom.odsystem.R.drawable.collapse_up_type_standard
+                                    } else {
+                                        com.telekom.odsystem.R.drawable.collapse_down_type_standard_size_standard
+                                    }
+                                    ODSRow(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        gap = 2.dp
+                                    ) {
+                                        ODSText(
+                                            text = if (isIncrease) {
+                                                stringResource(
+                                                    com.app.screentime.config.R.string.more_than_yesterday,
+                                                    changeText
+                                                )
                                             } else {
-                                                stringResource(com.app.screentime.config.R.string.decreased)
+                                                stringResource(
+                                                    com.app.screentime.config.R.string.less_than_yesterday,
+                                                    changeText
+                                                )
                                             },
-                                            tint = scheme.basicText
-                                        ),
-                                        width = 14.dp,
-                                        height = 14.dp
-                                    )
+                                            style = DSTextStyles.bodySRegular,
+                                            color = activeScheme.basicText
+                                        )
+                                        ODSIcon(
+                                            iconModel = ODSIconModel(
+                                                drawableRes = arrowIcon,
+                                                contentDescription = if (isIncrease) {
+                                                    stringResource(com.app.screentime.config.R.string.increased)
+                                                } else {
+                                                    stringResource(com.app.screentime.config.R.string.decreased)
+                                                },
+                                                tint = activeScheme.basicText
+                                            ),
+                                            width = 14.dp,
+                                            height = 14.dp
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if (dailyGoal != null) {
-                        ODSColumn(
-                            gap = DSVariables.spacingComponent1,
-                            horizontalAlignment = Alignment.End
-                        ) {
-                            ODSRow(
-                                verticalAlignment = Alignment.CenterVertically,
-                                gap = DSVariables.spacingComponent1
+                        if (dailyGoal != null) {
+                            ODSColumn(
+                                gap = DSVariables.spacingComponent1,
+                                horizontalAlignment = Alignment.End
                             ) {
                                 ODSText(
                                     text = stringResource(R.string.daily_goal),
                                     style = DSTextStyles.bodyMRegular,
-                                    color = scheme.basicText
+                                    color = activeScheme.basicText
                                 )
-                                onEditDailyGoal?.let {
-                                    ODSIcon(
-                                        modifier = Modifier.clickable(
-                                            onClick = it
-                                        ),
-                                        iconModel = ODSIconModel(
-                                            drawableRes = com.telekom.odsystem.R.drawable.edit_type_standard,
-                                            contentDescription = stringResource(com.app.screentime.config.R.string.edit_daily_goal),
-                                            tint = scheme.basicText
-                                        ),
-                                        width = 20.dp,
-                                        height = 20.dp
+
+                                ODSRow(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    gap = DSVariables.spacingComponent1
+                                ) {
+                                    ODSText(
+                                        text = dailyGoal,
+                                        style = DSTextStyles.subtitle,
+                                        color = activeScheme.basicText
                                     )
+                                    onEditDailyGoal?.let {
+                                        ODSIcon(
+                                            modifier = Modifier.clickable(
+                                                onClick = it
+                                            ),
+                                            iconModel = ODSIconModel(
+                                                drawableRes = com.telekom.odsystem.R.drawable.edit_type_standard,
+                                                contentDescription = stringResource(com.app.screentime.config.R.string.edit_daily_goal),
+                                                tint = activeScheme.basicText
+                                            ),
+                                            width = 20.dp,
+                                            height = 20.dp
+                                        )
+                                    }
                                 }
                             }
-                            ODSText(
-                                text = dailyGoal,
-                                style = DSTextStyles.subtitle,
-                                color = scheme.basicText
-                            )
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(DSVariables.spacingComponent2))
+                    Spacer(modifier = Modifier.height(DSVariables.spacingComponent2))
 
-                ODSRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ODSColumn(
-                        gap = DSVariables.spacingComponent1
+                    ODSRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ODSText(
-                            text = stringResource(R.string.yearly_usage_stats_title, year),
-                            style = DSTextStyles.bodySRegular,
-                            color = activeScheme.basicText
-                        )
+                        ODSColumn(
+                            gap = DSVariables.spacingComponent1
+                        ) {
+                            ODSText(
+                                text = stringResource(R.string.yearly_usage_stats_title, year),
+                                style = DSTextStyles.bodySRegular,
+                                color = activeScheme.basicText
+                            )
 
-                        ODSText(
-                            text = yearlyScreenTime,
-                            style = DSTextStyles.bodyMBold,
-                            color = activeScheme.basicText
+                            ODSText(
+                                text = yearlyScreenTime,
+                                style = DSTextStyles.bodyMBold,
+                                color = activeScheme.basicText
+                            )
+                        }
+
+                        ODSLink(
+                            onClick = navigateToCustomisation,
+                            scheme = activeScheme,
+                            props = ODSLinkProps(
+                                type = ODSLinkType.SECONDARY,
+                                alignment = ODSLinkAlignment.RIGHT,
+                                label = stringResource(R.string.customize)
+                            )
                         )
                     }
-
-                    ODSLink(
-                        onClick = navigateToCustomisation,
-                        scheme = activeScheme,
-                        props = ODSLinkProps(
-                            alignment = ODSLinkAlignment.RIGHT,
-                            label = stringResource(R.string.customize)
-                        )
-                    )
                 }
-            }
 
-            // Dotted vertical line in center
-            Canvas(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .width(2.dp)
-                    .fillMaxHeight()
-            ) {
-                val pathEffect = PathEffect.dashPathEffect(
-                    intervals = floatArrayOf(6f, 6f),
-                    phase = 0f
-                )
-                drawLine(
-                    color = activeScheme.basicStrokeSubtle.getColor(),
-                    start = Offset(size.width / 2, 0f),
-                    end = Offset(size.width / 2, size.height),
-                    strokeWidth = 2f,
-                    pathEffect = pathEffect
-                )
             }
-        }
-    }
+        })
 }
 
 /**

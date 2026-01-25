@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.customisation.manager.CustomisationRefreshManager
 import com.telekom.odsystem.ODSystem
 import com.telekom.odsystem.ODSThemeLiveDataHolder
 import com.telekom.odsystem.ODSThemeType
@@ -19,7 +20,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 import com.telekom.odsystem.tokens.tokens.lagoonSecondaryScheme
 
 val LocalThemeMode = compositionLocalOf { false }
-val headerTheme = compositionLocalOf { lagoonSecondaryScheme }
+val headerTheme = compositionLocalOf<ODSTheme> { neutralScheme }
 
 @Composable
 fun ScreenTimeTheme(
@@ -29,6 +30,7 @@ fun ScreenTimeTheme(
     val context = LocalContext.current
     val isSystemDark = isSystemInDarkTheme()
     val themeString by themeViewModel.theme.collectAsState()
+    val currentHeaderScheme by themeViewModel.headerScheme.collectAsState()
 
     val odsThemeLiveData = remember { ODSThemeLiveDataHolder.getODSThemeLiveData() }
 
@@ -49,9 +51,16 @@ fun ScreenTimeTheme(
         }
     }
 
+    // Listen for customisation refresh events
+    LaunchedEffect(Unit) {
+        CustomisationRefreshManager.refreshTrigger.collect {
+            themeViewModel.refreshHeaderScheme()
+        }
+    }
+
     CompositionLocalProvider(
         LocalThemeMode provides isSystemDark,
-        headerTheme provides ColorPalette.BenefitScheme.pickSchemeRandom()
+        headerTheme provides currentHeaderScheme
     ) {
         MaterialTheme(
             shapes = Shapes,
