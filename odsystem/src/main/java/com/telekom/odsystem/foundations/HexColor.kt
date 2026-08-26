@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
 import java.util.Locale
 
 @Serializable
-class HexColor(private val hexColor: String, val alpha: Float = 1f) {
+data class HexColor(private val hexColor: String, val alpha: Float = 1f) {
 
     companion object {
         /**

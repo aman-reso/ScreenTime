@@ -82,10 +82,11 @@ class NativeAdState {
 
 @Composable
 fun rememberNativeAd(
-    adUnitId: String
+    adUnitId: String,
+    showAd: Boolean = true
 ): NativeAdState? {
     if (!AdConfig.areAdsEnabled()) return null
-
+    if (!showAd) return null
     val context = LocalContext.current
     val adState = remember { NativeAdState() }
 

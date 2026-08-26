@@ -8,6 +8,7 @@ The ScreenTime app supports deep linking through both custom URL schemes and HTT
 
 1. **Custom Scheme**: `apptime://screen/route`
 2. **HTTPS**: `https://apptime.in/route`
+3. **HTTPS (with www)**: `https://www.apptime.in/route`
 
 ## 🏗️ Architecture
 
@@ -90,6 +91,16 @@ External Source → Intent → MainActivity → DeeplinkParser → Screen Object
         <category android:name="android.intent.category.BROWSABLE" />
         <data
             android:host="apptime.in"
+            android:scheme="https" />
+    </intent-filter>
+
+    <!-- HTTPS App Links (with www) -->
+    <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data
+            android:host="www.apptime.in"
             android:scheme="https" />
     </intent-filter>
 </activity>

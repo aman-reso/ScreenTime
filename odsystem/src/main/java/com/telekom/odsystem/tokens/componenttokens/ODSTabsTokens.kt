@@ -38,7 +38,7 @@ val defaultODSTabsTokens = ODSTabsTokens(
     verticalArrangement = Arrangement.Center,
     contentAlignment = Alignment.CenterStart,
     dividerFrameBorderRadius = ODSCorners(all = DSVariables.radiusFull),
-    dividerFrameHeight = 4.dp,
+    dividerFrameHeight = 2.dp,
     dividerFrameOffset = ODSOffset(y = 0.dp),
     dividerFrameVerticalAlignment = Alignment.CenterVertically,
     dividerFrameHorizontalAlignment = Alignment.CenterHorizontally,
@@ -50,7 +50,7 @@ val defaultODSTabsTokens = ODSTabsTokens(
     listContainerHorizontalAlignment = Alignment.Start,
     listContainerHorizontalArrangement = Arrangement.Start,
     lineContainerBorderRadius = ODSCorners(all = DSVariables.radiusFull),
-    lineContainerHeight = 4.dp,
+    lineContainerHeight = 2.dp,
     lineContainerVerticalAlignment = Alignment.CenterVertically,
     lineContainerHorizontalAlignment = Alignment.CenterHorizontally,
     lineContainerHorizontalArrangement = Arrangement.Center

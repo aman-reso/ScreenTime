@@ -10,7 +10,7 @@ object AppSecrets {
     object Api {
         val isDebug = BuildConfig.DEBUG
         val DEFAULT_BASE_URL: String =
-            if (isDebug) BuildConfig.API_DEV_BASE_URL else BuildConfig.API_BASE_URL
+            if (isDebug) BuildConfig.API_BASE_URL else BuildConfig.API_BASE_URL
     }
 
     object Encryption {

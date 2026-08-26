@@ -148,7 +148,7 @@ private fun ODSActions(
         items?.forEachIndexed { index, odsNavigationItemProps ->
             ODSNavigationItem(
                 scheme = scheme,
-                props = odsNavigationItemProps.toODSNavigationItemProps(showLabel = props.labels),
+                props = odsNavigationItemProps.toODSNavigationItemProps(showLabel = false),
                 accessibilityIndex = index,
                 accessibilityTotalCount = items.size,
                 modifier = Modifier.weight(1f),

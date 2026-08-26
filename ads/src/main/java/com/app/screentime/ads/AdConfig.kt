@@ -30,20 +30,32 @@ object AdConfig {
     /**
      * Returns the banner ad unit ID based on build type.
      */
-    fun getBannerAdUnitId(): String = if (BuildConfig.DEBUG) DEBUG_BANNER_AD_UNIT_ID else RELEASE_BANNER_AD_UNIT_ID
+    fun getBannerAdUnitId(): String =
+        if (BuildConfig.DEBUG) DEBUG_BANNER_AD_UNIT_ID else RELEASE_BANNER_AD_UNIT_ID
 
     /**
      * Returns the native advanced ad unit ID based on build type.
      */
-    fun getNativeAdvancedAdUnitId(): String = if (BuildConfig.DEBUG) DEBUG_NATIVE_ADVANCED_AD_UNIT_ID else RELEASE_NATIVE_ADVANCED_AD_UNIT_ID
+    fun getNativeAdvancedAdUnitId(): String =
+        if (BuildConfig.DEBUG) DEBUG_NATIVE_ADVANCED_AD_UNIT_ID else RELEASE_NATIVE_ADVANCED_AD_UNIT_ID
 
     /**
      * Returns the interstitial ad unit ID based on build type.
      */
-    fun getInterstitialAdUnitId(): String = if (BuildConfig.DEBUG) DEBUG_INTERSTITIAL_AD_UNIT_ID else RELEASE_INTERSTITIAL_AD_UNIT_ID
+    fun getInterstitialAdUnitId(): String =
+        if (BuildConfig.DEBUG) DEBUG_INTERSTITIAL_AD_UNIT_ID else RELEASE_INTERSTITIAL_AD_UNIT_ID
 
     /**
      * Returns the rewarded ad unit ID based on build type.
      */
-    fun getRewardedAdUnitId(): String = if (BuildConfig.DEBUG) DEBUG_REWARDED_AD_UNIT_ID else RELEASE_REWARDED_AD_UNIT_ID
+    fun getRewardedAdUnitId(): String =
+        if (BuildConfig.DEBUG) DEBUG_REWARDED_AD_UNIT_ID else RELEASE_REWARDED_AD_UNIT_ID
+
+    fun showStatisticsAd(): Boolean {
+        return false;
+    }
+
+    fun showChallengeAd(): Boolean {
+        return false;
+    }
 }

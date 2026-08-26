@@ -2,29 +2,33 @@
 
 package com.telekom.odsystem.tokens.tokens
 
+import androidx.compose.ui.graphics.Color
 import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSEffect
 import com.telekom.odsystem.foundations.ODSElevation
 import com.telekom.odsystem.foundations.ODSElevationType
+
 //val AppBackground = Color(0xFFF9EDE2)
 //#e8e9e8
+//HexColor(0xFFF3F6FA)
+//#260564
 val lightMode = ODSTheme(
     name = "lightMode",
-    basicAccent = HexColor(0xffe20074),
-    basicAccentSecondary = HexColor(0xff000000),
-    basicBackground = HexColor(0xffffffff),
-    basicBackgroundCard = HexColor(0xfff1f1f1),
-    basicBackgroundCardSubtle = HexColor(0xffffffff),
-    basicBackgroundSubtle = HexColor(0xfff1f1f1),
+    basicAccent = HexColor(0xff0d2033),
+    basicAccentSecondary = HexColor(0xff0d2033),
+    basicBackground = HexColor(0xfff2f3f4),
+    basicBackgroundCard = HexColor(0xffffffff),
+    basicBackgroundCardSubtle = HexColor(0xfff2f3f4),
+    basicBackgroundSubtle = HexColor(0xfff2f3f4),
     basicModalOverlay = HexColor(0x66000000),
-    basicStroke = HexColor(0xff000000),
-    basicStrokeSubtle = HexColor(0xffb6b6b6),
-    basicText = HexColor(0xff000000),
-    basicTextDominant = HexColor(0xffe20074),
-    basicTextLink = HexColor(0xffe20074),
+    basicStroke = HexColor(0xff0d2033),
+    basicStrokeSubtle = HexColor(0xffe2e4e7),
+    basicText = HexColor(0xff0d2033),
+    basicTextDominant = HexColor(0xff0d2033),
+    basicTextLink = HexColor(0xff0d2033),
     basicTextOnAccent = HexColor(0xffffffff),
     basicTextOnAccentSecondary = HexColor(0xffffffff),
-    basicTextRecessive = HexColor(0xff616161),
+    basicTextRecessive = HexColor(0xff617182),
     elevationAppBarBottomFlatColour = HexColor(0x1a000000),
     elevationAppBarBottomRaisedColour = HexColor(0x0d000000),
     elevationAppBarTopFlatColour = HexColor(0x1a000000),

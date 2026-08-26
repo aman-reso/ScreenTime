@@ -1,6 +1,6 @@
 <resources>
     <!-- App Name -->
-    <string name="app_name">AppTime</string>
+    <string name="app_name">Chatty</string>
     <string name="widget_description">Monitor your daily screen time and app usage</string>
     <string name="set_widget">Set Widget</string>
 
@@ -11,7 +11,6 @@
     <string name="try_again">Try Again</string>
     <string name="cancel">Cancel</string>
     <string name="error">Error</string>
-    <string name="coming_soon">Coming Soon</string>
     <string name="apply_changes">Apply Changes</string>
     <string name="app_not_available_on_emulator">This app cannot be used on an emulator. Please use a physical device.</string>
 
@@ -70,6 +69,11 @@
     <string name="appearance">Appearance</string>
     <string name="features">Features</string>
     <string name="features_subtitle">Quick access to essential tools and settings</string>
+    <string name="more">More</string>
+    <string name="control_your_screen_title">Control your screen</string>
+    <string name="control_your_screen_subtitle">Choose the modes based on your screen on time</string>
+    <string name="screen_on_time_today">Screen on time Today</string>
+    <string name="mode_create">Create</string>
     <string name="set_wallpaper">Set Wallpaper</string>
     <string name="set_wallpaper_description">Wallpapers from our collection</string>
     <string name="wallpaper_set_home_screen">Wallpaper set on home screen</string>
@@ -134,11 +138,15 @@
     <string name="failed_to_load_weekly_data">Failed to load weekly data: %1$s</string>
 
     <!-- Landing Screen -->
-    <string name="today_screen_time">Today\'s Screen Time</string>
+    <string name="today_screen_time">Screen Time</string>
     <string name="good_morning">Good Morning ☀️</string>
     <string name="good_afternoon">Good Afternoon 🌤️</string>
     <string name="good_evening">Good Evening 🌇</string>
     <string name="good_night">Good Night 🌙</string>
+    <string name="screentime_coin_promo_title">Every minute becomes coins</string>
+    <string name="screentime_coin_promo_subtitle">Use your phone and earn coins automatically</string>
+    <string name="screentime_coin_promo_tag">1 hour = 10 coin</string>
+    <string name="screentime_coin_promo_phone_icon">Phone</string>
 
     <!-- Weekly Usage Chart -->
     <string name="this_week">This week</string>
@@ -371,6 +379,9 @@
     <string name="never_synced">Never synced</string>
     <string name="sync_now">Sync Now</string>
     <string name="syncing">Syncing…</string>
+    <string name="sync_section_title">Sync your progress</string>
+    <string name="sync_section_description">Update your stats and leaderboard. Tap Sync Now to refresh.</string>
+    <string name="sync_section_join_to_sync">Join the challenge to start syncing your progress.</string>
 
     <!-- Challenge Detail Screen -->
     <string name="failed_to_load_challenge_details">Failed to load challenge details.</string>
@@ -381,6 +392,9 @@
     <string name="reward">Reward</string>
     <string name="date_range">Date Range</string>
     <string name="date">Date</string>
+    <string name="challenge_dates">Challenge dates</string>
+    <string name="challenge_progress">Challenge progress</string>
+    <string name="progress_percent">%1$d%%</string>
     <string name="sync">Sync</string>
     <string name="description">Description</string>
     <string name="joined_member">Joined Member</string>
@@ -392,6 +406,7 @@
     <string name="view_rules">View Rules</string>
     <string name="leaderboard">Leaderboard</string>
     <string name="available_rewards">Available rewards</string>
+    <string name="coming_soon">Coming soon</string>
     <string name="reward_tag">Reward tag</string>
     <string name="no_rewards_available">No rewards available</string>
 
@@ -443,6 +458,25 @@
     <string name="vpn">VPN</string>
     <string name="no_connection">No Connection</string>
     <string name="network_information">Network Information</string>
+    <string name="invite">Invite</string>
+    <string name="app_limit_title">App Limit</string>
+    <string name="launch_app_limit_title">Launch App Limit</string>
+    <string name="distraction_tab_apps">Apps</string>
+    <string name="distraction_tab_distraction">Distraction</string>
+    <string name="distraction_empty">No distraction apps yet</string>
+    <string name="limit_set_success">Limit set successfully</string>
+    <string name="control_your_screen">Control your screen</string>
+    <string name="control_screen_subtitle">Choose the modes based on your screen on time</string>
+    <string name="screen_on_time_value">07h 37min</string>
+    <string name="recommended_modes">Recommended Modes</string>
+    <string name="mode_light">Light</string>
+    <string name="mode_focus">Focus</string>
+    <string name="hourly_distribution">Hourly Distribution</string>
+    <string name="hour_format_24">24 Hour format</string>
+    <string name="peak_usage">Peak Usage</string>
+    <string name="background_permission_title">Allow background permission</string>
+    <string name="background_permission_desc">Allow background activity so notification listener keeps working.</string>
+    <string name="allow_background">Allow in background</string>
     <string name="connection_type">Connection Type</string>
     <string name="ip_address">IP Address</string>
     <string name="na">N/A</string>
@@ -510,6 +544,16 @@
     <string name="watch_ad_to_earn_coins">Watch Ad to Earn %1$d Coins</string>
     <string name="watch_ad_subtitle">Watch a short video ad to earn bonus coins</string>
     <string name="watch_ad">Watch Ad</string>
+    <string name="start">Start</string>
+    <string name="refer_now">Refer now</string>
+    <string name="referral_code_label">Referral code: %1$s</string>
+    <string name="referral_received_title">You were referred!</string>
+    <string name="referral_received_message">Referral code %1$s has been applied.</string>
+    <string name="refer_title">Refer &amp; Earn</string>
+    <string name="refer_subtitle">Earn up to 50 coins</string>
+    <string name="coin_promo_title">Every minute becomes coins</string>
+    <string name="coin_promo_subtitle">Use your phone and earn coins automatically</string>
+    <string name="coin_promo_rate">1 hour = 10 coin</string>
     <string name="we_have_cash_reward">We have a cash reward for you!</string>
     <string name="claim_reward_description">Click the button below to claim your %1$d Leaderboard bonus</string>
     <string name="coins_earned">Coins Earned!</string>
@@ -552,6 +596,7 @@
     <string name="home_screen">Home Screen</string>
     <string name="both">Both</string>
     <string name="view_all_challenge">View all challenge</string>
+    <string name="see_more">See More</string>
 
     <!-- Battery Status Strings -->
     <string name="charging">Charging…</string>
@@ -664,8 +709,35 @@
     <!-- Battery Health -->
     <string name="battery_health">Battery Health</string>
 
+    <!-- Landing Tabs (Usage, Challenge, Statistics, Join group) -->
+    <string name="tab_usage">For You</string>
+    <string name="tab_challenge">Challenge</string>
+    <string name="tab_statistics">Statistics</string>
+    <string name="tab_join_group">Group</string>
+
+    <!-- Join group -->
+    <string name="join_group">Join group</string>
+    <string name="join">Join</string>
+    <string name="no_groups">No groups yet</string>
+    <string name="create_group">Create group</string>
+    <string name="create_group_subtitle">Add a new group and invite others.</string>
+    <string name="group_name">Group name</string>
+    <string name="group_description">Description</string>
+    <string name="group_tagline">Tagline (optional)</string>
+    <string name="group_category">Category (optional)</string>
+    <string name="group_max_members">Max members</string>
+    <string name="group_type">Type</string>
+    <string name="type_public">Public</string>
+    <string name="type_private">Private</string>
+    <string name="type_invite_only">Invite only</string>
+    <string name="group_name_required">Group name is required</string>
+    <string name="group_description_required">Description is required</string>
+    <string name="discover_groups">Discover Groups</string>
+    <string name="find_your_community">Find Your Community</string>
+    <string name="connect_with_like_minded">Connect with like-minded people and grow together</string>
+    <string name="members_count">%1$d+ Members</string>
+
     <!-- Usage Summary Card -->
-    <string name="todays_total">Today\'s Screen Time</string>
     <string name="more_than_yesterday">%s More than yesterday</string>
     <string name="less_than_yesterday">%s Less than yesterday</string>
     <string name="edit_daily_goal">Edit daily goal</string>
@@ -698,6 +770,8 @@
     <string name="nav_challenges">Challenges</string>
     <string name="nav_profile">Profile</string>
     <string name="nav_wallpaper">Wallpaper</string>
+    <string name="nav_more">More</string>
+    <string name="nav_reward">Reward</string>
 
     <!-- Leaderboard Screen -->
     <string name="daily">Daily</string>
@@ -710,7 +784,6 @@
     <string name="screen_time_value">Screen time: %1$s</string>
 
 
-    
     <!-- Yearly Usage Stats Card -->
     <string name="yearly_usage_stats_title">In %1$d</string>
     <string name="days_used_label">You have used mobile</string>
@@ -718,7 +791,7 @@
     <string name="yearly_usage_description">Track your digital wellness journey</string>
     <string name="daily_screen_time">Daily Screen Time</string>
     <string name="yearly_screen_time">Yearly Screen Time</string>
-    
+
     <!-- Customisation Screen -->
     <string name="customize">Customize</string>
     <string name="customisation">Customize Card</string>

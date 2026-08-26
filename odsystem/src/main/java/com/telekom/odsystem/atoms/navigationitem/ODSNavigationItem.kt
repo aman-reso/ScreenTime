@@ -101,7 +101,7 @@ fun ODSNavigationItem(
         if (props.textRes != -1) {
             ODSText(
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(props.textRes),
+                text = "Http",
                 style = style.labelStyle,
                 color = style.labelColor,
                 textAlign = style.labelTextAlign

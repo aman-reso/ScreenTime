@@ -213,7 +213,6 @@
     <string name="remaining_seconds">%1$d सेकंड</string>
 
     <!-- Widget -->
-    <string name="screen_time">स्क्रीन टाइम</string>
     <string name="network_usage">नेटवर्क उपयोग</string>
     <string name="refresh">ताज़ा करें</string>
     <string name="no_app_data_available">कोई ऐप डेटा उपलब्ध नहीं</string>
@@ -643,7 +642,7 @@
     <string name="battery_health">बैटरी स्वास्थ्य</string>
 
     <!-- Usage Summary Card -->
-    <string name="todays_total">आज का स्क्रीन टाइम</string>
+    <string name="screen_time">आज का स्क्रीन टाइम</string>
     <string name="more_than_yesterday">कल से %s अधिक</string>
     <string name="less_than_yesterday">कल से %s कम</string>
     <string name="edit_daily_goal">दैनिक लक्ष्य संपादित करें</string>

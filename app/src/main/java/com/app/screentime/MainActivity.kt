@@ -3,144 +3,97 @@ package com.app.screentime
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
-import android.util.Log
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavHostController
-import com.app.screentime.analytics.AnalyticsUseCase
-import com.app.screentime.applock.repository.AppLockRepository
-import com.app.screentime.applock.util.AppLockServiceManager
-import com.app.screentime.applock.util.PermissionHelper
-import com.app.screentime.config.language.AppLanguageManager
+import com.app.screentime.core.ui.theme.ChattyTheme
+import com.app.screentime.feature.auth.AuthGateScreen
+import com.app.screentime.feature.auth.AuthViewModel
+import com.app.screentime.messaging.ScreenTimeFirebaseMessagingService
 import com.app.screentime.navigation.ScreenTimeNavigation
-import com.app.screentime.permission.EmulatorBlockScreen
-import com.app.screentime.permission.checkUsageStatsPermission
-import com.app.screentime.permission.viewmodel.PermissionViewModel
-import com.app.screentime.permission.viewmodel.RegistrationViewModel
-import com.app.screentime.registrations.screen.RegistrationsScreen
-import com.app.screentime.utils.EmulatorDetector
-import com.app.screentime.ui.theme.LocalThemeMode
-import com.app.screentime.ui.theme.ScreenTimeTheme
-import com.app.screentime.ui.theme.ThemeViewModel
-import com.app.screentime.update.InAppUpdateManager
-import com.app.screentime.utils.CountryUtils
-import com.telekom.odsystem.atoms.ODSColumn
-import com.telekom.odsystem.foundations.ODSColorModel
-import com.telekom.odsystem.neutralScheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    @Inject
-    lateinit var inAppUpdateManager: InAppUpdateManager
-
-    @Inject
-    lateinit var analyticsUseCase: AnalyticsUseCase
-
-    @Inject
-    lateinit var appLanguageManager: AppLanguageManager
-
-    private val registrationViewModel: RegistrationViewModel by viewModels()
-    
-    private val deeplinkUriState = mutableStateOf<Uri?>(null)
+    private var incomingCallData by mutableStateOf<Pair<String, String>?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installSplashScreen()
-        analyticsUseCase.trackAppOpen()
-        
-        // Start App Lock service if at least one app is locked
-        startAppLockServiceIfNeeded()
-        
-        // Handle deeplink from intent (URI format or from notification)
-        deeplinkUriState.value = extractDeeplinkUri(intent)
-        
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT
+            )
+        )
+
+        handleIncomingCallIntent(intent)
+
         setContent {
-            val themeViewModel: ThemeViewModel = hiltViewModel()
-            val deeplinkUri by deeplinkUriState
-            ScreenTimeTheme(themeViewModel) {
-                val useDarkTheme = LocalThemeMode.current
-                val scheme = neutralScheme
+            val currentTheme by com.app.screentime.core.ui.theme.AppThemeManager.currentTheme.collectAsState()
+            val isUnlocked by com.app.screentime.core.ui.security.BiometricAuthManager.isUnlocked.collectAsState()
+            val isFingerprintEnabled = remember {
+                com.app.screentime.core.ui.security.BiometricAuthManager.isFingerprintLockEnabled(this@MainActivity)
+            }
 
-                if (!BuildConfig.DEBUG && EmulatorDetector.isEmulator()) {
-                    EmulatorBlockScreen(onBack = { finish() }, scheme = scheme)
-                } else {
-                    enableEdgeToEdge(
-                        statusBarStyle = if (useDarkTheme) {
-                            SystemBarStyle.dark(scheme.basicBackground.getIntColor())
-                        } else {
-                            SystemBarStyle.light(
-                                scheme.basicBackground.getIntColor(),
-                                darkScrim = scheme.basicBackground.getIntColor()
-                            )
-                        }, navigationBarStyle = SystemBarStyle.auto(
-                            Color.TRANSPARENT, Color.TRANSPARENT
-                        )
-                    )
+            ChattyTheme {
+                val authViewModel: AuthViewModel = hiltViewModel()
+                val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
 
-                    ODSColumn(
+                if (isFingerprintEnabled && !isUnlocked) {
+                    com.app.screentime.core.ui.security.BiometricLockScreen(
                         modifier = Modifier.fillMaxSize(),
-                        background = listOf(ODSColorModel(scheme.basicBackground)),
-                        verticalArrangement = Arrangement.Top
-                    ) {
-                        if (registrationViewModel.isLoginRequired() || !checkUsageStatsPermission(
-                                this@MainActivity
-                            )
-                        ) {
-                            RegistrationsScreen(
-                                scheme = scheme,
-                                registrationViewModel = registrationViewModel,
-                                isUserInIndia = CountryUtils.isUserInIndia(this@MainActivity)
-                            )
-                        } else {
-                            ScreenTimeNavigation(
-                                scheme = scheme,
-                                deeplinkUri = deeplinkUri,
-                                isUserInIndia = CountryUtils.isUserInIndia(this@MainActivity)
-                            )
+                        scheme = currentTheme,
+                        onUnlocked = {
+                            com.app.screentime.core.ui.security.BiometricAuthManager.setUnlocked(true)
                         }
-                    }
+                    )
+                } else if (!isLoggedIn) {
+                    AuthGateScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        scheme = currentTheme
+                    )
+                } else {
+                    ScreenTimeNavigation(
+                        modifier = Modifier.fillMaxSize(),
+                        incomingCall = incomingCallData,
+                        onClearIncomingCall = { incomingCallData = null },
+                        scheme = currentTheme
+                    )
                 }
             }
         }
-        val appLinkIntent: Intent = intent
-        appLinkIntent.action
-        appLinkIntent.data
     }
 
-    override fun onStart() {
-        super.onStart()
-        inAppUpdateManager.initialize(this)
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingCallIntent(intent)
     }
 
-    override fun onResume() {
-        super.onResume()
-        lifecycleScope.launch {
-            inAppUpdateManager.checkForUpdate(this@MainActivity)
+    private fun handleIncomingCallIntent(intent: Intent?) {
+        if (intent?.action == ScreenTimeFirebaseMessagingService.ACTION_ACCEPT_CALL) {
+            val callerId = intent.getStringExtra(ScreenTimeFirebaseMessagingService.EXTRA_CALLER_ID) ?: ""
+            val callerName = intent.getStringExtra(ScreenTimeFirebaseMessagingService.EXTRA_CALLER_NAME) ?: "Caller"
+            if (callerId.isNotEmpty()) {
+                incomingCallData = Pair(callerId, callerName)
+            }
         }
     }
 
@@ -151,63 +104,5 @@ class MainActivity : AppCompatActivity() {
             it.uiMode = uiMode
         }
         super.applyOverrideConfiguration(overrideConfiguration)
-    }
-
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        deeplinkUriState.value = extractDeeplinkUri(intent)
-    }
-    
-    /**
-     * Extract deeplink URI from intent
-     * Supports both direct URI data and notification extras
-     */
-    private fun extractDeeplinkUri(intent: Intent?): Uri? {
-        if (intent == null) return null
-        intent.data?.let { return it }
-        
-        val deeplinkString = intent.getStringExtra("deeplink")
-        if (!deeplinkString.isNullOrEmpty()) {
-            return try {
-                when {
-                    deeplinkString.startsWith("apptime://") || 
-                    deeplinkString.startsWith("https://") -> deeplinkString.toUri()
-                    else -> "apptime://screen/$deeplinkString".toUri()
-                }
-            } catch (e: Exception) {
-                null
-            }
-        }
-        return null
-    }
-    
-    /**
-     * Start App Lock Monitoring Service if at least one app is locked
-     * and required permissions are granted
-     */
-    private fun startAppLockServiceIfNeeded() {
-        try {
-            val appLockRepository = AppLockRepository(this)
-            val hasLockedApps = appLockRepository.getLockedApps().isNotEmpty()
-            
-            if (!hasLockedApps) {
-                Log.d("MainActivity", "No locked apps, skipping app lock service")
-                return
-            }
-            
-            val hasOverlayPermission = PermissionHelper.hasOverlayPermission(this)
-            val hasUsageStatsPermission = PermissionHelper.hasUsageStatsPermission(this)
-            
-            Log.d("MainActivity", "AppLock check - locked apps: $hasLockedApps, overlay: $hasOverlayPermission, usage: $hasUsageStatsPermission")
-            
-            if (hasOverlayPermission && hasUsageStatsPermission) {
-                Log.d("MainActivity", "Starting AppLockMonitoringService")
-                AppLockServiceManager.startService(this)
-            }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Error starting app lock service: ${e.message}")
-        }
     }
 }

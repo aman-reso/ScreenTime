@@ -3,6 +3,7 @@ package com.app.screentime.config.di
 import android.content.Context
 import com.app.screentime.config.ConfigManager
 import com.app.screentime.config.ConfigRepository
+import com.app.screentime.core.network.preferences.PreferencesManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,10 +19,9 @@ object ConfigModule {
     @Singleton
     fun provideConfigRepository(
         @ApplicationContext context: Context,
-        configService: com.app.screentime.core.network.service.ConfigService,
-        preferencesManager: com.app.screentime.core.network.preferences.PreferencesManager
+        preferencesManager: PreferencesManager
     ): ConfigRepository {
-        return ConfigRepository(context, configService, preferencesManager)
+        return ConfigRepository(context, preferencesManager)
     }
 
     @Provides
@@ -32,4 +32,3 @@ object ConfigModule {
         return ConfigManager(configRepository)
     }
 }
-

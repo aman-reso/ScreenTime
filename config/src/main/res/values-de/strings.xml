@@ -15,7 +15,6 @@
     <string name="coming_soon">Bald verfügbar</string>
 
     <!-- Usage Summary -->
-    <string name="todays_total">Heutige Bildschirmzeit</string>
     <string name="more_than_yesterday">%s Mehr als gestern</string>
     <string name="less_than_yesterday">%s Weniger als gestern</string>
     <string name="edit_daily_goal">Tägliches Ziel bearbeiten</string>

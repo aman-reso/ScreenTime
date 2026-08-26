@@ -581,7 +581,6 @@
     <string name="battery_health">ব্যাটারি স্বাস্থ্য</string>
 
     <!-- Usage Summary Card -->
-    <string name="todays_total">আজকের স্ক্রিন টাইম</string>
     <string name="more_than_yesterday">গতকালের চেয়ে %s বেশি</string>
     <string name="less_than_yesterday">গতকালের চেয়ে %s কম</string>
     <string name="edit_daily_goal">দৈনিক লক্ষ্য সম্পাদনা করুন</string>

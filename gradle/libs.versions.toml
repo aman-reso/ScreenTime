@@ -2,6 +2,8 @@
 constraintlayoutCompose = "1.0.1"
 constraintlayoutComposeVersion = "1.1.1"
 coreSplashscreen = "1.2.0"
+biometric = "1.2.0-alpha05"
+lottieCompose = "6.7.1"
 security-crypto = "1.1.0"
 agp = "8.13.0"
 hiltNavigationCompose = "1.3.0"
@@ -42,16 +44,21 @@ firebaseMessagingKtx = "25.0.1"
 play-app-update = "2.1.0"
 play-services-ads = "24.9.0"
 play-services-location = "21.3.0"
+play-installreferrer = "2.2"
 appcompat = "1.7.1"
 adaptive = "1.2.0"
 material = "1.13.0"
+desugarJdkLibs = "2.1.3"
 
 [libraries]
 androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintlayoutComposeVersion" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+androidx-biometric-ktx = { module = "androidx.biometric:biometric-ktx", version.ref = "biometric" }
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieCompose" }
 startup-android = { module = "androidx.startup:startup-runtime", version.ref = "startupAndroid" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
@@ -125,9 +132,11 @@ play-app-update = { group = "com.google.android.play", name = "app-update", vers
 play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "play-app-update" }
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "play-services-ads" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
+play-installreferrer = { group = "com.android.installreferrer", name = "installreferrer", version.ref = "play-installreferrer" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-compose-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "adaptive" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 
 
 
@@ -141,5 +150,3 @@ ksp = { id = "com.google.devtools.ksp", version = "2.3.0" }
 jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinSerialization" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-plugin" }
-
-

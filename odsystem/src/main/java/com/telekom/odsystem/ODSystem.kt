@@ -23,7 +23,7 @@ val invertedScheme: ODSTheme
 
 class ODSystem(private val context: Context) {
     companion object {
-        internal var colors = mutableStateOf(lightMode)
+        var colors = mutableStateOf(lightMode)
         private var themeType: ODSThemeType? = null
 
         fun init(context: Context, defaultThemeType: ODSThemeType = ODSThemeType.LIGHT) {

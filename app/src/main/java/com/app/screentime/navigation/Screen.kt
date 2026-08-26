@@ -5,75 +5,46 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class Screen : NavKey {
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
     @Serializable
-    object Landing : Screen()
+    object Login : Screen()
 
     @Serializable
-    object Profile : Screen()
+    object Register : Screen()
 
     @Serializable
-    object Search : Screen() // Removed - Search feature disabled
-    data class RecordDetail(val params: RecordDetailParams? = null) : Screen()
+    object ModelOnboarding : Screen() // Extra onboarding for model role
+
+    // ── Main tabs (bottom nav) ────────────────────────────────────────────────
+    @Serializable
+    object Discover : Screen() // Browse / discover models
 
     @Serializable
-    object Statistics : Screen()
+    object ChatList : Screen() // List of conversations
 
     @Serializable
-    data class SingleAppUsageDetail(val params: SingleAppUsageDetailParams? = null) : Screen()
+    object Wallet : Screen() // Wallet balance & history
 
     @Serializable
-    object Permission : Screen()
+    object Profile : Screen() // User's own profile
+
+    // ── Detail screens ────────────────────────────────────────────────────────
+    @Serializable
+    data class ModelProfile(val modelId: String, val modelName: String = "Model") : Screen()
 
     @Serializable
-    object FocusMode : Screen()
-
-    // object AppBlocking : Screen() // Removed - App Blocking feature disabled
-    @Serializable
-    object AppLock : Screen()
+    data class Chat(val modelId: String, val modelName: String) : Screen()
 
     @Serializable
-    object Leaderboard : Screen()
-
-    // object BlockedLinks : Screen() // Removed - VPN/BlockedLinks feature disabled
-    @Serializable
-    object Challenges : Screen() // Removed - Challenge feature disabled
+    data class VoiceCall(val modelId: String, val modelName: String) : Screen()
 
     @Serializable
-    data class ChallengeDetail(val params: ChallengeDetailParams? = null) :
-        Screen() { // Removed - Challenge feature disabled
-    }
+    object TopUp : Screen() // Top-up / recharge wallet
 
     @Serializable
-    object Reward : Screen() // Removed - Reward feature disabled
+    object Settings : Screen()
 
     @Serializable
-    object CoinHistory : Screen() // Removed - Reward feature disabled
-
-    @Serializable
-    data class RewardTransaction(val transactionId: Int? = null) :
-        Screen() // Removed - Reward feature disabled
-
-    @Serializable
-    object Wallpaper : Screen() // Removed - Wallpaper feature disabled
-
-    @Serializable
-    data class FullScreenWallpaper(val params: FullScreenWallpaperParams? = null) : Screen()
-
-    @Serializable
-    object CapturedNotifications : Screen()
-
-    @Serializable
-    object ControlCenter : Screen()
-
-    @Serializable
-    object ManageLocation : Screen()
-
-    @Serializable
-    object FileManager : Screen()
-
-    @Serializable
-    object WallPaperSearch : Screen()
-
-    @Serializable
-    object Customisation : Screen()
+    object SocialSpaceDemo : Screen() // Showcase demo screen
 }

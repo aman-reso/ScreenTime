@@ -2,7 +2,10 @@ package com.app.screentime.core.network.di
 
 import android.content.Context
 import com.app.screentime.core.network.NetworkClient
+import com.app.screentime.core.network.api.ChattyApi
 import com.app.screentime.core.network.preferences.PreferencesManager
+import com.app.screentime.core.network.session.SessionManager
+import com.app.screentime.core.network.websocket.ChattyWebSocketClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,16 +32,20 @@ object CoreNetworkModule {
 
     @Provides
     @Singleton
-    fun provideWallpaperService(networkClient: NetworkClient): com.app.screentime.core.network.service.WallpaperService =
-        com.app.screentime.core.network.service.WallpaperServiceImpl(networkClient)
+    fun provideSessionManager(
+        @ApplicationContext context: Context
+    ): SessionManager = SessionManager(context)
 
     @Provides
     @Singleton
-    fun provideConfigService(networkClient: NetworkClient): com.app.screentime.core.network.service.ConfigService =
-        com.app.screentime.core.network.service.ConfigServiceImpl(networkClient)
+    fun provideChattyApi(
+        networkClient: NetworkClient
+    ): ChattyApi = ChattyApi(networkClient)
 
     @Provides
     @Singleton
-    fun provideFeedbackService(networkClient: NetworkClient): com.app.screentime.core.network.service.FeedbackService =
-        com.app.screentime.core.network.service.FeedbackServiceImpl(networkClient)
+    fun provideChattyWebSocketClient(
+        api: ChattyApi,
+        sessionManager: SessionManager
+    ): ChattyWebSocketClient = ChattyWebSocketClient(api, sessionManager)
 }

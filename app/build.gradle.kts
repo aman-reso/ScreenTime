@@ -26,8 +26,8 @@ android {
         applicationId = "com.app.screentime"
         minSdk = 24
         targetSdk = 36
-        versionCode = 74
-        versionName = "7.4"
+        versionCode = 93
+        versionName = "9.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -35,7 +35,7 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            "\"${localProperties.getProperty("API_BASE_URL", "https://api.apptime.in")}\""
+            "\"${localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:8080")}\""
         )
         buildConfigField(
             "String",
@@ -71,6 +71,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -106,29 +107,29 @@ android {
 }
 
 dependencies {
+    // Core & Feature modules
+    implementation(project(":core:model"))
+    implementation(project(":core:network"))
+    implementation(project(":core:ui"))
+    implementation(project(":feature:auth"))
+    implementation(project(":feature:discover"))
+    implementation(project(":feature:chat"))
+    implementation(project(":feature:call"))
+    implementation(project(":feature:wallet"))
+    implementation(project(":feature:profile"))
+
     // Config module (translations)
     implementation(project(":config"))
 
     // ODS Library module with sources
     implementation(project(":odsystem"))
 
-    // Core Network module
-    implementation(project(":core:network"))
-
-    // Wallpaper module
-    implementation(project(":wallpaper"))
-
     // Analytics module
     implementation(project(":analytics"))
 
-    // AppLock module
-    implementation(project(":applock"))
-    
-    // FileManager module
-  //  implementation(project(":filemanager"))
-
     // Ads module
     implementation(project(":ads"))
+    implementation(project(":molecule"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -190,12 +191,15 @@ dependencies {
     // Coil for image loading
     implementation(libs.coil.compose)
 
-    // Lottie for animations
-    implementation("com.airbnb.android:lottie-compose:6.3.0")
 
     // Google Play In-App Updates
     implementation(libs.play.app.update)
     implementation(libs.play.app.update.ktx)
+
+
+    // Biometric Authentication
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.biometric.ktx)
 
     // Security/Crypto for EncryptedSharedPreferences
     implementation(libs.androidx.security.crypto)
@@ -223,4 +227,9 @@ dependencies {
 
     // Google Play Services Location
     implementation(libs.play.services.location)
+
+    // Google Play Install Referrer (campaign/source attribution)
+    implementation(libs.play.installreferrer)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
