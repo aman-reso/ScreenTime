@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,6 +78,12 @@ class MainActivity : AppCompatActivity() {
             ChattyTheme {
                 val authViewModel: AuthViewModel = hiltViewModel()
                 val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+
+                LaunchedEffect(isLoggedIn) {
+                    if (isLoggedIn) {
+                        activeCallManager.ensureConnected()
+                    }
+                }
 
                 if (isFingerprintEnabled && !isUnlocked && !isInPipMode) {
                     BiometricLockScreen(
