@@ -76,6 +76,6 @@ data class ODSButtonProps(
     var rightIcon: Boolean = false,
     var buttonType: ODSButtonButtonType = ODSButtonButtonType.STANDARD,
     var variant: ODSButtonVariant = ODSButtonVariant.PRIMARY,
-    var size: ODSButtonSize = ODSButtonSize.LARGE,
+    var size: ODSButtonSize = ODSButtonSize.SMALL,
     var disabled: Boolean = false,
 )

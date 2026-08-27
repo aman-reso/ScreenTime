@@ -79,13 +79,6 @@ fun ODSNavigationItem(
             )
             .semantics(mergeDescendants = true) {
                 selected = props.active
-                if (accessibilityIndex != null && accessibilityTotalCount != null) {
-                    contentDescription = context.getString(
-                        R.string.semantic_selected_tab_index_message,
-                        "${accessibilityIndex + 1}",
-                        "$accessibilityTotalCount"
-                    )
-                }
             },
         gap = style.gap,
         padding = style.padding,
@@ -98,15 +91,6 @@ fun ODSNavigationItem(
             style = style,
             props = props,
         )
-        if (props.textRes != -1) {
-            ODSText(
-                modifier = Modifier.fillMaxWidth(),
-                text = "Http",
-                style = style.labelStyle,
-                color = style.labelColor,
-                textAlign = style.labelTextAlign
-            )
-        }
         if (!props.text.isNullOrEmpty()) {
             ODSText(
                 modifier = Modifier.fillMaxWidth(),

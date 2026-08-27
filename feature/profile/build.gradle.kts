@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
+    implementation(project(":feature:wallet"))
     implementation(project(":odsystem"))
 
     implementation(libs.androidx.core.ktx)

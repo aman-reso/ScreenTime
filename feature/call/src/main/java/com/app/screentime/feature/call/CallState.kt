@@ -2,10 +2,12 @@ package com.app.screentime.feature.call
 
 enum class CallStatus {
     IDLE,
-    DIALING,           // Outgoing call waiting for response
-    INCOMING,          // Receiving call with accept/reject buttons
-    ACTIVE,            // In active call, live ticker running
-    ENDED              // Call ended with summary
+    CHECKING_BALANCE,      // Pre-call balance check in progress
+    INSUFFICIENT_BALANCE,  // Caller has insufficient balance to initiate call
+    DIALING,               // Outgoing call waiting for real remote response
+    INCOMING,              // Receiving call with accept/reject buttons
+    ACTIVE,                // In active call, WebRTC connected, live ticker running
+    ENDED                  // Call ended with summary
 }
 
 data class CallUiState(
@@ -15,6 +17,9 @@ data class CallUiState(
     val remoteUserName: String = "",
     val remoteUserAvatar: String? = null,
     val ratePerMin: Double = 10.0,
+    val currentBalance: Double = 0.0,
+    val minRequiredBalance: Double = 10.0,
+    val balanceMessage: String = "",
     val durationSec: Int = 0,
     val remainingSec: Int = 300,
     val cost: Double = 0.0,
@@ -23,3 +28,4 @@ data class CallUiState(
     val isLowBalanceWarning: Boolean = false,
     val endReason: String? = null
 )
+

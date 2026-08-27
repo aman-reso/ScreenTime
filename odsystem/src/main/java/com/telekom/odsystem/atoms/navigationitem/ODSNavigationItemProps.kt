@@ -39,5 +39,4 @@ data class ODSNavigationItemProps(
     var icon: ODSIconModel? = null,
     var text: String? = null,
     var badgeNumberProps: ODSNavigationItemBadgeNumberProps? = null,
-    var textRes: Int = -1,
 )

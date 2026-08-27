@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.core.content.edit
 
 sealed interface BiometricStatus {
     object Available : BiometricStatus
@@ -32,7 +33,7 @@ object BiometricAuthManager {
 
     fun setFingerprintLockEnabled(context: Context, enabled: Boolean) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putBoolean(KEY_FINGERPRINT_LOCK, enabled).apply()
+        prefs.edit { putBoolean(KEY_FINGERPRINT_LOCK, enabled) }
         if (!enabled) {
             _isUnlocked.value = true
         }

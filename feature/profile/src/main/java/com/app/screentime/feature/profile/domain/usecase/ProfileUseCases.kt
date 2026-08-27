@@ -63,9 +63,8 @@ class SubmitModelOnboardingUseCase @Inject constructor(
             api.submitOnboarding(
                 token = token,
                 bio = bio,
-                voiceRatePerMin = voiceRate,
-                groupRatePerMin = voiceRate * 0.7,
-                chatRatePerMsg = chatRate
+                voiceRate = voiceRate,
+                chatRate = chatRate
             )
             Result.success(true)
         } catch (e: Exception) {

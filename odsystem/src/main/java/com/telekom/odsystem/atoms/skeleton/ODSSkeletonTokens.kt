@@ -30,7 +30,7 @@ data class ODSSkeletonTokens(
 )
 
 var defaultODSSkeletonTokens = ODSSkeletonTokens(
-    borderRadiusVariantFull = ODSCorners(all = DSVariables.radiusFull),
+    borderRadiusVariantFull = ODSCorners(all = DSVariables.radiusMedium),
     borderRadiusVariantSmall = ODSCorners(all = DSVariables.radiusSmall),
     borderRadiusVariantMedium = ODSCorners(all = DSVariables.radiusMedium),
     borderRadiusVariantLarge = ODSCorners(all = DSVariables.radiusLarge),

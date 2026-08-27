@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
     <!-- Voice calls & WebRTC -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -39,6 +40,8 @@
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/app_icon_round"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.ScreenTime">
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
@@ -57,6 +60,8 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
+            android:supportsPictureInPicture="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:theme="@style/Theme.ScreenTime">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -124,6 +129,22 @@
         </provider>
 
 
+
+        <!-- Call Foreground Service -->
+        <service
+            android:name="com.app.screentime.feature.call.service.CallForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="microphone|phoneCall" />
+
+        <!-- Call Action Broadcast Receiver -->
+        <receiver
+            android:name="com.app.screentime.feature.call.receiver.CallActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.app.screentime.ACTION_CALL_HANGUP" />
+                <action android:name="com.app.screentime.ACTION_CALL_MUTE_TOGGLE" />
+            </intent-filter>
+        </receiver>
 
         <!-- Reject Call Broadcast Receiver -->
         <receiver

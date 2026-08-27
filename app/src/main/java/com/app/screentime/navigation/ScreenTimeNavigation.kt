@@ -17,11 +17,9 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Chat
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -32,8 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
@@ -84,13 +80,12 @@ private val bottomNavRoutes: Set<Screen> = setOf(
 @Composable
 fun ScreenTimeNavigation(
     modifier: Modifier = Modifier,
-    isAuthenticated: Boolean = true,
     deeplinkUri: Uri? = null,
     incomingCall: Pair<String, String>? = null,
     onClearIncomingCall: () -> Unit = {},
+    onLogout: () -> Unit = {},
     scheme: ODSTheme = neutralScheme,
-    props: Any? = null,
-    isUserInIndia: Boolean = true
+    isInPipMode: Boolean = false
 ) {
     val backStack = rememberNavBackStack(Screen.Discover)
     var selectedIndex by remember { mutableIntStateOf(0) }
@@ -111,7 +106,7 @@ fun ScreenTimeNavigation(
     val currentScreen = backStack.lastOrNull()
     val canHandleBack = backStack.size > 1 || (currentScreen != null && currentScreen != Screen.Discover)
 
-    BackHandler(enabled = canHandleBack) {
+    BackHandler(enabled = canHandleBack && !isInPipMode) {
         if (backStack.size > 1) {
             backStack.removeLastOrNull()
         } else if (currentScreen != Screen.Discover) {
@@ -124,7 +119,7 @@ fun ScreenTimeNavigation(
         bottomBar = {
             val current = backStack.lastOrNull()
             AnimatedVisibility(
-                visible = current in bottomNavRoutes,
+                visible = current in bottomNavRoutes && !isInPipMode,
                 enter = slideInVertically { it } + fadeIn(),
                 exit = slideOutVertically { it } + fadeOut()
             ) {
@@ -134,9 +129,9 @@ fun ScreenTimeNavigation(
                     onTabSelected = { index ->
                         val route = bottomNavTabs.getOrNull(index)?.screen ?: return@LunaBottomBar
                         val current2 = backStack.lastOrNull()
-                        when {
-                            current2 == route -> Unit // already there
-                            current2 in bottomNavRoutes -> backStack[backStack.lastIndex] = route
+                        when (current2) {
+                            route -> Unit // already there
+                            in bottomNavRoutes -> backStack[backStack.lastIndex] = route
                             else -> backStack.add(route)
                         }
                     }
@@ -158,8 +153,6 @@ fun ScreenTimeNavigation(
                 }
             },
             entryProvider = entryProvider {
-
-                // ── Discover (Home / First Tab) ───────────────────────────────
                 entry<Screen.Discover> {
                     DiscoverScreen(
                         modifier = Modifier
@@ -216,7 +209,7 @@ fun ScreenTimeNavigation(
                             .fillMaxSize()
                             .padding(bottom = paddingValues.calculateBottomPadding()),
                         scheme = scheme,
-                        onLogoutClick = { /* logout */ },
+                        onLogoutClick = onLogout,
                         onNavigateToTopUp = { backStack.add(Screen.TopUp) }
                     )
                 }
@@ -259,7 +252,12 @@ fun ScreenTimeNavigation(
                         modelName = key.modelName,
                         modifier = Modifier.fillMaxSize(),
                         scheme = scheme,
-                        onEndCall = { if (backStack.size > 1) backStack.removeLastOrNull() }
+                        isInPipMode = isInPipMode,
+                        onEndCall = { if (backStack.size > 1) backStack.removeLastOrNull() },
+                        onNavigateToTopUp = {
+                            if (backStack.size > 1) backStack.removeLastOrNull()
+                            backStack.add(Screen.TopUp)
+                        }
                     )
                 }
 
@@ -290,7 +288,6 @@ private fun LunaBottomBar(
                 ODSBottomNavigationItemProps(
                     active = selectedIndex == index,
                     text = tab.label,
-                    textRes = 0,
                     icon = ODSIconModel(imageVector = tab.unselectedIcon),
                     iconActive = ODSIconModel(imageVector = tab.selectedIcon)
                 )

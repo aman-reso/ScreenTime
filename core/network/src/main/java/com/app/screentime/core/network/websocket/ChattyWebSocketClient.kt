@@ -1,6 +1,7 @@
 package com.app.screentime.core.network.websocket
 
 import android.util.Log
+import com.app.screentime.core.network.NetworkAuthBridge
 import com.app.screentime.core.network.api.ChattyApi
 import com.app.screentime.core.network.session.SessionManager
 import kotlinx.coroutines.CoroutineScope
@@ -10,51 +11,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.*
 import javax.inject.Inject
 import javax.inject.Singleton
-
-@Serializable
-data class WSMessage(
-    val type: String,
-    val call_id: String? = null,
-    val room_id: String? = null,
-    val caller_id: String? = null,
-    val receiver_id: String? = null,
-    val rate_per_min: Double? = null,
-    val duration_sec: Int? = null,
-    val remaining_sec: Int? = null,
-    val cost: Double? = null,
-    val reason: String? = null,
-    val payload: String? = null
-)
-
-object WSEventTypes {
-    const val CALL_REQUEST = "CALL_REQUEST"
-    const val INCOMING_CALL = "INCOMING_CALL"
-    const val CALL_ACCEPT = "CALL_ACCEPT"
-    const val CALL_ACTIVE = "CALL_ACTIVE"
-    const val CALL_REJECT = "CALL_REJECT"
-    const val CALL_REJECTED = "CALL_REJECTED"
-    const val CALL_END = "CALL_END"
-    const val CALL_ENDED = "CALL_ENDED"
-    const val CALL_BUSY = "CALL_BUSY"
-    const val CALL_OFFLINE = "CALL_OFFLINE"
-    const val CALL_INSUFFICIENT_BALANCE = "CALL_INSUFFICIENT_BALANCE"
-    const val BALANCE_LOW_WARNING = "BALANCE_LOW_WARNING"
-    const val CALL_ENDED_BALANCE_EXHAUSTED = "CALL_ENDED_BALANCE_EXHAUSTED"
-    const val CALL_TICK = "CALL_TICK"
-    const val PRESENCE_UPDATE = "PRESENCE_UPDATE"
-    const val SESSION_TERMINATED = "SESSION_TERMINATED"
-    const val CHAT_MESSAGE = "CHAT_MESSAGE"
-    const val CHAT_RECEIVED = "CHAT_RECEIVED"
-    const val WEBRTC_OFFER = "WEBRTC_OFFER"
-    const val WEBRTC_ANSWER = "WEBRTC_ANSWER"
-    const val WEBRTC_ICE_CANDIDATE = "WEBRTC_ICE_CANDIDATE"
-}
 
 @Singleton
 class ChattyWebSocketClient @Inject constructor(
@@ -74,6 +35,11 @@ class ChattyWebSocketClient @Inject constructor(
     val rawMessagesFlow: SharedFlow<String> = _rawMessagesFlow.asSharedFlow()
 
     fun connect() {
+        if (sessionManager.isTokenExpired()) {
+            sessionManager.clearSession()
+            NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
+            return
+        }
         val token = sessionManager.token ?: return
         val wsUrl = api.getWsUrl(token)
         val request = Request.Builder().url(wsUrl).build()
@@ -92,61 +58,27 @@ class ChattyWebSocketClient @Inject constructor(
     }
 
     fun requestCall(receiverId: String) {
-        sendWSMessage(
-            WSMessage(
-                type = WSEventTypes.CALL_REQUEST,
-                receiver_id = receiverId
-            )
-        )
+        sendWSMessage(WSMessage(type = WSEventTypes.CALL_REQUEST, receiver_id = receiverId))
     }
 
     fun acceptCall(callId: String) {
-        sendWSMessage(
-            WSMessage(
-                type = WSEventTypes.CALL_ACCEPT,
-                call_id = callId
-            )
-        )
+        sendWSMessage(WSMessage(type = WSEventTypes.CALL_ACCEPT, call_id = callId))
     }
 
     fun rejectCall(callId: String, callerId: String) {
-        sendWSMessage(
-            WSMessage(
-                type = WSEventTypes.CALL_REJECT,
-                call_id = callId,
-                caller_id = callerId
-            )
-        )
+        sendWSMessage(WSMessage(type = WSEventTypes.CALL_REJECT, call_id = callId, caller_id = callerId))
     }
 
     fun endCall(callId: String) {
-        sendWSMessage(
-            WSMessage(
-                type = WSEventTypes.CALL_END,
-                call_id = callId
-            )
-        )
+        sendWSMessage(WSMessage(type = WSEventTypes.CALL_END, call_id = callId))
     }
 
     fun sendChatMessage(receiverId: String, text: String) {
-        sendWSMessage(
-            WSMessage(
-                type = WSEventTypes.CHAT_MESSAGE,
-                receiver_id = receiverId,
-                payload = text
-            )
-        )
+        sendWSMessage(WSMessage(type = WSEventTypes.CHAT_MESSAGE, receiver_id = receiverId, payload = text))
     }
 
     fun sendWebRTCSignaling(type: String, callId: String, receiverId: String?, payload: String) {
-        sendWSMessage(
-            WSMessage(
-                type = type,
-                call_id = callId,
-                receiver_id = receiverId,
-                payload = payload
-            )
-        )
+        sendWSMessage(WSMessage(type = type, call_id = callId, receiver_id = receiverId, payload = payload))
     }
 
     fun disconnect() {
@@ -164,6 +96,10 @@ class ChattyWebSocketClient @Inject constructor(
             _rawMessagesFlow.emit(text)
             try {
                 val parsed = json.decodeFromString<WSMessage>(text)
+                if (parsed.type == WSEventTypes.SESSION_TERMINATED) {
+                    sessionManager.clearSession()
+                    NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
+                }
                 _eventsFlow.emit(parsed)
             } catch (e: Exception) {
                 Log.w("ChattyWS", "Unparsed WS message: $text")
@@ -173,10 +109,23 @@ class ChattyWebSocketClient @Inject constructor(
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         Log.e("ChattyWS", "WebSocket failure: ${t.message}")
+        this.webSocket = null
+        scope.launch {
+            _eventsFlow.emit(
+                WSMessage(type = WSEventTypes.NETWORK_ERROR, reason = t.message ?: "Network failure")
+            )
+        }
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         Log.d("ChattyWS", "WebSocket closed: $reason")
+        this.webSocket = null
+        if (code != 1000) {
+            scope.launch {
+                _eventsFlow.emit(
+                    WSMessage(type = WSEventTypes.NETWORK_ERROR, reason = reason.ifBlank { "Closed unexpectedly" })
+                )
+            }
+        }
     }
 }
-

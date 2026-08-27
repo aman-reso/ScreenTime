@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +49,7 @@ private val modelSecondarySchemes = listOf(
     aperitifSecondaryScheme
 )
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun DiscoverScreen(
     modifier: Modifier = Modifier,
@@ -76,7 +78,10 @@ fun DiscoverScreen(
         baseList.filter { model ->
             when {
                 selectedFilter.startsWith("New") -> model.id in listOf("1", "2", "6", "8")
-                selectedFilter == "Nearby" -> model.distance.contains("m") && !model.distance.contains("km")
+                selectedFilter == "Nearby" -> model.distance.contains("m") && !model.distance.contains(
+                    "km"
+                )
+
                 selectedFilter == "Online" -> model.isOnline
                 selectedFilter == "Top Rated" -> model.rating >= 4.9f
                 else -> true
@@ -90,121 +95,129 @@ fun DiscoverScreen(
             val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             total > 0 && last >= total - 2
         }
-        .distinctUntilChanged()
-        .collect { shouldLoad ->
-            if (shouldLoad && !uiState.isLoadingMore && uiState.hasMorePages && !uiState.isLoading) {
-                viewModel.loadNextPage()
+            .distinctUntilChanged()
+            .collect { shouldLoad ->
+                if (shouldLoad && !uiState.isLoadingMore && uiState.hasMorePages && !uiState.isLoading) {
+                    viewModel.loadNextPage()
+                }
             }
-        }
     }
 
-    LazyColumn(
-        state = listState,
-        modifier = modifier
-            .fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 32.dp)
-    ) {
-        item(key = "top_location_header", contentType = "Header") {
-            Option2TopBar(scheme = scheme, onNavigateToSocialDemo = onNavigateToSocialDemo)
-        }
+    PullToRefreshBox(
+        isRefreshing = uiState.isRefreshing,
+        onRefresh = { viewModel.refresh() },
+        modifier = modifier.fillMaxSize()
+    )
+    {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 32.dp)
+        ) {
+            item(key = "top_location_header", contentType = "Header") {
+                Option2TopBar(scheme = scheme, onNavigateToSocialDemo = onNavigateToSocialDemo)
+            }
 
-        item(key = "dual_tab_control", contentType = "Tabs") {
-            Option2SegmentedTabs(
-                selectedTab = selectedTab,
-                scheme = scheme,
-                onTabSelected = { selectedTab = it }
-            )
-        }
+            item(key = "dual_tab_control", contentType = "Tabs") {
+                Option2SegmentedTabs(
+                    selectedTab = selectedTab,
+                    scheme = scheme,
+                    onTabSelected = { selectedTab = it }
+                )
+            }
 
-        item(key = "filter_chips_row", contentType = "Chips") {
-            Option2FilterChips(
-                filterChips = filterChips,
-                selectedFilter = selectedFilter,
-                scheme = scheme,
-                onSelectFilter = { selectedFilter = it }
-            )
-        }
+            item(key = "filter_chips_row", contentType = "Chips") {
+                Option2FilterChips(
+                    filterChips = filterChips,
+                    selectedFilter = selectedFilter,
+                    scheme = scheme,
+                    onSelectFilter = { selectedFilter = it }
+                )
+            }
 
-        if (uiState.isLoading && filtered.isEmpty()) {
-            items(2, key = { "init_grid_skel_$it" }, contentType = { "SkeletonGrid" }) {
+            if (uiState.isLoading && filtered.isEmpty()) {
+                items(2, key = { "init_grid_skel_$it" }, contentType = { "SkeletonGrid" }) {
+                    ODSRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        gap = 12.dp
+                    ) {
+                        Option2CardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
+                        Option2CardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
+                    }
+                }
+            }
+
+            items(
+                items = filtered.chunked(2),
+                key = { row -> row.map { it.id }.joinToString("_") },
+                contentType = { "ModelGridRow" }
+            ) { pair ->
                 ODSRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp),
                     gap = 12.dp
                 ) {
-                    Option2CardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
-                    Option2CardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
-                }
-            }
-        }
-
-        items(
-            items = filtered.chunked(2),
-            key = { row -> row.map { it.id }.joinToString("_") },
-            contentType = { "ModelGridRow" }
-        ) { pair ->
-            ODSRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                gap = 12.dp
-            ) {
-                val model1 = pair[0]
-                val colorIndex1 = remember(model1.id) { (model1.id.hashCode() and 0x7FFFFFFF) % modelSecondarySchemes.size }
-                Option2ModelCard(
-                    modifier = Modifier.weight(1f),
-                    model = model1,
-                    scheme = scheme,
-                    cardScheme = modelSecondarySchemes[colorIndex1],
-                    isFavorite = uiState.favoriteModelIds.contains(model1.id),
-                    onToggleFavorite = { viewModel.toggleFavorite(model1.id) },
-                    onClick = { onNavigateToModelProfile(model1.id) }
-                )
-
-                if (pair.size > 1) {
-                    val model2 = pair[1]
-                    val colorIndex2 = remember(model2.id) { (model2.id.hashCode() and 0x7FFFFFFF) % modelSecondarySchemes.size }
+                    val model1 = pair[0]
+                    val colorIndex1 =
+                        remember(model1.id) { (model1.id.hashCode() and 0x7FFFFFFF) % modelSecondarySchemes.size }
                     Option2ModelCard(
                         modifier = Modifier.weight(1f),
-                        model = model2,
+                        model = model1,
                         scheme = scheme,
-                        cardScheme = modelSecondarySchemes[colorIndex2],
-                        isFavorite = uiState.favoriteModelIds.contains(model2.id),
-                        onToggleFavorite = { viewModel.toggleFavorite(model2.id) },
-                        onClick = { onNavigateToModelProfile(model2.id) }
+                        cardScheme = modelSecondarySchemes[colorIndex1],
+                        isFavorite = uiState.favoriteModelIds.contains(model1.id),
+                        onToggleFavorite = { viewModel.toggleFavorite(model1.id) },
+                        onClick = { onNavigateToModelProfile(model1.id) }
                     )
-                } else {
-                    Spacer(Modifier.weight(1f))
-                }
-            }
-        }
 
-        if (uiState.isLoadingMore) {
-            item(key = "pagination_grid_skel", contentType = "SkeletonGrid") {
-                ODSRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                    gap = 12.dp
-                ) {
-                    Option2CardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
-                    Option2CardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
+                    if (pair.size > 1) {
+                        val model2 = pair[1]
+                        val colorIndex2 =
+                            remember(model2.id) { (model2.id.hashCode() and 0x7FFFFFFF) % modelSecondarySchemes.size }
+                        Option2ModelCard(
+                            modifier = Modifier.weight(1f),
+                            model = model2,
+                            scheme = scheme,
+                            cardScheme = modelSecondarySchemes[colorIndex2],
+                            isFavorite = uiState.favoriteModelIds.contains(model2.id),
+                            onToggleFavorite = { viewModel.toggleFavorite(model2.id) },
+                            onClick = { onNavigateToModelProfile(model2.id) }
+                        )
+                    } else {
+                        Spacer(Modifier.weight(1f))
+                    }
                 }
             }
-        } else if (!uiState.hasMorePages && filtered.isNotEmpty()) {
-            item(key = "caught_up_footer", contentType = "Footer") {
-                ODSBox(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSText(
-                        text = "✨ You've seen all matched connections",
-                        style = ODSTextStyles.microcopyRegular,
-                        color = scheme.basicTextRecessive
-                    )
+
+            if (uiState.isLoadingMore) {
+                item(key = "pagination_grid_skel", contentType = "SkeletonGrid") {
+                    ODSRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        gap = 12.dp
+                    ) {
+                        Option2CardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
+                        Option2CardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
+                    }
+                }
+            } else if (!uiState.hasMorePages && filtered.isNotEmpty()) {
+                item(key = "caught_up_footer", contentType = "Footer") {
+                    ODSBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSText(
+                            text = "✨ You've seen all matched connections",
+                            style = ODSTextStyles.microcopyRegular,
+                            color = scheme.basicTextRecessive
+                        )
+                    }
                 }
             }
         }
@@ -331,7 +344,10 @@ private fun Option2SegmentedTabs(
                     ),
                     cornerRadius = ODSCorners(all = 12.dp),
                     border = if (isSelected) {
-                        ODSBorder(width = 1.dp, colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle)))
+                        ODSBorder(
+                            width = 1.dp,
+                            colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
+                        )
                     } else null,
                     padding = ODSPadding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
@@ -372,7 +388,10 @@ private fun Option2FilterChips(
                     .size(38.dp)
                     .clip(CircleShape),
                 background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-                border = ODSBorder(width = 1.dp, colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))),
+                border = ODSBorder(
+                    width = 1.dp,
+                    colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
+                ),
                 contentAlignment = Alignment.Center
             ) {
                 ODSIcon(
@@ -384,7 +403,8 @@ private fun Option2FilterChips(
 
         // Category Pills
         items(filterChips, key = { it }) { filter ->
-            val isSelected = selectedFilter.startsWith(filter.take(3)) || selectedFilter == filter
+            val isSelected =
+                selectedFilter.startsWith(filter.take(3)) || selectedFilter == filter
             ODSBox(
                 modifier = Modifier.clickable { onSelectFilter(filter) },
                 background = listOf(
@@ -412,6 +432,7 @@ private fun Option2FilterChips(
         }
     }
 }
+
 
 /**
  * Option 2 2-Column Model Grid Card

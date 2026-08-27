@@ -14,6 +14,7 @@ import javax.inject.Inject
 
 data class DiscoverUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val currentPage: Int = 1,
     val hasMorePages: Boolean = true,
@@ -44,11 +45,25 @@ class DiscoverViewModel @Inject constructor(
                 currentPage = 1,
                 hasMorePages = true
             )
-            val list = getModelsUseCase.getPaginated(page = 1, pageSize = 4)
+            val list = getModelsUseCase.getPaginated(page = 1, pageSize = 6)
             _uiState.value = _uiState.value.copy(
                 models = list,
                 isLoading = false,
                 hasMorePages = list.isNotEmpty()
+            )
+        }
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isRefreshing = true, error = null)
+            val list = getModelsUseCase.getPaginated(page = 1, pageSize = 6)
+            _uiState.value = _uiState.value.copy(
+                models = list,
+                currentPage = 1,
+                hasMorePages = list.isNotEmpty(),
+                isRefreshing = false,
+                isLoading = false
             )
         }
     }
@@ -59,7 +74,7 @@ class DiscoverViewModel @Inject constructor(
         val nextPage = _uiState.value.currentPage + 1
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoadingMore = true)
-            val newModels = getModelsUseCase.getPaginated(page = nextPage, pageSize = 4)
+            val newModels = getModelsUseCase.getPaginated(page = nextPage, pageSize = 6)
             if (newModels.isNotEmpty()) {
                 val currentIds = _uiState.value.models.map { it.id }.toSet()
                 val distinctNew = newModels.filter { it.id !in currentIds }
@@ -67,7 +82,7 @@ class DiscoverViewModel @Inject constructor(
                     models = _uiState.value.models + distinctNew,
                     currentPage = nextPage,
                     isLoadingMore = false,
-                    hasMorePages = newModels.size >= 4
+                    hasMorePages = newModels.size >= 6
                 )
             } else {
                 _uiState.value = _uiState.value.copy(

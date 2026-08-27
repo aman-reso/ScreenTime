@@ -1,18 +1,27 @@
 package com.app.screentime.feature.call.domain.usecase
 
+import com.app.screentime.core.network.NetworkAuthBridge
+import com.app.screentime.core.network.session.SessionManager
 import com.app.screentime.core.network.websocket.ChattyWebSocketClient
 import com.app.screentime.core.network.websocket.WSMessage
 import kotlinx.coroutines.flow.SharedFlow
 import javax.inject.Inject
 
 class StartCallUseCase @Inject constructor(
-    private val wsClient: ChattyWebSocketClient
+    private val wsClient: ChattyWebSocketClient,
+    private val sessionManager: SessionManager
 ) {
-    operator fun invoke(receiverId: String) {
+    operator fun invoke(receiverId: String): Boolean {
+        if (!sessionManager.hasValidSession()) {
+            sessionManager.clearSession()
+            NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
+            return false
+        }
         if (!wsClient.isConnected()) {
             wsClient.connect()
         }
         wsClient.requestCall(receiverId)
+        return true
     }
 }
 

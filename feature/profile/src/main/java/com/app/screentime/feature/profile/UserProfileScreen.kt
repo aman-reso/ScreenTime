@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.feature.wallet.WalletPacksBottomSheet
 import com.app.screentime.core.ui.components.PompiereTitle
 import com.telekom.odsystem.atoms.*
 import com.telekom.odsystem.atoms.button.ODSButton
@@ -43,6 +44,7 @@ import com.telekom.odsystem.tokens.tokens.*
 import androidx.fragment.app.FragmentActivity
 import com.app.screentime.core.ui.security.BiometricAuthManager
 import com.app.screentime.core.ui.security.BiometricStatus
+import com.app.screentime.feature.wallet.WalletPacksBottomSheet
 
 import com.telekom.odsystem.atoms.divider.ODSDivider
 import com.telekom.odsystem.atoms.divider.ODSDividerProps
@@ -63,8 +65,13 @@ fun UserProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showEditProfileDialog by remember { mutableStateOf(false) }
+    var showWalletPacksSheet by remember { mutableStateOf(false) }
     var isSettingsOpen by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.loadUser()
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         // Main Profile Screen Content
@@ -209,7 +216,8 @@ fun UserProfileScreen(
             ODSBox(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = 20.dp)
+                    .clickable { showWalletPacksSheet = true },
                 background = listOf(ODSColorModel(hexColor = orchidSecondaryScheme.basicBackgroundSubtle)),
                 cornerRadius = ODSCorners(all = 16.dp),
                 padding = ODSPadding(all = 18.dp)
@@ -267,7 +275,7 @@ fun UserProfileScreen(
                             variant = ODSButtonVariant.PRIMARY,
                             size = ODSButtonSize.SMALL
                         ),
-                        onClick = onNavigateToTopUp
+                        onClick = { showWalletPacksSheet = true }
                     )
                 }
             }
@@ -352,7 +360,10 @@ fun UserProfileScreen(
                         icon = Icons.Outlined.Logout,
                         label = "Log Out",
                         scheme = scheme,
-                        onClick = onLogoutClick
+                        onClick = {
+                            viewModel.logout()
+                            onLogoutClick()
+                        }
                     )
                 }
             }
@@ -456,6 +467,18 @@ fun UserProfileScreen(
                     showEditProfileDialog = false
                     Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT)
                         .show()
+                }
+            )
+        }
+
+        // ── 8. Wallet Packs Interactive Grid BottomSheet ────────────────────
+        if (showWalletPacksSheet) {
+            WalletPacksBottomSheet(
+                onDismissRequest = { showWalletPacksSheet = false },
+                scheme = scheme,
+                onRechargeSuccess = {
+                    viewModel.loadUser()
+                    Toast.makeText(context, "Wallet recharged successfully! 🪙", Toast.LENGTH_SHORT).show()
                 }
             )
         }

@@ -1,6 +1,7 @@
 package com.app.screentime.feature.wallet.domain.usecase
 
 import com.app.screentime.core.network.api.ChattyApi
+import com.app.screentime.core.network.dto.WalletPackDto
 import com.app.screentime.core.network.dto.WalletResponse
 import com.app.screentime.core.network.session.SessionManager
 import javax.inject.Inject
@@ -14,6 +15,19 @@ class GetWalletUseCase @Inject constructor(
         return try {
             val response = api.getWallet(token)
             Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+}
+
+class GetWalletPacksUseCase @Inject constructor(
+    private val api: ChattyApi
+) {
+    suspend operator fun invoke(): Result<List<WalletPackDto>> {
+        return try {
+            val response = api.getWalletPacks()
+            Result.success(response.packs)
         } catch (e: Exception) {
             Result.failure(e)
         }

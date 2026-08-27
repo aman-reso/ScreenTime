@@ -116,7 +116,7 @@ class NetworkClient @Inject constructor(
             header("X-App-Language", getLanguageCode())
             header("X-Country-Code", countryCode)
 
-            val token = preferencesManager.getUserId()
+            val token = preferencesManager.getToken()
             if (!token.isNullOrBlank()) {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }

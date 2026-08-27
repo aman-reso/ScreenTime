@@ -28,12 +28,12 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            "\"${localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:8080")}\""
+            "\"${localProperties.getProperty("API_BASE_URL", "https://testing.bpscguru.com")}\""
         )
         buildConfigField(
             "String",
             "API_DEV_BASE_URL",
-            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://abd310e69b89.ngrok-free.app")}\""
+            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://testing.bpscguru.com")}\""
         )
         buildConfigField(
             "String",

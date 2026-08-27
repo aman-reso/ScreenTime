@@ -1,43 +1,15 @@
 package com.app.screentime.core.network.dto
 
-import com.app.screentime.core.model.UserRole
 import kotlinx.serialization.Serializable
 
-// ─── Requests ─────────────────────────────────────────────────────────────────
-
 @Serializable
-data class RegisterRequest(
-    val phone: String,
-    val name: String,
-    val role: String   // "user" or "model"
+data class ApiResponse<T>(
+    val success: Boolean = true,
+    val status_code: Int = 200,
+    val message: String = "",
+    val data: T? = null,
+    val timestamp: Long = 0L
 )
-
-@Serializable
-data class RechargeRequest(
-    val amount: Double
-)
-
-@Serializable
-data class CreateRoomRequest(
-    val title: String,
-    val rate_per_min: Double
-)
-
-@Serializable
-data class ReportRequest(
-    val reported_id: String,
-    val reason: String
-)
-
-@Serializable
-data class ModelOnboardRequest(
-    val bio: String,
-    val voice_rate_per_min: Double,
-    val group_rate_per_min: Double,
-    val chat_rate_per_msg: Double
-)
-
-// ─── Responses ────────────────────────────────────────────────────────────────
 
 @Serializable
 data class AuthResponse(
@@ -50,9 +22,9 @@ data class AuthResponse(
 
 @Serializable
 data class UserDto(
-    val id: String,
-    val phone: String,
-    val name: String,
+    val id: String = "",
+    val phone: String = "",
+    val name: String = "",
     val role: String = "user",
     val avatar_url: String? = null,
     val bio: String? = null,
@@ -75,11 +47,41 @@ data class WalletDto(
 )
 
 @Serializable
+data class WalletPackDto(
+    val id: String = "",
+    val coins: Int = 0,
+    val bonus_coins: Int = 0,
+    val total_coins: Int = 0,
+    val price_inr: Double = 0.0,
+    val badge: String? = null,
+    val is_popular: Boolean = false,
+    val description: String = ""
+)
+
+@Serializable
+data class WalletPacksResponse(
+    val count: Int = 0,
+    val packs: List<WalletPackDto> = emptyList()
+)
+
+@Serializable
+data class CheckCallBalanceResponse(
+    val can_call: Boolean = false,
+    val balance: Double = 0.0,
+    val rate_per_min: Double = 0.0,
+    val min_required: Double = 0.0,
+    val max_duration_sec: Int = 0,
+    val model_id: String = "",
+    val model_name: String = "",
+    val message: String = ""
+)
+
+@Serializable
 data class TransactionDto(
     val id: String,
     val user_id: String,
     val amount: Double,
-    val type: String,      // 'welcome_bonus', 'recharge', 'call_debit', 'call_credit', 'chat_debit'
+    val type: String,
     val description: String? = null,
     val call_id: String? = null,
     val room_id: String? = null,
@@ -136,49 +138,41 @@ data class OnboardingStatusResponse(
     val message: String = ""
 )
 
+// ── Ephemeral 24-Hour Chat DTOs ──────────────────────────────────────────────
 @Serializable
-data class ApiErrorResponse(
-    val error: String = "An error occurred"
+data class ChatMessageDto(
+    val id: String = "",
+    val sender_id: String = "",
+    val receiver_id: String = "",
+    val content: String = "",
+    val cost: Double = 0.0,
+    val expires_at: String = "",
+    val is_read: Boolean = false,
+    val created_at: String = ""
 )
 
-// ─── Domain Mappers ───────────────────────────────────────────────────────────
+@Serializable
+data class ConversationDto(
+    val id: String = "",
+    val partner_id: String = "",
+    val partner_name: String = "",
+    val partner_avatar: String = "",
+    val last_message: String = "",
+    val last_message_time: Long = 0L,
+    val unread_count: Int = 0,
+    val is_online: Boolean = false
+)
 
-fun UserDto.toModelProfile(): com.app.screentime.core.model.ModelProfile {
-    return com.app.screentime.core.model.ModelProfile(
-        id = this.id,
-        name = this.name,
-        bio = this.bio ?: "",
-        avatarUrl = this.avatar_url ?: "",
-        coverUrl = this.avatar_url ?: "",
-        ratePerMinute = this.voice_rate_per_min.toInt().coerceAtLeast(1),
-        chatRate = this.chat_rate_per_msg.toInt().coerceAtLeast(1),
-        isOnline = this.is_online,
-        isBusy = this.is_busy
-    )
-}
+@Serializable
+data class ConversationListResponse(
+    val count: Int = 0,
+    val conversations: List<ConversationDto> = emptyList(),
+    val notice: String = ""
+)
 
-fun UserDto.toUser(): com.app.screentime.core.model.User {
-    return com.app.screentime.core.model.User(
-        id = this.id,
-        phone = this.phone,
-        name = this.name,
-        role = com.app.screentime.core.model.UserRole.fromString(this.role),
-        avatarUrl = this.avatar_url,
-        bio = this.bio,
-        voiceRatePerMin = this.voice_rate_per_min,
-        chatRatePerMsg = this.chat_rate_per_msg,
-        isOnline = this.is_online,
-        isBusy = this.is_busy,
-        createdAt = this.created_at
-    )
-}
-
-fun TransactionDto.toWalletTransaction(): com.app.screentime.core.model.WalletTransaction {
-    return com.app.screentime.core.model.WalletTransaction(
-        id = this.id,
-        type = com.app.screentime.core.model.TransactionType.fromString(this.type),
-        amount = this.amount,
-        description = this.description ?: "Transaction",
-        timestamp = System.currentTimeMillis()
-    )
-}
+@Serializable
+data class EphemeralChatResponse(
+    val partner_id: String = "",
+    val messages: List<ChatMessageDto> = emptyList(),
+    val notice: String = ""
+)

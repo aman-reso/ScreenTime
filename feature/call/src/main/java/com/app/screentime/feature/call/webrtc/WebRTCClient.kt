@@ -58,6 +58,8 @@ class WebRTCClient @Inject constructor(
         PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer()
     )
 
+    var onIceConnectionFailed: (() -> Unit)? = null
+
     fun initialize(context: Context) {
         if (peerConnectionFactory != null) return
 
@@ -115,6 +117,9 @@ class WebRTCClient @Inject constructor(
 
                 override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {
                     Log.d("WebRTC", "ICE connection state: $state")
+                    if (state == PeerConnection.IceConnectionState.FAILED) {
+                        onIceConnectionFailed?.invoke()
+                    }
                 }
 
                 override fun onIceConnectionReceivingChange(receiving: Boolean) {}

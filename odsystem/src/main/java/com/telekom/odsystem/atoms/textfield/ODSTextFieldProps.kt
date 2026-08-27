@@ -137,7 +137,7 @@ data class ODSTextFieldProps(
     var required: Boolean = false,
     @Deprecated("Use textFieldIconProps with type ICON_CONTAINER instead with showRightIcon true")
     var rightIcon: ODSIconModel? = null,
-    var size: ODSTextFieldSize = ODSTextFieldSize.LARGE,
+    var size: ODSTextFieldSize = ODSTextFieldSize.SMALL,
     var suffixText: String? = null,
     @Deprecated("Use textFieldIconProps with type BUTTON_CONTAINER instead with showRightIcon true")
     var isPasswordField: Boolean = false,

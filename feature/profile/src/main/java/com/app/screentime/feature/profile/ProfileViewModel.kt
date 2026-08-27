@@ -103,6 +103,9 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun logout() {
+        _uiState.value = ProfileUiState(
+            isFingerprintLockEnabled = BiometricAuthManager.isFingerprintLockEnabled(context)
+        )
         logoutUseCase()
     }
 
