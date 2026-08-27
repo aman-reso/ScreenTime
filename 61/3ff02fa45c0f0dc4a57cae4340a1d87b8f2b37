@@ -1,0 +1,81 @@
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthPhoneOtpSection.kt
+  h_9c8c4b23da7963 1-151
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthLandingScreen.kt
+  h_9c8c4b23da7963 1-109
+app/src/main/java/com/app/screentime/calling/di/CallingModule.kt
+  h_9c8c4b23da7963 1-52
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthLoginScreen.kt
+  h_9c8c4b23da7963 1-62
+  h_9c8c4b23da7963 63-82
+app/src/main/java/com/app/screentime/calling/presentation/ui/CallScreen.kt
+  h_9c8c4b23da7963 1-142
+feature/wallet/src/main/java/com/app/screentime/feature/wallet/WalletPacksBottomSheet.kt
+  h_9c8c4b23da7963 1-182
+feature/chat/src/main/java/com/app/screentime/feature/chat/ConversationItem.kt
+  h_9c8c4b23da7963 1-145
+app/src/main/java/com/app/screentime/calling/data/model/CallSocketMessage.kt
+  h_9c8c4b23da7963 1-70
+app/src/main/java/com/app/screentime/calling/data/model/WebRTCSignalDto.kt
+  h_9c8c4b23da7963 1-43
+app/src/main/java/com/app/screentime/calling/data/repository/CallRepositoryImpl.kt
+  h_9c8c4b23da7963 1-122
+app/src/main/java/com/app/screentime/calling/data/socket/ConnectWebSocketClient.kt
+  h_9c8c4b23da7963 1-119
+app/src/main/java/com/app/screentime/calling/domain/model/CallSession.kt
+  h_9c8c4b23da7963 1-32
+app/src/main/java/com/app/screentime/calling/domain/model/CallState.kt
+  h_9c8c4b23da7963 1-41
+app/src/main/java/com/app/screentime/calling/domain/repository/CallRepository.kt
+  h_9c8c4b23da7963 1-27
+app/src/main/java/com/app/screentime/calling/domain/usecase/BillingTickHandler.kt
+  h_9c8c4b23da7963 1-47
+app/src/main/java/com/app/screentime/calling/domain/usecase/CallUseCase.kt
+  h_9c8c4b23da7963 1-131
+app/src/main/java/com/app/screentime/calling/presentation/CallUiState.kt
+  h_9c8c4b23da7963 1-16
+app/src/main/java/com/app/screentime/calling/presentation/CallViewModel.kt
+  h_9c8c4b23da7963 1-123
+app/src/main/java/com/app/screentime/calling/presentation/ui/CallControls.kt
+  h_9c8c4b23da7963 1-89
+app/src/main/java/com/app/screentime/calling/presentation/ui/IncomingCallDialog.kt
+  h_9c8c4b23da7963 1-102
+app/src/main/res/xml/network_security_config.xml
+  h_9c8c4b23da7963 1-21
+core/network/src/main/java/com/app/screentime/core/network/dto/ApiMappers.kt
+  h_9c8c4b23da7963 1-47
+core/network/src/main/java/com/app/screentime/core/network/dto/ApiRequests.kt
+  h_9c8c4b23da7963 1-47
+core/network/src/main/java/com/app/screentime/core/network/websocket/WSMessage.kt
+  h_9c8c4b23da7963 1-43
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthCreatorDetailsSection.kt
+  h_9c8c4b23da7963 1-139
+feature/auth/src/main/java/com/app/screentime/feature/auth/domain/usecase/GuestLoginUseCase.kt
+  h_9c8c4b23da7963 1-19
+feature/auth/src/main/java/com/app/screentime/feature/auth/util/PhotoVerificationUtil.kt
+  h_9c8c4b23da7963 1-45
+feature/call/src/main/java/com/app/screentime/feature/call/ActiveCallManager.kt
+  h_9c8c4b23da7963 1-393
+feature/call/src/main/java/com/app/screentime/feature/call/receiver/CallActionReceiver.kt
+  h_9c8c4b23da7963 1-31
+feature/call/src/main/java/com/app/screentime/feature/call/service/CallForegroundService.kt
+  h_9c8c4b23da7963 1-212
+feature/chat/src/main/java/com/app/screentime/feature/chat/MessageBubble.kt
+  h_9c8c4b23da7963 1-61
+feature/chat/src/main/java/com/app/screentime/feature/chat/data/local/LocalChatStorage.kt
+  h_9c8c4b23da7963 1-82
+feature/wallet/src/main/java/com/app/screentime/feature/wallet/PackageCard.kt
+  h_9c8c4b23da7963 1-91
+feature/wallet/src/main/java/com/app/screentime/feature/wallet/WalletComponents.kt
+  h_9c8c4b23da7963 1-157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "613ff02fa45c0f0dc4a57cae4340a1d87b8f2b37",
+  "prompts": {},
+  "humans": {
+    "h_9c8c4b23da7963": {
+      "author": "AmanKumar <Aman.kumar@telekom-digital.com>"
+    }
+  }
+}
