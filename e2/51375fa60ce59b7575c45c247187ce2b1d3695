@@ -1,0 +1,15 @@
+app/src/main/java/com/app/screentime/MainActivity.kt
+  h_9c8c4b23da7963 18,82-86
+  h_9c8c4b23da7963 87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "e251375fa60ce59b7575c45c247187ce2b1d3695",
+  "prompts": {},
+  "humans": {
+    "h_9c8c4b23da7963": {
+      "author": "AmanKumar <Aman.kumar@telekom-digital.com>"
+    }
+  }
+}
