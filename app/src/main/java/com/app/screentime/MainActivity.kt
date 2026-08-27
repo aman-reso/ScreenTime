@@ -116,6 +116,12 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 activeCallManager.callState.collect { callState ->
                     updatePiPParams(callState)
+                    if (callState.status == CallStatus.INCOMING && incomingCallData == null) {
+                        incomingCallData = Pair(
+                            callState.remoteUserId.ifBlank { "unknown" },
+                            callState.remoteUserName.ifBlank { "Incoming Call" }
+                        )
+                    }
                 }
             }
         }
