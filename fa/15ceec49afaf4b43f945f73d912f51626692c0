@@ -1,0 +1,16 @@
+core/network/src/main/java/com/app/screentime/core/network/websocket/WSMessage.kt
+  h_9c8c4b23da7963 4,12-13,15,21
+feature/call/src/main/java/com/app/screentime/feature/call/ActiveCallManager.kt
+  h_9c8c4b23da7963 85,90,128-131,135-138,142-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "fa15ceec49afaf4b43f945f73d912f51626692c0",
+  "prompts": {},
+  "humans": {
+    "h_9c8c4b23da7963": {
+      "author": "AmanKumar <Aman.kumar@telekom-digital.com>"
+    }
+  }
+}
