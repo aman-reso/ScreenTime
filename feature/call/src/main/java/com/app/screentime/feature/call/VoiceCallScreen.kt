@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
@@ -122,11 +123,13 @@ fun VoiceCallScreen(
         }
     }
 
-    LaunchedEffect(modelId) {
-        if (hasMicPermission) {
-            viewModel.startOutgoingCall(modelId, modelName)
-        } else {
-            permissionLauncher.launch(permissionsToRequest)
+    LaunchedEffect(modelId, callState.status) {
+        if (callState.status != CallStatus.INCOMING && callState.status != CallStatus.ACTIVE) {
+            if (hasMicPermission) {
+                viewModel.startOutgoingCall(modelId, modelName)
+            } else {
+                permissionLauncher.launch(permissionsToRequest)
+            }
         }
     }
 
@@ -591,45 +594,110 @@ fun VoiceCallScreen(
                     Spacer(Modifier.weight(1f))
 
                     // Action Controls Row
-                    ODSRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 36.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CallControlButton(
-                            icon = if (callState.isMuted) Icons.Filled.MicOff else Icons.Outlined.Mic,
-                            label = if (callState.isMuted) "Unmute" else "Mute",
-                            isActive = callState.isMuted,
-                            scheme = scheme,
-                            size = 60.dp
-                        ) { viewModel.toggleMute() }
-
-                        ODSBox(
+                    if (callState.status == CallStatus.INCOMING) {
+                        ODSRow(
                             modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape)
-                                .clickable {
-                                    viewModel.endCall()
-                                    onEndCall()
-                                },
-                            background = listOf(ODSColorModel(hexColor = scheme.functionalDestructiveStandard)),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .padding(bottom = 36.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            ODSIcon(
-                                iconModel = ODSIconModel(imageVector = Icons.Filled.CallEnd),
-                                tint = scheme.basicTextOnAccent.getColor()
-                            )
-                        }
+                            // Decline (Red)
+                            ODSColumn(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                gap = 8.dp
+                            ) {
+                                ODSBox(
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(CircleShape)
+                                        .clickable {
+                                            viewModel.rejectIncomingCall()
+                                            onEndCall()
+                                        },
+                                    background = listOf(ODSColorModel(hexColor = scheme.functionalDestructiveStandard)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    ODSIcon(
+                                        iconModel = ODSIconModel(imageVector = Icons.Filled.CallEnd),
+                                        tint = scheme.basicTextOnAccent.getColor()
+                                    )
+                                }
+                                ODSText(
+                                    text = "Decline",
+                                    style = ODSTextStyles.microcopyRegular,
+                                    color = scheme.basicTextRecessive
+                                )
+                            }
 
-                        CallControlButton(
-                            icon = if (callState.isSpeaker) Icons.Filled.VolumeUp else Icons.Outlined.VolumeDown,
-                            label = if (callState.isSpeaker) "Speaker" else "Earpiece",
-                            isActive = callState.isSpeaker,
-                            scheme = scheme,
-                            size = 60.dp
-                        ) { viewModel.toggleSpeaker() }
+                            // Accept (Green)
+                            ODSColumn(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                gap = 8.dp
+                            ) {
+                                ODSBox(
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(CircleShape)
+                                        .clickable {
+                                            viewModel.acceptIncomingCall()
+                                        },
+                                    background = listOf(ODSColorModel(hexColor = scheme.functionalSuccessStandard)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    ODSIcon(
+                                        iconModel = ODSIconModel(imageVector = Icons.Filled.Call),
+                                        tint = scheme.basicTextOnAccent.getColor()
+                                    )
+                                }
+                                ODSText(
+                                    text = "Accept",
+                                    style = ODSTextStyles.microcopyRegular,
+                                    color = scheme.basicTextRecessive
+                                )
+                            }
+                        }
+                    } else {
+                        ODSRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 36.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CallControlButton(
+                                icon = if (callState.isMuted) Icons.Filled.MicOff else Icons.Outlined.Mic,
+                                label = if (callState.isMuted) "Unmute" else "Mute",
+                                isActive = callState.isMuted,
+                                scheme = scheme,
+                                size = 60.dp
+                            ) { viewModel.toggleMute() }
+
+                            ODSBox(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        viewModel.endCall()
+                                        onEndCall()
+                                    },
+                                background = listOf(ODSColorModel(hexColor = scheme.functionalDestructiveStandard)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ODSIcon(
+                                    iconModel = ODSIconModel(imageVector = Icons.Filled.CallEnd),
+                                    tint = scheme.basicTextOnAccent.getColor()
+                                )
+                            }
+
+                            CallControlButton(
+                                icon = if (callState.isSpeaker) Icons.Filled.VolumeUp else Icons.Outlined.VolumeDown,
+                                label = if (callState.isSpeaker) "Speaker" else "Earpiece",
+                                isActive = callState.isSpeaker,
+                                scheme = scheme,
+                                size = 60.dp
+                            ) { viewModel.toggleSpeaker() }
+                        }
                     }
                 }
             }
