@@ -43,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -111,6 +112,7 @@ fun VoiceCallScreen(
             ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         )
     }
+    var hasInitiatedCall by rememberSaveable { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -118,14 +120,16 @@ fun VoiceCallScreen(
         val micGranted = result[Manifest.permission.RECORD_AUDIO] == true ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         hasMicPermission = micGranted
-        if (micGranted) {
+        if (micGranted && !hasInitiatedCall && callState.status != CallStatus.INCOMING && callState.status != CallStatus.ACTIVE && callState.status != CallStatus.ENDED) {
+            hasInitiatedCall = true
             viewModel.startOutgoingCall(modelId, modelName)
         }
     }
 
-    LaunchedEffect(modelId, callState.status) {
-        if (callState.status != CallStatus.INCOMING && callState.status != CallStatus.ACTIVE) {
+    LaunchedEffect(Unit) {
+        if (!hasInitiatedCall && callState.status != CallStatus.INCOMING && callState.status != CallStatus.ACTIVE && callState.status != CallStatus.ENDED) {
             if (hasMicPermission) {
+                hasInitiatedCall = true
                 viewModel.startOutgoingCall(modelId, modelName)
             } else {
                 permissionLauncher.launch(permissionsToRequest)
