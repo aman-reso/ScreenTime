@@ -1,0 +1,14 @@
+feature/call/src/main/java/com/app/screentime/feature/call/VoiceCallScreen.kt
+  h_9c8c4b23da7963 32,126-132,597-598,600-603,605-658,660-691,693-700
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6155560bac225c2c7530373845f86534547ea756",
+  "prompts": {},
+  "humans": {
+    "h_9c8c4b23da7963": {
+      "author": "AmanKumar <Aman.kumar@telekom-digital.com>"
+    }
+  }
+}
