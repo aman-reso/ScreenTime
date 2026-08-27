@@ -1,0 +1,20 @@
+feature/chat/src/main/java/com/app/screentime/feature/chat/ChatViewModel.kt
+  h_9c8c4b23da7963 62
+core/network/src/main/java/com/app/screentime/core/network/websocket/ChattyWebSocketClient.kt
+  h_9c8c4b23da7963 39,44-48,50,60,63,84,88-93,97,103,107,112,119,125,135
+core/network/src/main/java/com/app/screentime/core/network/websocket/WSMessage.kt
+  h_9c8c4b23da7963 22-30
+feature/call/src/main/java/com/app/screentime/feature/call/ActiveCallManager.kt
+  h_9c8c4b23da7963 128,132,136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a22493963ba4cda83694ebfa6733fd778fa41c22",
+  "prompts": {},
+  "humans": {
+    "h_9c8c4b23da7963": {
+      "author": "AmanKumar <Aman.kumar@telekom-digital.com>"
+    }
+  }
+}
