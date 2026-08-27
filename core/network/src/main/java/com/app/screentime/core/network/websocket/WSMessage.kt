@@ -1,6 +1,7 @@
 package com.app.screentime.core.network.websocket
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class WSMessage(
@@ -8,13 +9,16 @@ data class WSMessage(
     val call_id: String? = null,
     val room_id: String? = null,
     val caller_id: String? = null,
+    val caller_name: String? = null,
+    val caller_avatar: String? = null,
     val receiver_id: String? = null,
+    val call_type: String? = null,
     val rate_per_min: Double? = null,
     val duration_sec: Int? = null,
     val remaining_sec: Int? = null,
     val cost: Double? = null,
     val reason: String? = null,
-    val payload: String? = null
+    val payload: JsonElement? = null
 )
 
 object WSEventTypes {

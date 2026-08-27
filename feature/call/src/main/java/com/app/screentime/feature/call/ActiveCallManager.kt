@@ -82,11 +82,12 @@ class ActiveCallManager @Inject constructor(
         when (msg.type) {
             WSEventTypes.INCOMING_CALL -> {
                 val rate = msg.rate_per_min ?: 10.0
+                val callerName = msg.caller_name?.ifBlank { null } ?: msg.caller_id ?: "Incoming Call"
                 _callState.value = CallUiState(
                     status = CallStatus.INCOMING,
                     callId = msg.call_id,
                     remoteUserId = msg.caller_id ?: "",
-                    remoteUserName = msg.caller_id ?: "Incoming Call",
+                    remoteUserName = callerName,
                     ratePerMin = rate
                 )
                 audioHelper.startDialingTone(scope)
@@ -124,15 +125,24 @@ class ActiveCallManager @Inject constructor(
             }
 
             WSEventTypes.WEBRTC_OFFER -> {
-                msg.payload?.let { webRTCClient.handleRemoteOffer(it) }
+                msg.payload?.let {
+                    val rawStr = if (it is kotlinx.serialization.json.JsonPrimitive) it.content else it.toString()
+                    webRTCClient.handleRemoteOffer(rawStr)
+                }
             }
 
             WSEventTypes.WEBRTC_ANSWER -> {
-                msg.payload?.let { webRTCClient.handleRemoteAnswer(it) }
+                msg.payload?.let {
+                    val rawStr = if (it is kotlinx.serialization.json.JsonPrimitive) it.content else it.toString()
+                    webRTCClient.handleRemoteAnswer(rawStr)
+                }
             }
 
             WSEventTypes.WEBRTC_ICE_CANDIDATE -> {
-                msg.payload?.let { webRTCClient.handleRemoteIceCandidate(it) }
+                msg.payload?.let {
+                    val rawStr = if (it is kotlinx.serialization.json.JsonPrimitive) it.content else it.toString()
+                    webRTCClient.handleRemoteIceCandidate(rawStr)
+                }
             }
 
             WSEventTypes.CALL_TICK -> {
