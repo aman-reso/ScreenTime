@@ -59,7 +59,7 @@ class ChatViewModel @Inject constructor(
                         id = "msg_${System.currentTimeMillis()}",
                         senderId = partner,
                         receiverId = "user",
-                        text = msg.payload ?: "",
+                        text = msg.payloadAsString(),
                         timestamp = System.currentTimeMillis()
                     )
                     observeMessagesUseCase.saveIncoming(partner, incoming)

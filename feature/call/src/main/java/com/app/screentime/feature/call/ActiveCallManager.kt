@@ -125,24 +125,15 @@ class ActiveCallManager @Inject constructor(
             }
 
             WSEventTypes.WEBRTC_OFFER -> {
-                msg.payload?.let {
-                    val rawStr = if (it is kotlinx.serialization.json.JsonPrimitive) it.content else it.toString()
-                    webRTCClient.handleRemoteOffer(rawStr)
-                }
+                webRTCClient.handleRemoteOffer(msg.payloadAsString())
             }
 
             WSEventTypes.WEBRTC_ANSWER -> {
-                msg.payload?.let {
-                    val rawStr = if (it is kotlinx.serialization.json.JsonPrimitive) it.content else it.toString()
-                    webRTCClient.handleRemoteAnswer(rawStr)
-                }
+                webRTCClient.handleRemoteAnswer(msg.payloadAsString())
             }
 
             WSEventTypes.WEBRTC_ICE_CANDIDATE -> {
-                msg.payload?.let {
-                    val rawStr = if (it is kotlinx.serialization.json.JsonPrimitive) it.content else it.toString()
-                    webRTCClient.handleRemoteIceCandidate(rawStr)
-                }
+                webRTCClient.handleRemoteIceCandidate(msg.payloadAsString())
             }
 
             WSEventTypes.CALL_TICK -> {

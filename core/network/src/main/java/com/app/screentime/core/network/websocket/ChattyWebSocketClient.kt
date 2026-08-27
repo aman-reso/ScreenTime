@@ -36,12 +36,18 @@ class ChattyWebSocketClient @Inject constructor(
 
     fun connect() {
         if (sessionManager.isTokenExpired()) {
+            Log.w("CONNECT_WS", "⚠️ Token expired, clearing session.")
             sessionManager.clearSession()
             NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
             return
         }
-        val token = sessionManager.token ?: return
+        val token = sessionManager.token
+        if (token.isNullOrBlank()) {
+            Log.w("CONNECT_WS", "⚠️ Connect aborted: token is null or blank.")
+            return
+        }
         val wsUrl = api.getWsUrl(token)
+        Log.i("CONNECT_WS", "🌐 Connecting to WebSocket: $wsUrl")
         val request = Request.Builder().url(wsUrl).build()
         webSocket = okHttpClient.newWebSocket(request, this)
     }
@@ -51,9 +57,10 @@ class ChattyWebSocketClient @Inject constructor(
     fun sendWSMessage(msg: WSMessage) {
         try {
             val str = json.encodeToString(msg)
+            Log.i("CONNECT_WS", "📤 [SENT] [${msg.type}] -> $str")
             webSocket?.send(str)
         } catch (e: Exception) {
-            Log.e("ChattyWS", "Failed to send WSMessage: ${e.message}")
+            Log.e("CONNECT_WS", "❌ Failed to send WSMessage: ${e.message}", e)
         }
     }
 
@@ -74,41 +81,48 @@ class ChattyWebSocketClient @Inject constructor(
     }
 
     fun sendChatMessage(receiverId: String, text: String) {
-        sendWSMessage(WSMessage(type = WSEventTypes.CHAT_MESSAGE, receiver_id = receiverId, payload = text))
+        sendWSMessage(WSMessage(type = WSEventTypes.CHAT_MESSAGE, receiver_id = receiverId, payload = kotlinx.serialization.json.JsonPrimitive(text)))
     }
 
     fun sendWebRTCSignaling(type: String, callId: String, receiverId: String?, payload: String) {
-        sendWSMessage(WSMessage(type = type, call_id = callId, receiver_id = receiverId, payload = payload))
+        val element = try {
+            json.parseToJsonElement(payload)
+        } catch (e: Exception) {
+            kotlinx.serialization.json.JsonPrimitive(payload)
+        }
+        sendWSMessage(WSMessage(type = type, call_id = callId, receiver_id = receiverId, payload = element))
     }
 
     fun disconnect() {
+        Log.i("CONNECT_WS", "🛑 Disconnecting WebSocket...")
         webSocket?.close(1000, "App closed")
         webSocket = null
     }
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
-        Log.d("ChattyWS", "Connected to Chatty WebSocket")
+        Log.i("CONNECT_WS", "🟢 [CONNECTED] WebSocket connection established successfully! Code: ${response.code}")
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
-        Log.d("ChattyWS", "Received: $text")
+        Log.i("CONNECT_WS", "📥 [RECEIVED] $text")
         scope.launch {
             _rawMessagesFlow.emit(text)
             try {
                 val parsed = json.decodeFromString<WSMessage>(text)
+                Log.i("CONNECT_WS", "✅ [PARSED EVENT] Type=${parsed.type}, CallID=${parsed.call_id}, Caller=${parsed.caller_id} (${parsed.caller_name}), Receiver=${parsed.receiver_id}")
                 if (parsed.type == WSEventTypes.SESSION_TERMINATED) {
                     sessionManager.clearSession()
                     NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
                 }
                 _eventsFlow.emit(parsed)
             } catch (e: Exception) {
-                Log.w("ChattyWS", "Unparsed WS message: $text")
+                Log.e("CONNECT_WS", "❌ Failed to parse WS message: ${e.message} | Raw: $text", e)
             }
         }
     }
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        Log.e("ChattyWS", "WebSocket failure: ${t.message}")
+        Log.e("CONNECT_WS", "❌ [FAILURE] WebSocket error: ${t.message}, ResponseCode: ${response?.code}", t)
         this.webSocket = null
         scope.launch {
             _eventsFlow.emit(
@@ -118,7 +132,7 @@ class ChattyWebSocketClient @Inject constructor(
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-        Log.d("ChattyWS", "WebSocket closed: $reason")
+        Log.w("CONNECT_WS", "🔴 [CLOSED] WebSocket closed: code=$code, reason=$reason")
         this.webSocket = null
         if (code != 1000) {
             scope.launch {

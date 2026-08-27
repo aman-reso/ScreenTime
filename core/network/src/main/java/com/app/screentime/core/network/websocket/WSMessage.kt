@@ -19,7 +19,15 @@ data class WSMessage(
     val cost: Double? = null,
     val reason: String? = null,
     val payload: JsonElement? = null
-)
+) {
+    fun payloadAsString(): String {
+        return when (val p = payload) {
+            is kotlinx.serialization.json.JsonPrimitive -> p.content
+            null -> ""
+            else -> p.toString()
+        }
+    }
+}
 
 object WSEventTypes {
     const val CALL_REQUEST = "CALL_REQUEST"
