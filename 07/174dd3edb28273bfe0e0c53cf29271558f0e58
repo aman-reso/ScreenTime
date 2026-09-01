@@ -1,0 +1,16 @@
+feature/call/src/main/java/com/app/screentime/feature/call/LiveStreamHostScreen.kt
+  h_9c8c4b23da7963 96,117,195-196
+feature/call/src/main/java/com/app/screentime/feature/call/LiveStreamViewerScreen.kt
+  h_9c8c4b23da7963 104,110,149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "07174dd3edb28273bfe0e0c53cf29271558f0e58",
+  "prompts": {},
+  "humans": {
+    "h_9c8c4b23da7963": {
+      "author": "AmanKumar <Aman.kumar@telekom-digital.com>"
+    }
+  }
+}
