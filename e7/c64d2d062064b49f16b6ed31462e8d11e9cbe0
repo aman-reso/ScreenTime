@@ -1,0 +1,215 @@
+feature/wallet/src/main/java/com/app/screentime/feature/wallet/PackageCard.kt
+  h_9c8c4b23da7963 4-9,13,16-26,28,38-41,44-47,49-50,52,54-57,59-62,65-68,70-83,87-113,115-122,126-128,130-134,136-139,142-152
+  h_9c8c4b23da7963 43,63,84-86
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthLoginScreen.kt
+  h_9c8c4b23da7963 3-7,16,40-44,65-80,82-87,89-90,92
+  h_9c8c4b23da7963 20-26,38-39,49,52-55,57-62,81,88,91,112-113
+feature/profile/src/main/java/com/app/screentime/feature/profile/BiometricSecurityCard.kt
+  h_9c8c4b23da7963 1,3-5,7,9-22,26-30,32-77
+  h_9c8c4b23da7963 2,6,8,23-25,31,78
+odsystem/src/main/res/drawable/ion_finger_print_outline.xml
+  h_9c8c4b23da7963 1-9
+feature/discover/src/main/java/com/app/screentime/feature/discover/ModelProfileBottomBar.kt
+  h_9c8c4b23da7963 1-77
+  h_9c8c4b23da7963 78-81
+odsystem/src/main/res/drawable/coin_icon.xml
+  h_9c8c4b23da7963 1-9
+app/src/main/java/com/app/screentime/MainActivity.kt
+  h_9c8c4b23da7963 28,31,41,43-44,46,53-56,62-64,74,81-82,86-89,117,119,134,159-165,177-178,184-185
+  h_9c8c4b23da7963 67-68,97,120-125,136,144,155-157,166-169,179-180
+odsystem/src/main/res/drawable/call.xml
+  h_9c8c4b23da7963 1-11
+odsystem/src/main/res/drawable/amount_come.xml
+  h_9c8c4b23da7963 1-14
+odsystem/src/main/res/drawable/notification.xml
+  h_9c8c4b23da7963 1-12
+app/build.gradle.kts
+  h_9c8c4b23da7963 62,71,73-77
+app/src/main/java/com/app/screentime/navigation/ScreenTimeNavigation.kt
+  h_9c8c4b23da7963 6,12-14,19,22,27,29-30,34-41,50-55,57-60,62,69-70,75,77-81,84,86,90,95,106-107,111-115,119,121,143-145,147,181,191,208-210,224-226,239,243,245,247,249-268,270-282,284-295,297-304,314-376,384,386-389,391-425,427-432
+  h_9c8c4b23da7963 74,82-83,85,120,132-133,146,148-157,159-180,185-190,192-193,195-207,211-212,214-223,227-228,230-238,240-242,244,246,305-312,382,426
+odsystem/src/main/res/drawable/discovery.xml
+  h_9c8c4b23da7963 1-16
+odsystem/src/main/res/drawable/video.xml
+  h_9c8c4b23da7963 1-14
+odsystem/src/main/java/com/telekom/odsystem/atoms/button/ODSButtonStyle.kt
+  h_9c8c4b23da7963 73,79-80,83-86,99
+feature/wallet/src/main/java/com/app/screentime/feature/wallet/WalletComponents.kt
+  h_9c8c4b23da7963 3-11,16-18,22-26,29-32,34,36-38,40,43,46,48,50-71,75-77,79-82,86-88,90-93,95-97,101-120,122-128,130-131,136-138,143,147,151-157,159-161,166,168-170,174-179,181,183-205,207-211
+  h_9c8c4b23da7963 41-42,44-45,74,89,94,98-99,121,129,140-141,145-146,158,206
+feature/discover/src/main/java/com/app/screentime/feature/discover/StaggeredModelCard.kt
+  h_9c8c4b23da7963 1-163
+  h_9c8c4b23da7963 164-209
+odsystem/src/main/res/drawable/message.xml
+  h_9c8c4b23da7963 1-20
+odsystem/src/main/res/drawable/filter.xml
+  h_9c8c4b23da7963 1-20
+feature/chat/src/main/java/com/app/screentime/feature/chat/MessageBubble.kt
+  h_9c8c4b23da7963 3,9-16,18,20-21,27-28,31,33,37-56,62-63,65-66,68-97
+  h_9c8c4b23da7963 57-61,64,67,98-105
+odsystem/src/main/res/drawable/send.xml
+  h_9c8c4b23da7963 1-11
+feature/discover/src/main/java/com/app/screentime/feature/discover/DiscoverScreen.kt
+  h_9c8c4b23da7963 4-15,22,24-31,38-43,49-51,54,57-137,140-220,235-236,238-239,242,244,246,250-258,260,262-270,272-275,278,281-282,286-287,312,314,316,318-319,323,325,332,334-340,342-377,379-391,394-395,399,401-404,406-414,416-423,425-438,440-446,457,459-460,465-481,483,488,490-491,509,521-522,524-527,544-545,549-552,559,569,572,579-581,584,600-602,607,609-610,613-615,620-622,626-628
+  h_9c8c4b23da7963 221,259,261,288-289,308,317,320,333,341,396-398,400,405,424,439,482,582-583
+core/network/src/main/java/com/app/screentime/core/network/websocket/ChattyWebSocketClient.kt
+  h_9c8c4b23da7963 16,31-34,43-44,60,70-81,83,89-98,102-109,114,118-123,133-136,141,145-148,158-159,176-177,185-186,191-200,205-206,235,247
+  h_9c8c4b23da7963 29-30,35,82,99-101,110-111,115-117,124-125,129-132,137-138,142-144,149-150,154-157,160-162,171-175,178-180,201-202
+feature/call/build.gradle.kts
+  h_9c8c4b23da7963 53
+  h_9c8c4b23da7963 54-55
+feature/call/src/main/java/com/app/screentime/feature/call/LiveStreamViewerScreen.kt
+  h_9c8c4b23da7963 1-643
+feature/call/src/main/java/com/app/screentime/feature/call/LiveStreamHostScreen.kt
+  h_9c8c4b23da7963 1-63,65-74,76-98,101-120,123-129,131-153,155-160,162-168,170-172,178-193,195-236,240-250,254-267,270-359,362-388,390-418,423-454
+app/src/main/java/com/app/screentime/ScreenTimeApplication.kt
+  h_9c8c4b23da7963 16
+  h_9c8c4b23da7963 12,22
+feature/discover/src/main/java/com/app/screentime/feature/discover/ModelProfileInfoSection.kt
+  h_9c8c4b23da7963 1-213
+feature/chat/src/main/java/com/app/screentime/feature/chat/ChatListScreen.kt
+  h_9c8c4b23da7963 3-7,12-14,21-25,28,58-59,64,80,83,85-86,89,98
+  h_9c8c4b23da7963 63,78-79,81-82,84,87-88,90-92
+odsystem/src/main/java/com/telekom/odsystem/atoms/switch/ODSSwitchProps.kt
+  h_9c8c4b23da7963 32
+feature/call/src/main/java/com/app/screentime/feature/call/VideoCallScreen.kt
+  h_9c8c4b23da7963 1-249
+  h_9c8c4b23da7963 250-598
+odsystem/src/main/res/drawable/wallet.xml
+  h_9c8c4b23da7963 1-13
+feature/call/src/main/java/com/app/screentime/feature/call/LiveListScreen.kt
+  h_9c8c4b23da7963 1-400
+odsystem/src/main/res/drawable/location.xml
+  h_9c8c4b23da7963 1-14
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthPhoneOtpSection.kt
+  h_9c8c4b23da7963 9-12,24,26,29,42-43,46-47,53-54,63-66,72-77,80-82,87-103,107-115,117-120,125-127,130,137-142,144
+  h_9c8c4b23da7963 60-62,67-70,104-106,122-124
+feature/profile/src/main/java/com/app/screentime/feature/profile/UserProfileScreen.kt
+  h_9c8c4b23da7963 4-11,15-23,28,30-36,39-41,44,56-57,80,82-83,85,93-100,102-108,111,113-118,121,123-145,149-154,157-159,161-162,165,169,171-179,182,186,189,193,197,199,201,207-213,216,222,225-231,233,235-244,247,251
+  h_9c8c4b23da7963 109,119,170,180-181,183-185,187-188,190-192,194-195,245-246,248-250,252,255
+odsystem/src/main/res/drawable/profile.xml
+  h_9c8c4b23da7963 1-9
+feature/wallet/src/main/java/com/app/screentime/feature/wallet/WalletScreen.kt
+  h_9c8c4b23da7963 3-11,14,16-24,27,30-36,39-42,47,56,58-90,92,94,96-101,103,105-125,127-129,133-136,139-140,142-144,146-164,166-175,177,181-185,187-189,191-195,199-204,207-209,211-221,224-227,230-231,235,237-243,245
+  h_9c8c4b23da7963 137-138,141,165,176,178-180,186,228-229,232,244
+feature/call/src/main/java/com/app/screentime/feature/call/CallGlobalOverlays.kt
+  h_9c8c4b23da7963 1-352
+feature/wallet/src/main/java/com/app/screentime/feature/wallet/WalletPacksBottomSheet.kt
+  h_9c8c4b23da7963 3-6,9-12,17-20,25-29,31-33,35,61-64,66-74,76-78,82-84,86-88,90-93,96,98,101-102,108-109,113,116,118-119,122,124,129-156,159
+  h_9c8c4b23da7963 39,75,79-81,111-112,120-121,157
+feature/call/src/main/java/com/app/screentime/feature/call/ActiveCallManager.kt
+  h_9c8c4b23da7963 17-21,32,46,55,58-60,63-66,68,77,90-92,94,97,99,112-118,123,127-128,150,162,166,185-197,199-201,206-209,213-214,216-222,225-229,232,237-244,248,251-253,257-265,275,278,285-289,294-311,315-317,321-322,325-326,332-333,335-336,341-343,347-352,356-358,362-364,366,369-375,380,383-390,394-395,397,404-405,413,416-417,419-423,427,431,439-443
+  h_9c8c4b23da7963 61-62,93,198,202-205,210-212,215,223-224,230-231,233-236,245-247,249-250,254-256,266-268,270-274,283-284,290-293,323,334,344-346,353-355,367-368,379,382,396,398-399,403,408-412,414,418,432-438,445-450,452-453,460,463-464,466-479,486-491
+feature/wallet/src/main/java/com/app/screentime/feature/wallet/domain/usecase/WalletUseCases.kt
+  h_9c8c4b23da7963 3,5,17,20-22,24-35,37,63-66,68-71
+  h_9c8c4b23da7963 36
+odsystem/src/main/res/drawable/arrow_right.xml
+  h_9c8c4b23da7963 1-24
+.gitignore
+  h_9c8c4b23da7963 4-5,7-8
+app/proguard-rules.pro
+  h_9c8c4b23da7963 69-76
+app/src/main/AndroidManifest.xml
+  h_9c8c4b23da7963 65
+app/src/main/java/com/app/screentime/calling/domain/usecase/CallUseCase.kt
+  h_9c8c4b23da7963 24,26,29-31
+app/src/main/java/com/app/screentime/navigation/Screen.kt
+  h_9c8c4b23da7963 42-44,51-67
+core/network/src/main/java/com/app/screentime/core/network/NetworkClient.kt
+  h_9c8c4b23da7963 88-89,149
+core/network/src/main/java/com/app/screentime/core/network/api/ChattyApi.kt
+  h_9c8c4b23da7963 173-221
+core/network/src/main/java/com/app/screentime/core/network/dto/ApiMappers.kt
+  h_9c8c4b23da7963 24,29,36
+core/network/src/main/java/com/app/screentime/core/network/dto/ApiModels.kt
+  h_9c8c4b23da7963 158-162,164-167,169,174-198,213-264
+core/network/src/main/java/com/app/screentime/core/network/session/SessionManager.kt
+  h_9c8c4b23da7963 70-94,114
+core/network/src/main/java/com/app/screentime/core/network/websocket/WSMessage.kt
+  h_9c8c4b23da7963 15-19,26
+core/ui/src/main/java/com/app/screentime/core/ui/components/CommonUi.kt
+  h_9c8c4b23da7963 59,158,207
+core/ui/src/main/java/com/app/screentime/core/ui/security/BiometricLockScreen.kt
+  h_9c8c4b23da7963 90,92-93
+core/ui/src/main/java/com/app/screentime/core/ui/theme/AppThemeManager.kt
+  h_9c8c4b23da7963 74-109,122,125,131-132,137-138,145
+core/ui/src/main/java/com/app/screentime/core/ui/theme/ChattyTheme.kt
+  h_9c8c4b23da7963 19-56,58-66
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthCreatorDetailsSection.kt
+  h_9c8c4b23da7963 23,28,55,66,77,89,136-137
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthGateScreen.kt
+  h_9c8c4b23da7963 13,37-40,45-46,57-64
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthLandingScreen.kt
+  h_9c8c4b23da7963 3,11,15-21,28,30-32,37-38,40-41,48-49,67,77,79-90,92,94-95,99-136,138-139,141,143,145,148-150,152,154,157,159,162-164,166,168,170-186,192-222
+feature/auth/src/main/java/com/app/screentime/feature/auth/AuthViewModel.kt
+  h_9c8c4b23da7963 5,31,63,94-97,99,101-105,107,111-133,143,146,148,150,156
+feature/auth/src/main/java/com/app/screentime/feature/auth/domain/usecase/AuthUseCases.kt
+  h_9c8c4b23da7963 19-22,33-34
+feature/call/src/main/java/com/app/screentime/feature/call/AudioManagerHelper.kt
+  h_9c8c4b23da7963 16-22,24,33,35,44,52-56,71,87,98,109
+feature/call/src/main/java/com/app/screentime/feature/call/CallState.kt
+  h_9c8c4b23da7963 3-7,14,20,34-35
+feature/call/src/main/java/com/app/screentime/feature/call/CallViewModel.kt
+  h_9c8c4b23da7963 5,16-25,48-59
+feature/call/src/main/java/com/app/screentime/feature/call/LiveViewModel.kt
+  h_9c8c4b23da7963 1-13
+feature/call/src/main/java/com/app/screentime/feature/call/VoiceCallScreen.kt
+  h_9c8c4b23da7963 116-124,131,133,138,141,151,186,188-189,207-210,247-250,254-259,267,269,272,275-278,280-310,375,377-378,470-474,506,508-509,577,579-580,617-621,834
+feature/call/src/main/java/com/app/screentime/feature/call/domain/usecase/CallUseCases.kt
+  h_9c8c4b23da7963 14,23,31-32,47-48
+feature/chat/src/main/java/com/app/screentime/feature/chat/ChatInputBar.kt
+  h_9c8c4b23da7963 1-136
+feature/chat/src/main/java/com/app/screentime/feature/chat/ChatIntroCard.kt
+  h_9c8c4b23da7963 1,3,6-14,18-21,23-45
+feature/chat/src/main/java/com/app/screentime/feature/chat/ChatScreen.kt
+  h_9c8c4b23da7963 3-16,20-24,26-28,31-33,35,37-44,53,58-63,69,71-87,91-94,96-104,106-116,118-119,121-126,128-134,137-155,158-165
+feature/chat/src/main/java/com/app/screentime/feature/chat/ChatTopBar.kt
+  h_9c8c4b23da7963 1-115
+feature/chat/src/main/java/com/app/screentime/feature/chat/ConversationItem.kt
+  h_9c8c4b23da7963 57,60-68,70-76,79-87,89-102,105-108,116-117,119,121,123,125-129,132-134,139,142-156
+feature/chat/src/main/java/com/app/screentime/feature/chat/domain/usecase/ChatUseCases.kt
+  h_9c8c4b23da7963 121,124-128,136-139
+feature/discover/src/main/java/com/app/screentime/feature/discover/DiscoverFilterBottomSheet.kt
+  h_9c8c4b23da7963 1-213
+feature/discover/src/main/java/com/app/screentime/feature/discover/ModelProfileHeader.kt
+  h_9c8c4b23da7963 1-160
+feature/discover/src/main/java/com/app/screentime/feature/discover/ModelProfileScreen.kt
+  h_9c8c4b23da7963 3-6,9-12,18-19,32-33,42-43,45-47,49-52,54-55,58,60-63,66,69-76
+feature/discover/src/main/java/com/app/screentime/feature/discover/SocialSpaceDemoScreen.kt
+  h_9c8c4b23da7963 196,198-199,273,329,520,554,562,709,714,719,740
+feature/profile/src/main/java/com/app/screentime/feature/profile/EditProfileDialog.kt
+  h_9c8c4b23da7963 1-162
+feature/profile/src/main/java/com/app/screentime/feature/profile/LanguageSelectionBottomSheet.kt
+  h_9c8c4b23da7963 1-135
+feature/profile/src/main/java/com/app/screentime/feature/profile/ModelVerificationBottomSheet.kt
+  h_9c8c4b23da7963 1-215
+feature/profile/src/main/java/com/app/screentime/feature/profile/ModelVerificationPendingCard.kt
+  h_9c8c4b23da7963 1-107
+feature/profile/src/main/java/com/app/screentime/feature/profile/ProfileMenuCard.kt
+  h_9c8c4b23da7963 1-135
+feature/profile/src/main/java/com/app/screentime/feature/profile/ProfileStatsRow.kt
+  h_9c8c4b23da7963 1-89
+feature/profile/src/main/java/com/app/screentime/feature/profile/ProfileViewModel.kt
+  h_9c8c4b23da7963 26-30,62-63,69-71,76-77,83-85,104-119,144
+feature/profile/src/main/java/com/app/screentime/feature/profile/UserProfileHeader.kt
+  h_9c8c4b23da7963 1-144
+feature/profile/src/main/java/com/app/screentime/feature/profile/domain/usecase/ProfileUseCases.kt
+  h_9c8c4b23da7963 20,25-26
+feature/wallet/src/main/java/com/app/screentime/feature/wallet/WalletViewModel.kt
+  h_9c8c4b23da7963 18-20,29,40-41,44-50,63-64,66,98,101-102,121-122
+odsystem/src/main/java/com/telekom/odsystem/tokens/tokens/DarkModeTokens.kt
+  h_9c8c4b23da7963 12-20,22-26,41-49,51-54,59-98,100-118
+odsystem/src/main/java/com/telekom/odsystem/tokens/tokens/LightModeTokens.kt
+  h_9c8c4b23da7963 17-31,46-54,56-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "e7c64d2d062064b49f16b6ed31462e8d11e9cbe0",
+  "prompts": {},
+  "humans": {
+    "h_9c8c4b23da7963": {
+      "author": "AmanKumar <Aman.kumar@telekom-digital.com>"
+    }
+  }
+}
