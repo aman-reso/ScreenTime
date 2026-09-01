@@ -24,11 +24,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
+import com.app.screentime.core.network.session.SessionManager
 import com.app.screentime.core.ui.security.BiometricAuthManager
 import com.app.screentime.core.ui.security.BiometricLockScreen
+import com.app.screentime.core.ui.theme.AppThemeManager
 import com.app.screentime.core.ui.theme.ChattyTheme
 import com.app.screentime.feature.auth.AuthGateScreen
 import com.app.screentime.feature.auth.AuthViewModel
@@ -38,50 +38,55 @@ import com.app.screentime.feature.call.CallUiState
 import com.app.screentime.feature.call.receiver.CallActionReceiver
 import com.app.screentime.messaging.ScreenTimeFirebaseMessagingService
 import com.app.screentime.navigation.ScreenTimeNavigation
+import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var activeCallManager: ActiveCallManager
+    lateinit var sessionManager: SessionManager
+
+    @Inject
+    lateinit var activeCallManager: Lazy<ActiveCallManager>
 
     private var incomingCallData by mutableStateOf<Pair<String, String>?>(null)
     private var isInPipMode by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val t0 = System.currentTimeMillis()
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { false }
         super.onCreate(savedInstanceState)
-        installSplashScreen()
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(
-                Color.TRANSPARENT,
-                Color.TRANSPARENT
-            ),
-            navigationBarStyle = SystemBarStyle.light(
-                Color.TRANSPARENT,
-                Color.TRANSPARENT
-            )
+            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
         )
 
         handleIncomingCallIntent(intent)
-        observeCallStateForPiP()
 
         setContent {
-            val currentTheme by com.app.screentime.core.ui.theme.AppThemeManager.currentTheme.collectAsState()
+            val currentTheme by AppThemeManager.currentTheme.collectAsState()
             val isUnlocked by BiometricAuthManager.isUnlocked.collectAsState()
             val isFingerprintEnabled = remember {
                 BiometricAuthManager.isFingerprintLockEnabled(this@MainActivity)
             }
 
             ChattyTheme {
-                val authViewModel: AuthViewModel = hiltViewModel()
-                val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+                val isLoggedIn by sessionManager.isLoggedInFlow.collectAsState()
+                android.util.Log.i("STARTUP_TRACE", "👤 [${System.currentTimeMillis() - t0}ms] isLoggedIn=$isLoggedIn, isInPipMode=$isInPipMode")
 
                 LaunchedEffect(isLoggedIn) {
                     if (isLoggedIn) {
-                        activeCallManager.ensureConnected()
+                        withContext(Dispatchers.IO) {
+                            activeCallManager.get().ensureConnected()
+                        }
+                        startPiPObserver()
                     }
                 }
 
@@ -89,9 +94,7 @@ class MainActivity : AppCompatActivity() {
                     BiometricLockScreen(
                         modifier = Modifier.fillMaxSize(),
                         scheme = currentTheme,
-                        onUnlocked = {
-                            BiometricAuthManager.setUnlocked(true)
-                        }
+                        onUnlocked = { BiometricAuthManager.setUnlocked(true) }
                     )
                 } else if (!isLoggedIn && !isInPipMode) {
                     AuthGateScreen(
@@ -111,17 +114,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun observeCallStateForPiP() {
+    private fun startPiPObserver() {
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                activeCallManager.callState.collect { callState ->
-                    updatePiPParams(callState)
-                    if (callState.status == CallStatus.INCOMING && incomingCallData == null) {
-                        incomingCallData = Pair(
-                            callState.remoteUserId.ifBlank { "unknown" },
-                            callState.remoteUserName.ifBlank { "Incoming Call" }
-                        )
-                    }
+            activeCallManager.get().callState.collectLatest { callState ->
+                updatePiPParams(callState)
+                if (callState.status == CallStatus.INCOMING && incomingCallData == null) {
+                    incomingCallData = Pair(
+                        callState.remoteUserId.ifBlank { "unknown" },
+                        callState.remoteUserName.ifBlank { "Incoming Call" }
+                    )
                 }
             }
         }
@@ -130,10 +131,9 @@ class MainActivity : AppCompatActivity() {
     private fun updatePiPParams(callState: CallUiState) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
-                val params = buildPipParams(callState)
-                setPictureInPictureParams(params)
+                setPictureInPictureParams(buildPipParams(callState))
             } catch (e: Exception) {
-                // Ignore if PiP is not supported on device
+                // Ignore if PiP not supported
             }
         }
     }
@@ -141,8 +141,7 @@ class MainActivity : AppCompatActivity() {
     private fun buildPipParams(callState: CallUiState): PictureInPictureParams {
         val isCallActive = callState.status == CallStatus.ACTIVE || callState.status == CallStatus.DIALING
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PictureInPictureParams.Builder()
-                .setAspectRatio(Rational(9, 16))
+            PictureInPictureParams.Builder().setAspectRatio(Rational(9, 16))
         } else {
             return null as PictureInPictureParams
         }
@@ -153,36 +152,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (isCallActive) {
-            val actions = mutableListOf<RemoteAction>()
-
-            // 1. Mute Action
-            val muteIntent = Intent(CallActionReceiver.ACTION_TOGGLE_MUTE).apply {
-                setPackage(packageName)
-            }
-            val mutePendingIntent = PendingIntent.getBroadcast(
-                this,
-                201,
-                muteIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val muteIcon = Icon.createWithResource(this, android.R.drawable.stat_notify_chat)
+            val muteIntent = Intent(CallActionReceiver.ACTION_TOGGLE_MUTE).apply { setPackage(packageName) }
+            val mutePendingIntent = PendingIntent.getBroadcast(this, 201, muteIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             val muteTitle = if (callState.isMuted) "Unmute" else "Mute"
-            actions.add(RemoteAction(muteIcon, muteTitle, muteTitle, mutePendingIntent))
-
-            // 2. Hang Up Action
-            val hangupIntent = Intent(CallActionReceiver.ACTION_HANGUP).apply {
-                setPackage(packageName)
-            }
-            val hangupPendingIntent = PendingIntent.getBroadcast(
-                this,
-                202,
-                hangupIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val hangupIcon = Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel)
-            actions.add(RemoteAction(hangupIcon, "End Call", "End Call", hangupPendingIntent))
-
-            builder.setActions(actions)
+            builder.setActions(mutableListOf(
+                RemoteAction(Icon.createWithResource(this, android.R.drawable.stat_notify_chat),
+                    muteTitle, muteTitle, mutePendingIntent),
+                RemoteAction(
+                    Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel),
+                    "End Call", "End Call",
+                    PendingIntent.getBroadcast(this, 202,
+                        Intent(CallActionReceiver.ACTION_HANGUP).apply { setPackage(packageName) },
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                )
+            ))
         }
 
         return builder.build()
@@ -190,15 +174,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        val state = activeCallManager.callState.value
-        if (state.status == CallStatus.ACTIVE || state.status == CallStatus.DIALING) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                try {
+        try {
+            val state = activeCallManager.get().callState.value
+            if (state.status == CallStatus.ACTIVE || state.status == CallStatus.DIALING) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     enterPictureInPictureMode(buildPipParams(state))
-                } catch (e: Exception) {
-                    // Fallback
                 }
             }
+        } catch (e: Exception) {
+            // ignore
         }
     }
 

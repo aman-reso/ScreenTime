@@ -11,7 +11,7 @@ class StartCallUseCase @Inject constructor(
     private val wsClient: ChattyWebSocketClient,
     private val sessionManager: SessionManager
 ) {
-    operator fun invoke(receiverId: String): Boolean {
+    operator fun invoke(receiverId: String, callType: String = "voice"): Boolean {
         if (!sessionManager.hasValidSession()) {
             sessionManager.clearSession()
             NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
@@ -20,7 +20,7 @@ class StartCallUseCase @Inject constructor(
         if (!wsClient.isConnected()) {
             wsClient.connect()
         }
-        wsClient.requestCall(receiverId)
+        wsClient.requestCall(receiverId, callType)
         return true
     }
 }
@@ -28,8 +28,8 @@ class StartCallUseCase @Inject constructor(
 class AcceptCallUseCase @Inject constructor(
     private val wsClient: ChattyWebSocketClient
 ) {
-    operator fun invoke(callId: String) {
-        wsClient.acceptCall(callId)
+    operator fun invoke(callId: String, callerId: String? = null) {
+        wsClient.acceptCall(callId, callerId)
     }
 }
 
@@ -44,8 +44,8 @@ class RejectCallUseCase @Inject constructor(
 class EndCallUseCase @Inject constructor(
     private val wsClient: ChattyWebSocketClient
 ) {
-    operator fun invoke(callId: String) {
-        wsClient.endCall(callId)
+    operator fun invoke(callId: String, peerId: String? = null) {
+        wsClient.endCall(callId, peerId)
     }
 }
 

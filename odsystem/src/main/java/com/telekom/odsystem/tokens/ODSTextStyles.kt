@@ -113,8 +113,6 @@ object ODSTextStyles {
         ODSTextStyle(fontFamily = R.font.pompiere_regular, fontSize = 24, lineHeight = 28)
     val pompiereHeader =
         ODSTextStyle(fontFamily = R.font.pompiere_regular, fontSize = 20, lineHeight = 24)
-    val pompiereBodyL =
-        ODSTextStyle(fontFamily = R.font.pompiere_regular, fontSize = 22, lineHeight = 26)
     val pompiereBodyM =
         ODSTextStyle(fontFamily = R.font.pompiere_regular, fontSize = 18, lineHeight = 22)
 }

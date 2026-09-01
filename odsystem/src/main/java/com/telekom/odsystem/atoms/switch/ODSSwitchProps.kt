@@ -29,5 +29,5 @@ data class ODSSwitchProps(
     var label: String? = null,
     var readOnly: Boolean = false,
     var selected: Boolean = false,
-    var size: ODSSwitchSize = ODSSwitchSize.LARGE,
+    var size: ODSSwitchSize = ODSSwitchSize.SMALL,
 )

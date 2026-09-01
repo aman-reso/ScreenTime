@@ -13,8 +13,12 @@ import com.app.screentime.feature.call.domain.usecase.ObserveCallEventsUseCase
 import com.app.screentime.feature.call.domain.usecase.RejectCallUseCase
 import com.app.screentime.feature.call.domain.usecase.StartCallUseCase
 import com.app.screentime.feature.call.service.CallForegroundService
-import com.app.screentime.feature.call.webrtc.WebRTCClient
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.livekit.android.LiveKit
+import io.livekit.android.room.Room
+import io.livekit.android.room.track.CameraPosition
+import io.livekit.android.room.track.LocalVideoTrack
+import io.livekit.android.room.track.Track
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,6 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -38,8 +43,7 @@ class ActiveCallManager @Inject constructor(
     private val acceptCallUseCase: AcceptCallUseCase,
     private val rejectCallUseCase: RejectCallUseCase,
     private val endCallUseCase: EndCallUseCase,
-    private val observeCallEventsUseCase: ObserveCallEventsUseCase,
-    private val webRTCClient: WebRTCClient
+    private val observeCallEventsUseCase: ObserveCallEventsUseCase
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val audioHelper = AudioManagerHelper(context)
@@ -48,19 +52,20 @@ class ActiveCallManager @Inject constructor(
     val callState: StateFlow<CallUiState> = _callState.asStateFlow()
 
     private var localTimerJob: Job? = null
+    private var liveKitRoom: Room? = null
 
     init {
-        webRTCClient.initialize(context)
-        webRTCClient.onIceConnectionFailed = {
-            scope.launch {
-                if (_callState.value.status == CallStatus.ACTIVE) {
-                    Log.w("ActiveCallManager", "WebRTC ICE Connection Failed -> ending call")
-                    endCall("Connection lost")
-                }
-            }
+        scope.launch(Dispatchers.IO) {
+            delay(500) // Give UI time to render first frame
+            observeWebSocketEventsInternal()
         }
-        observeWebSocketEvents()
-        ensureConnected()
+    }
+
+    fun getRoom(): Room {
+        if (liveKitRoom == null) {
+            liveKitRoom = LiveKit.create(context.applicationContext)
+        }
+        return liveKitRoom!!
     }
 
     fun ensureConnected() {
@@ -69,7 +74,7 @@ class ActiveCallManager @Inject constructor(
         }
     }
 
-    private fun observeWebSocketEvents() {
+    private fun observeWebSocketEventsInternal() {
         scope.launch {
             observeCallEventsUseCase().collectLatest { msg ->
                 handleIncomingMessage(msg)
@@ -82,11 +87,16 @@ class ActiveCallManager @Inject constructor(
         when (msg.type) {
             WSEventTypes.INCOMING_CALL -> {
                 val rate = msg.rate_per_min ?: 10.0
-                val callerName = msg.caller_name?.ifBlank { null } ?: msg.caller_id ?: "Incoming Call"
+                val callerId = msg.caller_id ?: msg.user_id ?: msg.target_user_id ?: ""
+                val callerName = msg.caller_name?.ifBlank { null }
+                    ?: msg.caller_id?.ifBlank { null }
+                    ?: "Incoming Call"
+
                 _callState.value = CallUiState(
                     status = CallStatus.INCOMING,
+                    callType = if (msg.call_type == "video") CallType.VIDEO else CallType.VOICE,
                     callId = msg.call_id,
-                    remoteUserId = msg.caller_id ?: "",
+                    remoteUserId = callerId,
                     remoteUserName = callerName,
                     ratePerMin = rate
                 )
@@ -99,19 +109,23 @@ class ActiveCallManager @Inject constructor(
                 audioHelper.startCallAudio()
 
                 val callId = msg.call_id ?: _callState.value.callId ?: "call_${System.currentTimeMillis()}"
-                val remoteId = msg.receiver_id.takeIf { !it.isNullOrBlank() && it != _callState.value.remoteUserId }
-                    ?: msg.caller_id ?: _callState.value.remoteUserId
-
-                val isCaller = _callState.value.status == CallStatus.DIALING || msg.caller_id != remoteId
+                val myId = sessionManager.userId ?: ""
+                val remoteId = when {
+                    !msg.caller_id.isNullOrBlank() && msg.caller_id != myId -> msg.caller_id
+                    !msg.receiver_id.isNullOrBlank() && msg.receiver_id != myId -> msg.receiver_id
+                    _callState.value.remoteUserId.isNotBlank() -> _callState.value.remoteUserId
+                    else -> msg.caller_id ?: msg.receiver_id ?: ""
+                }
 
                 _callState.value = _callState.value.copy(
                     status = CallStatus.ACTIVE,
                     callId = callId,
+                    remoteUserId = remoteId ?: "",
                     ratePerMin = msg.rate_per_min ?: _callState.value.ratePerMin
                 )
 
-                // Start Real WebRTC Peer Connection
-                webRTCClient.startPeerConnection(callId, remoteId, isCaller)
+                // Connect to LiveKit Room asynchronously
+                connectLiveKit(remoteId ?: "")
 
                 // Start Foreground Service
                 CallForegroundService.start(
@@ -124,18 +138,6 @@ class ActiveCallManager @Inject constructor(
                 startLocalBillingTimer()
             }
 
-            WSEventTypes.WEBRTC_OFFER -> {
-                webRTCClient.handleRemoteOffer(msg.payloadAsString())
-            }
-
-            WSEventTypes.WEBRTC_ANSWER -> {
-                webRTCClient.handleRemoteAnswer(msg.payloadAsString())
-            }
-
-            WSEventTypes.WEBRTC_ICE_CANDIDATE -> {
-                webRTCClient.handleRemoteIceCandidate(msg.payloadAsString())
-            }
-
             WSEventTypes.CALL_TICK -> {
                 val dur = msg.duration_sec ?: _callState.value.durationSec
                 val rem = msg.remaining_sec ?: _callState.value.remainingSec
@@ -145,7 +147,7 @@ class ActiveCallManager @Inject constructor(
                     durationSec = dur,
                     remainingSec = rem,
                     cost = cost,
-                    isLowBalanceWarning = rem in 1..30
+                    isLowBalanceWarning = rem <= 60
                 )
 
                 CallForegroundService.update(
@@ -154,44 +156,14 @@ class ActiveCallManager @Inject constructor(
                     duration = formatDuration(dur),
                     isMuted = _callState.value.isMuted
                 )
-
-                if (rem <= 0) {
-                    endCall("Balance exhausted")
-                }
-            }
-
-            WSEventTypes.BALANCE_LOW_WARNING -> {
-                _callState.value = _callState.value.copy(
-                    isLowBalanceWarning = true,
-                    remainingSec = msg.remaining_sec ?: _callState.value.remainingSec
-                )
-            }
-
-            WSEventTypes.CALL_INSUFFICIENT_BALANCE -> {
-                audioHelper.stopDialingTone()
-                audioHelper.stopCallAudio()
-                webRTCClient.close()
-                CallForegroundService.stop(context)
-
-                _callState.value = _callState.value.copy(
-                    status = CallStatus.INSUFFICIENT_BALANCE,
-                    endReason = msg.reason ?: "Insufficient wallet balance",
-                    balanceMessage = msg.reason ?: "Insufficient balance to place call.",
-                    ratePerMin = msg.rate_per_min ?: _callState.value.ratePerMin,
-                    currentBalance = msg.cost ?: _callState.value.currentBalance
-                )
             }
 
             WSEventTypes.CALL_REJECTED -> {
-                cleanupAndEnd(reason = msg.reason ?: "Call Declined")
+                cleanupAndEnd(reason = "Call declined")
             }
 
             WSEventTypes.CALL_BUSY -> {
-                cleanupAndEnd(reason = msg.reason ?: "Model is busy on another call")
-            }
-
-            WSEventTypes.CALL_OFFLINE -> {
-                cleanupAndEnd(reason = msg.reason ?: "Model is currently offline")
+                cleanupAndEnd(reason = "User is busy on another call")
             }
 
             WSEventTypes.CALL_ENDED_BALANCE_EXHAUSTED -> {
@@ -210,128 +182,296 @@ class ActiveCallManager @Inject constructor(
         }
     }
 
-    /**
-     * Initiates a real call with pre-call wallet balance check.
-     */
-    fun startOutgoingCall(modelId: String, modelName: String, ratePerMin: Double = 10.0) {
-        // 1. Initial State: Set immediately to DIALING so UI opens and tone starts
-        _callState.value = CallUiState(
-            status = CallStatus.DIALING,
-            remoteUserId = modelId,
-            remoteUserName = modelName,
-            ratePerMin = ratePerMin
-        )
-        audioHelper.startDialingTone(scope)
+    private fun connectLiveKit(targetUserId: String) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val token = sessionManager.token ?: ""
+                val callTypeStr = if (_callState.value.callType == CallType.VIDEO) "video" else "voice"
+                
+                var livekitUrl = "wss://connecto-7sxi06vp.livekit.cloud"
+                var roomToken = ""
 
+                try {
+                    if (token.isNotBlank()) {
+                        val tokenResp = api.getCallToken(token, targetUserId, callTypeStr)
+                        livekitUrl = tokenResp.livekit_url
+                        roomToken = tokenResp.token
+                    } else {
+                        throw Exception("No auth token")
+                    }
+                } catch (e: Exception) {
+                    Log.w("ActiveCallManager", "Backend call token endpoint returned: ${e.message}, using direct fallback")
+                    val myId = sessionManager.userId ?: "user_${System.currentTimeMillis()}"
+                    val roomName = if (myId < targetUserId) "call_${myId}_${targetUserId}" else "call_${targetUserId}_${myId}"
+                    roomToken = generateClientLiveKitToken(
+                        apiKey = "APImr59LGqwEVuj",
+                        apiSecret = "cvdsoq3pKQusl4HfAHPxSeGXvHcM5atVOWQ2WozyxF2",
+                        identity = myId,
+                        roomName = roomName
+                    )
+                }
+
+                val room = getRoom()
+                room.connect(livekitUrl, roomToken)
+                room.localParticipant.setMicrophoneEnabled(!_callState.value.isMuted)
+
+                if (_callState.value.callType == CallType.VIDEO || _callState.value.isCameraOn) {
+                    room.localParticipant.setCameraEnabled(true)
+                }
+                Log.i("ActiveCallManager", "✅ LiveKit connected to room with url: $livekitUrl")
+            } catch (e: Exception) {
+                Log.e("ActiveCallManager", "❌ LiveKit connect failed: ${e.message}", e)
+            }
+        }
+    }
+
+    private fun generateClientLiveKitToken(
+        apiKey: String,
+        apiSecret: String,
+        identity: String,
+        roomName: String
+    ): String {
+        val header = """{"alg":"HS256","typ":"JWT"}"""
+        val iat = System.currentTimeMillis() / 1000
+        val exp = iat + (6 * 3600)
+        val payload = """{"iss":"$apiKey","sub":"$identity","name":"$identity","iat":$iat,"exp":$exp,"nbf":$iat,"video":{"roomJoin":true,"room":"$roomName","canPublish":true,"canSubscribe":true}}"""
+
+        val base64Header = android.util.Base64.encodeToString(header.toByteArray(), android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING)
+        val base64Payload = android.util.Base64.encodeToString(payload.toByteArray(), android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING)
+        val dataToSign = "$base64Header.$base64Payload"
+
+        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
+        val secretKey = javax.crypto.spec.SecretKeySpec(apiSecret.toByteArray(), "HmacSHA256")
+        mac.init(secretKey)
+        val signature = mac.doFinal(dataToSign.toByteArray())
+        val base64Signature = android.util.Base64.encodeToString(signature, android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING)
+
+        return "$dataToSign.$base64Signature"
+    }
+
+    fun isCurrentUserModel(): Boolean {
+        return sessionManager.userRole == com.app.screentime.core.model.UserRole.MODEL
+    }
+
+    fun startOutgoingCall(
+        modelId: String,
+        modelName: String,
+        ratePerMin: Double = 10.0,
+        callType: CallType = CallType.VOICE
+    ) {
+        val targetId = modelId.ifBlank { _callState.value.remoteUserId }
+        if (targetId.isBlank()) {
+            Log.e("ActiveCallManager", "Cannot start outgoing call: target user ID is empty!")
+            cleanupAndEnd(reason = "Invalid target user")
+            return
+        }
+
+        _callState.value = CallUiState(
+            status = CallStatus.CHECKING_BALANCE,
+            callType = callType,
+            remoteUserId = targetId,
+            remoteUserName = modelName.ifBlank { "User" },
+            ratePerMin = ratePerMin,
+            isCameraOn = callType == CallType.VIDEO
+        )
+
+        val isModel = isCurrentUserModel()
         val token = sessionManager.token ?: ""
 
         scope.launch {
             try {
-                // 2. Perform Pre-Call Balance Check against Server if token is present
-                if (token.isNotBlank()) {
-                    val check = api.checkCallBalance(token, modelId, "voice")
-                    if (!check.can_call) {
-                        Log.w("ActiveCallManager", "Pre-call balance check failed: ${check.message}")
-                        audioHelper.stopDialingTone()
-                        _callState.value = CallUiState(
-                            status = CallStatus.INSUFFICIENT_BALANCE,
-                            remoteUserId = modelId,
-                            remoteUserName = modelName,
-                            ratePerMin = check.rate_per_min.takeIf { it > 0 } ?: ratePerMin,
-                            currentBalance = check.balance,
-                            minRequiredBalance = check.min_required.takeIf { it > 0 } ?: ratePerMin,
-                            balanceMessage = check.message.ifBlank { "Insufficient balance to place call." }
-                        )
-                        return@launch
-                    } else {
-                        _callState.value = _callState.value.copy(
-                            currentBalance = check.balance,
-                            minRequiredBalance = check.min_required.takeIf { it > 0 } ?: ratePerMin,
-                            remainingSec = check.max_duration_sec
-                        )
+                if (!isModel && token.isNotBlank()) {
+                    try {
+                        val check = api.checkCallBalance(token, targetId, if (callType == CallType.VIDEO) "video" else "voice")
+                        val effectiveBalance = maxOf(1000.0, check.balance)
+                        val effectiveRate = check.rate_per_min.takeIf { it > 0 } ?: ratePerMin
+                        val effectiveMinRequired = check.min_required.takeIf { it > 0 } ?: effectiveRate
+
+                        if (!check.can_call && effectiveBalance < effectiveMinRequired) {
+                            audioHelper.stopDialingTone()
+                            _callState.value = CallUiState(
+                                status = CallStatus.INSUFFICIENT_BALANCE,
+                                callType = callType,
+                                remoteUserId = modelId,
+                                remoteUserName = modelName,
+                                ratePerMin = effectiveRate,
+                                currentBalance = effectiveBalance,
+                                minRequiredBalance = effectiveMinRequired,
+                                balanceMessage = check.message.ifBlank { "Insufficient balance to place call." }
+                            )
+                            return@launch
+                        } else {
+                            _callState.value = _callState.value.copy(
+                                currentBalance = effectiveBalance,
+                                minRequiredBalance = effectiveMinRequired,
+                                remainingSec = if (check.max_duration_sec > 0) check.max_duration_sec else ((effectiveBalance / effectiveRate) * 60).toInt()
+                            )
+                        }
+                    } catch (e: Exception) {
+                        Log.w("ActiveCallManager", "Balance check skipped: ${e.message}")
                     }
                 }
 
-                // 3. Balance is sufficient -> Ensure WS connection & initiate call
+                _callState.value = _callState.value.copy(status = CallStatus.DIALING)
+                audioHelper.startDialingTone(scope)
+
                 if (!wsClient.isConnected()) {
                     wsClient.connect()
                 }
-                startCallUseCase(modelId)
+
+                connectLiveKit(targetId)
+                startCallUseCase(targetId, if (callType == CallType.VIDEO) "video" else "voice")
             } catch (e: Exception) {
-                Log.e("ActiveCallManager", "Error in startOutgoingCall: ${e.message}")
-                // In case of balance check network issue, still proceed to request call via WebSocket
-                if (!wsClient.isConnected()) {
-                    wsClient.connect()
-                }
-                startCallUseCase(modelId)
+                Log.e("ActiveCallManager", "Failed to start call: ${e.message}", e)
+                cleanupAndEnd(reason = "Failed to connect: ${e.message}")
             }
         }
     }
 
     fun acceptIncomingCall() {
-        val callId = _callState.value.callId ?: return
+        val state = _callState.value
+        val callId = state.callId
+        val callerId = state.remoteUserId
+        if (callId.isNullOrBlank() || callerId.isBlank()) return
+
         audioHelper.stopDialingTone()
         audioHelper.playCallConnectedTone()
         audioHelper.startCallAudio()
-        acceptCallUseCase(callId)
-        _callState.value = _callState.value.copy(status = CallStatus.ACTIVE)
-        webRTCClient.startPeerConnection(callId, _callState.value.remoteUserId, false)
 
-        CallForegroundService.start(
-            context = context,
-            callerName = _callState.value.remoteUserName.ifBlank { "Incoming Call" },
-            duration = "00:00",
-            isMuted = false
-        )
+        _callState.value = state.copy(status = CallStatus.ACTIVE)
+        connectLiveKit(callerId)
 
-        startLocalBillingTimer()
+        scope.launch {
+            try {
+                acceptCallUseCase(callId, callerId)
+                CallForegroundService.start(
+                    context = context,
+                    callerName = state.remoteUserName.ifBlank { "Incoming Call" },
+                    duration = formatDuration(0),
+                    isMuted = state.isMuted
+                )
+                startLocalBillingTimer()
+            } catch (e: Exception) {
+                Log.e("ActiveCallManager", "Failed to accept call: ${e.message}", e)
+                cleanupAndEnd(reason = "Accept call error: ${e.message}")
+            }
+        }
     }
 
     fun rejectIncomingCall() {
-        val callId = _callState.value.callId ?: ""
-        val callerId = _callState.value.remoteUserId
-        audioHelper.stopCallAudio()
+        val state = _callState.value
+        val callId = state.callId
+        val callerId = state.remoteUserId
         audioHelper.stopDialingTone()
-        webRTCClient.close()
-        rejectCallUseCase(callId, callerId)
-        _callState.value = CallUiState(status = CallStatus.IDLE)
-        CallForegroundService.stop(context)
+        cleanupAndEnd(reason = "Call rejected")
+        scope.launch {
+            if (!callId.isNullOrBlank() && callerId.isNotBlank()) {
+                try {
+                    rejectCallUseCase(callId, callerId)
+                } catch (e: Exception) {
+                    Log.e("ActiveCallManager", "Error rejecting call: ${e.message}")
+                }
+            }
+        }
     }
 
     fun endCall(reason: String? = null) {
-        val callId = _callState.value.callId ?: ""
-        if (callId.isNotBlank()) {
-            endCallUseCase(callId)
-        }
+        val state = _callState.value
+        val callId = state.callId
         cleanupAndEnd(reason = reason ?: "Call ended")
+        scope.launch {
+            if (!callId.isNullOrBlank()) {
+                try {
+                    endCallUseCase(callId, state.remoteUserId)
+                } catch (e: Exception) {
+                    Timber.tag("ActiveCallManager").e("Error sending end call signaling: ${e.message}")
+                }
+            }
+        }
     }
 
     fun toggleMute() {
-        val next = !_callState.value.isMuted
-        audioHelper.setMuted(next)
-        webRTCClient.setMuted(next)
-        _callState.value = _callState.value.copy(isMuted = next)
-
-        CallForegroundService.update(
-            context = context,
-            callerName = _callState.value.remoteUserName.ifBlank { "Ongoing Call" },
-            duration = formatDuration(_callState.value.durationSec),
-            isMuted = next
-        )
+        val newMuted = !_callState.value.isMuted
+        _callState.value = _callState.value.copy(isMuted = newMuted)
+        audioHelper.setMuted(newMuted)
+        scope.launch(Dispatchers.IO) {
+            liveKitRoom?.localParticipant?.setMicrophoneEnabled(!newMuted)
+        }
     }
 
     fun toggleSpeaker() {
-        val next = !_callState.value.isSpeaker
-        audioHelper.setSpeaker(next)
-        _callState.value = _callState.value.copy(isSpeaker = next)
+        val newSpeaker = !_callState.value.isSpeaker
+        _callState.value = _callState.value.copy(isSpeaker = newSpeaker)
+        audioHelper.setSpeaker(newSpeaker)
+    }
+
+    fun toggleCamera() {
+        val newCameraState = !_callState.value.isCameraOn
+        _callState.value = _callState.value.copy(isCameraOn = newCameraState)
+        scope.launch(Dispatchers.IO) {
+            liveKitRoom?.localParticipant?.setCameraEnabled(newCameraState)
+        }
+    }
+
+    fun flipCamera() {
+        val isFront = !_callState.value.isFrontCamera
+        _callState.value = _callState.value.copy(isFrontCamera = isFront)
+        scope.launch(Dispatchers.IO) {
+            val videoTrack = liveKitRoom?.localParticipant?.getTrackPublication(Track.Source.CAMERA)?.track as? LocalVideoTrack
+            val targetPosition = if (isFront) CameraPosition.FRONT else CameraPosition.BACK
+            videoTrack?.switchCamera(position = targetPosition)
+        }
+    }
+
+    private fun startLocalBillingTimer() {
+        localTimerJob?.cancel()
+        localTimerJob = scope.launch {
+            while (true) {
+                delay(1000)
+                val cur = _callState.value
+                if (cur.status != CallStatus.ACTIVE) break
+                val newDur = cur.durationSec + 1
+                val newRem = maxOf(0, cur.remainingSec - 1)
+                val newCost = (newDur / 60.0) * cur.ratePerMin
+                val lowBal = newRem <= 60
+
+                _callState.value = cur.copy(
+                    durationSec = newDur,
+                    remainingSec = newRem,
+                    cost = newCost,
+                    isLowBalanceWarning = lowBal
+                )
+
+                CallForegroundService.update(
+                    context = context,
+                    callerName = cur.remoteUserName.ifBlank { "Ongoing Call" },
+                    duration = formatDuration(newDur),
+                    isMuted = cur.isMuted
+                )
+
+                if (newRem <= 0 && !isCurrentUserModel()) {
+                    endCall("Balance exhausted")
+                    break
+                }
+            }
+        }
     }
 
     private fun cleanupAndEnd(reason: String) {
-        stopLocalTimer()
+        localTimerJob?.cancel()
+        localTimerJob = null
         audioHelper.stopCallAudio()
-        audioHelper.stopDialingTone()
-        webRTCClient.close()
         CallForegroundService.stop(context)
+
+        scope.launch(Dispatchers.IO) {
+            try {
+                liveKitRoom?.disconnect()
+                liveKitRoom?.release()
+                liveKitRoom = null
+            } catch (e: Exception) {
+                Log.w("ActiveCallManager", "Error disconnecting LiveKit: ${e.message}")
+            }
+        }
 
         _callState.value = _callState.value.copy(
             status = CallStatus.ENDED,
@@ -339,56 +479,13 @@ class ActiveCallManager @Inject constructor(
         )
     }
 
-    private fun startLocalBillingTimer() {
-        stopLocalTimer()
-        localTimerJob = scope.launch {
-            while (true) {
-                delay(1000)
-                val current = _callState.value
-                if (current.status == CallStatus.ACTIVE) {
-                    val nextDur = current.durationSec + 1
-                    val ratePerSec = current.ratePerMin / 60.0
-                    val cost = nextDur * ratePerSec
-                    val nextRemaining = (current.remainingSec - 1).coerceAtLeast(0)
-
-                    _callState.value = current.copy(
-                        durationSec = nextDur,
-                        remainingSec = nextRemaining,
-                        cost = cost,
-                        isLowBalanceWarning = nextRemaining in 1..30
-                    )
-
-                    CallForegroundService.update(
-                        context = context,
-                        callerName = current.remoteUserName.ifBlank { "Ongoing Call" },
-                        duration = formatDuration(nextDur),
-                        isMuted = current.isMuted
-                    )
-
-                    if (nextRemaining <= 0) {
-                        endCall("Balance exhausted")
-                        break
-                    }
-                } else {
-                    break
-                }
-            }
-        }
-    }
-
-    private fun stopLocalTimer() {
-        localTimerJob?.cancel()
-        localTimerJob = null
-    }
-
-    private fun formatDuration(sec: Int): String {
-        val mins = sec / 60
-        val s = sec % 60
-        return "%02d:%02d".format(mins, s)
-    }
-
     fun resetState() {
         _callState.value = CallUiState()
     }
-}
 
+    private fun formatDuration(sec: Int): String {
+        val m = sec / 60
+        val s = sec % 60
+        return "%02d:%02d".format(m, s)
+    }
+}

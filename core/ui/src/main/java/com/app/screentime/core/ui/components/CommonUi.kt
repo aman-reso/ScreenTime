@@ -56,7 +56,7 @@ fun EvermoreTopBar(
     ) {
         ODSText(
             text = title,
-            style = ODSTextStyles.pompiereBodyM,
+            style = ODSTextStyles.bodyMBold,
             color = scheme.basicText
         )
         IconButton(
@@ -155,7 +155,7 @@ fun FeatureGridCard(
             }
             ODSText(
                 text = title,
-                style = ODSTextStyles.pompiereTitleS,
+                style = ODSTextStyles.bodyMBold,
                 color = scheme.basicText
             )
             ODSText(
@@ -204,7 +204,7 @@ fun TestimonialCard(
                     ) {
                         ODSText(
                             text = avatarInitial,
-                            style = ODSTextStyles.pompiereTitleS,
+                            style = ODSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )
                     }

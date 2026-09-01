@@ -85,7 +85,8 @@ class NetworkClient @Inject constructor(
         }
     }
 
-    val httpClient: HttpClient = HttpClient(Android) {
+    val httpClient: HttpClient by lazy {
+        HttpClient(Android) {
 
         install(ContentNegotiation) {
             json(Json {
@@ -145,6 +146,7 @@ class NetworkClient @Inject constructor(
             socketTimeoutMillis = 30_000
         }
     }
+}
 
 }
 

@@ -14,7 +14,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
-import com.app.screentime.core.ui.components.PompiereTitle
 import com.telekom.odsystem.atoms.*
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
@@ -88,10 +87,10 @@ fun BiometricLockScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 gap = 6.dp
             ) {
-                PompiereTitle(
+                ODSText(
                     text = "EVERM♥RE",
-                    scheme = scheme,
-                    style = ODSTextStyles.pompiereDisplayL
+                    style = ODSTextStyles.bodyMBold,
+                    color = scheme.basicText
                 )
                 ODSText(
                     text = "Evermore is Locked",

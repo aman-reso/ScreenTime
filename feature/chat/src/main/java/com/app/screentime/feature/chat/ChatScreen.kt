@@ -1,31 +1,47 @@
 package com.app.screentime.feature.chat
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.IconButton
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.telekom.odsystem.atoms.*
-import com.telekom.odsystem.atoms.icon.ODSIcon
-import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.atoms.textfield.ODSTextField
-import com.telekom.odsystem.atoms.textfield.ODSTextFieldProps
-import com.telekom.odsystem.foundations.*
+import com.app.screentime.core.model.ChatMessage
+import com.telekom.odsystem.atoms.ODSImage
+import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.neutralScheme
-import com.telekom.odsystem.tokens.ODSTextStyles
-import com.telekom.odsystem.tokens.tokens.*
+import com.telekom.odsystem.tokens.tokens.ODSTheme
 
+private val defaultModelPortraits = listOf(
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1200&q=85"
+)
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChatScreen(
     modelId: String,
@@ -34,108 +50,120 @@ fun ChatScreen(
     scheme: ODSTheme = neutralScheme,
     onBackClick: () -> Unit = {},
     onStartVoiceCall: () -> Unit = {},
+    onStartVideoCall: () -> Unit = onStartVoiceCall,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    val isImeVisible = WindowInsets.isImeVisible
+
+    val modelPortraitUrl = remember(modelId) {
+        val hash = (modelId.hashCode() and 0x7FFFFFFF)
+        defaultModelPortraits[hash % defaultModelPortraits.size]
+    }
 
     LaunchedEffect(modelId) {
         viewModel.loadChat(modelId)
     }
 
-    LaunchedEffect(uiState.messages.size) {
+    val displayMessages = remember(uiState.messages) {
         if (uiState.messages.isNotEmpty()) {
-            listState.animateScrollToItem(uiState.messages.size - 1)
+            uiState.messages
+        } else {
+            listOf(
+                ChatMessage(
+                    id = "sample_msg_1",
+                    senderId = modelId,
+                    receiverId = "user",
+                    text = "Hey! So glad we connected! Let's chat or hop on a call 😉",
+                    timestamp = System.currentTimeMillis() - 60_000
+                )
+            )
         }
     }
 
-    ODSColumn(
-        modifier = modifier.fillMaxSize().imePadding(),
-        background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
+    LaunchedEffect(displayMessages.size) {
+        if (displayMessages.isNotEmpty()) {
+            listState.animateScrollToItem(displayMessages.size)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(scheme.basicBackground.getColor())
     ) {
-        // Top App Bar
-        ODSRow(
-            modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            ODSRow(verticalAlignment = Alignment.CenterVertically, gap = 10.dp, modifier = Modifier.weight(1f)) {
-                IconButton(onClick = onBackClick) {
-                    ODSIcon(
-                        iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.navigation_left_type_standard_size_standard),
-                        tint = scheme.basicText.getColor()
+        // 1. Model Profile Portrait Background Image
+        ODSImage(
+            imageModel = ODSImageModel(
+                url = modelPortraitUrl,
+                contentDescription = modelName
+            ),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // 2. Soft Gradient Scrim Overlay for Legibility
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0x661E1145),
+                            Color(0x991E1145),
+                            Color(0xFA1E1145)
+                        )
                     )
-                }
+                )
+        )
 
-                ODSBox(
-                    modifier = Modifier.size(40.dp).clip(CircleShape),
-                    background = listOf(ODSColorModel(hexColor = orchidSecondaryScheme.basicBackgroundSubtle)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSText(
-                        text = modelName.take(1).uppercase(),
-                        style = ODSTextStyles.bodyMBold,
-                        color = scheme.basicText
-                    )
-                }
-
-                ODSColumn(gap = 2.dp) {
-                    ODSText(text = modelName, style = ODSTextStyles.bodyMBold, color = scheme.basicText)
-                    ODSText(text = "Online • ₹1/msg", style = ODSTextStyles.microcopyRegular, color = scheme.functionalSuccessStandard)
-                }
-            }
-
-            IconButton(onClick = onStartVoiceCall) {
-                ODSIcon(iconModel = ODSIconModel(imageVector = Icons.Default.Phone), tint = scheme.basicAccent.getColor())
-            }
-        }
-
-        // 24-Hour Ephemeral Notice
-        ODSBox(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-            cornerRadius = ODSCorners(all = 10.dp),
-            padding = ODSPadding(horizontal = 12.dp, vertical = 6.dp)
+        // 3. Main Chat Screen Content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .then(if (isImeVisible) Modifier.imePadding() else Modifier.navigationBarsPadding())
         ) {
-            ODSText(
-                text = "🔒 Ephemeral Session: Messages delete automatically after 24 hours.",
-                style = ODSTextStyles.microcopyRegular,
-                color = scheme.basicTextRecessive
-            )
-        }
-
-        // Messages Feed
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(uiState.messages, key = { it.id }) { msg ->
-                val isMe = msg.receiverId == modelId
-                MessageBubble(message = msg, isMe = isMe, scheme = scheme)
-            }
-        }
-
-        // Input & Send Bar
-        ODSRow(
-            modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            gap = 8.dp
-        ) {
-            ODSTextField(
-                onValueChange = { viewModel.onInputTextChanged(it) },
-                modifier = Modifier.weight(1f),
-                props = ODSTextFieldProps(placeholderText = "Message ${modelName.split(" ").firstOrNull() ?: ""}...", inputText = uiState.inputText),
+            // Modular Top Bar with Audio & Video Call Icons
+            ChatTopBar(
+                modelName = modelName,
+                scheme = scheme,
+                onBackClick = onBackClick,
+                onAudioCallClick = onStartVoiceCall,
+                onVideoCallClick = onStartVideoCall
             )
 
-            ODSBox(
-                modifier = Modifier.size(44.dp).clip(CircleShape).clickable { viewModel.sendMessage(modelId) },
-                background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-                contentAlignment = Alignment.Center
+            // Messages Feed (No empty cards/sections)
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                ODSIcon(iconModel = ODSIconModel(imageVector = Icons.Default.Send), tint = scheme.basicTextOnAccent.getColor())
+                items(displayMessages, key = { it.id }) { msg ->
+                    val isMe = msg.senderId == "user" || msg.receiverId == modelId
+                    MessageBubble(
+                        message = msg,
+                        isMe = isMe,
+                        scheme = scheme,
+                        avatarUrl = modelPortraitUrl
+                    )
+                }
             }
+
+            // Modular Bottom Input Bar
+            ChatInputBar(
+                inputText = uiState.inputText,
+                modelName = modelName,
+                scheme = scheme,
+                onInputTextChanged = { viewModel.onInputTextChanged(it) },
+                onSendMessage = { viewModel.sendMessage(modelId) },
+                onVoiceClick = onStartVoiceCall
+            )
         }
     }
 }

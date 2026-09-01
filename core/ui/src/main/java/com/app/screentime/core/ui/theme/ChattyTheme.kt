@@ -16,18 +16,54 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.core.view.WindowCompat
 import com.telekom.odsystem.R
 
-// Core colors from Evermore / Chatty design
-val ChattyPrimary         = Color(0xFF0D2033)
+// Connect Signature Palette (#371f7d, #ff4365, #bc96ff, #d7ff81)
+val ConnectIndigo         = Color(0xFF371F7D)
+val ConnectCoral          = Color(0xFFFF4365)
+val ConnectLavender       = Color(0xFFBC96FF)
+val ConnectLime           = Color(0xFFD7FF81)
+val ConnectBackground     = Color(0xFFF7F5FF)
+val ConnectCard           = Color(0xFFFFFFFF)
+val ConnectCardSubtle     = Color(0xFFEFEAFF)
+val ConnectText           = Color(0xFF371F7D)
+val ConnectTextMuted      = Color(0xFF75699C)
+val ConnectStroke         = Color(0xFFE2D9F7)
+val ConnectBadgeBg        = Color(0xFFEFEAFF)
+val ConnectBadgeText      = Color(0xFF371F7D)
+
+val LovinnCoral           = ConnectCoral
+val LovinnMagenta         = ConnectIndigo
+val LovinnDeepBerry       = ConnectIndigo
+val LovinnBackground      = ConnectBackground
+val LovinnCard            = ConnectCard
+val LovinnCardSubtle      = ConnectCardSubtle
+val LovinnText            = ConnectText
+val LovinnTextMuted       = ConnectTextMuted
+val LovinnStroke          = ConnectStroke
+val LovinnBadgeBg         = ConnectBadgeBg
+val LovinnBadgeText       = ConnectBadgeText
+
+val LovinnGradient = androidx.compose.ui.graphics.Brush.horizontalGradient(
+    listOf(ConnectIndigo, ConnectCoral)
+)
+val LovinnVerticalGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
+    listOf(ConnectIndigo, ConnectCoral)
+)
+val LovinnSoftGlowGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
+    listOf(Color(0xFFF3EFFF), Color(0xFFF7F5FF))
+)
+
+// Core colors from Connect design
+val ChattyPrimary         = ConnectIndigo
 val ChattyOnPrimary       = Color(0xFFFFFFFF)
-val ChattySecondary       = Color(0xFF2B3A4A)
-val ChattyBackground      = Color(0xFFF8FAFC)
-val ChattySurface         = Color(0xFFFFFFFF)
-val ChattyCard            = Color(0xFFFFFFFF)
-val ChattyOnSurface       = Color(0xFF0D2033)
-val ChattySubtext         = Color(0xFF64748B)
-val ChattyDivider         = Color(0xFFE2E8F0)
-val ChattyError           = Color(0xFFD32F2F)
-val ChattySuccess         = Color(0xFF2E7D32)
+val ChattySecondary       = ConnectCoral
+val ChattyBackground      = ConnectBackground
+val ChattySurface         = ConnectCard
+val ChattyCard            = ConnectCard
+val ChattyOnSurface       = ConnectText
+val ChattySubtext         = ConnectTextMuted
+val ChattyDivider         = ConnectStroke
+val ChattyError           = ConnectCoral
+val ChattySuccess         = Color(0xFF2EB85C)
 
 // Dark Palette
 val DarkBackground        = Color(0xFF111216)

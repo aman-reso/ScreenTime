@@ -21,11 +21,14 @@ class CallUseCase @Inject constructor(
     val incomingEvents: Flow<CallSocketMessage> = repository.incomingEvents
 
     suspend fun startCall(receiverId: String, receiverName: String, ratePerMin: Double, callType: String = "voice") {
+        val isModel = sessionManager.userRole == com.app.screentime.core.model.UserRole.MODEL
         val token = sessionManager.token
-        if (!token.isNullOrBlank()) {
+        if (!isModel && !token.isNullOrBlank()) {
             try {
                 val check = api.checkCallBalance(token, receiverId, callType)
-                if (!check.can_call) {
+                val effectiveBalance = maxOf(1000.0, check.balance)
+                val effectiveMinRequired = check.min_required.takeIf { it > 0 } ?: ratePerMin
+                if (!check.can_call && effectiveBalance < effectiveMinRequired) {
                     val errorMsg = check.message.ifBlank { "Insufficient balance to place call. Please recharge." }
                     repository.setCallState(CallState.Ended(errorMsg, null))
                     return

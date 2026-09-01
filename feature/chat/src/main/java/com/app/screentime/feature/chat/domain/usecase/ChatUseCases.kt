@@ -118,10 +118,14 @@ class GetConversationsUseCase @Inject constructor(
 
         try {
             // 1. Load active conversations from server
+            val myId = sessionManager.userId ?: ""
             val res = api.getConversations(token)
             for (dto in res.conversations) {
-                seenPartnerIds.add(dto.partner_id)
-                val latestLocal = localStorage.getLatestMessage(dto.partner_id)
+                val partnerId = dto.getResolvedPartnerId(myId)
+                if (partnerId.isBlank()) continue
+                val partnerName = dto.getResolvedPartnerName()
+                seenPartnerIds.add(partnerId)
+                val latestLocal = localStorage.getLatestMessage(partnerId)
                 val (msg, time) = if (latestLocal != null && latestLocal.timestamp >= dto.last_message_time) {
                     latestLocal.text to latestLocal.timestamp
                 } else {
@@ -129,10 +133,10 @@ class GetConversationsUseCase @Inject constructor(
                 }
                 list.add(
                     Conversation(
-                        id = dto.id,
-                        modelId = dto.partner_id,
-                        modelName = dto.partner_name,
-                        modelAvatarUrl = dto.partner_avatar,
+                        id = dto.id.ifBlank { "conv_$partnerId" },
+                        modelId = partnerId,
+                        modelName = partnerName,
+                        modelAvatarUrl = dto.partner_avatar.ifBlank { dto.avatar_url },
                         lastMessage = msg,
                         lastMessageTime = time,
                         unreadCount = dto.unread_count,

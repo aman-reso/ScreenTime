@@ -13,12 +13,15 @@ class AudioManagerHelper(private val context: Context) {
     private var ringbackJob: Job? = null
     private var previousAudioMode: Int = AudioManager.MODE_NORMAL
 
-    init {
-        try {
-            toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 85)
-        } catch (e: Exception) {
-            Log.w("AudioHelper", "Failed to initialize tone generator: ${e.message}")
+    private fun getToneGenerator(): ToneGenerator? {
+        if (toneGenerator == null) {
+            try {
+                toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 85)
+            } catch (e: Exception) {
+                Log.w("AudioHelper", "Failed to initialize tone generator: ${e.message}")
+            }
         }
+        return toneGenerator
     }
 
     fun startCallAudio() {
@@ -27,8 +30,9 @@ class AudioManagerHelper(private val context: Context) {
                 previousAudioMode = am.mode
                 am.mode = AudioManager.MODE_IN_COMMUNICATION
                 am.isMicrophoneMute = false
-                am.isSpeakerphoneOn = false
+                am.isSpeakerphoneOn = true
             }
+            Log.i("AudioHelper", "🔊 Call audio started with MODE_IN_COMMUNICATION, speaker=ON")
         } catch (e: Exception) {
             Log.e("AudioHelper", "Failed to start call audio: ${e.message}")
         }
@@ -37,6 +41,7 @@ class AudioManagerHelper(private val context: Context) {
     fun setMuted(muted: Boolean) {
         try {
             audioManager?.isMicrophoneMute = muted
+            Log.d("AudioHelper", "Mic mute set to: $muted")
         } catch (e: Exception) {
             Log.e("AudioHelper", "Failed to set mute: ${e.message}")
         }
@@ -44,7 +49,11 @@ class AudioManagerHelper(private val context: Context) {
 
     fun setSpeaker(speaker: Boolean) {
         try {
-            audioManager?.isSpeakerphoneOn = speaker
+            audioManager?.let { am ->
+                am.mode = AudioManager.MODE_IN_COMMUNICATION
+                am.isSpeakerphoneOn = speaker
+            }
+            Log.d("AudioHelper", "Speaker set to: $speaker")
         } catch (e: Exception) {
             Log.e("AudioHelper", "Failed to set speaker: ${e.message}")
         }
@@ -59,7 +68,7 @@ class AudioManagerHelper(private val context: Context) {
             try {
                 while (isActive) {
                     try {
-                        toneGenerator?.startTone(ToneGenerator.TONE_SUP_RINGTONE, 1800)
+                        getToneGenerator()?.startTone(ToneGenerator.TONE_SUP_RINGTONE, 1800)
                     } catch (e: Exception) {
                         Log.w("AudioHelper", "Tone error: ${e.message}")
                     }
@@ -75,7 +84,7 @@ class AudioManagerHelper(private val context: Context) {
         ringbackJob?.cancel()
         ringbackJob = null
         try {
-            toneGenerator?.stopTone()
+            getToneGenerator()?.stopTone()
         } catch (e: Exception) {
             Log.w("AudioHelper", "Failed to stop tone: ${e.message}")
         }
@@ -86,7 +95,7 @@ class AudioManagerHelper(private val context: Context) {
      */
     fun playCallConnectedTone() {
         try {
-            toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 400)
+            getToneGenerator()?.startTone(ToneGenerator.TONE_PROP_ACK, 400)
         } catch (e: Exception) {
             Log.w("AudioHelper", "Failed to play connect tone: ${e.message}")
         }
@@ -97,7 +106,7 @@ class AudioManagerHelper(private val context: Context) {
      */
     fun playCallEndedTone() {
         try {
-            toneGenerator?.startTone(ToneGenerator.TONE_SUP_BUSY, 800)
+            getToneGenerator()?.startTone(ToneGenerator.TONE_SUP_BUSY, 800)
         } catch (e: Exception) {
             Log.w("AudioHelper", "Failed to play end tone: ${e.message}")
         }

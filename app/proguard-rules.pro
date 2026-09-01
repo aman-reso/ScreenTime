@@ -67,3 +67,10 @@
 -keep class com.app.screentime.MainActivity {
     protected void attachBaseContext(android.content.Context);
 }
+
+# LiveKit & WebRTC
+-keep class io.livekit.android.** { *; }
+-dontwarn io.livekit.android.**
+-keep class org.webrtc.** { *; }
+-dontwarn org.webrtc.**
+-dontwarn timber.log.**

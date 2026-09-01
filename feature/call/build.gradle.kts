@@ -50,7 +50,9 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
-    implementation("io.github.webrtc-sdk:android:125.6422.06.1")
+    implementation("io.livekit:livekit-android:2.28.1")
+    implementation("io.livekit:livekit-android-compose-components:2.4.2")
+    implementation("com.jakewharton.timber:timber:5.0.1")
 }
 
 

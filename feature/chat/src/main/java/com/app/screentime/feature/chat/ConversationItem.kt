@@ -54,90 +54,106 @@ fun ConversationItem(
 ) {
     val colorScheme = avatarSchemes[index % avatarSchemes.size]
 
-    ODSRow(
+    ODSBox(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        gap = 14.dp
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clickable(onClick = onClick),
+        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+        cornerRadius = ODSCorners(all = 22.dp),
+        border = ODSBorder(
+            width = 1.dp,
+            colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
+        ),
+        padding = ODSPadding(horizontal = 14.dp, vertical = 10.dp)
     ) {
-        // Avatar with Online dot
-        Box {
-            ODSBox(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape),
-                background = listOf(ODSColorModel(hexColor = colorScheme.basicBackgroundSubtle)),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSText(
-                    text = conv.modelName.take(1).uppercase(),
-                    style = ODSTextStyles.bodyMBold,
-                    color = colorScheme.basicText
-                )
-            }
-            if (conv.isOnline) {
+        ODSRow(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            gap = 12.dp
+        ) {
+            // 1. Small Circular Avatar (40.dp)
+            Box {
                 ODSBox(
                     modifier = Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .align(Alignment.BottomEnd),
-                    background = listOf(ODSColorModel(hexColor = scheme.functionalSuccessStandard)),
-                    border = ODSBorder(
-                        width = 2.dp,
-                        colorList = listOf(ODSColorModel(scheme.basicBackground))
+                        .size(40.dp)
+                        .clip(CircleShape),
+                    background = listOf(ODSColorModel(hexColor = colorScheme.basicBackgroundSubtle)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSText(
+                        text = conv.modelName.take(1).uppercase(),
+                        style = ODSTextStyles.bodySBold,
+                        color = colorScheme.basicText
                     )
-                ) {}
+                }
+                if (conv.isOnline) {
+                    ODSBox(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .align(Alignment.BottomEnd),
+                        background = listOf(ODSColorModel(hexColor = scheme.basicAccent)), // Lime dot
+                        border = ODSBorder(
+                            width = 1.5.dp,
+                            colorList = listOf(ODSColorModel(scheme.basicBackgroundCard))
+                        )
+                    ) {}
+                }
             }
-        }
 
-        // Name & Last Message
-        ODSColumn(
-            modifier = Modifier.weight(1f),
-            gap = 4.dp
-        ) {
-            ODSRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // 2. Name & Message Info
+            ODSColumn(
+                modifier = Modifier.weight(1f),
+                gap = 4.dp
             ) {
                 ODSText(
                     text = conv.modelName,
                     style = ODSTextStyles.bodyMBold,
                     color = scheme.basicText
                 )
+
+                val messageText = if (conv.lastMessage.isNotBlank()) conv.lastMessage else "Say hi!"
+                val isSayHi = conv.lastMessage.isBlank() || conv.lastMessage.equals("Say hi!", ignoreCase = true)
                 ODSText(
-                    text = formatTime(conv.lastMessageTime),
-                    style = ODSTextStyles.microcopyRegular,
-                    color = scheme.basicTextRecessive
+                    text = messageText,
+                    style = ODSTextStyles.bodySRegular,
+                    color = if (isSayHi) scheme.basicAccent else scheme.basicTextRecessive
                 )
             }
 
-            ODSRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // 3. Right Status Badge (Unread count or Online indicator)
+            ODSColumn(
+                horizontalAlignment = Alignment.End,
+                gap = 6.dp
             ) {
-                ODSText(
-                    text = conv.lastMessage,
-                    style = ODSTextStyles.bodySRegular,
-                    color = scheme.basicTextRecessive,
-                    modifier = Modifier.weight(1f)
-                )
-
                 if (conv.unreadCount > 0) {
                     ODSBox(
-                        background = listOf(ODSColorModel(hexColor = scheme.functionalSuccessStandard)),
-                        cornerRadius = ODSCorners(all = 10.dp),
-                        padding = ODSPadding(horizontal = 6.dp, vertical = 2.dp)
+                        background = listOf(ODSColorModel(hexColor = scheme.basicAccent)), // Cyber Lime pill
+                        cornerRadius = ODSCorners(all = 12.dp),
+                        padding = ODSPadding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         ODSText(
                             text = "${conv.unreadCount}",
                             style = ODSTextStyles.microcopyBold,
-                            color = scheme.basicBackground
+                            color = scheme.basicTextOnAccent
                         )
                     }
+                } else if (conv.isOnline) {
+                    ODSBox(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape),
+                        background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                    ) {}
+                }
+
+                if (conv.lastMessageTime > 0) {
+                    ODSText(
+                        text = formatTime(conv.lastMessageTime),
+                        style = ODSTextStyles.microcopyRegular,
+                        color = scheme.basicTextRecessive
+                    )
                 }
             }
         }

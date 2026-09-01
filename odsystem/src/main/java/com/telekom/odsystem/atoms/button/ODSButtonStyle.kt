@@ -70,20 +70,20 @@ class ODSButtonStyle {
         style.horizontalArrangement = DSButtonTokens.horizontalArrangement
         style.contentAlignment = DSButtonTokens.contentAlignment
         if (props.size == ODSButtonSize.LARGE) {
-            style.minHeight = DSButtonTokens.minHeightSizeLarge
+            style.minHeight = DSButtonTokens.minHeightSizeSmall
         }
         if (props.size == ODSButtonSize.SMALL) {
             style.minHeight = DSButtonTokens.minHeightSizeSmall
         }
         if (props.buttonType == ODSButtonButtonType.STANDARD && props.size == ODSButtonSize.LARGE) {
-            style.padding = DSButtonTokens.paddingButtonTypeStandardSizeLarge
-            style.minWidth = DSButtonTokens.minWidthButtonTypeStandardSizeLarge
+            style.padding = DSButtonTokens.paddingButtonTypeStandardSizeSmall
+            style.minWidth = DSButtonTokens.minWidthButtonTypeStandardSizeSmall
         }
         if (props.buttonType == ODSButtonButtonType.ICON_ONLY && props.size == ODSButtonSize.LARGE) {
-            style.padding = DSButtonTokens.paddingButtonTypeIconOnlySizeLarge
-            style.minWidth = DSButtonTokens.minWidthButtonTypeIconOnlySizeLarge
-            style.maxHeight = DSButtonTokens.maxHeightButtonTypeIconOnlySizeLarge
-            style.maxWidth = DSButtonTokens.maxWidthButtonTypeIconOnlySizeLarge
+            style.padding = DSButtonTokens.paddingButtonTypeIconOnlySizeSmall
+            style.minWidth = DSButtonTokens.minWidthButtonTypeIconOnlySizeSmall
+            style.maxHeight = DSButtonTokens.maxHeightButtonTypeIconOnlySizeSmall
+            style.maxWidth = DSButtonTokens.maxWidthButtonTypeIconOnlySizeSmall
         }
         if (props.buttonType == ODSButtonButtonType.STANDARD && props.size == ODSButtonSize.SMALL) {
             style.padding = DSButtonTokens.paddingButtonTypeStandardSizeSmall
@@ -96,7 +96,7 @@ class ODSButtonStyle {
             style.maxWidth = DSButtonTokens.maxWidthButtonTypeIconOnlySizeSmall
         }
         if (props.buttonType == ODSButtonButtonType.STANDARD && props.variant == ODSButtonVariant.GHOST && props.size == ODSButtonSize.LARGE) {
-            style.padding = DSButtonTokens.paddingButtonTypeStandardVariantGhostSizeLarge
+            style.padding = DSButtonTokens.paddingButtonTypeStandardVariantGhostSizeSmall
         }
         if (props.buttonType == ODSButtonButtonType.STANDARD && props.variant == ODSButtonVariant.GHOST && props.size == ODSButtonSize.SMALL) {
             style.padding = DSButtonTokens.paddingButtonTypeStandardVariantGhostSizeSmall

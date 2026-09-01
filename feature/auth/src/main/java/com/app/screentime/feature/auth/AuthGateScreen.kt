@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.core.model.UserRole
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
@@ -33,18 +34,16 @@ fun AuthGateScreen(
             scheme = scheme,
             uiState = uiState,
             onBackClick = {
-                when (uiState.step) {
-                    AuthStep.CREATOR_DETAILS -> viewModel.resetToPhoneInput()
-                    AuthStep.OTP_INPUT -> viewModel.resetToPhoneInput()
-                    AuthStep.PHONE_INPUT -> isLoginScreenVisible = false
+                if (uiState.step == AuthStep.CREATOR_DETAILS) {
+                    viewModel.resetToPhoneInput()
+                } else {
+                    isLoginScreenVisible = false
                 }
             },
-            onRoleChange = { viewModel.onRoleChanged(it) },
             onPhoneChange = { viewModel.onPhoneChanged(it) },
             onOtpChange = { viewModel.onOtpChanged(it) },
-            onSendOtp = { viewModel.sendOtp() },
-            onVerifyOtp = { viewModel.verifyOtp() },
-            onEditPhone = { viewModel.resetToPhoneInput() },
+            onVerifyAndLogin = { viewModel.verifyAndLogin() },
+            onGoogleLogin = { viewModel.loginWithGoogle() },
             onNameChange = { viewModel.onNameChanged(it) },
             onBioChange = { viewModel.onBioChanged(it) },
             onVoiceRateChange = { viewModel.onVoiceRateChanged(it) },
@@ -55,7 +54,14 @@ fun AuthGateScreen(
         AuthLandingScreen(
             modifier = modifier.fillMaxSize(),
             scheme = scheme,
-            onGetStartedClick = { isLoginScreenVisible = true },
+            onContinueAsUser = {
+                viewModel.onRoleChanged(UserRole.USER)
+                isLoginScreenVisible = true
+            },
+            onContinueAsModel = {
+                viewModel.onRoleChanged(UserRole.MODEL)
+                isLoginScreenVisible = true
+            },
             onGuestClick = { viewModel.loginAsGuest() }
         )
     }

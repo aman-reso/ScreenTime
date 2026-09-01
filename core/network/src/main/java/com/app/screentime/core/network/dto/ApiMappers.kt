@@ -21,17 +21,19 @@ fun UserDto.toModelProfile(): ModelProfile {
 }
 
 fun UserDto.toUser(): User {
+    val roleEnum = UserRole.fromString(this.role)
     return User(
         id = this.id,
         phone = this.phone,
         name = this.name,
-        role = UserRole.fromString(this.role),
+        role = roleEnum,
         avatarUrl = this.avatar_url,
         bio = this.bio,
         voiceRatePerMin = this.voice_rate_per_min,
         chatRatePerMsg = this.chat_rate_per_msg,
         isOnline = this.is_online,
         isBusy = this.is_busy,
+        walletBalance = if (roleEnum == UserRole.USER) 1000.0 else 0.0,
         createdAt = this.created_at
     )
 }

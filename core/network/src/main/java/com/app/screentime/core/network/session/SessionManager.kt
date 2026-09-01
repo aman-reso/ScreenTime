@@ -67,6 +67,31 @@ class SessionManager @Inject constructor(
         get() = prefs.getLong(KEY_EXPIRES_AT, 0L)
         set(value) = prefs.edit { putLong(KEY_EXPIRES_AT, value) }
 
+    var walletBalance: Double
+        get() = Double.fromBits(prefs.getLong("wallet_balance_bits", java.lang.Double.doubleToRawLongBits(1000.0)))
+        set(value) = prefs.edit { putLong("wallet_balance_bits", java.lang.Double.doubleToRawLongBits(value)) }
+
+    var currentUser: User?
+        get() {
+            val id = userId ?: return null
+            return User(
+                id = id,
+                phone = userPhone ?: "",
+                name = userName ?: "User",
+                role = userRole,
+                walletBalance = walletBalance
+            )
+        }
+        set(value) {
+            if (value != null) {
+                userId = value.id
+                userName = value.name
+                userPhone = value.phone
+                userRole = value.role
+                walletBalance = value.walletBalance
+            }
+        }
+
     fun hasToken(): Boolean = !token.isNullOrEmpty()
 
     fun isTokenExpired(): Boolean {
@@ -86,6 +111,7 @@ class SessionManager @Inject constructor(
             .putString(KEY_USER_NAME, user.name)
             .putString(KEY_USER_PHONE, user.phone)
             .putString(KEY_USER_ROLE, user.role.name.lowercase())
+            .putLong("wallet_balance_bits", java.lang.Double.doubleToRawLongBits(user.walletBalance))
             .putLong(KEY_EXPIRES_AT, expiry)
             .apply()
         _isLoggedInFlow.value = true

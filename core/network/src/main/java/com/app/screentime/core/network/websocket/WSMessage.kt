@@ -12,12 +12,18 @@ data class WSMessage(
     val caller_name: String? = null,
     val caller_avatar: String? = null,
     val receiver_id: String? = null,
+    val target_user_id: String? = null,
+    val targetUserId: String? = null,
+    val target_id: String? = null,
+    val model_id: String? = null,
+    val user_id: String? = null,
     val call_type: String? = null,
     val rate_per_min: Double? = null,
     val duration_sec: Int? = null,
     val remaining_sec: Int? = null,
     val cost: Double? = null,
     val reason: String? = null,
+    val message: String? = null,
     val payload: JsonElement? = null
 ) {
     fun payloadAsString(): String {

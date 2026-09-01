@@ -43,7 +43,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.app.screentime.core.ui.components.PompiereTitle
 import com.telekom.odsystem.atoms.*
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
@@ -194,10 +193,10 @@ private fun SocialFeedView(
                         )
                     }
 
-                    PompiereTitle(
+                    ODSText(
                         text = "Home",
-                        scheme = scheme,
-                        style = ODSTextStyles.pompiereHeader
+                        style = ODSTextStyles.bodyMBold,
+                        color = HexColor(0xffffffff)
                     )
 
                     ODSRow(gap = 10.dp) {
@@ -271,7 +270,7 @@ private fun SocialFeedView(
                                 ) {
                                     ODSText(
                                         text = initial,
-                                        style = ODSTextStyles.pompiereTitleS,
+                                        style = ODSTextStyles.bodyMBold,
                                         color = HexColor(0xffffffff)
                                     )
                                 }
@@ -327,7 +326,7 @@ private fun SocialFeedView(
                         ) {
                             ODSText(
                                 text = "✨",
-                                style = ODSTextStyles.pompiereDisplayL,
+                                style = ODSTextStyles.titleL,
                                 color = HexColor(0xffffffff)
                             )
 
@@ -518,7 +517,7 @@ private fun SocialProfileView(
                                 contentAlignment = Alignment.Center
                             ) {
                                 ODSIcon(
-                                    iconModel = ODSIconModel(imageVector = Icons.Filled.ArrowBack),
+                                    iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.arrow_right),
                                     tint = Color.White
                                 )
                             }
@@ -552,7 +551,7 @@ private fun SocialProfileView(
                             ) {
                                 ODSText(
                                     text = "M",
-                                    style = ODSTextStyles.pompiereTitleM,
+                                    style = ODSTextStyles.titleL,
                                     color = HexColor(0xffffffff)
                                 )
                             }
@@ -560,7 +559,7 @@ private fun SocialProfileView(
                             ODSColumn(gap = 6.dp) {
                                 ODSText(
                                     text = "Minain Baski",
-                                    style = ODSTextStyles.pompiereTitleM,
+                                    style = ODSTextStyles.bodyMBold,
                                     color = HexColor(0xffffffff)
                                 )
                                 ODSText(
@@ -707,17 +706,17 @@ private fun SocialOnboardingView(
         ODSColumn(gap = 10.dp) {
             ODSText(
                 text = "The",
-                style = ODSTextStyles.pompiereDisplayL,
+                style = ODSTextStyles.titleL,
                 color = HexColor(0xffffffff)
             )
             ODSText(
                 text = "Social Space",
-                style = ODSTextStyles.pompiereDisplayL,
+                style = ODSTextStyles.titleL,
                 color = HexColor(0xffe20074)
             )
             ODSText(
                 text = "for Everyone",
-                style = ODSTextStyles.pompiereDisplayL,
+                style = ODSTextStyles.titleL,
                 color = HexColor(0xffffffff)
             )
             ODSText(
@@ -738,7 +737,7 @@ private fun SocialOnboardingView(
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(horizontalAlignment = Alignment.CenterHorizontally, gap = 8.dp) {
-                ODSText(text = "🌟", style = ODSTextStyles.pompiereDisplayL, color = HexColor(0xffffffff))
+                ODSText(text = "🌟", style = ODSTextStyles.titleL, color = HexColor(0xffffffff))
                 ODSText(text = "Connect & Inspire", style = ODSTextStyles.bodyMBold, color = HexColor(0xffffffff))
             }
         }

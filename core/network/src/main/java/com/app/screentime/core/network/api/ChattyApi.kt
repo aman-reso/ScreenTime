@@ -170,6 +170,55 @@ class ChattyApi @Inject constructor(
         return res.status.isSuccess()
     }
 
+    // ── 9. LiveKit Call Token ────────────────────────────────────────────────
+    suspend fun getCallToken(token: String, remoteUserId: String, callType: String = "voice"): LiveKitTokenResponse {
+        val res: ApiResponse<LiveKitTokenResponse> = httpClient.post("$baseUrl/api/calls/token") {
+            bearerAuth(token)
+            setBody(mapOf("remote_user_id" to remoteUserId, "call_type" to callType))
+        }.body()
+        return res.data ?: throw Exception(res.message.ifBlank { "Failed to get call token" })
+    }
+
+    // ── 10. Live Streaming ──────────────────────────────────────────────────
+    suspend fun getLiveStreams(token: String): List<LiveStreamDto> {
+        val res: ApiResponse<LiveStreamListResponse> = httpClient.get("$baseUrl/api/live/list") {
+            bearerAuth(token)
+        }.body()
+        return res.data?.streams ?: emptyList()
+    }
+
+    suspend fun startLiveStream(token: String, title: String): StartLiveResponse {
+        val res: ApiResponse<StartLiveResponse> = httpClient.post("$baseUrl/api/live/start") {
+            bearerAuth(token)
+            setBody(mapOf("title" to title))
+        }.body()
+        return res.data ?: throw Exception(res.message.ifBlank { "Failed to start live stream" })
+    }
+
+    suspend fun endLiveStream(token: String, streamId: String): Boolean {
+        val res = httpClient.post("$baseUrl/api/live/end") {
+            bearerAuth(token)
+            setBody(mapOf("stream_id" to streamId))
+        }
+        return res.status.isSuccess()
+    }
+
+    suspend fun joinLiveStream(token: String, streamId: String): JoinLiveResponse {
+        val res: ApiResponse<JoinLiveResponse> = httpClient.post("$baseUrl/api/live/join") {
+            bearerAuth(token)
+            setBody(mapOf("stream_id" to streamId))
+        }.body()
+        return res.data ?: throw Exception(res.message.ifBlank { "Failed to join live stream" })
+    }
+
+    suspend fun sendLiveTip(token: String, streamId: String, amount: Double, giftName: String): Boolean {
+        val res = httpClient.post("$baseUrl/api/live/tip") {
+            bearerAuth(token)
+            setBody(LiveTipRequest(stream_id = streamId, amount = amount, gift_name = giftName))
+        }
+        return res.status.isSuccess()
+    }
+
     fun getWsUrl(token: String): String {
         val wsBase = baseUrl.replace("http://", "ws://").replace("https://", "wss://")
         return "$wsBase/ws?token=$token"

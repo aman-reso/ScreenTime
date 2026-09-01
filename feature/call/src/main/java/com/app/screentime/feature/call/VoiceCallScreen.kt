@@ -59,7 +59,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.core.ui.components.PompiereTitle
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
@@ -114,23 +113,32 @@ fun VoiceCallScreen(
     }
     var hasInitiatedCall by rememberSaveable { mutableStateOf(false) }
 
+    val isCurrentUserModel = viewModel.isCurrentUserModel()
+    val targetId = when {
+        modelId.isNotBlank() -> modelId
+        callState.remoteUserId.isNotBlank() -> callState.remoteUserId
+        else -> ""
+    }
+    val isIncomingOrActive = (callState.status == CallStatus.INCOMING || callState.status == CallStatus.ACTIVE) &&
+            callState.remoteUserId.isNotEmpty() && (callState.remoteUserId == targetId || targetId.isBlank())
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
         val micGranted = result[Manifest.permission.RECORD_AUDIO] == true ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         hasMicPermission = micGranted
-        if (micGranted && !hasInitiatedCall && callState.status != CallStatus.INCOMING && callState.status != CallStatus.ACTIVE && callState.status != CallStatus.ENDED) {
+        if (micGranted && !hasInitiatedCall && !isIncomingOrActive && targetId.isNotBlank()) {
             hasInitiatedCall = true
-            viewModel.startOutgoingCall(modelId, modelName)
+            viewModel.startOutgoingCall(targetId, modelName)
         }
     }
 
     LaunchedEffect(Unit) {
-        if (!hasInitiatedCall && callState.status != CallStatus.INCOMING && callState.status != CallStatus.ACTIVE && callState.status != CallStatus.ENDED) {
+        if (!hasInitiatedCall && !isIncomingOrActive && targetId.isNotBlank()) {
             if (hasMicPermission) {
                 hasInitiatedCall = true
-                viewModel.startOutgoingCall(modelId, modelName)
+                viewModel.startOutgoingCall(targetId, modelName)
             } else {
                 permissionLauncher.launch(permissionsToRequest)
             }
@@ -140,6 +148,7 @@ fun VoiceCallScreen(
     LaunchedEffect(callState.status) {
         if (callState.status == CallStatus.ENDED) {
             delay(2500L.milliseconds)
+            viewModel.resetState()
             onEndCall()
         }
     }
@@ -174,10 +183,10 @@ fun VoiceCallScreen(
                     )
                 }
 
-                PompiereTitle(
+                ODSText(
                     text = "Call Ended",
-                    scheme = scheme,
-                    style = ODSTextStyles.pompiereDisplay
+                    style = ODSTextStyles.bodyMBold,
+                    color = scheme.basicText
                 )
 
                 ODSText(
@@ -195,7 +204,10 @@ fun VoiceCallScreen(
                         label = "Close",
                         variant = ODSButtonVariant.PRIMARY
                     ),
-                    onClick = onEndCall
+                    onClick = {
+                        viewModel.resetState()
+                        onEndCall()
+                    }
                 )
             }
         }
@@ -232,15 +244,19 @@ fun VoiceCallScreen(
                     )
                 }
 
-                PompiereTitle(
-                    text = "Insufficient Balance",
-                    scheme = scheme,
-                    style = ODSTextStyles.pompiereDisplay
+                ODSText(
+                    text = if (isCurrentUserModel) "Caller Insufficient Balance" else "Insufficient Balance",
+                    style = ODSTextStyles.bodyMBold,
+                    color = scheme.basicText
                 )
 
                 ODSText(
-                    text = callState.balanceMessage.ifBlank {
-                        "You need at least ₹${callState.minRequiredBalance.toInt()} coins for a 1-minute voice call with $modelName. Current balance: ₹${callState.currentBalance.toInt()}."
+                    text = if (isCurrentUserModel) {
+                        callState.balanceMessage.ifBlank { "The caller does not have sufficient balance to continue this call." }
+                    } else {
+                        callState.balanceMessage.ifBlank {
+                            "You need at least ₹${callState.minRequiredBalance.toInt()} coins for a 1-minute voice call with $modelName. Current balance: ₹${callState.currentBalance.toInt()}."
+                        }
                     },
                     style = ODSTextStyles.bodyMRegular,
                     color = scheme.basicTextRecessive
@@ -248,29 +264,50 @@ fun VoiceCallScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                ODSRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                if (isCurrentUserModel) {
                     ODSButton(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(0.6f),
                         scheme = scheme,
                         props = ODSButtonProps(
-                            label = "Cancel",
-                            variant = ODSButtonVariant.SECONDARY,
-                        ),
-                        onClick = onEndCall
-                    )
-
-                    ODSButton(
-                        modifier = Modifier.weight(1f),
-                        scheme = scheme,
-                        props = ODSButtonProps(
-                            label = "Top Up Wallet",
+                            label = "Close",
                             variant = ODSButtonVariant.PRIMARY
                         ),
-                        onClick = onNavigateToTopUp
+                        onClick = {
+                            viewModel.resetState()
+                            onEndCall()
+                        }
                     )
+                } else {
+                    ODSRow(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ODSButton(
+                            modifier = Modifier.weight(1f),
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = "Cancel",
+                                variant = ODSButtonVariant.SECONDARY,
+                            ),
+                            onClick = {
+                                viewModel.resetState()
+                                onEndCall()
+                            }
+                        )
+
+                        ODSButton(
+                            modifier = Modifier.weight(1f),
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = "Top Up Wallet",
+                                variant = ODSButtonVariant.PRIMARY
+                            ),
+                            onClick = {
+                                viewModel.resetState()
+                                onNavigateToTopUp()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -335,10 +372,10 @@ fun VoiceCallScreen(
                     )
                 }
 
-                PompiereTitle(
+                ODSText(
                     text = "Microphone Access Required",
-                    scheme = scheme,
-                    style = ODSTextStyles.pompiereDisplay
+                    style = ODSTextStyles.bodyMBold,
+                    color = scheme.basicText
                 )
 
                 ODSText(
@@ -430,7 +467,11 @@ fun VoiceCallScreen(
                                     tint = scheme.basicAccent.getColor()
                                 )
                                 ODSText(
-                                    text = "${callState.cost.toInt()} coins spent · 10/min",
+                                    text = if (isCurrentUserModel) {
+                                        "${callState.cost.toInt()} coins earned · +${callState.ratePerMin.toInt()}/min"
+                                    } else {
+                                        "${callState.cost.toInt()} coins spent · ${callState.ratePerMin.toInt()}/min"
+                                    },
                                     style = ODSTextStyles.microcopyRegular,
                                     color = scheme.basicTextRecessive
                                 )
@@ -462,10 +503,10 @@ fun VoiceCallScreen(
                                     style = ODSTextStyles.microcopyBold,
                                     color = scheme.basicAccent
                                 )
-                                PompiereTitle(
+                                ODSText(
                                     text = modelName,
-                                    scheme = scheme,
-                                    style = ODSTextStyles.pompiereDisplayL
+                                    style = ODSTextStyles.bodyMBold,
+                                    color = scheme.basicText
                                 )
                                 ODSText(
                                     text = formattedTime,
@@ -533,10 +574,10 @@ fun VoiceCallScreen(
                         color = scheme.basicAccent
                     )
                     Spacer(Modifier.height(8.dp))
-                    PompiereTitle(
+                    ODSText(
                         text = modelName,
-                        scheme = scheme,
-                        style = ODSTextStyles.pompiereDisplay
+                        style = ODSTextStyles.bodyMBold,
+                        color = scheme.basicText
                     )
                     Spacer(Modifier.height(4.dp))
                     ODSText(
@@ -573,7 +614,11 @@ fun VoiceCallScreen(
                                 tint = scheme.basicAccent.getColor()
                             )
                             ODSText(
-                                text = "${"%.2f".format(callState.cost)} coins spent · ${callState.ratePerMin.toInt()}/min",
+                                text = if (isCurrentUserModel) {
+                                    "${"%.2f".format(callState.cost)} coins earned · +₹${callState.ratePerMin.toInt()}/min"
+                                } else {
+                                    "${"%.2f".format(callState.cost)} coins spent · ${callState.ratePerMin.toInt()}/min"
+                                },
                                 style = ODSTextStyles.microcopyRegular,
                                 color = scheme.basicTextRecessive
                             )
@@ -786,7 +831,7 @@ private fun AudioWaveformVisualizer(
             ) {
                 ODSText(
                     text = modelName.firstOrNull()?.toString() ?: "M",
-                    style = ODSTextStyles.pompiereDisplayL,
+                    style = ODSTextStyles.titleL,
                     color = scheme.basicText
                 )
             }

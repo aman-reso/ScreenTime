@@ -2,6 +2,7 @@ package com.app.screentime.feature.call
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.livekit.android.room.Room
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
@@ -12,8 +13,16 @@ class CallViewModel @Inject constructor(
 
     val callState: StateFlow<CallUiState> = activeCallManager.callState
 
-    fun startOutgoingCall(modelId: String, modelName: String, ratePerMin: Double = 10.0) {
-        activeCallManager.startOutgoingCall(modelId, modelName, ratePerMin)
+    val room: Room
+        get() = activeCallManager.getRoom()
+
+    fun startOutgoingCall(
+        modelId: String,
+        modelName: String,
+        ratePerMin: Double = 10.0,
+        callType: CallType = CallType.VOICE
+    ) {
+        activeCallManager.startOutgoingCall(modelId, modelName, ratePerMin, callType)
     }
 
     fun acceptIncomingCall() {
@@ -34,6 +43,18 @@ class CallViewModel @Inject constructor(
 
     fun toggleSpeaker() {
         activeCallManager.toggleSpeaker()
+    }
+
+    fun toggleCamera() {
+        activeCallManager.toggleCamera()
+    }
+
+    fun flipCamera() {
+        activeCallManager.flipCamera()
+    }
+
+    fun isCurrentUserModel(): Boolean {
+        return activeCallManager.isCurrentUserModel()
     }
 
     fun resetState() {

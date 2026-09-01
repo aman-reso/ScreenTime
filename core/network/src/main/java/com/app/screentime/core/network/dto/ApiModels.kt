@@ -155,13 +155,47 @@ data class ChatMessageDto(
 data class ConversationDto(
     val id: String = "",
     val partner_id: String = "",
+    val user_id: String = "",
+    val peer_id: String = "",
+    val caller_id: String = "",
+    val receiver_id: String = "",
+    val model_id: String = "",
     val partner_name: String = "",
+    val user_name: String = "",
+    val name: String = "",
+    val username: String = "",
+    val caller_name: String = "",
     val partner_avatar: String = "",
+    val avatar_url: String = "",
     val last_message: String = "",
     val last_message_time: Long = 0L,
     val unread_count: Int = 0,
     val is_online: Boolean = false
-)
+) {
+    fun getResolvedPartnerId(currentUserId: String? = null): String {
+        return when {
+            partner_id.isNotBlank() && partner_id != currentUserId -> partner_id
+            user_id.isNotBlank() && user_id != currentUserId -> user_id
+            peer_id.isNotBlank() && peer_id != currentUserId -> peer_id
+            caller_id.isNotBlank() && caller_id != currentUserId -> caller_id
+            receiver_id.isNotBlank() && receiver_id != currentUserId -> receiver_id
+            model_id.isNotBlank() && model_id != currentUserId -> model_id
+            id.isNotBlank() && !id.startsWith("conv_") && id != currentUserId -> id
+            else -> partner_id.ifBlank { user_id.ifBlank { peer_id.ifBlank { caller_id.ifBlank { receiver_id.ifBlank { id } } } } }
+        }
+    }
+
+    fun getResolvedPartnerName(): String {
+        return when {
+            partner_name.isNotBlank() -> partner_name
+            user_name.isNotBlank() -> user_name
+            name.isNotBlank() -> name
+            username.isNotBlank() -> username
+            caller_name.isNotBlank() -> caller_name
+            else -> "User"
+        }
+    }
+}
 
 @Serializable
 data class ConversationListResponse(
@@ -175,4 +209,56 @@ data class EphemeralChatResponse(
     val partner_id: String = "",
     val messages: List<ChatMessageDto> = emptyList(),
     val notice: String = ""
+)
+
+@Serializable
+data class LiveKitTokenResponse(
+    val token: String = "",
+    val livekit_url: String = "",
+    val room_name: String = ""
+)
+
+@Serializable
+data class LiveStreamDto(
+    val stream_id: String = "",
+    val host_id: String = "",
+    val host_name: String = "",
+    val host_avatar: String = "",
+    val title: String = "",
+    val viewer_count: Int = 1,
+    val total_earned: Double = 0.0,
+    val is_active: Boolean = true
+)
+
+@Serializable
+data class LiveStreamListResponse(
+    val streams: List<LiveStreamDto> = emptyList()
+)
+
+@Serializable
+data class StartLiveResponse(
+    val stream: LiveStreamDto? = null,
+    val livekit_url: String = "",
+    val token: String = ""
+)
+
+@Serializable
+data class JoinLiveResponse(
+    val livekit_url: String = "",
+    val token: String = "",
+    val room_name: String = ""
+)
+
+@Serializable
+data class LiveTipRequest(
+    val stream_id: String,
+    val amount: Double,
+    val gift_name: String
+)
+
+@Serializable
+data class LiveTipResponse(
+    val amount: Double = 0.0,
+    val gift_name: String = "",
+    val sender: String = ""
 )

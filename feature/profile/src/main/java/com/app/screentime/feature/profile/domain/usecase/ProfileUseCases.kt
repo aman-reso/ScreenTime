@@ -17,11 +17,13 @@ class GetCurrentUserUseCase @Inject constructor(
         val name = sessionManager.userName ?: preferencesManager.getUsername() ?: "User"
         val id = sessionManager.userId ?: preferencesManager.getUserId() ?: ""
         val role = sessionManager.userRole
+        val walletBalance = if (role == UserRole.USER) 1000.0 else 0.0
         return User(
             id = id,
             phone = phone,
             name = name,
-            role = role
+            role = role,
+            walletBalance = walletBalance
         )
     }
 }

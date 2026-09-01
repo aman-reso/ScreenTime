@@ -59,6 +59,7 @@ android {
             mappingFileUploadEnabled = false
         }
         release {
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -67,7 +68,13 @@ android {
             )
         }
         debug {
+            isDebuggable = false
             isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 

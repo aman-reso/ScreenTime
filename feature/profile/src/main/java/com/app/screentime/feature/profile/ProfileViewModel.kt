@@ -23,6 +23,11 @@ data class ProfileUiState(
     val displayName: String = "",
     val email: String = "",
     val bio: String = "",
+    val role: com.app.screentime.core.model.UserRole = com.app.screentime.core.model.UserRole.USER,
+    val isModelDetailsVerified: Boolean = false,
+    val age: Int = 22,
+    val country: String = "India",
+    val photoUrl: String = "",
     val selectedTheme: String = AppThemeManager.currentThemeName.value,
     val selectedLanguage: String = "English",
     val isFingerprintLockEnabled: Boolean = false,
@@ -54,22 +59,30 @@ class ProfileViewModel @Inject constructor(
 
     fun loadUser() {
         val cachedUser = getCurrentUserUseCase()
+        val isUserRole = cachedUser.role == com.app.screentime.core.model.UserRole.USER
+        val initialCoins = if (isUserRole && cachedUser.walletBalance < 1000.0) 1000 else cachedUser.walletBalance.toInt()
         _uiState.value = _uiState.value.copy(
             user = cachedUser,
             displayName = cachedUser.name,
             email = cachedUser.email ?: "",
             bio = cachedUser.bio ?: "",
-            walletCoins = cachedUser.walletBalance.toInt()
+            role = cachedUser.role,
+            isModelDetailsVerified = cachedUser.role != com.app.screentime.core.model.UserRole.MODEL || cachedUser.bio.orEmpty().isNotBlank(),
+            walletCoins = initialCoins
         )
 
         viewModelScope.launch {
             fetchUserProfileUseCase().onSuccess { user ->
+                val isRegularUser = user.role == com.app.screentime.core.model.UserRole.USER
+                val finalCoins = if (isRegularUser && user.walletBalance < 1000.0) 1000 else user.walletBalance.toInt()
                 _uiState.value = _uiState.value.copy(
                     user = user,
                     displayName = user.name,
                     email = user.email ?: "",
                     bio = user.bio ?: "",
-                    walletCoins = user.walletBalance.toInt()
+                    role = user.role,
+                    isModelDetailsVerified = user.role != com.app.screentime.core.model.UserRole.MODEL || user.bio.orEmpty().isNotBlank(),
+                    walletCoins = finalCoins
                 )
             }
         }
@@ -86,6 +99,22 @@ class ProfileViewModel @Inject constructor(
                 bio = bio
             )
         )
+    }
+
+    fun submitModelVerificationDetails(name: String, age: Int, country: String, photoUrl: String?) {
+        _uiState.value = _uiState.value.copy(
+            displayName = name.ifBlank { _uiState.value.displayName },
+            age = age,
+            country = country,
+            photoUrl = photoUrl.orEmpty(),
+            isModelDetailsVerified = true,
+            user = _uiState.value.user?.copy(
+                name = name.ifBlank { _uiState.value.displayName }
+            )
+        )
+        viewModelScope.launch {
+            submitModelOnboardingUseCase("Country: $country, Age: $age", 15.0, 5.0)
+        }
     }
 
     fun setTheme(theme: String) {
@@ -112,7 +141,7 @@ class ProfileViewModel @Inject constructor(
     fun submitOnboarding(bio: String, voiceRate: Double, chatRate: Double) {
         viewModelScope.launch {
             submitModelOnboardingUseCase(bio, voiceRate, chatRate).onSuccess {
-                _uiState.value = _uiState.value.copy(isOnboardingSubmitted = true)
+                _uiState.value = _uiState.value.copy(isOnboardingSubmitted = true, isModelDetailsVerified = true)
             }
         }
     }

@@ -1,27 +1,32 @@
 package com.app.screentime.feature.auth
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
 import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.atoms.textfield.ODSTextField
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldProps
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldSize
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
@@ -32,120 +37,111 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun AuthPhoneOtpSection(
     scheme: ODSTheme,
     uiState: AuthUiState,
-    onRoleChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
     onOtpChange: (String) -> Unit,
-    onSendOtp: () -> Unit,
-    onVerifyOtp: () -> Unit,
-    onEditPhone: () -> Unit,
+    onVerifyAndLogin: () -> Unit,
+    onGoogleLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isOtpStep = uiState.step == AuthStep.OTP_INPUT
-    val isModel = uiState.role == "model"
-
-    ODSColumn(modifier = modifier.fillMaxWidth(), gap = 12.dp) {
-        // Discover-style Segmented Dual Option Tabs
-        ODSBox(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-            cornerRadius = ODSCorners(all = 16.dp),
-            padding = ODSPadding(all = 4.dp)
-        ) {
-            ODSRow(modifier = Modifier.fillMaxWidth(), gap = 4.dp) {
-                listOf(
-                    "user" to "👤 User (Caller)",
-                    "model" to "✦ Model (Creator)"
-                ).forEach { (roleKey, label) ->
-                    val isSelected = uiState.role == roleKey
-                    ODSBox(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { onRoleChange(roleKey) },
-                        background = listOf(ODSColorModel(hexColor = if (isSelected) scheme.basicBackground else scheme.basicBackgroundCard)),
-                        cornerRadius = ODSCorners(all = 12.dp),
-                        border = if (isSelected) ODSBorder(
-                            width = 1.dp,
-                            colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
-                        ) else null,
-                        padding = ODSPadding(vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ODSText(
-                            text = label,
-                            style = if (isSelected) ODSTextStyles.bodySBold else ODSTextStyles.bodySRegular,
-                            color = if (isSelected) scheme.basicText else scheme.basicTextRecessive
-                        )
-                    }
-                }
-            }
-        }
-
-        // Phone Input Field
+    ODSColumn(modifier = modifier.fillMaxWidth(), gap = 16.dp) {
+        // 1. Mobile Number Input Field
         ODSTextField(
             scheme = scheme,
             props = ODSTextFieldProps(
                 label = "Mobile Number",
                 inputText = uiState.phone,
-                disabled = isOtpStep
+                size = ODSTextFieldSize.SMALL,
+                leftIcon = ODSIconModel(imageVector = Icons.Filled.Phone)
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             onValueChange = onPhoneChange
         )
 
-        // OTP Input Field (Visible on OTP_INPUT step)
-        if (isOtpStep) {
-            ODSTextField(
-                scheme = scheme,
-                props = ODSTextFieldProps(
-                    label = "Enter OTP",
-                    inputText = uiState.otp
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                onValueChange = onOtpChange
-            )
+        ODSTextField(
+            scheme = scheme,
+            props = ODSTextFieldProps(
+                label = "OTP Code",
+                inputText = uiState.otp,
+                size = ODSTextFieldSize.SMALL,
+                leftIcon = ODSIconModel(imageVector = Icons.Filled.Lock)
+            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            onValueChange = onOtpChange
+        )
 
-            ODSRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onEditPhone),
-                horizontalArrangement = Arrangement.End
+        if (!uiState.error.isNullOrEmpty()) {
+            ODSBox(
+                modifier = Modifier.fillMaxWidth(),
+                background = listOf(ODSColorModel(hexColor = scheme.functionalDestructiveSubtle)),
+                cornerRadius = ODSCorners(all = 8.dp),
+                padding = ODSPadding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 ODSText(
-                    text = "Edit phone number",
-                    style = ODSTextStyles.microcopyBold,
-                    color = scheme.basicAccent
+                    text = uiState.error,
+                    style = ODSTextStyles.bodySRegular,
+                    color = scheme.functionalDestructiveStandard
                 )
             }
         }
 
-        if (!uiState.error.isNullOrEmpty()) {
-            ODSText(
-                text = uiState.error,
-                style = ODSTextStyles.bodySRegular,
-                color = scheme.functionalDestructiveStandard
-            )
-        }
-
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Action Button: Send OTP vs Verify OTP
+        // 3. Verify & Continue Button
+        ODSButton(
+            modifier = Modifier.fillMaxWidth(),
+            scheme = scheme,
+            props = ODSButtonProps(
+                label = if (uiState.isLoading) "Verifying..." else "Verify & Continue",
+                variant = ODSButtonVariant.PRIMARY,
+                size = ODSButtonSize.SMALL,
+                disabled = uiState.isLoading
+            ),
+            onClick = onVerifyAndLogin
+        )
+
+        // 4. Divider
+        ODSRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ODSBox(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(1.dp),
+                background = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
+            ) {}
+            ODSText(
+                modifier = Modifier.padding(horizontal = 12.dp),
+                text = "or continue with",
+                style = ODSTextStyles.microcopyRegular,
+                color = scheme.basicTextRecessive
+            )
+            ODSBox(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(1.dp),
+                background = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
+            ) {}
+        }
+
+        // 5. Google Sign-In Button at Bottom (Secondary Button - 3rd color #bc96ff)
         ODSButton(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
             scheme = scheme,
             props = ODSButtonProps(
-                label = when {
-                    uiState.isLoading -> "Verifying..."
-                    isOtpStep && isModel -> "Verify & Continue to Profile"
-                    isOtpStep -> "Verify & Enter Connect"
-                    else -> "Send OTP Verification"
-                },
-                variant = ODSButtonVariant.PRIMARY
+                label = "Continue with Google",
+                buttonIcon = ODSIconModel(imageVector = Icons.Filled.AccountCircle),
+                leftIcon = true,
+                variant = ODSButtonVariant.SECONDARY,
+                size = ODSButtonSize.SMALL,
+                disabled = uiState.isLoading
             ),
-            onClick = if (isOtpStep) onVerifyOtp else onSendOtp
+            onClick = onGoogleLogin
         )
     }
 }

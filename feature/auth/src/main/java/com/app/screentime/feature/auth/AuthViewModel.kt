@@ -2,6 +2,7 @@ package com.app.screentime.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.screentime.core.model.UserRole
 import com.app.screentime.feature.auth.domain.usecase.CheckAuthStatusUseCase
 import com.app.screentime.feature.auth.domain.usecase.GuestLoginUseCase
 import com.app.screentime.feature.auth.domain.usecase.LoginUseCase
@@ -27,7 +28,7 @@ data class AuthUiState(
     val phone: String = "",
     val otp: String = "",
     val name: String = "",
-    val role: String = "user", // "user" or "model"
+    val role: UserRole = UserRole.USER,
     val bio: String = "",
     val voiceRate: String = "15",
     val avatarUrl: String = "",
@@ -59,7 +60,7 @@ class AuthViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(name = name, error = null)
     }
 
-    fun onRoleChanged(role: String) {
+    fun onRoleChanged(role: UserRole) {
         _uiState.value = _uiState.value.copy(role = role, error = null)
     }
 
@@ -90,17 +91,46 @@ class AuthViewModel @Inject constructor(
     }
 
     fun verifyOtp() {
+        verifyAndLogin()
+    }
+
+    fun verifyAndLogin() {
         val current = _uiState.value
+        val cleanPhone = current.phone.trim()
         val cleanOtp = current.otp.trim()
+
+        if (cleanPhone.length < 10) {
+            _uiState.value = current.copy(error = "Please enter a valid 10-digit mobile number")
+            return
+        }
         if (cleanOtp.length < 4) {
-            _uiState.value = current.copy(error = "Please enter the 4-digit OTP code (e.g. 1234)")
+            _uiState.value = current.copy(error = "Please enter a valid 4-digit OTP code (e.g. 1234)")
             return
         }
 
-        if (current.role == "model") {
-            _uiState.value = current.copy(step = AuthStep.CREATOR_DETAILS, error = null)
-        } else {
-            performLogin("User " + current.phone.takeLast(4), "user")
+        val defaultName = if (current.role == UserRole.MODEL) "Model " + cleanPhone.takeLast(4) else "User " + cleanPhone.takeLast(4)
+        performLogin(defaultName, current.role)
+    }
+
+    fun loginWithGoogle(selectedRole: UserRole? = null) {
+        val targetRole = selectedRole ?: _uiState.value.role
+        val mockGooglePhone = "98" + (10000000..99999999).random()
+        val mockName = if (targetRole == UserRole.MODEL) "Creator Google" else "Google User"
+        _uiState.value = _uiState.value.copy(
+            isLoading = true,
+            error = null,
+            role = targetRole
+        )
+        viewModelScope.launch {
+            val result = loginUseCase(mockGooglePhone, mockName, targetRole.name.lowercase())
+            result.onSuccess {
+                _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Google Sign-In failed. Please try again."
+                )
+            }
         }
     }
 
@@ -110,20 +140,20 @@ class AuthViewModel @Inject constructor(
             _uiState.value = current.copy(error = "Creator display name is required")
             return
         }
-        performLogin(current.name.trim(), "model")
+        performLogin(current.name.trim(), UserRole.MODEL)
     }
 
-    private fun performLogin(userName: String, role: String) {
+    private fun performLogin(userName: String, role: UserRole) {
         val current = _uiState.value
+        _uiState.value = current.copy(isLoading = true, error = null)
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            val result = loginUseCase(current.phone.trim(), userName, role)
+            val result = loginUseCase(current.phone.trim(), userName, role.name.lowercase())
             result.onSuccess {
                 _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.message ?: "Authentication failed. Please try again."
+                    error = e.message ?: "Login failed. Please try again."
                 )
             }
         }

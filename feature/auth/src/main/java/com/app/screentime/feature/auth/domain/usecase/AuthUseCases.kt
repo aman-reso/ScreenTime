@@ -16,6 +16,10 @@ class LoginUseCase @Inject constructor(
     suspend operator fun invoke(phone: String, name: String, role: String): Result<User> {
         return try {
             val response = api.registerOrLogin(phone, name, role)
+            val isModelRole = UserRole.fromString(response.user.role) == UserRole.MODEL
+            val rawBalance = response.wallet?.balance ?: 0.0
+            val defaultBalance = if (!isModelRole && rawBalance <= 0.0) 1000.0 else rawBalance
+
             val user = User(
                 id = response.user.id,
                 phone = response.user.phone,
@@ -26,7 +30,8 @@ class LoginUseCase @Inject constructor(
                 voiceRatePerMin = response.user.voice_rate_per_min,
                 chatRatePerMsg = response.user.chat_rate_per_msg,
                 isOnline = response.user.is_online,
-                isBusy = response.user.is_busy
+                isBusy = response.user.is_busy,
+                walletBalance = defaultBalance
             )
             sessionManager.saveSession(response.token, user)
             preferencesManager.setToken(response.token)

@@ -20,10 +20,12 @@ import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
 import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.atoms.textfield.ODSTextField
 import com.telekom.odsystem.atoms.textfield.ODSTextFieldProps
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldSize
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
@@ -49,8 +51,8 @@ fun AuthCreatorDetailsSection(
             scheme = scheme,
             props = ODSTextFieldProps(
                 label = "Creator Display Name",
-                placeholderText = "e.g. Priya Sharma",
                 inputText = uiState.name,
+                size = ODSTextFieldSize.SMALL,
                 leftIcon = ODSIconModel(imageVector = Icons.Filled.Person)
             ),
             onValueChange = onNameChange
@@ -60,8 +62,8 @@ fun AuthCreatorDetailsSection(
             scheme = scheme,
             props = ODSTextFieldProps(
                 label = "Bio / About You",
-                placeholderText = "Love late-night chats & music 🎵",
                 inputText = uiState.bio,
+                size = ODSTextFieldSize.SMALL,
                 leftIcon = ODSIconModel(imageVector = Icons.Filled.Description)
             ),
             onValueChange = onBioChange
@@ -71,8 +73,8 @@ fun AuthCreatorDetailsSection(
             scheme = scheme,
             props = ODSTextFieldProps(
                 label = "Voice Call Rate (₹ / min)",
-                placeholderText = "15",
                 inputText = uiState.voiceRate,
+                size = ODSTextFieldSize.SMALL,
                 leftIcon = ODSIconModel(imageVector = Icons.Filled.CurrencyRupee)
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -83,8 +85,8 @@ fun AuthCreatorDetailsSection(
             scheme = scheme,
             props = ODSTextFieldProps(
                 label = "Profile Photo URL (Female Creator Verification)",
-                placeholderText = "https://.../photo.jpg",
                 inputText = uiState.avatarUrl,
+                size = ODSTextFieldSize.SMALL,
                 leftIcon = ODSIconModel(imageVector = Icons.Filled.CameraAlt)
             ),
             onValueChange = onAvatarUrlChange
@@ -131,7 +133,8 @@ fun AuthCreatorDetailsSection(
             scheme = scheme,
             props = ODSButtonProps(
                 label = if (uiState.isLoading) "Saving Creator Profile..." else "Complete & Join as Creator",
-                variant = ODSButtonVariant.PRIMARY
+                variant = ODSButtonVariant.PRIMARY,
+                size = ODSButtonSize.SMALL
             ),
             onClick = onSubmitDetails
         )

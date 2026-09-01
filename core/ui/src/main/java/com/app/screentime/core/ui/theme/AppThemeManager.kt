@@ -71,6 +71,42 @@ object AppThemeManager {
         basicStrokeSubtle = HexColor(0xff152943)
     )
 
+    val ConnectTheme: ODSTheme = lightMode.copy(
+        name = "Connect (Default)",
+        basicAccent = HexColor(0xffd7ff81), // 4th color: Primary button
+        basicAccentSecondary = HexColor(0xffbc96ff), // 3rd color: Secondary button
+        basicBackground = HexColor(0xff371f7d), // 1st color: Background
+        basicBackgroundCard = HexColor(0xff2b1764),
+        basicBackgroundCardSubtle = HexColor(0xff221153),
+        basicBackgroundSubtle = HexColor(0xff221153),
+        basicText = HexColor(0xffffffff),
+        basicTextDominant = HexColor(0xffffffff),
+        basicTextOnAccent = HexColor(0xff371f7d),
+        basicTextOnAccentSecondary = HexColor(0xff371f7d),
+        basicTextRecessive = HexColor(0xffbc96ff),
+        basicTextLink = HexColor(0xffff4365), // 2nd color: Icon & links
+        basicStroke = HexColor(0xffbc96ff),
+        basicStrokeSubtle = HexColor(0xff4c2d9e)
+    )
+
+    val ConnectDarkTheme: ODSTheme = darkMode.copy(
+        name = "Connect Dark",
+        basicAccent = HexColor(0xffd7ff81),
+        basicAccentSecondary = HexColor(0xffbc96ff),
+        basicBackground = HexColor(0xff371f7d),
+        basicBackgroundCard = HexColor(0xff2b1764),
+        basicBackgroundCardSubtle = HexColor(0xff221153),
+        basicBackgroundSubtle = HexColor(0xff221153),
+        basicText = HexColor(0xffffffff),
+        basicTextDominant = HexColor(0xffffffff),
+        basicTextOnAccent = HexColor(0xff371f7d),
+        basicTextOnAccentSecondary = HexColor(0xff371f7d),
+        basicTextRecessive = HexColor(0xffbc96ff),
+        basicTextLink = HexColor(0xffff4365),
+        basicStroke = HexColor(0xffbc96ff),
+        basicStrokeSubtle = HexColor(0xff4c2d9e)
+    )
+
     val LightTheme: ODSTheme = lightMode.copy(
         name = "Light Mode",
         basicBackground = HexColor(0xfff8fafc),
@@ -83,26 +119,29 @@ object AppThemeManager {
         basicStrokeSubtle = HexColor(0xffe2e8f0)
     )
 
-    private val _currentThemeName = MutableStateFlow("Dark (Onyx)")
+    private val _currentThemeName = MutableStateFlow("Connect (Default)")
     val currentThemeName: StateFlow<String> = _currentThemeName.asStateFlow()
 
-    private val _currentTheme = MutableStateFlow(DarkOnyxTheme)
+    private val _currentTheme = MutableStateFlow(ConnectTheme)
     val currentTheme: StateFlow<ODSTheme> = _currentTheme.asStateFlow()
 
     fun setTheme(themeName: String) {
         _currentThemeName.value = themeName
         val newTheme = when (themeName) {
+            "Connect (Default)" -> ConnectTheme
+            "Connect Dark" -> ConnectDarkTheme
             "Light Mode" -> LightTheme
             "Velvet Orchid" -> VelvetOrchidTheme
             "Amber Sunset" -> AmberSunsetTheme
             "Oceanic Breeze" -> OceanicBreezeTheme
-            else -> DarkOnyxTheme
+            "Dark (Onyx)" -> DarkOnyxTheme
+            else -> ConnectTheme
         }
         _currentTheme.value = newTheme
         ODSystem.colors.value = newTheme
     }
 
     fun isDarkTheme(): Boolean {
-        return _currentThemeName.value != "Light Mode"
+        return _currentThemeName.value != "Connect (Default)" && _currentThemeName.value != "Light Mode"
     }
 }
