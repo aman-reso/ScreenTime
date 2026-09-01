@@ -159,18 +159,13 @@ fun LiveStreamHostScreen(
         }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(streamId) {
         onDispose {
-            scope.launch {
-                try {
-                    val token = sessionManager.token ?: ""
-                    if (streamId.isNotBlank()) {
-                        api.endLiveStream(token, streamId)
-                    }
-                    room.disconnect()
-                    room.release()
-                } catch (_: Exception) {
-                }
+            viewModel.endStream(streamId)
+            try {
+                room.disconnect()
+                room.release()
+            } catch (_: Exception) {
             }
         }
     }
@@ -410,6 +405,12 @@ fun LiveStreamHostScreen(
                             ),
                             onClick = {
                                 showEndDialog = false
+                                viewModel.endStream(streamId)
+                                try {
+                                    room.disconnect()
+                                    room.release()
+                                } catch (_: Exception) {
+                                }
                                 onEndStream()
                             }
                         )
