@@ -65,6 +65,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerLabelAlignment
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.tokens.tokens.cheddarSecondaryScheme
+
 @Composable
 fun LiveStreamHostScreen(
     streamTitle: String,
@@ -87,6 +97,19 @@ fun LiveStreamHostScreen(
     var isCameraFront by remember { mutableStateOf(true) }
     var showEndDialog by remember { mutableStateOf(false) }
     var streamId by remember { mutableStateOf("") }
+    var retryTrigger by remember { mutableIntStateOf(0) }
+
+    // Loading & Error States
+    var isConnecting by remember { mutableStateOf(true) }
+    var connectionStatusText by remember { mutableStateOf("Preparing broadcast studio...") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    var hasPermissions by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        )
+    }
 
     val chatMessages = remember {
         mutableStateListOf(
@@ -100,27 +123,36 @@ fun LiveStreamHostScreen(
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ -> }
+    ) { perms ->
+        val cam = perms[Manifest.permission.CAMERA] == true
+        val mic = perms[Manifest.permission.RECORD_AUDIO] == true
+        if (cam && mic) {
+            hasPermissions = true
+            errorMessage = null
+            retryTrigger++
+        } else {
+            hasPermissions = false
+            isConnecting = false
+            errorMessage = "Camera and Microphone permissions are required to start your broadcast."
+        }
+    }
 
-    LaunchedEffect(Unit) {
-        val hasCam = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-        val hasMic = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.RECORD_AUDIO
-        ) == PackageManager.PERMISSION_GRANTED
-        if (!hasCam || !hasMic) {
+    LaunchedEffect(hasPermissions, retryTrigger) {
+        if (!hasPermissions) {
             permissionLauncher.launch(
                 arrayOf(
                     Manifest.permission.CAMERA,
                     Manifest.permission.RECORD_AUDIO
                 )
             )
+            return@LaunchedEffect
         }
 
+        isConnecting = true
+        errorMessage = null
+
         try {
+            connectionStatusText = "Registering broadcast on server..."
             val token = sessionManager.token ?: ""
             val startResp = try {
                 api.startLiveStream(token, streamTitle.ifBlank { "My Live Show" })
@@ -138,9 +170,20 @@ fun LiveStreamHostScreen(
                 roomName = streamId
             )
 
+            connectionStatusText = "Connecting to LiveKit room..."
             room.connect(livekitUrl, roomToken)
-            room.localParticipant.setMicrophoneEnabled(true)
-            room.localParticipant.setCameraEnabled(true)
+
+            connectionStatusText = "Starting camera & audio..."
+            try {
+                room.localParticipant.setMicrophoneEnabled(true)
+            } catch (_: Exception) {}
+
+            try {
+                room.localParticipant.setCameraEnabled(true)
+            } catch (e: Exception) {
+                errorMessage = "Failed to enable camera: ${e.localizedMessage}"
+            }
+
             isLive = true
 
             // Observe local video track
@@ -148,14 +191,20 @@ fun LiveStreamHostScreen(
                 val pub = room.localParticipant.getTrackPublication(Track.Source.CAMERA)
                 localVideoTrack = pub?.track as? LocalVideoTrack
 
+                if (localVideoTrack != null) {
+                    isConnecting = false
+                    errorMessage = null
+                }
+
                 // Simulated incoming viewer comments for active demo feel
                 if (viewerCount < 145) {
                     viewerCount += (1..3).random()
                 }
-                delay(3000)
+                delay(1000)
             }
         } catch (e: Exception) {
-            isLive = true
+            isConnecting = false
+            errorMessage = e.localizedMessage ?: "Failed to connect to broadcast server"
         }
     }
 
@@ -175,16 +224,99 @@ fun LiveStreamHostScreen(
             .fillMaxSize()
             .background(Color(0xFF0F0A1C))
     ) {
-        // ── Fullscreen Host Camera Stream ────────────────────────────────────
+        // ── Fullscreen Host Camera Stream or Loading / Error State ───────────
         if (localVideoTrack != null) {
             LiveKitVideoSurface(
                 room = room,
                 videoTrack = localVideoTrack,
                 modifier = Modifier.fillMaxSize()
             )
+        } else if (errorMessage != null) {
+            // ── Error State UI with Retry & Exit ─────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color(0xFF1E1145))
+                        .padding(24.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x33FF334B)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSText(
+                            text = "⚠️",
+                            style = ODSTextStyles.bodyL,
+                            color = HexColor(0xFFFF334B)
+                        )
+                    }
+
+                    ODSText(
+                        text = "Unable to Start Broadcast",
+                        style = ODSTextStyles.bodyMBold,
+                        color = HexColor(0xFFFFFFFF)
+                    )
+
+                    ODSText(
+                        text = errorMessage ?: "Unknown connection failure",
+                        style = ODSTextStyles.bodyMRegular,
+                        color = HexColor(0xFFBC96FF)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        ODSButton(
+                            modifier = Modifier.weight(1f),
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = "Go Back",
+                                variant = ODSButtonVariant.SECONDARY
+                            ),
+                            onClick = {
+                                viewModel.endStream(streamId)
+                                onEndStream()
+                            }
+                        )
+
+                        ODSButton(
+                            modifier = Modifier.weight(1f),
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = "Retry",
+                                variant = ODSButtonVariant.PRIMARY
+                            ),
+                            onClick = {
+                                errorMessage = null
+                                isConnecting = true
+                                retryTrigger++
+                            }
+                        )
+                    }
+                }
+            }
         } else {
+            // ── ODS Loading Spinner State ─────────────────────────────────────
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color(0xFFFF334B))
+                ODSLoadingSpinner(
+                    props = ODSLoadingSpinnerProps(
+                        labelText = connectionStatusText,
+                        labelAlignment = ODSLoadingSpinnerLabelAlignment.VERTICAL
+                    ),
+                    scheme = scheme
+                )
             }
         }
 

@@ -23,12 +23,46 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.core.model.UserRole
+import com.app.screentime.core.network.dto.LiveStreamDto
+import com.telekom.odsystem.atoms.ODSBorder
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSImage
+import com.telekom.odsystem.atoms.ODSImageModel
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
 import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.atoms.skeleton.ODSSkeleton
 import com.telekom.odsystem.atoms.skeleton.ODSSkeletonProps
 import com.telekom.odsystem.atoms.skeleton.ODSSkeletonVariant
+import com.telekom.odsystem.foundations.HexColor
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.tokens.ODSTextStyles
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+import com.telekom.odsystem.tokens.tokens.cheddarSecondaryScheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -68,7 +102,7 @@ fun LiveListScreen(
         ODSColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 12.dp),
             gap = 12.dp
         ) {
             Spacer(
@@ -113,7 +147,7 @@ fun LiveListScreen(
 
                         ODSText(
                             text = "Live Shows",
-                            style = ODSTextStyles.bodyLBold,
+                            style = ODSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )
                     }
@@ -139,7 +173,7 @@ fun LiveListScreen(
                             gap = 6.dp
                         ) {
                             ODSIcon(
-                                iconModel = ODSIconModel(drawableRes = R.drawable.video),
+                                iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.video),
                                 tint = HexColor(0xFFFFFFFF).getColor(),
                                 modifier = Modifier.size(14.dp)
                             )
@@ -189,7 +223,7 @@ fun LiveListScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             ODSIcon(
-                                iconModel = ODSIconModel(drawableRes = R.drawable.video),
+                                iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.video),
                                 tint = scheme.basicAccent.getColor(),
                                 modifier = Modifier.size(36.dp)
                             )
@@ -244,40 +278,6 @@ fun LiveListScreen(
                             }
                         )
                     }
-                }
-            }
-        }
-
-        // Floating Compact "Go Live" Pill for Models
-        if (isModel) {
-            ODSBox(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 85.dp)
-                    .clickable(onClick = onNavigateToHost),
-                background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-                border = ODSBorder(
-                    width = 1.dp,
-                    colorList = listOf(ODSColorModel(hexColor = HexColor(0x66FFFFFF)))
-                ),
-                cornerRadius = ODSCorners(all = 20.dp),
-                padding = ODSPadding(horizontal = 14.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSRow(
-                    verticalAlignment = Alignment.CenterVertically,
-                    gap = 6.dp
-                ) {
-                    ODSIcon(
-                        iconModel = ODSIconModel(drawableRes = R.drawable.video),
-                        tint = HexColor(0xFFFFFFFF).getColor(),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    ODSText(
-                        text = "Go Live",
-                        style = ODSTextStyles.microcopyBold,
-                        color = HexColor(0xFFFFFFFF)
-                    )
                 }
             }
         }
@@ -431,7 +431,7 @@ fun LiveStreamCard(
                     gap = 4.dp
                 ) {
                     ODSIcon(
-                        iconModel = ODSIconModel(drawableRes = R.drawable.happy_person_type_bold_size_standard),
+                        iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.happy_person_type_bold_size_standard),
                         tint = HexColor(0xFFFFFFFF).getColor(),
                         modifier = Modifier.size(12.dp)
                     )
