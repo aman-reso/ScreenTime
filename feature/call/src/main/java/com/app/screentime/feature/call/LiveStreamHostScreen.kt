@@ -41,7 +41,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CancellationException
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -203,14 +205,19 @@ fun LiveStreamHostScreen(
                 delay(1000)
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             isConnecting = false
             errorMessage = e.localizedMessage ?: "Failed to connect to broadcast server"
         }
     }
 
-    DisposableEffect(streamId) {
+    val currentStreamId by rememberUpdatedState(streamId)
+    DisposableEffect(Unit) {
         onDispose {
-            viewModel.endStream(streamId)
+            val sid = currentStreamId
+            if (sid.isNotBlank()) {
+                viewModel.endStream(sid)
+            }
             try {
                 room.disconnect()
                 room.release()

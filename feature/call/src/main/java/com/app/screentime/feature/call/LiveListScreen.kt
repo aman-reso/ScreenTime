@@ -65,6 +65,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 import com.telekom.odsystem.tokens.tokens.cheddarSecondaryScheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun LiveListScreen(
@@ -87,11 +88,11 @@ fun LiveListScreen(
                 val fetched = api.getLiveStreams(token)
                 streams = fetched
             } catch (e: Exception) {
-                // Keep current streams on transient network errors
+
             } finally {
                 isLoading = false
             }
-            delay(3000) // Poll every 3 seconds for active broadcasts
+            delay(3000.milliseconds)
         }
     }
 
