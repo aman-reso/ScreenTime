@@ -23,43 +23,12 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.app.screentime.core.model.UserRole
-import com.app.screentime.core.network.dto.LiveStreamDto
-import com.telekom.odsystem.R
-import com.telekom.odsystem.atoms.ODSBorder
-import com.telekom.odsystem.atoms.ODSBox
-import com.telekom.odsystem.atoms.ODSColumn
-import com.telekom.odsystem.atoms.ODSImage
-import com.telekom.odsystem.atoms.ODSImageModel
-import com.telekom.odsystem.atoms.ODSRow
-import com.telekom.odsystem.atoms.ODSText
-import com.telekom.odsystem.atoms.icon.ODSIcon
-import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.foundations.HexColor
-import com.telekom.odsystem.foundations.ODSColorModel
-import com.telekom.odsystem.foundations.ODSCorners
-import com.telekom.odsystem.foundations.ODSPadding
-import com.telekom.odsystem.neutralScheme
-import com.telekom.odsystem.tokens.ODSTextStyles
-import com.telekom.odsystem.tokens.tokens.ODSTheme
-import com.telekom.odsystem.tokens.tokens.cheddarSecondaryScheme
-
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.skeleton.ODSSkeleton
+import com.telekom.odsystem.atoms.skeleton.ODSSkeletonProps
+import com.telekom.odsystem.atoms.skeleton.ODSSkeletonVariant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -78,56 +47,22 @@ fun LiveListScreen(
     val isModel = sessionManager.userRole == UserRole.MODEL
 
     LaunchedEffect(Unit) {
-        val fallbackMockStreams = listOf(
-            LiveStreamDto(
-                stream_id = "live_demo_1",
-                host_id = "m1",
-                host_name = "Riya Gosh",
-                host_avatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
-                title = "Late night vibe & music 🎵",
-                viewer_count = 142
-            ),
-            LiveStreamDto(
-                stream_id = "live_demo_2",
-                host_id = "m2",
-                host_name = "Ananya Sharma",
-                host_avatar = "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80",
-                title = "Q&A and chill chat ✨",
-                viewer_count = 89
-            ),
-            LiveStreamDto(
-                stream_id = "live_demo_3",
-                host_id = "m3",
-                host_name = "Priya Kapoor",
-                host_avatar = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
-                title = "Singing your favorite songs 🎤",
-                viewer_count = 230
-            )
-        )
-
         while (isActive) {
             try {
                 val token = sessionManager.token ?: ""
                 val fetched = api.getLiveStreams(token)
-                if (fetched.isNotEmpty()) {
-                    streams = fetched
-                } else if (streams.isEmpty()) {
-                    streams = fallbackMockStreams
-                }
+                streams = fetched
             } catch (e: Exception) {
-                if (streams.isEmpty()) {
-                    streams = fallbackMockStreams
-                }
+                // Keep current streams on transient network errors
             } finally {
                 isLoading = false
             }
-            delay(3000) // Poll every 3 seconds for newly started broadcasts
+            delay(3000) // Poll every 3 seconds for active broadcasts
         }
     }
 
     ODSBox(
-        modifier = modifier
-            .fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
     ) {
         ODSColumn(
@@ -136,9 +71,11 @@ fun LiveListScreen(
                 .padding(horizontal = 16.dp),
             gap = 12.dp
         ) {
-            Spacer(modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding())
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+            )
             ODSRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -191,8 +128,7 @@ fun LiveListScreen(
                 // Header Compact "Go Live" Button for Models
                 if (isModel) {
                     ODSBox(
-                        modifier = Modifier
-                            .clickable(onClick = onNavigateToHost),
+                        modifier = Modifier.clickable(onClick = onNavigateToHost),
                         background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
                         cornerRadius = ODSCorners(all = 16.dp),
                         padding = ODSPadding(horizontal = 12.dp, vertical = 6.dp),
@@ -218,13 +154,75 @@ fun LiveListScreen(
             }
 
             if (isLoading) {
+                // ── ODS Shimmer Skeleton Loading Grid ──────────────────────────────
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 96.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(6) {
+                        LiveStreamCardSkeleton(scheme = scheme)
+                    }
+                }
+            } else if (streams.isEmpty()) {
+                // ── ODS Empty State ────────────────────────────────────────────────
                 ODSBox(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 80.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = scheme.basicAccent.getColor())
+                    ODSColumn(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth(0.85f)
+                            .padding(24.dp)
+                    ) {
+                        ODSBox(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape),
+                            background = listOf(ODSColorModel(hexColor = cheddarSecondaryScheme.basicBackgroundSubtle)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSIcon(
+                                iconModel = ODSIconModel(drawableRes = R.drawable.video),
+                                tint = scheme.basicAccent.getColor(),
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+
+                        ODSText(
+                            text = "No Live Shows Right Now",
+                            style = ODSTextStyles.bodyLBold,
+                            color = scheme.basicText
+                        )
+
+                        ODSText(
+                            text = "Creators will appear here as soon as they start broadcasting. Check back in a moment or start your own stream!",
+                            style = ODSTextStyles.bodyMRegular,
+                            color = scheme.basicTextRecessive
+                        )
+
+                        if (isModel) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            ODSButton(
+                                modifier = Modifier.fillMaxWidth(0.7f),
+                                scheme = scheme,
+                                props = ODSButtonProps(
+                                    label = "Start Broadcasting",
+                                    variant = ODSButtonVariant.PRIMARY
+                                ),
+                                onClick = onNavigateToHost
+                            )
+                        }
+                    }
                 }
             } else {
+                // ── Active Live Stream Grid ────────────────────────────────────────
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -285,6 +283,75 @@ fun LiveListScreen(
         }
     }
 }
+
+@Composable
+fun LiveStreamCardSkeleton(
+    scheme: ODSTheme,
+    modifier: Modifier = Modifier
+) {
+    ODSBox(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(240.dp)
+            .clip(RoundedCornerShape(16.dp)),
+        background = listOf(ODSColorModel(hexColor = cheddarSecondaryScheme.basicBackgroundSubtle)),
+        cornerRadius = ODSCorners(all = 16.dp),
+        border = ODSBorder(
+            width = 1.dp,
+            colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
+        ),
+        padding = ODSPadding(all = 12.dp)
+    ) {
+        ODSColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ODSSkeleton(
+                    modifier = Modifier
+                        .size(width = 54.dp, height = 22.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    scheme = scheme,
+                    props = ODSSkeletonProps(variant = ODSSkeletonVariant.SMALL)
+                )
+                ODSSkeleton(
+                    modifier = Modifier
+                        .size(width = 44.dp, height = 22.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    scheme = scheme,
+                    props = ODSSkeletonProps(variant = ODSSkeletonVariant.SMALL)
+                )
+            }
+
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth(),
+                gap = 6.dp
+            ) {
+                ODSSkeleton(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(4.dp)),
+                    scheme = scheme,
+                    props = ODSSkeletonProps(variant = ODSSkeletonVariant.LARGE)
+                )
+                ODSSkeleton(
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(4.dp)),
+                    scheme = scheme,
+                    props = ODSSkeletonProps(variant = ODSSkeletonVariant.SMALL)
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 fun LiveStreamCard(
