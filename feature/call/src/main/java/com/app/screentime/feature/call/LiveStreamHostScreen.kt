@@ -93,7 +93,7 @@ fun LiveStreamHostScreen(
 
     var localVideoTrack by remember { mutableStateOf<LocalVideoTrack?>(null) }
     var isLive by remember { mutableStateOf(false) }
-    var viewerCount by remember { mutableIntStateOf(1) }
+    var viewerCount by remember { mutableIntStateOf(0) }
     var totalEarned by remember { mutableDoubleStateOf(0.0) }
     var isMuted by remember { mutableStateOf(false) }
     var isCameraFront by remember { mutableStateOf(true) }
@@ -114,13 +114,7 @@ fun LiveStreamHostScreen(
     }
 
     val chatMessages = remember {
-        mutableStateListOf(
-            LiveChatMessage(
-                "1",
-                "System",
-                "You are now LIVE! Share your stream to invite viewers. 🌟"
-            )
-        )
+        mutableStateListOf<LiveChatMessage>()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -198,10 +192,8 @@ fun LiveStreamHostScreen(
                     errorMessage = null
                 }
 
-                // Simulated incoming viewer comments for active demo feel
-                if (viewerCount < 145) {
-                    viewerCount += (1..3).random()
-                }
+                // Real-time viewer count based on actual connected viewers
+                viewerCount = room.remoteParticipants.size
                 delay(1000)
             }
         } catch (e: Exception) {

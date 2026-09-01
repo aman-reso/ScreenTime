@@ -101,17 +101,13 @@ fun LiveStreamViewerScreen(
 
     var remoteVideoTrack by remember { mutableStateOf<RemoteVideoTrack?>(null) }
     var isConnected by remember { mutableStateOf(false) }
-    var viewerCount by remember { mutableIntStateOf(128) }
+    var viewerCount by remember { mutableIntStateOf(1) }
     var messageText by remember { mutableStateOf("") }
     var showGiftSheet by remember { mutableStateOf(false) }
     var tipNotice by remember { mutableStateOf<String?>(null) }
 
     val chatMessages = remember {
-        mutableStateListOf(
-            LiveChatMessage("1", "Aman", "Hey everyone! 👋"),
-            LiveChatMessage("2", "Vikram", "Super clear stream! ❤️"),
-            LiveChatMessage("3", "Sneha", "Loving the music tonight ✨")
-        )
+        mutableStateListOf<LiveChatMessage>()
     }
     val listState = rememberLazyListState()
 
@@ -150,6 +146,7 @@ fun LiveStreamViewerScreen(
                     .firstOrNull()
                     ?.getTrackPublication(Track.Source.CAMERA)
                 remoteVideoTrack = remotePub?.track as? RemoteVideoTrack
+                viewerCount = maxOf(1, room.remoteParticipants.size)
                 delay(500)
             }
         } catch (e: Exception) {
