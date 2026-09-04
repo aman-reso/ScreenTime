@@ -25,6 +25,11 @@
     <!-- Ads -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
+    <!-- Remove unused LiveKit ScreenCaptureService & MediaProjection permission to satisfy Google Play Console -->
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"
+        tools:node="remove" />
+
     <application
         android:name=".ScreenTimeApplication"
         android:allowBackup="true"
@@ -119,6 +124,11 @@
             android:name="com.app.screentime.feature.call.service.CallForegroundService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+
+        <!-- Remove unused LiveKit ScreenCaptureService to satisfy Google Play Console -->
+        <service
+            android:name="io.livekit.android.room.track.screencapture.ScreenCaptureService"
+            tools:node="remove" />
 
         <!-- Call Action Broadcast Receiver -->
         <receiver
