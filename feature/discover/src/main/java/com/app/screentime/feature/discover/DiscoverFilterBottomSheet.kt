@@ -34,14 +34,11 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiscoverFilterBottomSheet(
-
     scheme: ODSTheme,
     selectedTab: String,
     selectedFilter: String,
-    selectedDistance: String,
     onTabSelected: (String) -> Unit,
     onFilterSelected: (String) -> Unit,
-    onDistanceSelected: (String) -> Unit,
     onReset: () -> Unit,
     onApply: () -> Unit,
     onDismiss: () -> Unit
@@ -57,7 +54,7 @@ fun DiscoverFilterBottomSheet(
                 scheme = scheme,
                 props = ODSBottomSheetHeaderProps(
                     largeHeading = "Filter Creators",
-                    subtitle = "Customize models discovery near you",
+                    subtitle = "Customize models discovery",
                     size = ODSBottomSheetHeaderSize.LARGE
                 )
             )
@@ -113,7 +110,7 @@ fun DiscoverFilterBottomSheet(
                         style = ODSTextStyles.bodySBold,
                         color = scheme.basicText
                     )
-                    val categories = listOf("All", "New ✨", "Nearby 📍", "Online Now 🟢", "Top Rated ⭐")
+                    val categories = listOf("All", "New ✨", "Online Now 🟢", "Top Rated ⭐")
                     ODSWrap(horizontalGap = 8.dp, verticalGap = 8.dp) {
                         categories.forEach { category ->
                             val isSelected = selectedFilter.startsWith(category.take(3)) || selectedFilter == category
@@ -135,41 +132,6 @@ fun DiscoverFilterBottomSheet(
                                     text = category,
                                     style = if (isSelected) ODSTextStyles.bodySBold else ODSTextStyles.bodySRegular,
                                     color = if (isSelected) scheme.basicTextOnAccent else scheme.basicText
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Distance Radius
-                ODSColumn(gap = 8.dp) {
-                    ODSText(
-                        text = "Distance Radius",
-                        style = ODSTextStyles.bodySBold,
-                        color = scheme.basicText
-                    )
-                    val distances = listOf("Any Distance", "Within 5 km", "Within 10 km", "Within 25 km")
-                    ODSWrap(horizontalGap = 8.dp, verticalGap = 8.dp) {
-                        distances.forEach { dist ->
-                            val isSelected = selectedDistance == dist
-                            ODSBox(
-                                modifier = Modifier.clickable { onDistanceSelected(dist) },
-                                background = listOf(
-                                    ODSColorModel(
-                                        hexColor = if (isSelected) scheme.basicAccentSecondary else scheme.basicBackground
-                                    )
-                                ),
-                                cornerRadius = ODSCorners(all = 12.dp),
-                                border = ODSBorder(
-                                    width = 1.dp,
-                                    colorList = listOf(ODSColorModel(hexColor = if (isSelected) scheme.basicAccentSecondary else scheme.basicStrokeSubtle))
-                                ),
-                                padding = ODSPadding(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                ODSText(
-                                    text = dist,
-                                    style = if (isSelected) ODSTextStyles.bodySBold else ODSTextStyles.bodySRegular,
-                                    color = if (isSelected) scheme.basicBackground else scheme.basicText
                                 )
                             }
                         }
@@ -210,4 +172,3 @@ fun DiscoverFilterBottomSheet(
         }
     )
 }
-

@@ -116,7 +116,7 @@ fun ModelVerificationBottomSheet(
                     scheme = scheme,
                     props = ODSTextFieldProps(
                         size = ODSTextFieldSize.SMALL,
-                        label = "Country / Location",
+                        label = "Country",
                         placeholderText = "e.g. India, Indonesia, USA",
                         inputText = country,
                         leftIcon = ODSIconModel(imageVector = Icons.Outlined.Flag)

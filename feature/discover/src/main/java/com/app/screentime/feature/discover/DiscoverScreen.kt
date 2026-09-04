@@ -160,12 +160,11 @@ fun DiscoverScreen(
 
     var selectedTab by remember { mutableStateOf("Discovery") }
     var selectedFilter by remember { mutableStateOf("All") }
-    var selectedDistance by remember { mutableStateOf("Any Distance") }
     var showFilterSheet by remember { mutableStateOf(false) }
 
     val sourceModels = uiState.models
 
-    val filtered = remember(sourceModels, selectedTab, selectedFilter, selectedDistance) {
+    val filtered = remember(sourceModels, selectedTab, selectedFilter) {
         val baseList = if (selectedTab == "Matched") {
             sourceModels.filter { uiState.favoriteModelIds.contains(it.id) || it.rating >= 4.9f }
         } else {
@@ -173,7 +172,7 @@ fun DiscoverScreen(
         }
 
         baseList.filter { model ->
-            val matchesFilter = when {
+            when {
                 selectedFilter.startsWith("New") -> model.id in listOf(
                     "m1",
                     "m2",
@@ -182,30 +181,10 @@ fun DiscoverScreen(
                     "1",
                     "2"
                 )
-
-                selectedFilter.startsWith("Nearby") -> model.distance.contains("m") && !model.distance.contains(
-                    "km"
-                )
-
                 selectedFilter.startsWith("Online") -> model.isOnline
                 selectedFilter.startsWith("Top") -> model.rating >= 4.9f
                 else -> true
             }
-
-            val matchesDistance = when (selectedDistance) {
-                "Within 5 km" -> model.distance.startsWith("3") || (model.distance.contains("m") && !model.distance.contains(
-                    "km"
-                ))
-
-                "Within 10 km" -> model.distance.startsWith("3") || model.distance.startsWith("8") || model.distance.startsWith(
-                    "1"
-                )
-
-                "Within 25 km" -> !model.distance.startsWith("4") && !model.distance.startsWith("5")
-                else -> true
-            }
-
-            matchesFilter && matchesDistance
         }
     }
 
@@ -237,11 +216,11 @@ fun DiscoverScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 96.dp)
         ) {
-            // 1. Top Location Bar
-            item(key = "top_location_header", contentType = "Header") {
+            // 1. Top Header Bar
+            item(key = "top_header", contentType = "Header") {
                 DiscoverTopBar(
                     scheme = scheme,
-                    hasActiveFilter = selectedFilter != "All" || selectedDistance != "Any Distance",
+                    hasActiveFilter = selectedFilter != "All",
                     onOpenFilter = { showFilterSheet = true }
                 )
             }
@@ -412,13 +391,10 @@ fun DiscoverScreen(
                 scheme = scheme,
                 selectedTab = selectedTab,
                 selectedFilter = selectedFilter,
-                selectedDistance = selectedDistance,
                 onTabSelected = { selectedTab = it },
                 onFilterSelected = { selectedFilter = it },
-                onDistanceSelected = { selectedDistance = it },
                 onReset = {
                     selectedFilter = "All"
-                    selectedDistance = "Any Distance"
                     showFilterSheet = false
                 },
                 onApply = { showFilterSheet = false },
@@ -463,23 +439,11 @@ private fun DiscoverTopBar(
             ) {}
         }
         ODSColumn(horizontalAlignment = Alignment.CenterHorizontally, gap = 2.dp) {
-            ODSRow(verticalAlignment = Alignment.CenterVertically, gap = 4.dp) {
-                ODSIcon(
-                    iconModel = ODSIconModel(drawableRes = R.drawable.location),
-                    tint = scheme.basicText.getColor(),
-                    height = 20.dp,
-                    width = 20.dp
-                )
-                ODSText(
-                    text = "Bekasi, Jawa Barat",
-                    style = ODSTextStyles.bodySBold,
-                    color = scheme.basicText
-                )
-                ODSIcon(
-                    iconModel = ODSIconModel(imageVector = Icons.Outlined.KeyboardArrowDown),
-                    tint = scheme.basicTextRecessive.getColor()
-                )
-            }
+            ODSText(
+                text = "Discover",
+                style = ODSTextStyles.titleM,
+                color = scheme.basicText
+            )
         }
         ODSBox(
             modifier = Modifier

@@ -10,21 +10,17 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
-    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
     <!-- Voice calls & WebRTC -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
-    <!-- Camera (future video calls) -->
+    <!-- Camera (video calls & live streaming) -->
     <uses-permission android:name="android.permission.CAMERA" />
 
     <!-- Biometric Authentication -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
-    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <!-- Ads -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
@@ -122,7 +118,7 @@
         <service
             android:name="com.app.screentime.feature.call.service.CallForegroundService"
             android:exported="false"
-            android:foregroundServiceType="microphone|phoneCall" />
+            android:foregroundServiceType="microphone" />
 
         <!-- Call Action Broadcast Receiver -->
         <receiver

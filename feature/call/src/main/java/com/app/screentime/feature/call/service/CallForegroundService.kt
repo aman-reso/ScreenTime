@@ -107,9 +107,6 @@ class CallForegroundService : Service() {
                     if (hasRecordAudio) {
                         serviceType = serviceType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
                     }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        serviceType = serviceType or ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
-                    }
                 }
 
                 try {

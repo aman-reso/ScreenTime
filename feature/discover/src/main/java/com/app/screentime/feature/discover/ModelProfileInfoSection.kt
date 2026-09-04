@@ -39,29 +39,11 @@ fun ModelProfileInfoSection(
         gap = 14.dp
     ) {
         // 1. Name & Age
-        ODSColumn(gap = 4.dp) {
-            ODSText(
-                text = "${model.name}, ${model.age}",
-                style = ODSTextStyles.titleL,
-                color = scheme.basicText
-            )
-
-            ODSRow(
-                verticalAlignment = Alignment.CenterVertically,
-                gap = 6.dp
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.location),
-                    tint = scheme.basicTextRecessive.getColor(),
-                    modifier = Modifier.size(16.dp)
-                )
-                ODSText(
-                    text = model.location.ifBlank { "Mumbai, India" },
-                    style = ODSTextStyles.microcopyRegular,
-                    color = scheme.basicTextRecessive
-                )
-            }
-        }
+        ODSText(
+            text = "${model.name}, ${model.age}",
+            style = ODSTextStyles.titleL,
+            color = scheme.basicText
+        )
 
         // 2. Call & Chat Rate Badges
         ODSRow(

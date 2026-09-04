@@ -235,9 +235,6 @@ dependencies {
     // ConstraintLayout Compose
     implementation(libs.androidx.constraintlayout.compose)
 
-    // Google Play Services Location
-    implementation(libs.play.services.location)
-
     // Google Play Install Referrer (campaign/source attribution)
     implementation(libs.play.installreferrer)
 

@@ -154,8 +154,7 @@ fun StaggeredModelCard(
                     style = ODSTextStyles.bodySBold,
                     color = HexColor(0xFFFFFFFF)
                 )
-                val tagStr = if (model.tags.isNotEmpty()) model.tags.take(2).joinToString(", ")
-                    else model.distance.ifBlank { "" }
+                val tagStr = if (model.tags.isNotEmpty()) model.tags.take(2).joinToString(", ") else ""
                 if (tagStr.isNotBlank()) {
                     ODSText(
                         text = tagStr,
