@@ -1,7 +1,12 @@
 package com.app.screentime.core.ui.security
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Fingerprint
@@ -14,7 +19,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
-import com.telekom.odsystem.atoms.*
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
 import com.telekom.odsystem.atoms.button.ODSButtonSize
@@ -22,8 +29,6 @@ import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.ODSColorModel
-import com.telekom.odsystem.foundations.ODSCorners
-import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
@@ -68,7 +73,6 @@ fun BiometricLockScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             gap = 20.dp
         ) {
-            // Lock Icon Badge
             ODSBox(
                 modifier = Modifier
                     .size(64.dp)

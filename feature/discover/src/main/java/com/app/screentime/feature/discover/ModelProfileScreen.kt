@@ -1,9 +1,13 @@
 package com.app.screentime.feature.discover
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -39,23 +43,24 @@ fun ModelProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     val model = uiState.model ?: ModelProfile(id = modelId, name = modelName)
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(scheme.basicBackground.getColor())
+    ) {
         ODSColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
             background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
         ) {
-            // 1. Hero Image Header (Image, Back, Favorite, Online & Rating tags)
+            // 1. Hero Image Header (Full width, bottom tags, dual gradient scrims)
             ModelProfileHeader(
                 model = model,
-                isFavorite = uiState.isFavorite,
-                scheme = scheme,
-                onBackClick = onBackClick,
-                onFavoriteToggle = { viewModel.toggleFavorite() }
+                scheme = scheme
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
 
             // 2. Profile Details & Rates (Name, Bio, Call/Chat Rate pills, Tags)
             ModelProfileInfoSection(
@@ -66,7 +71,20 @@ fun ModelProfileScreen(
             Spacer(Modifier.height(110.dp))
         }
 
-        // 3. Floating Bottom Actions (Chat, Video Call, and Voice Call Buttons)
+        // 3. Floating Top Bar (Back & Favorite buttons, securely below status bar)
+        ModelProfileTopBar(
+            isFavorite = uiState.isFavorite,
+            scheme = scheme,
+            onBackClick = onBackClick,
+            onFavoriteToggle = { viewModel.toggleFavorite() },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+
+        // 4. Floating Bottom Actions (Chat, Video Call, and Voice Call Buttons)
         ModelProfileBottomBar(
             scheme = scheme,
             onStartChat = { onStartChat(model.id, model.name) },

@@ -34,6 +34,8 @@ data class CallUiState(
     val isCameraOn: Boolean = false,
     val isFrontCamera: Boolean = true,
     val isLowBalanceWarning: Boolean = false,
+    val isP2PConnected: Boolean = false,
+    val isUsingLiveKitFallback: Boolean = false,
     val endReason: String? = null
 )
 

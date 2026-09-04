@@ -75,6 +75,8 @@ import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import com.telekom.odsystem.tokens.tokens.cheddarSecondaryScheme
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import kotlinx.coroutines.delay
 import kotlin.math.sin
 import kotlin.time.Duration.Companion.milliseconds
@@ -245,17 +247,22 @@ fun VoiceCallScreen(
                 }
 
                 ODSText(
-                    text = if (isCurrentUserModel) "Caller Insufficient Balance" else "Insufficient Balance",
+                    text = if (isCurrentUserModel) stringResource(R.string.call_caller_insufficient_balance) else stringResource(R.string.call_insufficient_balance),
                     style = ODSTextStyles.bodyMBold,
                     color = scheme.basicText
                 )
 
                 ODSText(
                     text = if (isCurrentUserModel) {
-                        callState.balanceMessage.ifBlank { "The caller does not have sufficient balance to continue this call." }
+                        callState.balanceMessage.ifBlank { stringResource(R.string.call_insufficient_balance_caller_msg) }
                     } else {
                         callState.balanceMessage.ifBlank {
-                            "You need at least ₹${callState.minRequiredBalance.toInt()} coins for a 1-minute voice call with $modelName. Current balance: ₹${callState.currentBalance.toInt()}."
+                            stringResource(
+                                R.string.call_insufficient_balance_msg,
+                                callState.minRequiredBalance.toInt(),
+                                modelName,
+                                callState.currentBalance.toInt()
+                            )
                         }
                     },
                     style = ODSTextStyles.bodyMRegular,
@@ -269,7 +276,7 @@ fun VoiceCallScreen(
                         modifier = Modifier.fillMaxWidth(0.6f),
                         scheme = scheme,
                         props = ODSButtonProps(
-                            label = "Close",
+                            label = stringResource(R.string.call_action_close),
                             variant = ODSButtonVariant.PRIMARY
                         ),
                         onClick = {
@@ -286,7 +293,7 @@ fun VoiceCallScreen(
                             modifier = Modifier.weight(1f),
                             scheme = scheme,
                             props = ODSButtonProps(
-                                label = "Cancel",
+                                label = stringResource(R.string.call_action_cancel),
                                 variant = ODSButtonVariant.SECONDARY,
                             ),
                             onClick = {
@@ -299,7 +306,7 @@ fun VoiceCallScreen(
                             modifier = Modifier.weight(1f),
                             scheme = scheme,
                             props = ODSButtonProps(
-                                label = "Top Up Wallet",
+                                label = stringResource(R.string.call_action_recharge),
                                 variant = ODSButtonVariant.PRIMARY
                             ),
                             onClick = {
@@ -318,12 +325,12 @@ fun VoiceCallScreen(
     val seconds = callState.durationSec % 60
     val formattedTime = "%02d:%02d".format(minutes, seconds)
     val statusText = when (callState.status) {
-        CallStatus.CHECKING_BALANCE -> "CHECKING BALANCE…"
-        CallStatus.DIALING -> "CONNECTING…"
-        CallStatus.ACTIVE -> "VOICE CALL"
-        CallStatus.INCOMING -> "INCOMING CALL"
-        CallStatus.ENDED -> "CALL ENDED"
-        else -> "CALLING…"
+        CallStatus.CHECKING_BALANCE -> stringResource(R.string.call_insufficient_balance).uppercase()
+        CallStatus.DIALING -> stringResource(R.string.call_ringing).uppercase()
+        CallStatus.ACTIVE -> stringResource(R.string.call_voice_call).uppercase()
+        CallStatus.INCOMING -> stringResource(R.string.call_incoming_voice).uppercase()
+        CallStatus.ENDED -> stringResource(R.string.call_voice_ended).uppercase()
+        else -> stringResource(R.string.call_ringing).uppercase()
     }
 
     if (isActuallyInPip) {

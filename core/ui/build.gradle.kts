@@ -29,6 +29,7 @@ android {
 
 dependencies {
     implementation(project(":core:model"))
+    api(project(":config"))
     api(project(":odsystem"))
     api(project(":molecule"))
 

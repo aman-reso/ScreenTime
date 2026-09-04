@@ -321,7 +321,7 @@ fun ScreenTimeNavigation(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 12.dp)) {
+                .padding(horizontal = 20.dp)) {
             LunaBottomBar(
                 scheme = scheme, selectedIndex = selectedIndex, onTabSelected = { index ->
                     val route = bottomNavTabs.getOrNull(index)?.screen ?: return@LunaBottomBar
@@ -334,18 +334,27 @@ fun ScreenTimeNavigation(
                 })
         }
 
-        // ── Global Active Call Floating Section (Shown on ANY screen if call is active and user minimized call) ──
         AnimatedVisibility(
             visible = callState.status == CallStatus.ACTIVE && !isAlreadyOnCallScreen && !isInPipMode,
             enter = slideInVertically { -it } + fadeIn(),
             exit = slideOutVertically { -it } + fadeOut(),
             modifier = Modifier.align(Alignment.TopCenter)) {
             ActiveCallGlobalBanner(callState = callState, scheme = scheme, onExpand = {
-                backStack.add(
-                    Screen.VoiceCall(
-                        callState.remoteUserId.ifBlank { "unknown" },
-                        callState.remoteUserName.ifBlank { "Caller" })
-                )
+                if (callState.callType == com.app.screentime.feature.call.CallType.VIDEO) {
+                    backStack.add(
+                        Screen.VideoCall(
+                            modelId = callState.remoteUserId.ifBlank { "unknown" },
+                            modelName = callState.remoteUserName.ifBlank { "Caller" },
+                            ratePerMin = callState.ratePerMin
+                        )
+                    )
+                } else {
+                    backStack.add(
+                        Screen.VoiceCall(
+                            callState.remoteUserId.ifBlank { "unknown" },
+                            callState.remoteUserName.ifBlank { "Caller" })
+                    )
+                }
             }, onEndCall = {
                 callViewModel.endCall("Ended from banner")
             }, onToggleMute = {
@@ -364,11 +373,21 @@ fun ScreenTimeNavigation(
                 scheme = scheme,
                 onAccept = {
                     callViewModel.acceptIncomingCall()
-                    backStack.add(
-                        Screen.VoiceCall(
-                            callState.remoteUserId.ifBlank { "unknown" },
-                            callState.remoteUserName.ifBlank { "Caller" })
-                    )
+                    if (callState.callType == com.app.screentime.feature.call.CallType.VIDEO) {
+                        backStack.add(
+                            Screen.VideoCall(
+                                modelId = callState.remoteUserId.ifBlank { "unknown" },
+                                modelName = callState.remoteUserName.ifBlank { "Caller" },
+                                ratePerMin = callState.ratePerMin
+                            )
+                        )
+                    } else {
+                        backStack.add(
+                            Screen.VoiceCall(
+                                callState.remoteUserId.ifBlank { "unknown" },
+                                callState.remoteUserName.ifBlank { "Caller" })
+                        )
+                    }
                 },
                 onDecline = {
                     callViewModel.rejectIncomingCall()
@@ -397,7 +416,6 @@ private fun LunaBottomBar(
         ) {
             bottomNavTabs.forEachIndexed { index, tab ->
                 val isSelected = selectedIndex == index
-
                 ODSBox(
                     modifier = Modifier.clickable(
                         interactionSource = remember { MutableInteractionSource() },

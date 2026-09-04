@@ -2,6 +2,7 @@ package com.app.screentime.feature.profile
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,14 +32,15 @@ fun BiometricSecurityCard(
 ) {
     ODSBox(
         modifier = modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp),
         background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
         cornerRadius = ODSCorners(all = 12.dp),
         border = ODSBorder(
             width = 1.dp,
             colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
         ),
-        padding = ODSPadding(horizontal = 16.dp, vertical = 12.dp)
+        padding = ODSPadding(horizontal = 12.dp, vertical = 12.dp)
     ) {
         ODSRow(
             modifier = Modifier

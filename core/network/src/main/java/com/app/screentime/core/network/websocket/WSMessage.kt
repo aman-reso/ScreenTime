@@ -24,6 +24,10 @@ data class WSMessage(
     val cost: Double? = null,
     val reason: String? = null,
     val message: String? = null,
+    val sdp: String? = null,
+    val candidate: String? = null,
+    val sdp_mid: String? = null,
+    val sdp_m_line_index: Int? = null,
     val payload: JsonElement? = null
 ) {
     fun payloadAsString(): String {
@@ -44,6 +48,8 @@ object WSEventTypes {
     const val CALL_REJECTED = "CALL_REJECTED"
     const val CALL_END = "CALL_END"
     const val CALL_ENDED = "CALL_ENDED"
+    const val CALL_CANCEL = "CALL_CANCEL"
+    const val CALL_CANCELLED = "CALL_CANCELLED"
     const val CALL_BUSY = "CALL_BUSY"
     const val CALL_OFFLINE = "CALL_OFFLINE"
     const val CALL_INSUFFICIENT_BALANCE = "CALL_INSUFFICIENT_BALANCE"

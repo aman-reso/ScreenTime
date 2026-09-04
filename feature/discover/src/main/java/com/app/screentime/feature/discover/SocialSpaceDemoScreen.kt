@@ -517,7 +517,7 @@ private fun SocialProfileView(
                                 contentAlignment = Alignment.Center
                             ) {
                                 ODSIcon(
-                                    iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.arrow_right),
+                                    iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.navigation_left_type_standard_size_standard),
                                     tint = Color.White
                                 )
                             }

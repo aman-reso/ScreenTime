@@ -32,8 +32,11 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.config.R as ConfigR
 import com.app.screentime.core.model.ModelProfile
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBorder
@@ -41,8 +44,16 @@ import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerVariant
 import com.telekom.odsystem.atoms.skeleton.ODSSkeleton
 import com.telekom.odsystem.atoms.skeleton.ODSSkeletonProps
 import com.telekom.odsystem.atoms.skeleton.ODSSkeletonVariant
@@ -53,89 +64,6 @@ import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
-
-private val defaultDummyModels = listOf(
-    ModelProfile(
-        id = "m1",
-        name = "Riya Gosh",
-        age = 23,
-        distance = "40km",
-        tags = listOf("Sing", "Friends"),
-        avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-        rating = 4.9f,
-        isOnline = true
-    ),
-    ModelProfile(
-        id = "m2",
-        name = "Sullyon Nake",
-        age = 22,
-        distance = "8km",
-        tags = listOf("Sing", "Friends"),
-        avatarUrl = "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
-        rating = 4.8f,
-        isOnline = true
-    ),
-    ModelProfile(
-        id = "m3",
-        name = "Kang Seulgi",
-        age = 24,
-        distance = "3km",
-        tags = listOf("Sing", "Friends"),
-        avatarUrl = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
-        rating = 5.0f,
-        isOnline = true
-    ),
-    ModelProfile(
-        id = "m4",
-        name = "Jeon Jung",
-        age = 25,
-        distance = "20km",
-        tags = listOf("Sing", "Friends"),
-        avatarUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80",
-        rating = 4.9f,
-        isOnline = false
-    ),
-    ModelProfile(
-        id = "m5",
-        name = "Elena Rostova",
-        age = 21,
-        distance = "45km",
-        tags = listOf("Dance", "Music"),
-        avatarUrl = "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80",
-        rating = 4.9f,
-        isOnline = true
-    ),
-    ModelProfile(
-        id = "m6",
-        name = "Mina Thorne",
-        age = 23,
-        distance = "30km",
-        tags = listOf("Chat", "Travel"),
-        avatarUrl = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80",
-        rating = 4.9f,
-        isOnline = true
-    ),
-    ModelProfile(
-        id = "m7",
-        name = "Jessica Alba",
-        age = 26,
-        distance = "12km",
-        tags = listOf("Acting", "Cosplay"),
-        avatarUrl = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80",
-        rating = 4.8f,
-        isOnline = true
-    ),
-    ModelProfile(
-        id = "m8",
-        name = "Sophia Chen",
-        age = 22,
-        distance = "15km",
-        tags = listOf("Vlog", "Coffee"),
-        avatarUrl = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80",
-        rating = 4.9f,
-        isOnline = true
-    )
-)
 
 sealed class StaggeredBlock {
     data class SplitLeftTall(
@@ -235,9 +163,7 @@ fun DiscoverScreen(
     var selectedDistance by remember { mutableStateOf("Any Distance") }
     var showFilterSheet by remember { mutableStateOf(false) }
 
-    val sourceModels = remember(uiState.models) {
-        if (uiState.models.isNotEmpty()) uiState.models else defaultDummyModels
-    }
+    val sourceModels = uiState.models
 
     val filtered = remember(sourceModels, selectedTab, selectedFilter, selectedDistance) {
         val baseList = if (selectedTab == "Matched") {
@@ -329,135 +255,153 @@ fun DiscoverScreen(
                 )
             }
 
-            // 3. Staggered Dynamic Bento Cards (12.dp corners)
-            items(
-                items = staggeredBlocks,
-                key = { block ->
+            // 3. Content: Loading Shimmer Bento Grid vs Empty State vs Dynamic Bento Cards
+            if (uiState.isLoading || (uiState.models.isEmpty() && uiState.error == null && !uiState.isRefreshing)) {
+                item(key = "discover_bento_shimmer", contentType = "Shimmer") {
+                    DiscoverBentoShimmer(scheme = scheme)
+                }
+            } else if (filtered.isEmpty()) {
+                item(key = "discover_empty_state", contentType = "EmptyState") {
+                    DiscoverEmptyState(
+                        scheme = scheme,
+                        onRefresh = { viewModel.loadInitialModels() }
+                    )
+                }
+            } else {
+                items(
+                    items = staggeredBlocks,
+                    key = { block ->
+                        when (block) {
+                            is StaggeredBlock.SplitLeftTall -> "slt_${block.tall.id}_${block.top.id}_${block.bottom.id}"
+                            is StaggeredBlock.FullWidth -> "fw_${block.model.id}"
+                            is StaggeredBlock.TwoHalfCards -> "thc_${block.left.id}_${block.right.id}"
+                            is StaggeredBlock.SplitRightTall -> "srt_${block.tall.id}_${block.top.id}_${block.bottom.id}"
+                        }
+                    },
+                    contentType = { "StaggeredBlock" }
+                ) { block ->
                     when (block) {
-                        is StaggeredBlock.SplitLeftTall -> "slt_${block.tall.id}_${block.top.id}_${block.bottom.id}"
-                        is StaggeredBlock.FullWidth -> "fw_${block.model.id}"
-                        is StaggeredBlock.TwoHalfCards -> "thc_${block.left.id}_${block.right.id}"
-                        is StaggeredBlock.SplitRightTall -> "srt_${block.tall.id}_${block.top.id}_${block.bottom.id}"
-                    }
-                },
-                contentType = { "StaggeredBlock" }
-            ) { block ->
-                when (block) {
-                    is StaggeredBlock.SplitLeftTall -> {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            StaggeredModelCard(
-                                model = block.tall,
-                                height = 360.dp,
-                                scheme = scheme,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onNavigateToModelProfile(block.tall.id) })
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                        is StaggeredBlock.SplitLeftTall -> {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 StaggeredModelCard(
-                                    model = block.top,
-                                    height = 175.dp,
+                                    model = block.tall,
+                                    height = 360.dp,
                                     scheme = scheme,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = { onNavigateToModelProfile(block.top.id) })
-                                StaggeredModelCard(
-                                    model = block.bottom,
-                                    height = 175.dp,
-                                    scheme = scheme,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = { onNavigateToModelProfile(block.bottom.id) })
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToModelProfile(block.tall.id) })
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    StaggeredModelCard(
+                                        model = block.top,
+                                        height = 175.dp,
+                                        scheme = scheme,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = { onNavigateToModelProfile(block.top.id) })
+                                    StaggeredModelCard(
+                                        model = block.bottom,
+                                        height = 175.dp,
+                                        scheme = scheme,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = { onNavigateToModelProfile(block.bottom.id) })
+                                }
                             }
                         }
-                    }
 
-                    is StaggeredBlock.FullWidth -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
-                        ) {
-                            StaggeredModelCard(
-                                model = block.model,
-                                height = 280.dp,
-                                scheme = scheme,
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = { onNavigateToModelProfile(block.model.id) })
-                        }
-                    }
-
-                    is StaggeredBlock.TwoHalfCards -> {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            StaggeredModelCard(
-                                model = block.left,
-                                height = 230.dp,
-                                scheme = scheme,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onNavigateToModelProfile(block.left.id) })
-                            StaggeredModelCard(
-                                model = block.right,
-                                height = 230.dp,
-                                scheme = scheme,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onNavigateToModelProfile(block.right.id) })
-                        }
-                    }
-
-                    is StaggeredBlock.SplitRightTall -> {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                        is StaggeredBlock.FullWidth -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 6.dp)
                             ) {
                                 StaggeredModelCard(
-                                    model = block.top,
-                                    height = 175.dp,
+                                    model = block.model,
+                                    height = 280.dp,
                                     scheme = scheme,
                                     modifier = Modifier.fillMaxWidth(),
-                                    onClick = { onNavigateToModelProfile(block.top.id) })
-                                StaggeredModelCard(
-                                    model = block.bottom,
-                                    height = 175.dp,
-                                    scheme = scheme,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = { onNavigateToModelProfile(block.bottom.id) })
+                                    onClick = { onNavigateToModelProfile(block.model.id) })
                             }
-                            StaggeredModelCard(
-                                model = block.tall,
-                                height = 360.dp,
-                                scheme = scheme,
-                                modifier = Modifier.weight(1f),
-                                onClick = { onNavigateToModelProfile(block.tall.id) })
+                        }
+
+                        is StaggeredBlock.TwoHalfCards -> {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                StaggeredModelCard(
+                                    model = block.left,
+                                    height = 230.dp,
+                                    scheme = scheme,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToModelProfile(block.left.id) })
+                                StaggeredModelCard(
+                                    model = block.right,
+                                    height = 230.dp,
+                                    scheme = scheme,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToModelProfile(block.right.id) })
+                            }
+                        }
+
+                        is StaggeredBlock.SplitRightTall -> {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    StaggeredModelCard(
+                                        model = block.top,
+                                        height = 175.dp,
+                                        scheme = scheme,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = { onNavigateToModelProfile(block.top.id) })
+                                    StaggeredModelCard(
+                                        model = block.bottom,
+                                        height = 175.dp,
+                                        scheme = scheme,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = { onNavigateToModelProfile(block.bottom.id) })
+                                }
+                                StaggeredModelCard(
+                                    model = block.tall,
+                                    height = 360.dp,
+                                    scheme = scheme,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { onNavigateToModelProfile(block.tall.id) })
+                            }
                         }
                     }
                 }
             }
 
             if (uiState.isLoadingMore) {
-                item(key = "pagination_grid_skel", contentType = "SkeletonGrid") {
-                    ODSRow(
+                item(key = "pagination_loader", contentType = "Loader") {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 6.dp),
-                        gap = 10.dp
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        DiscoverCardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
-                        DiscoverCardSkeleton(modifier = Modifier.weight(1f), scheme = scheme)
+                        ODSLoadingSpinner(
+                            scheme = scheme,
+                            props = ODSLoadingSpinnerProps(
+                                size = ODSLoadingSpinnerSize.SMALL,
+                                variant = ODSLoadingSpinnerVariant.STANDARD
+                            )
+                        )
                     }
                 }
             }
@@ -597,36 +541,232 @@ private fun DiscoverSegmentedTabs(
 }
 
 @Composable
-private fun DiscoverCardSkeleton(
-    modifier: Modifier = Modifier,
-    scheme: ODSTheme
+private fun DiscoverBentoShimmer(scheme: ODSTheme) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Pattern 0: SplitLeftTall skeleton (Left: 360dp, Right: two 175dp cards)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            DiscoverBentoCardSkeleton(
+                height = 360.dp,
+                scheme = scheme,
+                modifier = Modifier.weight(1f)
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                DiscoverBentoCardSkeleton(
+                    height = 175.dp,
+                    scheme = scheme,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                DiscoverBentoCardSkeleton(
+                    height = 175.dp,
+                    scheme = scheme,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        // Pattern 1: FullWidth skeleton (280dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+        ) {
+            DiscoverBentoCardSkeleton(
+                height = 280.dp,
+                scheme = scheme,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Pattern 2: TwoHalfCards skeleton (230dp each)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            DiscoverBentoCardSkeleton(
+                height = 230.dp,
+                scheme = scheme,
+                modifier = Modifier.weight(1f)
+            )
+            DiscoverBentoCardSkeleton(
+                height = 230.dp,
+                scheme = scheme,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // Pattern 3: SplitRightTall skeleton (Left: two 175dp cards, Right: 360dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                DiscoverBentoCardSkeleton(
+                    height = 175.dp,
+                    scheme = scheme,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                DiscoverBentoCardSkeleton(
+                    height = 175.dp,
+                    scheme = scheme,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            DiscoverBentoCardSkeleton(
+                height = 360.dp,
+                scheme = scheme,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DiscoverBentoCardSkeleton(
+    height: Dp,
+    scheme: ODSTheme,
+    modifier: Modifier = Modifier
 ) {
     ODSBox(
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp),
+            .height(height),
         background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
         cornerRadius = ODSCorners(all = 12.dp),
-        padding = ODSPadding(all = 12.dp)
+        border = ODSBorder(
+            width = 1.dp,
+            colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
+        ),
+        clipContent = true
+    ) {
+        // Base shimmer card placeholder taking the full card surface
+        ODSSkeleton(
+            modifier = Modifier.fillMaxSize(),
+            scheme = scheme,
+            props = ODSSkeletonProps(variant = ODSSkeletonVariant.LARGE)
+        )
+
+        // Overlay with bottom placeholder row mirroring model info & action buttons
+        ODSRow(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            ODSColumn(gap = 6.dp) {
+                ODSSkeleton(
+                    modifier = Modifier
+                        .size(width = 80.dp, height = 14.dp),
+                    scheme = scheme,
+                    props = ODSSkeletonProps(variant = ODSSkeletonVariant.SMALL)
+                )
+                ODSSkeleton(
+                    modifier = Modifier
+                        .size(width = 48.dp, height = 10.dp),
+                    scheme = scheme,
+                    props = ODSSkeletonProps(variant = ODSSkeletonVariant.SMALL)
+                )
+            }
+
+            ODSRow(gap = 6.dp, verticalAlignment = Alignment.CenterVertically) {
+                ODSSkeleton(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape),
+                    scheme = scheme,
+                    props = ODSSkeletonProps(variant = ODSSkeletonVariant.SMALL)
+                )
+                ODSSkeleton(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape),
+                    scheme = scheme,
+                    props = ODSSkeletonProps(variant = ODSSkeletonVariant.SMALL)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DiscoverCardSkeleton(
+    modifier: Modifier = Modifier,
+    height: Dp = 230.dp,
+    scheme: ODSTheme
+) {
+    DiscoverBentoCardSkeleton(
+        height = height,
+        scheme = scheme,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun DiscoverEmptyState(
+    scheme: ODSTheme,
+    onRefresh: () -> Unit
+) {
+    ODSBox(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 64.dp),
+        contentAlignment = Alignment.Center
     ) {
         ODSColumn(
-            modifier = Modifier.fillMaxSize(),
-            gap = 10.dp,
-            verticalArrangement = Arrangement.SpaceBetween
+            horizontalAlignment = Alignment.CenterHorizontally,
+            gap = 16.dp
         ) {
-            ODSSkeleton(
+            ODSBox(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp),
-                scheme = scheme,
-                props = ODSSkeletonProps(variant = ODSSkeletonVariant.LARGE)
+                    .size(64.dp)
+                    .clip(CircleShape),
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+                contentAlignment = Alignment.Center
+            ) {
+                ODSIcon(
+                    iconModel = ODSIconModel(drawableRes = R.drawable.discovery),
+                    tint = scheme.basicAccent.getColor(),
+                    height = 32.dp,
+                    width = 32.dp
+                )
+            }
+            ODSText(
+                text = stringResource(ConfigR.string.discover_no_models_found),
+                style = ODSTextStyles.titleS,
+                color = scheme.basicText
             )
-            ODSSkeleton(
-                modifier = Modifier
-                    .fillMaxWidth(0.7f)
-                    .height(18.dp),
+            ODSText(
+                text = stringResource(ConfigR.string.discover_no_models_desc),
+                style = ODSTextStyles.bodySRegular,
+                color = scheme.basicTextRecessive
+            )
+            ODSButton(
+                onClick = onRefresh,
                 scheme = scheme,
-                props = ODSSkeletonProps(variant = ODSSkeletonVariant.SMALL)
+                props = ODSButtonProps(
+                    label = stringResource(ConfigR.string.discover_refresh),
+                    variant = ODSButtonVariant.SECONDARY,
+                    size = ODSButtonSize.SMALL
+                )
             )
         }
     }

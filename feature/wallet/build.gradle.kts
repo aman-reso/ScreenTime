@@ -35,6 +35,8 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
     implementation(project(":odsystem"))
+    implementation(project(":config"))
+
 
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))

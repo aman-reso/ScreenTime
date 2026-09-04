@@ -198,11 +198,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIncomingCallIntent(intent: Intent?) {
-        if (intent?.action == ScreenTimeFirebaseMessagingService.ACTION_ACCEPT_CALL) {
-            val callerId = intent.getStringExtra(ScreenTimeFirebaseMessagingService.EXTRA_CALLER_ID) ?: ""
-            val callerName = intent.getStringExtra(ScreenTimeFirebaseMessagingService.EXTRA_CALLER_NAME) ?: "Caller"
+        val action = intent?.action
+        if (action == ScreenTimeFirebaseMessagingService.ACTION_ACCEPT_CALL ||
+            action == com.app.screentime.feature.call.receiver.CallActionReceiver.ACTION_ACCEPT_CALL) {
+            val callerId = intent.getStringExtra(ScreenTimeFirebaseMessagingService.EXTRA_CALLER_ID)
+                ?: intent.getStringExtra("caller_id") ?: ""
+            val callerName = intent.getStringExtra(ScreenTimeFirebaseMessagingService.EXTRA_CALLER_NAME)
+                ?: intent.getStringExtra("caller_name") ?: "Caller"
             if (callerId.isNotEmpty()) {
                 incomingCallData = Pair(callerId, callerName)
+                activeCallManager.get().acceptIncomingCall()
             }
         }
     }

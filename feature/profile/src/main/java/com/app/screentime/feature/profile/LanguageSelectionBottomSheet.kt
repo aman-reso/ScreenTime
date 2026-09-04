@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,8 +33,6 @@ import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeaderSize
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
-import androidx.compose.material3.ExperimentalMaterial3Api
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LanguageSelectionBottomSheet(
@@ -42,7 +41,8 @@ fun LanguageSelectionBottomSheet(
     onLanguageSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val languages = listOf("English", "हिन्दी (Hindi)", "Español", "Français", "Deutsch", "Bahasa Indonesia")
+    val languages =
+        listOf("English", "हिन्दी (Hindi)", "Español", "Français", "Deutsch", "Bahasa Indonesia")
 
     ODSBottomSheet(
         scheme = scheme,
@@ -54,17 +54,16 @@ fun LanguageSelectionBottomSheet(
             ODSBottomSheetHeader(
                 scheme = scheme,
                 props = ODSBottomSheetHeaderProps(
-                    largeHeading = "Choose Language",
+                    smallHeading = "Choose Language",
                     subtitle = "Select your preferred app language",
-                    size = ODSBottomSheetHeaderSize.LARGE
+                    size = ODSBottomSheetHeaderSize.SMALL
                 )
             )
         },
         contentSlot = {
             ODSColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
+                    .fillMaxWidth(),
                 gap = 10.dp
             ) {
                 languages.forEach { lang ->
@@ -117,14 +116,13 @@ fun LanguageSelectionBottomSheet(
             ODSRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
                 ODSButton(
                     modifier = Modifier.fillMaxWidth(),
                     scheme = scheme,
                     props = ODSButtonProps(
                         label = "Close",
-                        variant = ODSButtonVariant.GHOST,
+                        variant = ODSButtonVariant.PRIMARY,
                         size = ODSButtonSize.SMALL
                     ),
                     onClick = onDismiss

@@ -1,8 +1,10 @@
 package com.app.screentime.feature.chat
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -95,7 +97,7 @@ fun ChatListScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 12.dp)
                 ) {
                     itemsIndexed(conversations, key = { _, conv -> conv.id }) { index, conv ->
                         ConversationItem(
@@ -104,6 +106,9 @@ fun ChatListScreen(
                             scheme = scheme,
                             onClick = { onNavigateToChat(conv.modelId, conv.modelName) }
                         )
+                    }
+                    item {
+                        Spacer(modifier = Modifier.height(40.dp))
                     }
                 }
             }

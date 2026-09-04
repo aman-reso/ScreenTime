@@ -46,7 +46,7 @@ fun ProfileMenuCard(
     ODSBox(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 12.dp),
         background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
         cornerRadius = ODSCorners(all = 12.dp),
         border = ODSBorder(

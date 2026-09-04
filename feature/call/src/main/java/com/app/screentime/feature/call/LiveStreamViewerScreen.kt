@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,8 +31,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.CardGiftcard
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -39,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -54,17 +58,31 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.feature.wallet.WalletPacksBottomSheet
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSBorder
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.atoms.ODSImage
 import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import io.livekit.android.LiveKit
 import io.livekit.android.room.track.RemoteVideoTrack
 import io.livekit.android.room.track.Track
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 data class LiveChatMessage(
@@ -106,6 +124,14 @@ fun LiveStreamViewerScreen(
     var showGiftSheet by remember { mutableStateOf(false) }
     var tipNotice by remember { mutableStateOf<String?>(null) }
 
+    // Token Deduction & Paid Mode States
+    var isPaidMode by remember { mutableStateOf(false) }
+    var coinRatePerMin by remember { mutableDoubleStateOf(10.0) }
+    var hasUnlockedPaidStream by remember { mutableStateOf(false) }
+    var userCoinBalance by remember { mutableDoubleStateOf(0.0) }
+    var showRechargeSheet by remember { mutableStateOf(false) }
+    var isDeductingInitial by remember { mutableStateOf(false) }
+
     val chatMessages = remember {
         mutableStateListOf<LiveChatMessage>()
     }
@@ -118,6 +144,60 @@ fun LiveStreamViewerScreen(
             GiftOption("g3", "Crown", "👑", 100.0),
             GiftOption("g4", "Diamond", "💎", 500.0)
         )
+    }
+
+    // ── 1. Fetch Initial Wallet Balance & Poll Stream Status ─────────────────
+    LaunchedEffect(streamId) {
+        val token = sessionManager.token ?: ""
+        try {
+            val walletRes = api.getWallet(token)
+            userCoinBalance = walletRes.wallet?.balance ?: 0.0
+        } catch (_: Exception) {}
+
+        while (isActive) {
+            try {
+                val status = api.getLiveStreamStatus(token, streamId)
+                if (status != null) {
+                    val prevPaid = isPaidMode
+                    isPaidMode = status.is_paid_mode
+                    if (status.coin_rate_per_min > 0) {
+                        coinRatePerMin = status.coin_rate_per_min
+                    }
+                    if (!prevPaid && isPaidMode && !hasUnlockedPaidStream) {
+                        tipNotice = "⚠️ Host enabled Token Deduction (${coinRatePerMin.toInt()}c/min)"
+                        delay(3000)
+                        tipNotice = null
+                    }
+                }
+            } catch (_: Exception) {}
+            delay(2500)
+        }
+    }
+
+    // ── 2. Periodic Token Deduction Ticker (When Watching in Paid Mode) ───────
+    LaunchedEffect(hasUnlockedPaidStream, isPaidMode) {
+        if (hasUnlockedPaidStream && isPaidMode) {
+            val token = sessionManager.token ?: ""
+            while (isActive) {
+                delay(60000) // Deduct every 1 minute
+                try {
+                    val res = api.deductLiveCoins(token, streamId, 60)
+                    if (res.success) {
+                        userCoinBalance = res.balance
+                        if (!res.is_paid_mode) {
+                            isPaidMode = false
+                        }
+                    } else {
+                        // Insufficient coins -> lock stream back
+                        hasUnlockedPaidStream = false
+                        userCoinBalance = res.balance
+                        tipNotice = "⚠️ Balance exhausted! Re-enter or add coins to continue."
+                        delay(3500)
+                        tipNotice = null
+                    }
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     // Connect to LiveKit Room as Subscriber
@@ -169,7 +249,7 @@ fun LiveStreamViewerScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0418))
+            .background(scheme.basicBackground.getColor())
     ) {
         // ── Fullscreen Video Feed or Scrim ───────────────────────────────────
         if (remoteVideoTrack != null) {
@@ -260,11 +340,31 @@ fun LiveStreamViewerScreen(
                 }
             }
 
-            // Right side: Viewer Count & Close
+            // Right side: Rate Pill (if paid), Viewer Count & Close
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (isPaidMode) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color(0xFF8E24AA), Color(0xFFFF6D00))
+                                )
+                            )
+                            .clickable { showRechargeSheet = true }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        ODSText(
+                            text = "🪙 ${coinRatePerMin.toInt()}c/min | ${userCoinBalance.toInt()}c",
+                            style = ODSTextStyles.microcopyBold,
+                            color = HexColor(0xFFFFEB3B)
+                        )
+                    }
+                }
+
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
@@ -333,6 +433,196 @@ fun LiveStreamViewerScreen(
                         style = ODSTextStyles.bodyMBold,
                         color = HexColor(0xFFFFFFFF)
                     )
+                }
+            }
+        }
+
+        // ── Frosted Transparent Warning Curtain (ODS Design System) ──
+        if (isPaidMode && !hasUnlockedPaidStream) {
+            ODSBox(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(enabled = false) {},
+                background = listOf(ODSColorModel(hexColor = HexColor(0xEE0A0418))),
+                contentAlignment = Alignment.Center
+            ) {
+                ODSBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.88f)
+                        .clip(RoundedCornerShape(24.dp)),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+                    cornerRadius = ODSCorners(all = 24.dp),
+                    border = ODSBorder(
+                        width = 1.5.dp,
+                        colorList = listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                    ),
+                    padding = ODSPadding(all = 24.dp)
+                ) {
+                    ODSColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        gap = 16.dp
+                    ) {
+                        // Lock Glow Icon in Accent Box
+                        ODSBox(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape),
+                            background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSText(
+                                text = "🔒",
+                                style = ODSTextStyles.bodyL,
+                                color = scheme.basicTextOnAccent
+                            )
+                        }
+
+                        ODSText(
+                            text = stringResource(R.string.live_warning_title),
+                            style = ODSTextStyles.titleS,
+                            color = scheme.basicText
+                        )
+
+                        ODSText(
+                            text = stringResource(R.string.live_warning_desc),
+                            style = ODSTextStyles.bodyMRegular,
+                            color = scheme.basicTextRecessive
+                        )
+
+                        // Rate & Balance Information Cards
+                        ODSRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            gap = 10.dp
+                        ) {
+                            // Rate Card
+                            ODSBox(
+                                modifier = Modifier.weight(1f),
+                                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                                cornerRadius = ODSCorners(all = 12.dp),
+                                padding = ODSPadding(all = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ODSColumn(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    gap = 2.dp
+                                ) {
+                                    ODSText(
+                                        text = stringResource(R.string.live_rate_label),
+                                        style = ODSTextStyles.microcopyRegular,
+                                        color = scheme.basicTextRecessive
+                                    )
+                                    ODSText(
+                                        text = "🪙 ${coinRatePerMin.toInt()}c/min",
+                                        style = ODSTextStyles.bodyMBold,
+                                        color = scheme.basicAccent
+                                    )
+                                }
+                            }
+
+                            // Balance Card
+                            ODSBox(
+                                modifier = Modifier.weight(1f),
+                                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                                cornerRadius = ODSCorners(all = 12.dp),
+                                padding = ODSPadding(all = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ODSColumn(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    gap = 2.dp
+                                ) {
+                                    ODSText(
+                                        text = "Your Balance",
+                                        style = ODSTextStyles.microcopyRegular,
+                                        color = scheme.basicTextRecessive
+                                    )
+                                    ODSText(
+                                        text = "💰 ${userCoinBalance.toInt()} Coins",
+                                        style = ODSTextStyles.bodyMBold,
+                                        color = if (userCoinBalance >= coinRatePerMin) scheme.basicAccent else scheme.functionalDestructiveStandard
+                                    )
+                                }
+                            }
+                        }
+
+                        // Action Buttons (Enter Stream OR Add Funds)
+                        if (userCoinBalance >= coinRatePerMin) {
+                            ODSButton(
+                                modifier = Modifier.fillMaxWidth(),
+                                scheme = scheme,
+                                props = ODSButtonProps(
+                                    label = if (isDeductingInitial) "Entering..." else stringResource(R.string.live_enter_button, coinRatePerMin.toInt()),
+                                    variant = ODSButtonVariant.PRIMARY
+                                ),
+                                onClick = {
+                                    if (isDeductingInitial) return@ODSButton
+                                    isDeductingInitial = true
+                                    scope.launch {
+                                        try {
+                                            val token = sessionManager.token ?: ""
+                                            val deductResp = api.deductLiveCoins(token, streamId, 60)
+                                            if (deductResp.success) {
+                                                userCoinBalance = deductResp.balance
+                                                hasUnlockedPaidStream = true
+                                                tipNotice = "🎉 Welcome! Live broadcast unlocked."
+                                                delay(2500)
+                                                tipNotice = null
+                                            } else {
+                                                userCoinBalance = deductResp.balance
+                                                tipNotice = "⚠️ ${deductResp.error.ifBlank { "Insufficient coins to enter" }}"
+                                                delay(3000)
+                                                tipNotice = null
+                                            }
+                                        } catch (e: Exception) {
+                                            tipNotice = "Error: ${e.localizedMessage}"
+                                            delay(3000)
+                                            tipNotice = null
+                                        } finally {
+                                            isDeductingInitial = false
+                                        }
+                                    }
+                                }
+                            )
+                        } else {
+                            // Low Balance Notice Card
+                            ODSBox(
+                                modifier = Modifier.fillMaxWidth(),
+                                background = listOf(ODSColorModel(hexColor = scheme.functionalDestructiveSubtle)),
+                                cornerRadius = ODSCorners(all = 12.dp),
+                                padding = ODSPadding(horizontal = 12.dp, vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ODSText(
+                                    text = "⚠️ Low Balance! Minimum ${coinRatePerMin.toInt()} Coins needed to enter.",
+                                    style = ODSTextStyles.microcopyBold,
+                                    color = scheme.functionalDestructiveStandard
+                                )
+                            }
+
+                            // Add Funds Button
+                            ODSButton(
+                                modifier = Modifier.fillMaxWidth(),
+                                scheme = scheme,
+                                props = ODSButtonProps(
+                                    label = "➕ Add Funds / Recharge Coins",
+                                    variant = ODSButtonVariant.PRIMARY
+                                ),
+                                onClick = { showRechargeSheet = true }
+                            )
+                        }
+
+                        // Exit Stream Button
+                        ODSButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = "Exit Stream",
+                                variant = ODSButtonVariant.SECONDARY
+                            ),
+                            onClick = onExit
+                        )
+                    }
                 }
             }
         }
@@ -601,6 +891,26 @@ fun LiveStreamViewerScreen(
                     }
                 }
             }
+        }
+
+        // ── Wallet Packs Recharge Drawer ──────────────────────────────────────
+        if (showRechargeSheet) {
+            WalletPacksBottomSheet(
+                onDismissRequest = { showRechargeSheet = false },
+                scheme = scheme,
+                onRechargeSuccess = {
+                    scope.launch {
+                        try {
+                            val token = sessionManager.token ?: ""
+                            val w = api.getWallet(token)
+                            userCoinBalance = w.wallet?.balance ?: 0.0
+                            tipNotice = "🎉 Recharge successful! Balance: ${userCoinBalance.toInt()} Coins"
+                            delay(3000)
+                            tipNotice = null
+                        } catch (_: Exception) {}
+                    }
+                }
+            )
         }
     }
 }

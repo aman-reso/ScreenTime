@@ -17,16 +17,22 @@ class SendMessageUseCase @Inject constructor(
     private val localStorage: LocalChatStorage
 ) {
     suspend operator fun invoke(receiverId: String, text: String): Result<ChatMessage> {
+        val trimmed = text.trim()
+        if (trimmed.isBlank()) {
+            return Result.failure(IllegalArgumentException("Message content cannot be blank"))
+        }
+
         val token = sessionManager.token ?: ""
         val myUserId = sessionManager.userId ?: "user"
         val timestamp = System.currentTimeMillis()
 
         // 1. Optimistic Local Save
+        val localId = "msg_${timestamp}"
         val localMsg = ChatMessage(
-            id = "msg_${timestamp}",
+            id = localId,
             senderId = myUserId,
             receiverId = receiverId,
-            text = text,
+            text = trimmed,
             timestamp = timestamp
         )
         localStorage.saveMessage(receiverId, localMsg)
@@ -35,19 +41,20 @@ class SendMessageUseCase @Inject constructor(
         if (!wsClient.isConnected()) {
             wsClient.connect()
         }
-        wsClient.sendChatMessage(receiverId, text)
+        wsClient.sendChatMessage(receiverId, trimmed)
 
         // 3. Persistent Server Sync
         return try {
-            val dto = api.sendChatMessage(token, receiverId, text)
+            val dto = api.sendChatMessage(token, receiverId, trimmed)
             val serverMsg = ChatMessage(
-                id = dto.id.ifBlank { localMsg.id },
+                id = dto.id.ifBlank { localId },
                 senderId = dto.sender_id.ifBlank { myUserId },
                 receiverId = dto.receiver_id.ifBlank { receiverId },
-                text = dto.content.ifBlank { text },
+                text = dto.content.ifBlank { trimmed },
                 timestamp = timestamp
             )
-            localStorage.saveMessage(receiverId, serverMsg)
+            // Replace the optimistic message with the server-confirmed message
+            localStorage.replaceOrSaveMessage(receiverId, localId, serverMsg)
             Result.success(serverMsg)
         } catch (e: Exception) {
             Result.success(localMsg)
@@ -68,15 +75,22 @@ class GetMessagesUseCase @Inject constructor(
         return try {
             val res = api.getChatMessages(token, partnerId)
             if (res.messages.isNotEmpty()) {
-                val remote = res.messages.map { dto ->
-                    ChatMessage(
-                        id = dto.id,
-                        senderId = dto.sender_id,
-                        receiverId = dto.receiver_id,
-                        text = dto.content,
-                        timestamp = System.currentTimeMillis()
-                    )
-                }
+                val remote = res.messages
+                    .filter { it.content.isNotBlank() }
+                    .map { dto ->
+                        val parsedTime = try {
+                            java.time.Instant.parse(dto.created_at).toEpochMilli()
+                        } catch (e: Exception) {
+                            System.currentTimeMillis()
+                        }
+                        ChatMessage(
+                            id = dto.id,
+                            senderId = dto.sender_id,
+                            receiverId = dto.receiver_id,
+                            text = dto.content,
+                            timestamp = parsedTime
+                        )
+                    }
                 localStorage.saveMessages(partnerId, remote)
                 localStorage.getMessages(partnerId)
             } else {
@@ -90,8 +104,12 @@ class GetMessagesUseCase @Inject constructor(
 
 class ObserveMessagesUseCase @Inject constructor(
     private val wsClient: ChattyWebSocketClient,
-    private val localStorage: LocalChatStorage
+    private val localStorage: LocalChatStorage,
+    private val sessionManager: SessionManager
 ) {
+    val currentUserId: String
+        get() = sessionManager.userId ?: "user"
+
     operator fun invoke(): SharedFlow<WSMessage> {
         if (!wsClient.isConnected()) {
             wsClient.connect()
@@ -100,7 +118,9 @@ class ObserveMessagesUseCase @Inject constructor(
     }
 
     fun saveIncoming(partnerId: String, msg: ChatMessage) {
-        localStorage.saveMessage(partnerId, msg)
+        if (msg.text.isNotBlank()) {
+            localStorage.saveMessage(partnerId, msg)
+        }
     }
 }
 

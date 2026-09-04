@@ -67,8 +67,9 @@ fun ChatScreen(
     }
 
     val displayMessages = remember(uiState.messages) {
-        if (uiState.messages.isNotEmpty()) {
-            uiState.messages
+        val valid = uiState.messages.filter { it.text.isNotBlank() }.distinctBy { it.id }
+        if (valid.isNotEmpty()) {
+            valid
         } else {
             listOf(
                 ChatMessage(
@@ -145,7 +146,7 @@ fun ChatScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(displayMessages, key = { it.id }) { msg ->
-                    val isMe = msg.senderId == "user" || msg.receiverId == modelId
+                    val isMe = msg.senderId != modelId
                     MessageBubble(
                         message = msg,
                         isMe = isMe,

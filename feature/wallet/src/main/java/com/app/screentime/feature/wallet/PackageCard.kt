@@ -20,10 +20,11 @@ import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
@@ -36,17 +37,16 @@ fun PackageCard(
     onClick: () -> Unit
 ) {
     val borderColor = if (isSelected) scheme.basicAccent else scheme.basicStrokeSubtle
-    val borderWidth = if (isSelected) 1.5.dp else 1.dp
-    val bgColor = if (isSelected) scheme.basicBackground else scheme.basicBackgroundCard
+    val cardBackground = if (isSelected) scheme.basicBackgroundCard else scheme.basicBackgroundCardSubtle
 
     ODSBox(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        background = listOf(ODSColorModel(hexColor = bgColor)),
-        cornerRadius = ODSCorners(all = 12.dp),
+        background = listOf(ODSColorModel(hexColor = cardBackground)),
+        cornerRadius = ODSCorners(all = 16.dp),
         border = ODSBorder(
-            width = borderWidth,
+            width = if (isSelected) 2.dp else 1.dp,
             colorList = listOf(ODSColorModel(hexColor = borderColor))
         ),
         padding = ODSPadding(horizontal = 16.dp, vertical = 14.dp)
@@ -58,18 +58,19 @@ fun PackageCard(
         ) {
             ODSRow(
                 verticalAlignment = Alignment.CenterVertically,
-                gap = 12.dp,
-                modifier = Modifier.weight(1f)
+                gap = 14.dp
             ) {
+                // Coin Icon in Accent Capsule
                 ODSBox(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(44.dp)
                         .clip(CircleShape),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.coin_icon),
-                        tint = HexColor(0xFF1E1145).getColor(),
+                        tint = scheme.basicBackground.getColor(),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -80,7 +81,7 @@ fun PackageCard(
                         gap = 8.dp
                     ) {
                         ODSText(
-                            text = "${pack.total_coins} Coins",
+                            text = stringResource(R.string.wallet_coins_count, pack.total_coins),
                             style = ODSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )
@@ -91,9 +92,9 @@ fun PackageCard(
                                 padding = ODSPadding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 ODSText(
-                                    text = "+${pack.bonus_coins} Free",
+                                    text = stringResource(R.string.wallet_bonus_free, pack.bonus_coins),
                                     style = ODSTextStyles.microcopyBold,
-                                    color = HexColor(0xFF1E1145)
+                                    color = scheme.basicBackground
                                 )
                             }
                         } else if (pack.is_popular) {
@@ -103,9 +104,9 @@ fun PackageCard(
                                 padding = ODSPadding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 ODSText(
-                                    text = "Popular",
+                                    text = stringResource(R.string.wallet_popular),
                                     style = ODSTextStyles.microcopyBold,
-                                    color = HexColor(0xFFFFFFFF)
+                                    color = scheme.basicText
                                 )
                             }
                         }
@@ -135,7 +136,7 @@ fun PackageCard(
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(imageVector = Icons.Default.Check),
-                        tint = HexColor(0xFF1E1145).getColor(),
+                        tint = scheme.basicBackground.getColor(),
                         modifier = Modifier.size(16.dp)
                     )
                 }

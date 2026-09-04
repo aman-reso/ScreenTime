@@ -68,12 +68,11 @@ fun UserProfileScreen(
                 .verticalScroll(rememberScrollState()),
             background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
         ) {
-            // 1. Top Bar
             ODSRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 14.dp),
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {

@@ -44,7 +44,7 @@ class ChatViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
             val list = getMessagesUseCase(partnerId)
             _uiState.value = _uiState.value.copy(
-                messages = list,
+                messages = list.filter { it.text.isNotBlank() }.distinctBy { it.id },
                 isLoading = false
             )
         }
@@ -53,20 +53,43 @@ class ChatViewModel @Inject constructor(
     private fun observeIncomingMessages() {
         viewModelScope.launch {
             observeMessagesUseCase().collectLatest { msg ->
-                if (msg.type == WSEventTypes.CHAT_MESSAGE || msg.type == WSEventTypes.CHAT_RECEIVED) {
-                    val partner = msg.caller_id ?: activePartnerId
+                // ONLY handle actual incoming chat messages. CHAT_RECEIVED is purely an ACK/delivery receipt.
+                if (msg.type == WSEventTypes.CHAT_MESSAGE) {
+                    val myId = observeMessagesUseCase.currentUserId
+                    val sender = msg.caller_id ?: msg.user_id ?: ""
+
+                    // Ignore echo of our own sent message
+                    if (sender.isNotBlank() && sender == myId) {
+                        return@collectLatest
+                    }
+
+                    val content = (msg.message?.takeIf { it.isNotBlank() } ?: msg.payloadAsString()).trim()
+                    if (content.isBlank()) {
+                        return@collectLatest
+                    }
+
+                    val partner = if (sender.isNotBlank() && sender != myId) sender else activePartnerId
+                    val msgId = msg.call_id?.takeIf { it.isNotBlank() }
+                        ?: "msg_${System.currentTimeMillis()}_${content.hashCode()}"
+
                     val incoming = ChatMessage(
-                        id = "msg_${System.currentTimeMillis()}",
+                        id = msgId,
                         senderId = partner,
-                        receiverId = "user",
-                        text = msg.payloadAsString(),
+                        receiverId = myId,
+                        text = content,
                         timestamp = System.currentTimeMillis()
                     )
                     observeMessagesUseCase.saveIncoming(partner, incoming)
                     if (partner == activePartnerId) {
-                        _uiState.value = _uiState.value.copy(
-                            messages = _uiState.value.messages + incoming
-                        )
+                        val current = _uiState.value.messages
+                        val isDuplicate = current.any {
+                            it.id == incoming.id || (it.text == incoming.text && it.senderId == incoming.senderId && Math.abs(it.timestamp - incoming.timestamp) < 4000)
+                        }
+                        if (!isDuplicate) {
+                            _uiState.value = _uiState.value.copy(
+                                messages = (current + incoming).distinctBy { it.id }
+                            )
+                        }
                     }
                 }
             }
@@ -81,18 +104,38 @@ class ChatViewModel @Inject constructor(
         val text = _uiState.value.inputText.trim()
         if (text.isBlank()) return
 
-        _uiState.value = _uiState.value.copy(inputText = "", isSending = true)
+        val myUserId = observeMessagesUseCase.currentUserId
+        val tempId = "msg_${System.currentTimeMillis()}"
+        val optimisticMsg = ChatMessage(
+            id = tempId,
+            senderId = myUserId,
+            receiverId = modelId,
+            text = text,
+            timestamp = System.currentTimeMillis()
+        )
+
+        // Optimistically show message on UI immediately
+        _uiState.value = _uiState.value.copy(
+            inputText = "",
+            messages = (_uiState.value.messages + optimisticMsg).distinctBy { it.id },
+            isSending = true
+        )
+
         viewModelScope.launch {
-            sendMessageUseCase(modelId, text).onSuccess { msg ->
-                val existing = _uiState.value.messages.any { it.id == msg.id }
-                if (!existing) {
-                    _uiState.value = _uiState.value.copy(
-                        messages = _uiState.value.messages + msg,
-                        isSending = false
-                    )
-                } else {
-                    _uiState.value = _uiState.value.copy(isSending = false)
-                }
+            sendMessageUseCase(modelId, text).onSuccess { confirmedMsg ->
+                val current = _uiState.value.messages
+                val updated = current.map {
+                    if (it.id == tempId || (it.text == text && it.senderId == myUserId && Math.abs(it.timestamp - confirmedMsg.timestamp) < 5000)) {
+                        confirmedMsg
+                    } else {
+                        it
+                    }
+                }.distinctBy { it.id }
+
+                _uiState.value = _uiState.value.copy(
+                    messages = updated,
+                    isSending = false
+                )
             }.onFailure {
                 _uiState.value = _uiState.value.copy(isSending = false)
             }

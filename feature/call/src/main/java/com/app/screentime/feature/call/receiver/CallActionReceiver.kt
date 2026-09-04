@@ -16,10 +16,19 @@ class CallActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         when (intent?.action) {
             ACTION_HANGUP -> {
+                com.app.screentime.feature.call.service.CallNotificationHelper.cancelIncomingCallNotification(context ?: return)
                 activeCallManager.endCall("Ended by user")
             }
             ACTION_TOGGLE_MUTE -> {
                 activeCallManager.toggleMute()
+            }
+            ACTION_REJECT_CALL -> {
+                com.app.screentime.feature.call.service.CallNotificationHelper.cancelIncomingCallNotification(context ?: return)
+                activeCallManager.rejectIncomingCall()
+            }
+            ACTION_ACCEPT_CALL -> {
+                com.app.screentime.feature.call.service.CallNotificationHelper.cancelIncomingCallNotification(context ?: return)
+                activeCallManager.acceptIncomingCall()
             }
         }
     }
@@ -27,5 +36,7 @@ class CallActionReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_HANGUP = "com.app.screentime.ACTION_CALL_HANGUP"
         const val ACTION_TOGGLE_MUTE = "com.app.screentime.ACTION_CALL_MUTE_TOGGLE"
+        const val ACTION_ACCEPT_CALL = "com.app.screentime.ACTION_ACCEPT_CALL"
+        const val ACTION_REJECT_CALL = "com.app.screentime.ACTION_REJECT_CALL"
     }
 }

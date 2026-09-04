@@ -4,7 +4,13 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +37,9 @@ import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,6 +62,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.ExperimentalMaterial3Api
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.switch.ODSSwitch
+import com.telekom.odsystem.atoms.switch.ODSSwitchProps
+import com.telekom.odsystem.atoms.switch.ODSSwitchSize
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheet
+import com.telekom.odsystem.molecules.bottomsheet.ODSBottomSheetProps
+import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeader
+import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeaderProps
+import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeaderSize
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
@@ -60,6 +82,8 @@ import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import io.livekit.android.LiveKit
 import io.livekit.android.room.track.LocalVideoTrack
 import io.livekit.android.room.track.Track
@@ -77,6 +101,7 @@ import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.tokens.cheddarSecondaryScheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveStreamHostScreen(
     streamTitle: String,
@@ -100,6 +125,12 @@ fun LiveStreamHostScreen(
     var showEndDialog by remember { mutableStateOf(false) }
     var streamId by remember { mutableStateOf("") }
     var retryTrigger by remember { mutableIntStateOf(0) }
+
+    // Token Deduction / Paid Mode States
+    var isPaidMode by remember { mutableStateOf(false) }
+    var coinRatePerMin by remember { mutableDoubleStateOf(10.0) }
+    var showPaidConfigDialog by remember { mutableStateOf(false) }
+    var statusToast by remember { mutableStateOf<String?>(null) }
 
     // Loading & Error States
     var isConnecting by remember { mutableStateOf(true) }
@@ -221,7 +252,7 @@ fun LiveStreamHostScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0A1C))
+            .background(scheme.basicBackground.getColor())
     ) {
         // ── Fullscreen Host Camera Stream or Loading / Error State ───────────
         if (localVideoTrack != null) {
@@ -244,33 +275,33 @@ fun LiveStreamHostScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0xFF1E1145))
+                        .background(scheme.basicBackgroundCard.getColor())
                         .padding(24.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .size(64.dp)
                             .clip(CircleShape)
-                            .background(Color(0x33FF334B)),
+                            .background(scheme.functionalDestructiveSubtle.getColor()),
                         contentAlignment = Alignment.Center
                     ) {
                         ODSText(
                             text = "⚠️",
                             style = ODSTextStyles.bodyL,
-                            color = HexColor(0xFFFF334B)
+                            color = scheme.functionalDestructiveStandard
                         )
                     }
 
                     ODSText(
-                        text = "Unable to Start Broadcast",
+                        text = stringResource(R.string.live_stream_ended),
                         style = ODSTextStyles.bodyMBold,
-                        color = HexColor(0xFFFFFFFF)
+                        color = scheme.basicText
                     )
 
                     ODSText(
                         text = errorMessage ?: "Unknown connection failure",
                         style = ODSTextStyles.bodyMRegular,
-                        color = HexColor(0xFFBC96FF)
+                        color = scheme.basicTextRecessive
                     )
 
                     Row(
@@ -281,12 +312,13 @@ fun LiveStreamHostScreen(
                             modifier = Modifier.weight(1f),
                             scheme = scheme,
                             props = ODSButtonProps(
-                                label = "Go Back",
+                                label = stringResource(R.string.retry),
                                 variant = ODSButtonVariant.SECONDARY
                             ),
                             onClick = {
-                                viewModel.endStream(streamId)
-                                onEndStream()
+                                errorMessage = null
+                                isConnecting = true
+                                retryTrigger++
                             }
                         )
 
@@ -294,13 +326,12 @@ fun LiveStreamHostScreen(
                             modifier = Modifier.weight(1f),
                             scheme = scheme,
                             props = ODSButtonProps(
-                                label = "Retry",
+                                label = stringResource(R.string.close),
                                 variant = ODSButtonVariant.PRIMARY
                             ),
                             onClick = {
-                                errorMessage = null
-                                isConnecting = true
-                                retryTrigger++
+                                viewModel.endStream(streamId)
+                                onEndStream()
                             }
                         )
                     }
@@ -319,7 +350,7 @@ fun LiveStreamHostScreen(
             }
         }
 
-        // ── Top Bar (LIVE Badge, Viewers, Earnings, End Live Button) ──────────
+        // ── Top Bar (LIVE Badge, Paid Mode Pill, Earnings, End Live Button) ──
         Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -335,31 +366,49 @@ fun LiveStreamHostScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0x88000000))
+                    .background(scheme.basicBackgroundCardSubtle.getColor())
                     .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFF334B))
+                        .background(scheme.functionalDestructiveStandard.getColor())
                 )
                 ODSText(
                     text = "LIVE",
                     style = ODSTextStyles.microcopyBold,
-                    color = HexColor(0xFFFF334B)
+                    color = scheme.functionalDestructiveStandard
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     imageVector = Icons.Default.Visibility,
                     contentDescription = "Viewers",
-                    tint = Color.White,
+                    tint = scheme.basicText.getColor(),
                     modifier = Modifier.size(14.dp)
                 )
                 ODSText(
                     text = "$viewerCount",
                     style = ODSTextStyles.microcopyBold,
-                    color = HexColor(0xFFFFFFFF)
+                    color = scheme.basicText
+                )
+            }
+
+            // Monetization Mode Pill (Free vs Paid)
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        if (isPaidMode) Brush.horizontalGradient(listOf(scheme.basicAccent.getColor(), scheme.basicAccentSecondary.getColor()))
+                        else Brush.horizontalGradient(listOf(scheme.basicBackgroundCardSubtle.getColor(), scheme.basicBackgroundCardSubtle.getColor()))
+                    )
+                    .clickable { showPaidConfigDialog = true }
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                ODSText(
+                    text = if (isPaidMode) "🪙 ${coinRatePerMin.toInt()}c/min" else "🪙 Free",
+                    style = ODSTextStyles.microcopyBold,
+                    color = if (isPaidMode) scheme.basicAccent else scheme.basicText
                 )
             }
 
@@ -367,13 +416,13 @@ fun LiveStreamHostScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0x88000000))
+                    .background(scheme.basicBackgroundCardSubtle.getColor())
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 ODSText(
                     text = "💰 ₹%.2f".format(totalEarned),
                     style = ODSTextStyles.microcopyBold,
-                    color = HexColor(0xFFD7FF81)
+                    color = scheme.basicAccent
                 )
             }
 
@@ -381,15 +430,45 @@ fun LiveStreamHostScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xCCFF334B))
+                    .background(scheme.functionalDestructiveStandard.getColor())
                     .clickable { showEndDialog = true }
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 ODSText(
-                    text = "End Live",
+                    text = stringResource(R.string.call_action_end),
                     style = ODSTextStyles.microcopyBold,
-                    color = HexColor(0xFFFFFFFF)
+                    color = scheme.basicText
                 )
+            }
+        }
+
+        // ── Toast Status Banner ───────────────────────────────────────────────
+        AnimatedVisibility(
+            visible = statusToast != null,
+            enter = fadeIn() + slideInVertically(),
+            exit = fadeOut() + slideOutVertically(),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = 64.dp)
+        ) {
+            statusToast?.let { toast ->
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFF7B1FA2), Color(0xFFE91E63))
+                            )
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    ODSText(
+                        text = toast,
+                        style = ODSTextStyles.bodyMBold,
+                        color = HexColor(0xFFFFFFFF)
+                    )
+                }
             }
         }
 
@@ -433,7 +512,7 @@ fun LiveStreamHostScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Host Quick Controls (Flip Camera, Mic Mute)
+            // Host Quick Controls (Flip Camera, Mic Mute, Token Deduction)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -482,7 +561,223 @@ fun LiveStreamHostScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 }
+
+                // Token Deduction / Paid Mode Button
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isPaidMode) Brush.linearGradient(listOf(Color(0xFF8E24AA), Color(0xFFFF6D00)))
+                            else Brush.linearGradient(listOf(Color(0x882B1764), Color(0x882B1764)))
+                        )
+                        .clickable { showPaidConfigDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSText(
+                        text = "🪙",
+                        style = ODSTextStyles.bodyMBold,
+                        color = HexColor(0xFFFFFFFF)
+                    )
+                }
             }
+        }
+
+        // ── Token Deduction (Paid Mode) Config Bottom Sheet (ODS Design System) ──
+        if (showPaidConfigDialog) {
+            var tempPaidMode by remember { mutableStateOf(isPaidMode) }
+            var tempRate by remember { mutableDoubleStateOf(coinRatePerMin) }
+
+            ODSBottomSheet(
+                scheme = scheme,
+                showBottomSheet = true,
+                props = ODSBottomSheetProps(showHandle = true),
+                onDismissRequest = { showPaidConfigDialog = false },
+                onCloseClicked = { showPaidConfigDialog = false },
+                titleSlot = {
+                    ODSBottomSheetHeader(
+                        scheme = scheme,
+                        props = ODSBottomSheetHeaderProps(
+                            largeHeading = "Token Deduction",
+                            subtitle = "Per-minute stream monetization",
+                            size = ODSBottomSheetHeaderSize.SMALL
+                        )
+                    )
+                },
+                contentSlot = {
+                    ODSColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        gap = 16.dp
+                    ) {
+                        // Switch Card
+                        ODSBox(
+                            modifier = Modifier.fillMaxWidth(),
+                            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+                            cornerRadius = ODSCorners(all = 16.dp),
+                            padding = ODSPadding(horizontal = 16.dp, vertical = 14.dp)
+                        ) {
+                            ODSRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                ODSColumn(gap = 2.dp, modifier = Modifier.weight(1f)) {
+                                    ODSText(
+                                        text = "Paid Broadcast",
+                                        style = ODSTextStyles.bodyMBold,
+                                        color = scheme.basicText
+                                    )
+                                    ODSText(
+                                        text = if (tempPaidMode) "Active (Tokens deducted per minute)" else "Disabled (Free for all viewers)",
+                                        style = ODSTextStyles.microcopyRegular,
+                                        color = if (tempPaidMode) scheme.basicAccent else scheme.basicTextRecessive
+                                    )
+                                }
+                                ODSSwitch(
+                                    scheme = scheme,
+                                    props = ODSSwitchProps(
+                                        selected = tempPaidMode,
+                                        size = ODSSwitchSize.LARGE
+                                    ),
+                                    onCheckedChange = { tempPaidMode = it }
+                                )
+                            }
+                        }
+
+                        if (tempPaidMode) {
+                            ODSText(
+                                text = "Charge Rate (Default: 10 Coins/min)",
+                                style = ODSTextStyles.bodyMBold,
+                                color = scheme.basicText
+                            )
+
+                            // Quick Rate Selectors
+                            ODSRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                gap = 8.dp
+                            ) {
+                                listOf(10.0, 20.0, 50.0, 100.0).forEach { rate ->
+                                    val isSelected = tempRate == rate
+                                    ODSBox(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .clickable { tempRate = rate },
+                                        background = listOf(
+                                            ODSColorModel(
+                                                hexColor = if (isSelected) scheme.basicAccent
+                                                else scheme.basicBackgroundCard
+                                            )
+                                        ),
+                                        cornerRadius = ODSCorners(all = 12.dp),
+                                        padding = ODSPadding(vertical = 12.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        ODSText(
+                                            text = "${rate.toInt()}c/min",
+                                            style = ODSTextStyles.microcopyBold,
+                                            color = if (isSelected) scheme.basicTextOnAccent else scheme.basicText
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Stepper Row
+                            ODSBox(
+                                modifier = Modifier.fillMaxWidth(),
+                                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+                                cornerRadius = ODSCorners(all = 16.dp),
+                                padding = ODSPadding(horizontal = 16.dp, vertical = 10.dp)
+                            ) {
+                                ODSRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    ODSText(
+                                        text = "Custom Rate:",
+                                        style = ODSTextStyles.bodyMRegular,
+                                        color = scheme.basicText
+                                    )
+                                    ODSRow(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        gap = 12.dp
+                                    ) {
+                                        ODSBox(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .clickable { if (tempRate > 5.0) tempRate -= 5.0 },
+                                            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            ODSText(
+                                                text = "−",
+                                                style = ODSTextStyles.bodyMBold,
+                                                color = scheme.basicText
+                                            )
+                                        }
+                                        ODSText(
+                                            text = "${tempRate.toInt()} Coins/min",
+                                            style = ODSTextStyles.bodyMBold,
+                                            color = scheme.basicAccent
+                                        )
+                                        ODSBox(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .clickable { tempRate += 5.0 },
+                                            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            ODSText(
+                                                text = "+",
+                                                style = ODSTextStyles.bodyMBold,
+                                                color = scheme.basicText
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Apply Button
+                        ODSButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = if (tempPaidMode) "Apply Token Deduction (${tempRate.toInt()} Coins/min)" else "Disable Token Deduction (Set Free)",
+                                variant = ODSButtonVariant.PRIMARY
+                            ),
+                            onClick = {
+                                isPaidMode = tempPaidMode
+                                coinRatePerMin = tempRate
+                                showPaidConfigDialog = false
+
+                                scope.launch {
+                                    try {
+                                        val token = sessionManager.token ?: ""
+                                        api.setLivePaidMode(token, streamId, isPaidMode, coinRatePerMin)
+                                        statusToast = if (isPaidMode) {
+                                            "🪙 Token deduction active (${coinRatePerMin.toInt()} coins/min)"
+                                        } else {
+                                            "🪙 Stream is now free for all viewers"
+                                        }
+                                        delay(3000)
+                                        statusToast = null
+                                    } catch (e: Exception) {
+                                        statusToast = "Failed to update settings: ${e.localizedMessage}"
+                                        delay(3000)
+                                        statusToast = null
+                                    }
+                                }
+                            }
+                        )
+                    }
+                }
+            )
         }
 
         // ── End Live Confirmation Modal ──────────────────────────────────────

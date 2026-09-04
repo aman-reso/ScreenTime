@@ -45,7 +45,7 @@ fun UserProfileHeader(
     modifier: Modifier = Modifier
 ) {
     ODSColumn(
-        modifier = modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+        modifier = modifier.padding(horizontal = 12.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         gap = 10.dp
     ) {

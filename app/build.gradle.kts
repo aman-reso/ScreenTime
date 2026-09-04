@@ -13,6 +13,7 @@ plugins {
 
 android {
     namespace = "com.app.screentime"
+    //noinspection GradleDependency
     compileSdk = 36
 
     // Load secrets from local.properties
@@ -25,6 +26,7 @@ android {
     defaultConfig {
         applicationId = "com.app.screentime"
         minSdk = 24
+        //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 93
         versionName = "9.3"

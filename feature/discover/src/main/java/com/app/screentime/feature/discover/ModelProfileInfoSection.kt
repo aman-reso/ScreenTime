@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,23 +38,13 @@ fun ModelProfileInfoSection(
             .padding(horizontal = 20.dp),
         gap = 14.dp
     ) {
-        // 1. Name & Verified Badge
+        // 1. Name & Age
         ODSColumn(gap = 4.dp) {
-            ODSRow(
-                verticalAlignment = Alignment.CenterVertically,
-                gap = 8.dp
-            ) {
-                ODSText(
-                    text = "${model.name}, ${model.age}",
-                    style = ODSTextStyles.titleL,
-                    color = scheme.basicText
-                )
-                ODSIcon(
-                    iconModel = ODSIconModel(imageVector = Icons.Outlined.Verified),
-                    tint = scheme.basicAccent.getColor(),
-                    modifier = Modifier.size(22.dp)
-                )
-            }
+            ODSText(
+                text = "${model.name}, ${model.age}",
+                style = ODSTextStyles.titleL,
+                color = scheme.basicText
+            )
 
             ODSRow(
                 verticalAlignment = Alignment.CenterVertically,

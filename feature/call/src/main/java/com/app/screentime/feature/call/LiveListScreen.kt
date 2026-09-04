@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -152,15 +153,8 @@ fun LiveListScreen(
                             color = scheme.basicText
                         )
                     }
-
-                    ODSText(
-                        text = "Watch creators live, send tips & chat in real time",
-                        style = ODSTextStyles.microcopyRegular,
-                        color = scheme.basicTextRecessive
-                    )
                 }
 
-                // Header Compact "Go Live" Button for Models
                 if (isModel) {
                     ODSBox(
                         modifier = Modifier.clickable(onClick = onNavigateToHost),
@@ -175,13 +169,13 @@ fun LiveListScreen(
                         ) {
                             ODSIcon(
                                 iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.video),
-                                tint = HexColor(0xFFFFFFFF).getColor(),
+                                tint = scheme.basicTextOnAccent.getColor(),
                                 modifier = Modifier.size(14.dp)
                             )
                             ODSText(
                                 text = "Go Live",
                                 style = ODSTextStyles.microcopyBold,
-                                color = HexColor(0xFFFFFFFF)
+                                color = scheme.basicTextOnAccent,
                             )
                         }
                     }
@@ -225,8 +219,8 @@ fun LiveListScreen(
                         ) {
                             ODSIcon(
                                 iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.video),
-                                tint = scheme.basicAccent.getColor(),
-                                modifier = Modifier.size(36.dp)
+                                tint = scheme.basicTextOnAccent.getColor(),
+                                modifier = Modifier.size(24.dp)
                             )
                         }
 
@@ -236,20 +230,14 @@ fun LiveListScreen(
                             color = scheme.basicText
                         )
 
-                        ODSText(
-                            text = "Creators will appear here as soon as they start broadcasting. Check back in a moment or start your own stream!",
-                            style = ODSTextStyles.bodyMRegular,
-                            color = scheme.basicTextRecessive
-                        )
-
                         if (isModel) {
                             Spacer(modifier = Modifier.height(8.dp))
                             ODSButton(
                                 modifier = Modifier.fillMaxWidth(0.7f),
                                 scheme = scheme,
                                 props = ODSButtonProps(
-                                    label = "Start Broadcasting",
-                                    variant = ODSButtonVariant.PRIMARY
+                                    label = "Go live",
+                                    variant = ODSButtonVariant.SECONDARY
                                 ),
                                 onClick = onNavigateToHost
                             )
@@ -408,17 +396,36 @@ fun LiveStreamCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // "● LIVE" Badge
-            ODSBox(
-                background = listOf(ODSColorModel(hexColor = scheme.functionalDestructiveStandard)),
-                cornerRadius = ODSCorners(all = 8.dp),
-                padding = ODSPadding(horizontal = 8.dp, vertical = 4.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                ODSText(
-                    text = "● LIVE",
-                    style = ODSTextStyles.microcopyBold,
-                    color = HexColor(0xFFFFFFFF)
-                )
+                // "● LIVE" Badge
+                ODSBox(
+                    background = listOf(ODSColorModel(hexColor = scheme.functionalDestructiveStandard)),
+                    cornerRadius = ODSCorners(all = 8.dp),
+                    padding = ODSPadding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    ODSText(
+                        text = "● LIVE",
+                        style = ODSTextStyles.microcopyBold,
+                        color = HexColor(0xFFFFFFFF)
+                    )
+                }
+
+                if (stream.is_paid_mode) {
+                    ODSBox(
+                        background = listOf(ODSColorModel(hexColor = HexColor(0xFF8E24AA))),
+                        cornerRadius = ODSCorners(all = 8.dp),
+                        padding = ODSPadding(horizontal = 6.dp, vertical = 4.dp)
+                    ) {
+                        ODSText(
+                            text = "🪙 ${stream.coin_rate_per_min.toInt()}c/m",
+                            style = ODSTextStyles.microcopyBold,
+                            color = HexColor(0xFFFFEB3B)
+                        )
+                    }
+                }
             }
 
             // Viewer Count Badge

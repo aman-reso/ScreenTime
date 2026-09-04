@@ -16,6 +16,11 @@ class CallViewModel @Inject constructor(
     val room: Room
         get() = activeCallManager.getRoom()
 
+    val localWebRtcVideoTrack: StateFlow<livekit.org.webrtc.VideoTrack?> = activeCallManager.localWebRtcVideoTrack
+    val remoteWebRtcVideoTrack: StateFlow<livekit.org.webrtc.VideoTrack?> = activeCallManager.remoteWebRtcVideoTrack
+    val webRtcEglBase: livekit.org.webrtc.EglBase?
+        get() = activeCallManager.webRtcEglBase
+
     fun startOutgoingCall(
         modelId: String,
         modelName: String,

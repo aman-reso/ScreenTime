@@ -154,13 +154,15 @@ fun StaggeredModelCard(
                     style = ODSTextStyles.bodySBold,
                     color = HexColor(0xFFFFFFFF)
                 )
-                val tagStr = if (model.tags.isNotEmpty()) model.tags.take(2)
-                    .joinToString(", ") else "Verified"
-                ODSText(
-                    text = tagStr,
-                    style = ODSTextStyles.microcopyRegular,
-                    color = HexColor(0xCCFFFFFF)
-                )
+                val tagStr = if (model.tags.isNotEmpty()) model.tags.take(2).joinToString(", ")
+                    else model.distance.ifBlank { "" }
+                if (tagStr.isNotBlank()) {
+                    ODSText(
+                        text = tagStr,
+                        style = ODSTextStyles.microcopyRegular,
+                        color = HexColor(0xCCFFFFFF)
+                    )
+                }
             }
 
             // Call and Voice Icons from ODS (same as ModelProfileBottomBar reference)

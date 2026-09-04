@@ -219,6 +219,32 @@ class ChattyApi @Inject constructor(
         return res.status.isSuccess()
     }
 
+    suspend fun setLivePaidMode(token: String, streamId: String, isPaidMode: Boolean, coinRatePerMin: Double): LiveStreamDto? {
+        val res: ApiResponse<LivePaidModeResponse> = httpClient.post("$baseUrl/api/live/paid_mode") {
+            bearerAuth(token)
+            setBody(LivePaidModeRequest(stream_id = streamId, is_paid_mode = isPaidMode, coin_rate_per_min = coinRatePerMin))
+        }.body()
+        return res.data?.stream
+    }
+
+    suspend fun getLiveStreamStatus(token: String, streamId: String): LiveStreamDto? {
+        val res: ApiResponse<LiveStatusResponse> = httpClient.get("$baseUrl/api/live/status") {
+            bearerAuth(token)
+            url {
+                parameters.append("stream_id", streamId)
+            }
+        }.body()
+        return res.data?.stream
+    }
+
+    suspend fun deductLiveCoins(token: String, streamId: String, durationSeconds: Int = 60): LiveDeductResponse {
+        val res: ApiResponse<LiveDeductResponse> = httpClient.post("$baseUrl/api/live/deduct") {
+            bearerAuth(token)
+            setBody(LiveDeductRequest(stream_id = streamId, duration_seconds = durationSeconds))
+        }.body()
+        return res.data ?: LiveDeductResponse(success = false, error = res.message)
+    }
+
     fun getWsUrl(token: String): String {
         val wsBase = baseUrl.replace("http://", "ws://").replace("https://", "wss://")
         return "$wsBase/ws?token=$token"

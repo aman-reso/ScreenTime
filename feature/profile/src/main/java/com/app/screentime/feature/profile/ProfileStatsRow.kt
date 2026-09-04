@@ -28,7 +28,7 @@ fun ProfileStatsRow(
     ODSRow(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 12.dp),
         gap = 10.dp
     ) {
         StatItem(

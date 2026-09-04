@@ -41,7 +41,7 @@ fun ModelVerificationPendingCard(
     ODSBox(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 12.dp)
             .clickable(onClick = onClickComplete),
         background = listOf(ODSColorModel(hexColor = HexColor(0xFFFBBF24))),
         cornerRadius = ODSCorners(all = 12.dp),

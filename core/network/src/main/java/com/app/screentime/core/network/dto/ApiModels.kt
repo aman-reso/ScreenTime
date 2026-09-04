@@ -227,7 +227,9 @@ data class LiveStreamDto(
     val title: String = "",
     val viewer_count: Int = 1,
     val total_earned: Double = 0.0,
-    val is_active: Boolean = true
+    val is_active: Boolean = true,
+    val is_paid_mode: Boolean = false,
+    val coin_rate_per_min: Double = 10.0
 )
 
 @Serializable
@@ -262,3 +264,39 @@ data class LiveTipResponse(
     val gift_name: String = "",
     val sender: String = ""
 )
+
+@Serializable
+data class LivePaidModeRequest(
+    val stream_id: String,
+    val is_paid_mode: Boolean,
+    val coin_rate_per_min: Double = 10.0
+)
+
+@Serializable
+data class LivePaidModeResponse(
+    val stream: LiveStreamDto? = null
+)
+
+@Serializable
+data class LiveStatusResponse(
+    val stream: LiveStreamDto? = null,
+    val is_active: Boolean = true
+)
+
+@Serializable
+data class LiveDeductRequest(
+    val stream_id: String,
+    val duration_seconds: Int = 60
+)
+
+@Serializable
+data class LiveDeductResponse(
+    val success: Boolean = false,
+    val deducted: Double = 0.0,
+    val balance: Double = 0.0,
+    val required: Double = 0.0,
+    val is_paid_mode: Boolean = false,
+    val coin_rate_per_min: Double = 10.0,
+    val error: String = ""
+)
+

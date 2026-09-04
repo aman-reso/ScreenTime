@@ -31,6 +31,8 @@ import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
@@ -115,7 +117,7 @@ fun HeroBalanceCard(
                         contentAlignment = Alignment.Center
                     ) {
                         ODSText(
-                            text = if (isModel) "Withdraw Funds" else "+ Top Up Coins",
+                            text = if (isModel) stringResource(R.string.wallet_withdraw_funds) else stringResource(R.string.wallet_top_up_coins),
                             style = ODSTextStyles.bodySBold,
                             color = HexColor(0xff1e1145)
                         )

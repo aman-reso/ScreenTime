@@ -13,6 +13,8 @@ import com.app.screentime.feature.call.domain.usecase.ObserveCallEventsUseCase
 import com.app.screentime.feature.call.domain.usecase.RejectCallUseCase
 import com.app.screentime.feature.call.domain.usecase.StartCallUseCase
 import com.app.screentime.feature.call.service.CallForegroundService
+import com.app.screentime.feature.call.service.CallNotificationHelper
+import com.app.screentime.feature.call.webrtc.WebRtcCallClient
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.livekit.android.LiveKit
 import io.livekit.android.room.Room
@@ -29,6 +31,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import livekit.org.webrtc.EglBase
+import livekit.org.webrtc.VideoTrack as RtcVideoTrack
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -54,9 +58,19 @@ class ActiveCallManager @Inject constructor(
     private var localTimerJob: Job? = null
     private var liveKitRoom: Room? = null
 
+    // ── WebRTC P2P Direct Connection (Primary) ────────────────────────────────
+    var webRtcCallClient: WebRtcCallClient? = null
+        private set
+    val localWebRtcVideoTrack = MutableStateFlow<RtcVideoTrack?>(null)
+    val remoteWebRtcVideoTrack = MutableStateFlow<RtcVideoTrack?>(null)
+    val webRtcEglBase: EglBase?
+        get() = webRtcCallClient?.eglBase
+    private var incomingCallTimeoutJob: Job? = null
+
     init {
         scope.launch(Dispatchers.IO) {
             delay(500) // Give UI time to render first frame
+            CallNotificationHelper.createChannels(context)
             observeWebSocketEventsInternal()
         }
     }
@@ -91,19 +105,42 @@ class ActiveCallManager @Inject constructor(
                 val callerName = msg.caller_name?.ifBlank { null }
                     ?: msg.caller_id?.ifBlank { null }
                     ?: "Incoming Call"
+                val callType = if (msg.call_type == "video") CallType.VIDEO else CallType.VOICE
 
                 _callState.value = CallUiState(
                     status = CallStatus.INCOMING,
-                    callType = if (msg.call_type == "video") CallType.VIDEO else CallType.VOICE,
+                    callType = callType,
                     callId = msg.call_id,
                     remoteUserId = callerId,
                     remoteUserName = callerName,
                     ratePerMin = rate
                 )
                 audioHelper.startDialingTone(scope)
+
+                // High-priority notification with ringing & full-screen intent
+                CallNotificationHelper.showIncomingCallNotification(
+                    context = context,
+                    callId = msg.call_id ?: "",
+                    callerId = callerId,
+                    callerName = callerName,
+                    callType = if (callType == CallType.VIDEO) "video" else "voice"
+                )
+
+                // 45s Ringing Timeout: Auto-dismiss and register missed call
+                incomingCallTimeoutJob?.cancel()
+                incomingCallTimeoutJob = scope.launch {
+                    delay(45000)
+                    if (_callState.value.status == CallStatus.INCOMING) {
+                        CallNotificationHelper.cancelIncomingCallNotification(context)
+                        CallNotificationHelper.showMissedCallNotification(context, callerName)
+                        rejectIncomingCall()
+                    }
+                }
             }
 
             WSEventTypes.CALL_ACTIVE -> {
+                incomingCallTimeoutJob?.cancel()
+                CallNotificationHelper.cancelIncomingCallNotification(context)
                 audioHelper.stopDialingTone()
                 audioHelper.playCallConnectedTone()
                 audioHelper.startCallAudio()
@@ -124,9 +161,6 @@ class ActiveCallManager @Inject constructor(
                     ratePerMin = msg.rate_per_min ?: _callState.value.ratePerMin
                 )
 
-                // Connect to LiveKit Room asynchronously
-                connectLiveKit(remoteId ?: "")
-
                 // Start Foreground Service
                 CallForegroundService.start(
                     context = context,
@@ -136,6 +170,44 @@ class ActiveCallManager @Inject constructor(
                 )
 
                 startLocalBillingTimer()
+            }
+
+            WSEventTypes.WEBRTC_OFFER -> {
+                val sdp = msg.sdp?.ifBlank { null } ?: msg.payloadAsString()
+                if (sdp.isNotBlank()) {
+                    Log.i("ActiveCallManager", "Received WEBRTC_OFFER, handing to P2P client")
+                    webRtcCallClient?.handleRemoteOffer(sdp)
+                }
+            }
+
+            WSEventTypes.WEBRTC_ANSWER -> {
+                val sdp = msg.sdp?.ifBlank { null } ?: msg.payloadAsString()
+                if (sdp.isNotBlank()) {
+                    Log.i("ActiveCallManager", "Received WEBRTC_ANSWER, handing to P2P client")
+                    webRtcCallClient?.handleRemoteAnswer(sdp)
+                }
+            }
+
+            WSEventTypes.WEBRTC_ICE_CANDIDATE -> {
+                val cand = msg.candidate?.ifBlank { null } ?: msg.payloadAsString()
+                val mid = msg.sdp_mid ?: "0"
+                val mLine = msg.sdp_m_line_index ?: 0
+                if (cand.isNotBlank()) {
+                    webRtcCallClient?.handleRemoteIceCandidate(mid, mLine, cand)
+                }
+            }
+
+            WSEventTypes.CALL_CANCEL, WSEventTypes.CALL_CANCELLED -> {
+                incomingCallTimeoutJob?.cancel()
+                val isIncoming = _callState.value.status == CallStatus.INCOMING
+                CallNotificationHelper.cancelIncomingCallNotification(context)
+                if (isIncoming) {
+                    CallNotificationHelper.showMissedCallNotification(
+                        context,
+                        _callState.value.remoteUserName.ifBlank { "Caller" }
+                    )
+                }
+                cleanupAndEnd(reason = "Caller cancelled the call")
             }
 
             WSEventTypes.CALL_TICK -> {
@@ -159,32 +231,83 @@ class ActiveCallManager @Inject constructor(
             }
 
             WSEventTypes.CALL_REJECTED -> {
+                CallNotificationHelper.cancelIncomingCallNotification(context)
                 cleanupAndEnd(reason = "Call declined")
             }
 
             WSEventTypes.CALL_BUSY -> {
+                CallNotificationHelper.cancelIncomingCallNotification(context)
                 cleanupAndEnd(reason = "User is busy on another call")
             }
 
             WSEventTypes.CALL_ENDED_BALANCE_EXHAUSTED -> {
+                CallNotificationHelper.cancelIncomingCallNotification(context)
                 cleanupAndEnd(reason = "Call ended: Balance exhausted")
             }
 
             WSEventTypes.CALL_ENDED -> {
+                CallNotificationHelper.cancelIncomingCallNotification(context)
                 cleanupAndEnd(reason = msg.reason ?: "Call ended by remote party")
             }
 
             WSEventTypes.NETWORK_ERROR -> {
                 if (_callState.value.status == CallStatus.ACTIVE || _callState.value.status == CallStatus.DIALING) {
+                    CallNotificationHelper.cancelIncomingCallNotification(context)
                     cleanupAndEnd(reason = "Network connection lost")
                 }
             }
         }
     }
 
+    private fun initWebRtc(targetUserId: String, callId: String, isVideo: Boolean, isCaller: Boolean) {
+        try {
+            webRtcCallClient?.close()
+            webRtcCallClient = WebRtcCallClient(
+                context = context,
+                wsClient = wsClient,
+                callId = callId,
+                remoteUserId = targetUserId,
+                isVideo = isVideo,
+                onConnected = {
+                    Log.i("ActiveCallManager", "✅ P2P WebRTC Connected Successfully!")
+                    _callState.value = _callState.value.copy(isP2PConnected = true)
+                },
+                onFallbackToLiveKit = { reason ->
+                    Log.w("ActiveCallManager", "⚠️ $reason. Activating LiveKit SFU fallback...")
+                    _callState.value = _callState.value.copy(
+                        isUsingLiveKitFallback = true,
+                        isP2PConnected = false
+                    )
+                    connectLiveKit(targetUserId)
+                },
+                onRemoteVideoTrackReady = { track ->
+                    remoteWebRtcVideoTrack.value = track
+                },
+                onLocalVideoTrackReady = { track ->
+                    localWebRtcVideoTrack.value = track
+                }
+            )
+            webRtcCallClient?.start(isCaller)
+        } catch (e: Exception) {
+            Log.e("ActiveCallManager", "Error initializing WebRTC: ${e.message}, using LiveKit fallback", e)
+            _callState.value = _callState.value.copy(isUsingLiveKitFallback = true)
+            connectLiveKit(targetUserId)
+        }
+    }
+
     private fun connectLiveKit(targetUserId: String) {
         scope.launch(Dispatchers.IO) {
             try {
+                val room = getRoom()
+                if (room.state == Room.State.CONNECTED || room.state == Room.State.CONNECTING) {
+                    Log.d("ActiveCallManager", "LiveKit room already connected or connecting")
+                    if (_callState.value.callType == CallType.VIDEO || _callState.value.isCameraOn) {
+                        try {
+                            room.localParticipant.setCameraEnabled(true)
+                        } catch (_: Exception) {}
+                    }
+                    return@launch
+                }
                 val token = sessionManager.token ?: ""
                 val callTypeStr = if (_callState.value.callType == CallType.VIDEO) "video" else "voice"
                 
@@ -211,7 +334,6 @@ class ActiveCallManager @Inject constructor(
                     )
                 }
 
-                val room = getRoom()
                 room.connect(livekitUrl, roomToken)
                 room.localParticipant.setMicrophoneEnabled(!_callState.value.isMuted)
 
@@ -319,7 +441,11 @@ class ActiveCallManager @Inject constructor(
                     wsClient.connect()
                 }
 
-                connectLiveKit(targetId)
+                // 1. PRIMARY: Initialize P2P WebRTC
+                val callId = "call_${System.currentTimeMillis()}"
+                initWebRtc(targetId, callId, isVideo = callType == CallType.VIDEO, isCaller = true)
+
+                // 2. Send Call Request via WebSocket Signaling
                 startCallUseCase(targetId, if (callType == CallType.VIDEO) "video" else "voice")
             } catch (e: Exception) {
                 Log.e("ActiveCallManager", "Failed to start call: ${e.message}", e)
@@ -334,12 +460,16 @@ class ActiveCallManager @Inject constructor(
         val callerId = state.remoteUserId
         if (callId.isNullOrBlank() || callerId.isBlank()) return
 
+        incomingCallTimeoutJob?.cancel()
+        CallNotificationHelper.cancelIncomingCallNotification(context)
         audioHelper.stopDialingTone()
         audioHelper.playCallConnectedTone()
         audioHelper.startCallAudio()
 
         _callState.value = state.copy(status = CallStatus.ACTIVE)
-        connectLiveKit(callerId)
+
+        // 1. PRIMARY: Initialize P2P WebRTC as Receiver
+        initWebRtc(callerId, callId, isVideo = state.callType == CallType.VIDEO, isCaller = false)
 
         scope.launch {
             try {
@@ -359,6 +489,8 @@ class ActiveCallManager @Inject constructor(
     }
 
     fun rejectIncomingCall() {
+        incomingCallTimeoutJob?.cancel()
+        CallNotificationHelper.cancelIncomingCallNotification(context)
         val state = _callState.value
         val callId = state.callId
         val callerId = state.remoteUserId
@@ -376,6 +508,8 @@ class ActiveCallManager @Inject constructor(
     }
 
     fun endCall(reason: String? = null) {
+        incomingCallTimeoutJob?.cancel()
+        CallNotificationHelper.cancelIncomingCallNotification(context)
         val state = _callState.value
         val callId = state.callId
         cleanupAndEnd(reason = reason ?: "Call ended")
@@ -394,6 +528,7 @@ class ActiveCallManager @Inject constructor(
         val newMuted = !_callState.value.isMuted
         _callState.value = _callState.value.copy(isMuted = newMuted)
         audioHelper.setMuted(newMuted)
+        webRtcCallClient?.toggleMute(newMuted)
         scope.launch(Dispatchers.IO) {
             liveKitRoom?.localParticipant?.setMicrophoneEnabled(!newMuted)
         }
@@ -408,6 +543,7 @@ class ActiveCallManager @Inject constructor(
     fun toggleCamera() {
         val newCameraState = !_callState.value.isCameraOn
         _callState.value = _callState.value.copy(isCameraOn = newCameraState)
+        webRtcCallClient?.toggleCamera(newCameraState)
         scope.launch(Dispatchers.IO) {
             liveKitRoom?.localParticipant?.setCameraEnabled(newCameraState)
         }
@@ -458,6 +594,16 @@ class ActiveCallManager @Inject constructor(
     }
 
     private fun cleanupAndEnd(reason: String) {
+        incomingCallTimeoutJob?.cancel()
+        incomingCallTimeoutJob = null
+        CallNotificationHelper.cancelIncomingCallNotification(context)
+
+        // Close P2P WebRTC Engine
+        webRtcCallClient?.close()
+        webRtcCallClient = null
+        localWebRtcVideoTrack.value = null
+        remoteWebRtcVideoTrack.value = null
+
         localTimerJob?.cancel()
         localTimerJob = null
         audioHelper.stopCallAudio()
@@ -475,7 +621,9 @@ class ActiveCallManager @Inject constructor(
 
         _callState.value = _callState.value.copy(
             status = CallStatus.ENDED,
-            endReason = reason
+            endReason = reason,
+            isP2PConnected = false,
+            isUsingLiveKitFallback = false
         )
     }
 

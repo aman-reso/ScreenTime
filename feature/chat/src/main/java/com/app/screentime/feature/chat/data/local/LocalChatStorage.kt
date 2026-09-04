@@ -25,7 +25,8 @@ class LocalChatStorage @Inject constructor(
         val raw = prefs.getString("chat_$partnerId", null) ?: return emptyList()
         return try {
             val list = json.decodeFromString<List<ChatMessage>>(raw)
-            list.filter { now - it.timestamp < ttlMillis }
+            val valid = list.filter { it.text.isNotBlank() && (now - it.timestamp < ttlMillis) }
+            deduplicateMessages(valid)
         } catch (e: Exception) {
             emptyList()
         }
@@ -38,11 +39,27 @@ class LocalChatStorage @Inject constructor(
 
     @Synchronized
     fun saveMessage(partnerId: String, message: ChatMessage) {
+        if (message.text.isBlank()) return
         val current = getMessages(partnerId).toMutableList()
         if (current.none { it.id == message.id }) {
             current.add(message)
-            prefs.edit().putString("chat_$partnerId", json.encodeToString(current)).apply()
+            val deduplicated = deduplicateMessages(current)
+            prefs.edit().putString("chat_$partnerId", json.encodeToString(deduplicated)).apply()
         }
+    }
+
+    @Synchronized
+    fun replaceOrSaveMessage(partnerId: String, tempId: String, confirmedMessage: ChatMessage) {
+        if (confirmedMessage.text.isBlank()) return
+        val current = getMessages(partnerId).toMutableList()
+        val index = current.indexOfFirst { it.id == tempId }
+        if (index != -1) {
+            current[index] = confirmedMessage
+        } else if (current.none { it.id == confirmedMessage.id }) {
+            current.add(confirmedMessage)
+        }
+        val deduplicated = deduplicateMessages(current)
+        prefs.edit().putString("chat_$partnerId", json.encodeToString(deduplicated)).apply()
     }
 
     @Synchronized
@@ -50,11 +67,31 @@ class LocalChatStorage @Inject constructor(
         val current = getMessages(partnerId).toMutableList()
         val existingIds = current.map { it.id }.toSet()
         for (m in newMessages) {
-            if (m.id !in existingIds) {
+            if (m.text.isNotBlank() && m.id !in existingIds) {
                 current.add(m)
             }
         }
-        prefs.edit().putString("chat_$partnerId", json.encodeToString(current)).apply()
+        val deduplicated = deduplicateMessages(current)
+        prefs.edit().putString("chat_$partnerId", json.encodeToString(deduplicated)).apply()
+    }
+
+    private fun deduplicateMessages(messages: List<ChatMessage>): List<ChatMessage> {
+        val result = mutableListOf<ChatMessage>()
+        val seenIds = mutableSetOf<String>()
+        for (msg in messages) {
+            if (msg.text.isBlank() || msg.id in seenIds) continue
+            val duplicate = result.any {
+                it.senderId == msg.senderId &&
+                it.receiverId == msg.receiverId &&
+                it.text == msg.text &&
+                Math.abs(it.timestamp - msg.timestamp) < 5000
+            }
+            if (!duplicate) {
+                result.add(msg)
+                seenIds.add(msg.id)
+            }
+        }
+        return result.sortedBy { it.timestamp }
     }
 
     @Synchronized

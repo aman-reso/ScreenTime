@@ -56,7 +56,7 @@ fun ChatTopBar(
                 contentAlignment = Alignment.Center
             ) {
                 ODSIcon(
-                    iconModel = ODSIconModel(drawableRes = R.drawable.arrow_right),
+                    iconModel = ODSIconModel(drawableRes = R.drawable.navigation_left_type_standard_size_standard),
                     tint = scheme.basicText.getColor()
                 )
             }

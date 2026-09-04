@@ -684,4 +684,72 @@
     <string name="enter_service_name">आसान पहचान के लिए एक नाम दर्ज करें</string>
     <string name="service_name_placeholder">उदा., जॉन का इंटरनेट</string>
 
+    <!-- Call & Live Stream (हिन्दी अनुवाद) -->
+    <string name="call_live_video">लाइव वीडियो</string>
+    <string name="call_voice_call">वॉइस कॉल</string>
+    <string name="call_ringing">रिंगिंग…</string>
+    <string name="call_calling_target">%1$s को कॉल कर रहे हैं…</string>
+    <string name="call_ringing_p2p">रिंगिंग · P2P डायरेक्ट</string>
+    <string name="call_ringing_livekit">रिंगिंग · लाइवकिट बैकअप</string>
+    <string name="call_status_p2p_active">P2P डायरेक्ट · %1$s</string>
+    <string name="call_status_livekit_active">लाइवकिट बैकअप · %1$s</string>
+    <string name="call_video_ended">वीडियो कॉल समाप्त</string>
+    <string name="call_voice_ended">वॉइस कॉल समाप्त</string>
+    <string name="call_declined">कॉल अस्वीकार किया गया</string>
+    <string name="call_user_busy">उपयोगकर्ता दूसरी कॉल पर व्यस्त हैं</string>
+    <string name="call_duration_format">अवधि: %1$s</string>
+    <string name="call_total_charged">कुल शुल्क: ₹%.2f</string>
+    <string name="call_ongoing">जारी कॉल</string>
+    <string name="call_incoming_video">आने वाली वीडियो कॉल</string>
+    <string name="call_incoming_voice">आने वाली वॉइस कॉल</string>
+    <string name="call_incoming_from">%1$s आपको कॉल कर रहे हैं…</string>
+    <string name="call_missed_title">मिस्ड कॉल</string>
+    <string name="call_missed_text">आपने %1$s से एक कॉल मिस कर दी</string>
+    <string name="call_insufficient_balance">अपर्याप्त बैलेंस</string>
+    <string name="call_caller_insufficient_balance">कॉलर का अपर्याप्त बैलेंस</string>
+    <string name="call_insufficient_balance_caller_msg">कॉलर के पास वीडियो कॉल के लिए पर्याप्त बैलेंस नहीं है।</string>
+    <string name="call_insufficient_balance_msg">%2$s के साथ 1 मिनट की कॉल के लिए कम से कम ₹%1$d सिक्कों की आवश्यकता है। वर्तमान बैलेंस: ₹%3$d।</string>
+    <string name="call_action_close">बंद करें</string>
+    <string name="call_action_cancel">रद्द करें</string>
+    <string name="call_action_recharge">रिचार्ज करें</string>
+    <string name="call_action_end">कॉल समाप्त करें</string>
+    <string name="call_action_answer">उत्तर दें</string>
+    <string name="call_action_decline">अस्वीकार करें</string>
+    <string name="call_action_flip_camera">कैमरा पलटें</string>
+    <string name="call_action_toggle_camera">कैमरा</string>
+    <string name="call_action_toggle_mic">माइक</string>
+    <string name="call_action_toggle_speaker">स्पीकर</string>
+    <string name="live_stream_title">लाइव स्ट्रीमिंग</string>
+    <string name="live_stream_ended">प्रसारण समाप्त</string>
+    <string name="live_paid_badge">🪙 10c/m</string>
+    <string name="live_paid_mode">टोकन कटौती</string>
+    <string name="live_paid_mode_desc">दर्शकों से प्रति मिनट टोकन शुल्क लें</string>
+    <string name="live_rate_label">टोकन प्रति मिनट</string>
+    <string name="live_warning_title">होस्ट ने टोकन कटौती चालू की है</string>
+    <string name="live_warning_desc">इस स्ट्रीम को देखने के लिए टोकन की आवश्यकता है। देखते समय हर मिनट सिक्के काटे जाएंगे।</string>
+    <string name="live_enter_button">स्ट्रीम में प्रवेश करें · %1$d सिक्के/मिनट</string>
+    <string name="live_get_tokens_button">टोकन प्राप्त करें</string>
+
+    <!-- Wallet & Coin Pack Top-Up (हिन्दी अनुवाद) -->
+    <string name="wallet_coin_pack_top_up">कॉइन पैक टॉप-अप</string>
+    <string name="wallet_add_coins">सिक्के जोड़ें</string>
+    <string name="wallet_current_balance_format">वर्तमान बैलेंस: %1$d सिक्के</string>
+    <string name="wallet_instant_recharge">✨ तुरंत वॉलेट रिचार्ज</string>
+    <string name="wallet_100_percent_secure">100% सुरक्षित</string>
+    <string name="wallet_coins_count">%1$d सिक्के</string>
+    <string name="wallet_bonus_free">+%1$d मुफ्त</string>
+    <string name="wallet_popular">लोकप्रिय</string>
+    <string name="wallet_pay_button">भुगतान करें</string>
+    <string name="wallet_pay_with_price">₹%1$d भुगतान करें</string>
+    <string name="wallet_disclaimer">सिक्के कभी समाप्त नहीं होते · कॉल और चैट के लिए तुरंत उपलब्ध</string>
+    <string name="wallet_welcome_bonus">स्वागत बोनस</string>
+    <string name="wallet_sample_voice_call">सारा के साथ वॉइस कॉल</string>
+    <string name="wallet_sample_chat">चैट सत्र अनलॉक</string>
+    <string name="wallet_withdraw_funds">पैसे निकालें</string>
+    <string name="wallet_top_up_coins">+ सिक्के टॉप-अप करें</string>
+
+    <!-- Discover Screen (हिन्दी अनुवाद) -->
+    <string name="discover_no_models_found">कोई मॉडल नहीं मिला</string>
+    <string name="discover_no_models_desc">फ़िल्टर बदलकर देखें या ताज़ा करने के लिए नीचे खींचें</string>
+    <string name="discover_refresh">ताज़ा करें</string>
 </resources>

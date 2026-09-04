@@ -31,7 +31,8 @@ import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeader
 import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeaderProps
 import com.telekom.odsystem.slots.bottomsheetheader.ODSBottomSheetHeaderSize
-import com.telekom.odsystem.tokens.ODSTextStyles
+import androidx.compose.ui.res.stringResource
+import com.app.screentime.config.R
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,8 +69,8 @@ fun WalletPacksBottomSheet(
             ODSBottomSheetHeader(
                 scheme = scheme,
                 props = ODSBottomSheetHeaderProps(
-                    largeHeading = "Add Coins",
-                    subtitle = "Current Balance: ${uiState.balance.toInt()} Coins",
+                    largeHeading = stringResource(R.string.wallet_add_coins),
+                    subtitle = stringResource(R.string.wallet_current_balance_format, uiState.balance.toInt()),
                     size = ODSBottomSheetHeaderSize.SMALL
                 )
             )
@@ -93,13 +94,13 @@ fun WalletPacksBottomSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         ODSText(
-                            text = "✨ Instant Wallet Recharge",
-                            style = ODSTextStyles.bodySBold,
+                            text = stringResource(R.string.wallet_instant_recharge),
+                            style = com.telekom.odsystem.tokens.ODSTextStyles.bodySBold,
                             color = scheme.basicAccent
                         )
                         ODSText(
-                            text = "100% Secure",
-                            style = ODSTextStyles.microcopyRegular,
+                            text = stringResource(R.string.wallet_100_percent_secure),
+                            style = com.telekom.odsystem.tokens.ODSTextStyles.microcopyRegular,
                             color = scheme.basicTextRecessive
                         )
                     }
@@ -141,7 +142,7 @@ fun WalletPacksBottomSheet(
                     modifier = Modifier.fillMaxWidth(),
                     scheme = scheme,
                     props = ODSButtonProps(
-                        label = "Pay",
+                        label = if (pack != null) stringResource(R.string.wallet_pay_with_price, pack.price_inr.toInt()) else stringResource(R.string.wallet_pay_button),
                         variant = ODSButtonVariant.PRIMARY,
                         size = ODSButtonSize.SMALL,
                         disabled = uiState.isRecharging || pack == null
@@ -150,8 +151,8 @@ fun WalletPacksBottomSheet(
                 )
 
                 ODSText(
-                    text = "Coins never expire · Available immediately for calls & chats",
-                    style = ODSTextStyles.microcopyRegular,
+                    text = stringResource(R.string.wallet_disclaimer),
+                    style = com.telekom.odsystem.tokens.ODSTextStyles.microcopyRegular,
                     color = scheme.basicTextRecessive
                 )
             }
