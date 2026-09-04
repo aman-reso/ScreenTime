@@ -1,0 +1,24 @@
+app/src/main/AndroidManifest.xml
+  h_9c8c4b23da7963 19,121
+feature/discover/src/main/java/com/app/screentime/feature/discover/DiscoverFilterBottomSheet.kt
+  h_9c8c4b23da7963 57,113
+feature/discover/src/main/java/com/app/screentime/feature/discover/DiscoverScreen.kt
+  h_9c8c4b23da7963 167,175,219-220,223,442-446
+feature/discover/src/main/java/com/app/screentime/feature/discover/ModelProfileInfoSection.kt
+  h_9c8c4b23da7963 42-46
+feature/discover/src/main/java/com/app/screentime/feature/discover/StaggeredModelCard.kt
+  h_9c8c4b23da7963 157
+feature/profile/src/main/java/com/app/screentime/feature/profile/ModelVerificationBottomSheet.kt
+  h_9c8c4b23da7963 119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "bdae959a5ea246e695b9f4a10fcfb9516cbbffa8",
+  "prompts": {},
+  "humans": {
+    "h_9c8c4b23da7963": {
+      "author": "AmanKumar <Aman.kumar@telekom-digital.com>"
+    }
+  }
+}
