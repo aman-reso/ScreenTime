@@ -85,6 +85,9 @@ class NetworkClient @Inject constructor(
         }
     }
 
+    val baseUrl: String
+        get() = preferencesManager.getBaseUrl() ?: ApiEndpoints.getBaseUrl()
+
     val httpClient: HttpClient by lazy {
         HttpClient(Android) {
 
@@ -110,7 +113,7 @@ class NetworkClient @Inject constructor(
         }
 
         install(DefaultRequest) {
-            url(ApiEndpoints.getBaseUrl())
+            url(baseUrl)
             header("Content-Type", "application/json")
             header("ngrok-skip-browser-warning", "true")
             header("X-App-Version", appVersion)

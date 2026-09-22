@@ -65,7 +65,8 @@ data class ChatMessage(
     val text: String,
     val timestamp: Long,
     val isRead: Boolean = false,
-    val type: MessageType = MessageType.TEXT
+    val type: MessageType = MessageType.TEXT,
+    val mediaUrl: String? = null
 )
 
 @Serializable

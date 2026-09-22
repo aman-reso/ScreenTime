@@ -1,11 +1,6 @@
 package com.app.screentime.feature.chat
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,48 +9,66 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.core.model.ChatMessage
-import com.telekom.odsystem.atoms.ODSImage
-import com.telekom.odsystem.atoms.ODSImageModel
-import com.telekom.odsystem.neutralScheme
+import com.app.screentime.core.ui.theme.zonaODSTheme
+import com.app.screentime.feature.chat.component.ChatInputBar
+import com.app.screentime.feature.chat.component.ChatTopBar
+import com.app.screentime.feature.chat.component.MessageBubble
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSLazyColumn
+import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.tokens.ODSTextStyles
+import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 private val defaultModelPortraits = listOf(
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85",
-    "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=85",
-    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=85",
-    "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1200&q=85"
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80"
 )
 
+/**
+ * Direct Message Chat Screen (Matching media_1789923373115.png & Figma specifications).
+ *
+ * Rules:
+ * 1. 100% ODS components and ODSLazyColumn.
+ * 2. Colors picked from `scheme: ODSTheme`.
+ * 3. Compact button sizing.
+ * 4. Maximum text size 16sp across the screen with Funnel Sans font.
+ * 5. All padding, margins, gaps and radii use `ODSVariables`.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChatScreen(
     modelId: String,
     modelName: String,
     modifier: Modifier = Modifier,
-    scheme: ODSTheme = neutralScheme,
+    scheme: ODSTheme = zonaODSTheme,
     onBackClick: () -> Unit = {},
     onStartVoiceCall: () -> Unit = {},
     onStartVideoCall: () -> Unit = onStartVoiceCall,
+    onOpenProfile: () -> Unit = {},
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     val isImeVisible = WindowInsets.isImeVisible
+
+    val resolvedName = if (modelName.isNotBlank()) modelName else "Jessica Maple"
 
     val modelPortraitUrl = remember(modelId) {
         val hash = (modelId.hashCode() and 0x7FFFFFFF)
@@ -66,18 +79,40 @@ fun ChatScreen(
         viewModel.loadChat(modelId)
     }
 
+    // Default conversation matching Figma mockup (Alex & Jessica Maui conversation)
     val displayMessages = remember(uiState.messages) {
-        val valid = uiState.messages.filter { it.text.isNotBlank() }.distinctBy { it.id }
-        if (valid.isNotEmpty()) {
-            valid
+        if (uiState.messages.isNotEmpty()) {
+            uiState.messages.filter { it.text.isNotBlank() }.distinctBy { it.id }
         } else {
             listOf(
                 ChatMessage(
-                    id = "sample_msg_1",
+                    id = "msg_1",
                     senderId = modelId,
-                    receiverId = "user",
-                    text = "Hey! So glad we connected! Let's chat or hop on a call 😉",
-                    timestamp = System.currentTimeMillis() - 60_000
+                    receiverId = "me",
+                    text = "Hey Alex! I really loved your latest travel stories. Where was that beach? 🌴",
+                    timestamp = System.currentTimeMillis() - 3600_000
+                ),
+                ChatMessage(
+                    id = "msg_2",
+                    senderId = "me",
+                    receiverId = modelId,
+                    text = "Thanks Jess! That was actually in Maui. Absolute paradise!",
+                    timestamp = System.currentTimeMillis() - 3000_000
+                ),
+                ChatMessage(
+                    id = "msg_3",
+                    senderId = "me",
+                    receiverId = modelId,
+                    text = "[photo]",
+                    mediaUrl = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80",
+                    timestamp = System.currentTimeMillis() - 1800_000
+                ),
+                ChatMessage(
+                    id = "msg_4",
+                    senderId = modelId,
+                    receiverId = "me",
+                    text = "Wow! I have to go there sometime. We should plan a trip together! 😉",
+                    timestamp = System.currentTimeMillis() - 900_000
                 )
             )
         }
@@ -89,63 +124,65 @@ fun ChatScreen(
         }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(scheme.basicBackground.getColor())
+    ODSBox(
+        modifier = modifier.fillMaxSize(),
+        background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
     ) {
-        // 1. Model Profile Portrait Background Image
-        ODSImage(
-            imageModel = ODSImageModel(
-                url = modelPortraitUrl,
-                contentDescription = modelName
-            ),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // 2. Soft Gradient Scrim Overlay for Legibility
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0x661E1145),
-                            Color(0x991E1145),
-                            Color(0xFA1E1145)
-                        )
-                    )
-                )
-        )
-
-        // 3. Main Chat Screen Content
-        Column(
+        ODSColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .then(if (isImeVisible) Modifier.imePadding() else Modifier.navigationBarsPadding())
         ) {
-            // Modular Top Bar with Audio & Video Call Icons
+            // ── 1. Top App Bar ───────────────────────────────────────────────
             ChatTopBar(
-                modelName = modelName,
+                modelName = resolvedName,
                 scheme = scheme,
+                avatarUrl = modelPortraitUrl,
+                statusText = "Active now",
+                isOnline = true,
                 onBackClick = onBackClick,
                 onAudioCallClick = onStartVoiceCall,
-                onVideoCallClick = onStartVideoCall
+                onVideoCallClick = onStartVideoCall,
+                onProfileClick = onOpenProfile
             )
 
-            // Messages Feed (No empty cards/sections)
-            LazyColumn(
+            // ── 2. Chat Timeline Messages using ODSLazyColumn ────────────────
+            ODSLazyColumn(
                 state = listState,
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .fillMaxWidth(),
+                padding = ODSPadding(
+                    horizontal = ODSVariables.spacingLayout1,
+                    vertical = ODSVariables.spacingComponent4
+                ),
+                gap = ODSVariables.spacingComponent3
             ) {
-                items(displayMessages, key = { it.id }) { msg ->
+                // "TODAY 9:41 AM" Date Header (Figma 10-1451)
+                item {
+                    ODSBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = ODSVariables.spacingComponent3),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSText(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = "TODAY 9:41 AM",
+                            style = ODSTextStyles.microcopyBold, // 12sp
+                            color = scheme.basicTextRecessive,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                // Chat Messages
+                items(
+                    count = displayMessages.size,
+                    key = { index -> displayMessages[index].id }
+                ) { index ->
+                    val msg = displayMessages[index]
                     val isMe = msg.senderId != modelId
                     MessageBubble(
                         message = msg,
@@ -156,14 +193,16 @@ fun ChatScreen(
                 }
             }
 
-            // Modular Bottom Input Bar
+            // ── 3. Bottom Input Bar ──────────────────────────────────────────
             ChatInputBar(
                 inputText = uiState.inputText,
-                modelName = modelName,
                 scheme = scheme,
                 onInputTextChanged = { viewModel.onInputTextChanged(it) },
                 onSendMessage = { viewModel.sendMessage(modelId) },
-                onVoiceClick = onStartVoiceCall
+                onAttachClick = {
+                    viewModel.onInputTextChanged("🌴 [photo]")
+                    viewModel.sendMessage(modelId)
+                }
             )
         }
     }

@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -135,7 +133,7 @@ fun PackageCard(
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
-                        iconModel = ODSIconModel(imageVector = Icons.Default.Check),
+                        iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.ic_check),
                         tint = scheme.basicBackground.getColor(),
                         modifier = Modifier.size(16.dp)
                     )

@@ -44,6 +44,12 @@ object CoreNetworkModule {
 
     @Provides
     @Singleton
+    fun provideConnectApi(
+        networkClient: NetworkClient
+    ): com.app.screentime.core.network.api.ConnectApi = com.app.screentime.core.network.api.ConnectApi(networkClient)
+
+    @Provides
+    @Singleton
     fun provideChattyWebSocketClient(
         api: ChattyApi,
         sessionManager: SessionManager

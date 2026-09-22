@@ -22,6 +22,7 @@ class PreferencesManager @Inject constructor(
         private const val KEY_PHONE = "phone"
         private const val KEY_ROLE = "role"
         private const val KEY_FIRST_LAUNCH = "first_launch"
+        private const val KEY_BASE_URL = "custom_base_url"
         const val KEY_LANGUAGE = "language"
         const val LANGUAGE_PREF = "language_pref"
     }
@@ -54,6 +55,12 @@ class PreferencesManager @Inject constructor(
 
     fun setToken(token: String) {
         prefs.edit { putString(KEY_TOKEN, token) }
+    }
+
+    fun getBaseUrl(): String? = prefs.getString(KEY_BASE_URL, null)
+
+    fun setBaseUrl(url: String) {
+        prefs.edit { putString(KEY_BASE_URL, url.trimEnd('/')) }
     }
 
     fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)

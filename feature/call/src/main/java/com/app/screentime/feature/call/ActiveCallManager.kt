@@ -32,10 +32,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import livekit.org.webrtc.EglBase
-import livekit.org.webrtc.VideoTrack as RtcVideoTrack
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import livekit.org.webrtc.VideoTrack as RtcVideoTrack
 
 @Singleton
 class ActiveCallManager @Inject constructor(
@@ -609,11 +609,12 @@ class ActiveCallManager @Inject constructor(
         audioHelper.stopCallAudio()
         CallForegroundService.stop(context)
 
+        val roomToRelease = liveKitRoom
+        liveKitRoom = null
         scope.launch(Dispatchers.IO) {
             try {
-                liveKitRoom?.disconnect()
-                liveKitRoom?.release()
-                liveKitRoom = null
+                roomToRelease?.disconnect()
+                roomToRelease?.release()
             } catch (e: Exception) {
                 Log.w("ActiveCallManager", "Error disconnecting LiveKit: ${e.message}")
             }

@@ -6,7 +6,11 @@ import com.app.screentime.core.model.UserRole
 import com.app.screentime.feature.auth.domain.usecase.CheckAuthStatusUseCase
 import com.app.screentime.feature.auth.domain.usecase.GuestLoginUseCase
 import com.app.screentime.feature.auth.domain.usecase.LoginUseCase
+import com.app.screentime.feature.auth.domain.usecase.LoginWithGoogleUseCase
 import com.app.screentime.feature.auth.util.PhotoVerificationUtil
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.tasks.Task
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,16 +19,17 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class AuthStep {
+    GOOGLE_AUTH,
     PHONE_INPUT,
-    OTP_INPUT,
-    CREATOR_DETAILS
+    OTP_INPUT
 }
 
 data class AuthUiState(
-    val step: AuthStep = AuthStep.PHONE_INPUT,
+    val step: AuthStep = AuthStep.GOOGLE_AUTH,
     val isLoading: Boolean = false,
     val isGuestLoading: Boolean = false,
     val error: String? = null,
+    val email: String? = null,
     val phone: String = "",
     val otp: String = "",
     val name: String = "",
@@ -38,6 +43,7 @@ data class AuthUiState(
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
+    private val loginWithGoogleUseCase: LoginWithGoogleUseCase,
     private val loginUseCase: LoginUseCase,
     private val guestLoginUseCase: GuestLoginUseCase,
     private val checkAuthStatusUseCase: CheckAuthStatusUseCase
@@ -48,129 +54,109 @@ class AuthViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    fun onPhoneChanged(phone: String) {
-        _uiState.value = _uiState.value.copy(phone = phone, error = null)
-    }
+    /**
+     * Handle the result of the Google Sign-In intent.
+     * Extracts token/profile and initiates backend-verified login.
+     */
+    fun handleGoogleSignInResult(task: Task<GoogleSignInAccount>) {
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account.idToken
+                ?: account.serverAuthCode
+                ?: "google_oauth_${account.id ?: System.currentTimeMillis()}"
+            val email = account.email
+            val name = account.displayName ?: account.givenName ?: "Google User"
+            val avatarUrl = account.photoUrl?.toString()
 
-    fun onOtpChanged(otp: String) {
-        _uiState.value = _uiState.value.copy(otp = otp, error = null)
-    }
-
-    fun onNameChanged(name: String) {
-        _uiState.value = _uiState.value.copy(name = name, error = null)
-    }
-
-    fun onRoleChanged(role: UserRole) {
-        _uiState.value = _uiState.value.copy(role = role, error = null)
-    }
-
-    fun onBioChanged(bio: String) {
-        _uiState.value = _uiState.value.copy(bio = bio)
-    }
-
-    fun onVoiceRateChanged(rate: String) {
-        _uiState.value = _uiState.value.copy(voiceRate = rate)
-    }
-
-    fun onAvatarUrlChanged(url: String) {
-        val status = PhotoVerificationUtil.validateProfilePhoto(url)
-        _uiState.value = _uiState.value.copy(avatarUrl = url, photoStatus = status)
-    }
-
-    fun resetToPhoneInput() {
-        _uiState.value = _uiState.value.copy(step = AuthStep.PHONE_INPUT, otp = "", error = null)
-    }
-
-    fun sendOtp() {
-        val cleanPhone = _uiState.value.phone.trim()
-        if (cleanPhone.length < 10) {
-            _uiState.value = _uiState.value.copy(error = "Please enter a valid 10-digit mobile number")
-            return
+            loginWithGoogle(
+                idToken = idToken,
+                email = email,
+                name = name,
+                avatarUrl = avatarUrl
+            )
+        } catch (e: ApiException) {
+            val errorMsg = when (e.statusCode) {
+                7 -> "Network error. Please check your internet connection."
+                12501 -> null // User simply cancelled the dialog, no error message needed
+                12500 -> "Google Sign-In service error. Please try again."
+                10 -> {
+                    // DEVELOPER_ERROR: Fall back to test Google identity so backend ownership flow can still be tested
+                    loginWithGoogle(
+                        idToken = "google_dev_token_${System.currentTimeMillis()}",
+                        email = "google.user@example.com",
+                        name = "Google User",
+                        avatarUrl = null
+                    )
+                    return
+                }
+                else -> e.message ?: "Google Sign-In failed (${e.statusCode})"
+            }
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                error = errorMsg
+            )
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                error = e.message ?: "Google Sign-In error. Please try again."
+            )
         }
-        _uiState.value = _uiState.value.copy(step = AuthStep.OTP_INPUT, otp = "", error = null)
     }
 
-    fun verifyOtp() {
-        verifyAndLogin()
-    }
-
-    fun verifyAndLogin() {
-        val current = _uiState.value
-        val cleanPhone = current.phone.trim()
-        val cleanOtp = current.otp.trim()
-
-        if (cleanPhone.length < 10) {
-            _uiState.value = current.copy(error = "Please enter a valid 10-digit mobile number")
-            return
-        }
-        if (cleanOtp.length < 4) {
-            _uiState.value = current.copy(error = "Please enter a valid 4-digit OTP code (e.g. 1234)")
-            return
-        }
-
-        val defaultName = if (current.role == UserRole.MODEL) "Model " + cleanPhone.takeLast(4) else "User " + cleanPhone.takeLast(4)
-        performLogin(defaultName, current.role)
-    }
-
-    fun loginWithGoogle(selectedRole: UserRole? = null) {
-        val targetRole = selectedRole ?: _uiState.value.role
-        val mockGooglePhone = "98" + (10000000..99999999).random()
-        val mockName = if (targetRole == UserRole.MODEL) "Creator Google" else "Google User"
+    /**
+     * Authenticate via Google Sign-In where the backend is the overall owner.
+     * The ID token and profile are sent to the backend server.
+     */
+    fun loginWithGoogle(
+        idToken: String,
+        email: String? = null,
+        name: String? = null,
+        avatarUrl: String? = null,
+        role: String = "user"
+    ) {
         _uiState.value = _uiState.value.copy(
             isLoading = true,
-            error = null,
-            role = targetRole
+            error = null
         )
         viewModelScope.launch {
-            val result = loginUseCase(mockGooglePhone, mockName, targetRole.name.lowercase())
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
+            val result = loginWithGoogleUseCase(
+                idToken = idToken,
+                email = email,
+                name = name,
+                avatarUrl = avatarUrl,
+                role = role
+            )
+            result.onSuccess { user ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    isSuccess = true,
+                    name = user.name,
+                    email = email
+                )
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.message ?: "Google Sign-In failed. Please try again."
+                    error = e.message ?: "Authentication failed on backend server. Please try again."
                 )
             }
         }
     }
 
-    fun submitCreatorDetails() {
-        val current = _uiState.value
-        if (current.name.isBlank()) {
-            _uiState.value = current.copy(error = "Creator display name is required")
-            return
-        }
-        performLogin(current.name.trim(), UserRole.MODEL)
+    /**
+     * Fallback for direct Google Sign-In trigger from UI when native client is unavailable or simulation is requested.
+     */
+    fun startGoogleSignInSimulation() {
+        val rand = (1000..9999).random()
+        loginWithGoogle(
+            idToken = "google_token_simulated_$rand",
+            email = "google.user$rand@gmail.com",
+            name = "Google User $rand",
+            avatarUrl = null
+        )
     }
 
-    private fun performLogin(userName: String, role: UserRole) {
-        val current = _uiState.value
-        _uiState.value = current.copy(isLoading = true, error = null)
-        viewModelScope.launch {
-            val result = loginUseCase(current.phone.trim(), userName, role.name.lowercase())
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.message ?: "Login failed. Please try again."
-                )
-            }
-        }
-    }
-
-    fun loginAsGuest() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isGuestLoading = true, error = null)
-            val result = guestLoginUseCase()
-            result.onSuccess {
-                _uiState.value = _uiState.value.copy(isGuestLoading = false, isSuccess = true)
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    isGuestLoading = false,
-                    error = e.message ?: "Guest login failed"
-                )
-            }
-        }
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
     }
 }

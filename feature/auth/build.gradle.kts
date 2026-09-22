@@ -42,11 +42,12 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.material.icons.extended)
 
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
+
+    implementation(libs.play.services.auth)
 
     implementation(libs.kotlinx.serialization.json)
 }

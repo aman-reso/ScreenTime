@@ -1,0 +1,26 @@
+---
+description: Always use Telekom ODS components, tokens, and typography for UI
+alwaysApply: true
+---
+
+# ODS UI (mandatory)
+
+Source of truth: `GEMINI.md` and `ODS_TOKENS_REFERENCE.md`.
+
+## Components
+
+- 100% of UI must use Telekom ODS (`com.telekom.odsystem.*`): `ODSBox`, `ODSColumn`, `ODSRow`, `ODSText`, `ODSIcon`, `ODSImage`, `ODSButton`, etc.
+- Never use Compose `Box`, `Column`, `Row`, `Text`, `Icon`, `Button`, or `LazyColumn`.
+- Vertical lists and scrollable screens: always `ODSLazyColumn`. Never `Modifier.verticalScroll()` or Compose `LazyColumn`.
+
+## Color
+
+- Pick colors from the composable `scheme: ODSTheme` parameter, not hardcoded hex and not raw tokens when `scheme` is passed.
+- Wrap with `ODSColorModel(hexColor = scheme.xxx)`. For `ODSIcon` tint use `scheme.xxx.getColor()`.
+
+## Buttons, type, spacing
+
+- `ODSButton` defaults to `ODSButtonSize.SMALL` unless the user says otherwise.
+- Max text size is 16sp. Use `ODSTextStyles` with Funnel Sans (`bodyM*`, `bodyS*`, `microcopy*` only). No `title*`, `subtitle`, `bodyL`, or `display`.
+- Padding, gaps, and radii: `ODSVariables` only. Never raw `16.dp` / `8.dp` for spacing.
+---

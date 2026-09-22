@@ -2,13 +2,8 @@ package com.app.screentime.feature.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CurrencyRupee
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
+import com.telekom.odsystem.R as ODSR
+import com.telekom.odsystem.atoms.icon.ODSIcon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +48,7 @@ fun AuthCreatorDetailsSection(
                 label = "Creator Display Name",
                 inputText = uiState.name,
                 size = ODSTextFieldSize.SMALL,
-                leftIcon = ODSIconModel(imageVector = Icons.Filled.Person)
+                leftIcon = ODSIconModel(drawableRes = ODSR.drawable.ic_user)
             ),
             onValueChange = onNameChange
         )
@@ -64,7 +59,7 @@ fun AuthCreatorDetailsSection(
                 label = "Bio / About You",
                 inputText = uiState.bio,
                 size = ODSTextFieldSize.SMALL,
-                leftIcon = ODSIconModel(imageVector = Icons.Filled.Description)
+                leftIcon = ODSIconModel(drawableRes = ODSR.drawable.ic_edit_3)
             ),
             onValueChange = onBioChange
         )
@@ -75,7 +70,7 @@ fun AuthCreatorDetailsSection(
                 label = "Voice Call Rate (₹ / min)",
                 inputText = uiState.voiceRate,
                 size = ODSTextFieldSize.SMALL,
-                leftIcon = ODSIconModel(imageVector = Icons.Filled.CurrencyRupee)
+                leftIcon = ODSIconModel(drawableRes = ODSR.drawable.coin_icon)
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             onValueChange = onVoiceRateChange
@@ -87,7 +82,7 @@ fun AuthCreatorDetailsSection(
                 label = "Profile Photo URL (Female Creator Verification)",
                 inputText = uiState.avatarUrl,
                 size = ODSTextFieldSize.SMALL,
-                leftIcon = ODSIconModel(imageVector = Icons.Filled.CameraAlt)
+                leftIcon = ODSIconModel(drawableRes = ODSR.drawable.ic_camera)
             ),
             onValueChange = onAvatarUrlChange
         )
@@ -95,9 +90,8 @@ fun AuthCreatorDetailsSection(
         when (val photo = uiState.photoStatus) {
             is PhotoVerificationUtil.VerificationStatus.Verified -> {
                 ODSRow(gap = 6.dp, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Filled.CheckCircle,
-                        contentDescription = null,
+                    ODSIcon(
+                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.checkmark_type_bold),
                         tint = scheme.functionalSuccessStandard.getColor(),
                         modifier = Modifier.size(16.dp)
                     )

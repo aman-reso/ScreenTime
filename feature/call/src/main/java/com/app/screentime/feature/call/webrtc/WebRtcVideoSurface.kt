@@ -29,7 +29,6 @@ fun WebRtcVideoSurface(
         },
         update = { renderer ->
             renderer.setMirror(isMirror)
-            videoTrack.addSink(renderer)
         },
         onRelease = { renderer ->
             videoTrack.removeSink(renderer)

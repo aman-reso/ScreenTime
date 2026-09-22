@@ -41,11 +41,10 @@ class WalletViewModel @Inject constructor(
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
-    private val isModel = sessionManager.userRole == UserRole.MODEL
     private val _uiState = MutableStateFlow(
         WalletUiState(
-            isModel = isModel,
-            balance = if (!isModel) 1000.0 else 0.0
+            isModel = false,
+            balance = 1000.0
         )
     )
     val uiState: StateFlow<WalletUiState> = _uiState.asStateFlow()

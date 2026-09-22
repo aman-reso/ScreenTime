@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,10 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.screentime.core.ui.theme.ZonaColors
 import com.app.screentime.calling.presentation.CallUiState
+import com.telekom.odsystem.R
 
 @Composable
 fun CallScreen(
@@ -47,7 +47,11 @@ fun CallScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460))
+                    colors = listOf(
+                        ZonaColors.BackgroundStart.getColor(),
+                        ZonaColors.BackgroundMid.getColor(),
+                        ZonaColors.BackgroundEnd.getColor()
+                    )
                 )
             )
     ) {
@@ -64,13 +68,13 @@ fun CallScreen(
                     modifier = Modifier
                         .size(120.dp)
                         .clip(CircleShape)
-                        .background(Color(0x33FFFFFF)),
+                        .background(ZonaColors.MediaOverlay.getColor().copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Person,
+                        painter = painterResource(id = R.drawable.ic_user),
                         contentDescription = "Peer Avatar",
-                        tint = Color.White,
+                        tint = ZonaColors.TextPrimary.getColor(),
                         modifier = Modifier.size(64.dp)
                     )
                 }
@@ -80,27 +84,27 @@ fun CallScreen(
                     text = peerName,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = ZonaColors.TextPrimary.getColor()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = if (uiState.isCallActive) durationText else "Connecting...",
                     fontSize = 18.sp,
-                    color = Color(0xFFB0BEC5)
+                    color = ZonaColors.TextSecondary.getColor()
                 )
 
                 if (session != null && uiState.isCallActive) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = Color(0x33FFFFFF),
+                        color = ZonaColors.SurfaceElevated.getColor(),
                         modifier = Modifier.padding(horizontal = 16.dp)
                     ) {
                         Text(
                             text = "₹%.2f/min  •  Spent: ₹%.2f".format(session.ratePerMin, session.totalCost),
                             fontSize = 14.sp,
-                            color = Color(0xFFFFD54F),
+                            color = ZonaColors.ActionPrimary.getColor(),
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                         )
                     }
@@ -111,17 +115,17 @@ fun CallScreen(
             if (uiState.isLowBalance && uiState.lowBalanceWarning != null) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = Color(0xCCFF5252),
+                    color = ZonaColors.FeedbackDanger.getColor(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
                 ) {
                     Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Warning, contentDescription = null, tint = Color.White)
+                        Icon(painter = painterResource(id = R.drawable.ic_alert_triangle), contentDescription = null, tint = ZonaColors.TextInverse.getColor())
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = uiState.lowBalanceWarning,
-                            color = Color.White,
+                            color = ZonaColors.TextInverse.getColor(),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )

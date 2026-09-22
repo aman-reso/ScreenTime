@@ -326,22 +326,37 @@ class WebRtcCallClient(
         if (isClosed) return
         isClosed = true
         connectionTimeoutJob?.cancel()
+        scope.cancel()
 
         executor.execute {
             try {
                 videoCapturer?.stopCapture()
                 videoCapturer?.dispose()
+                videoCapturer = null
                 surfaceTextureHelper?.dispose()
+                surfaceTextureHelper = null
                 localVideoTrack?.dispose()
+                localVideoTrack = null
                 localVideoSource?.dispose()
+                localVideoSource = null
                 localAudioTrack?.dispose()
+                localAudioTrack = null
                 localAudioSource?.dispose()
+                localAudioSource = null
                 peerConnection?.close()
                 peerConnection?.dispose()
+                peerConnection = null
                 factory?.dispose()
+                factory = null
                 eglBase.release()
             } catch (e: Exception) {
                 Log.w(tag, "Error closing WebRTC resources: ${e.message}")
+            } finally {
+                try {
+                    executor.shutdown()
+                } catch (e: Exception) {
+                    Log.w(tag, "Error shutting down WebRTC executor: ${e.message}")
+                }
             }
         }
     }

@@ -6,15 +6,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.telekom.odsystem.R as ODSR
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
@@ -51,7 +48,7 @@ fun AuthPhoneOtpSection(
                 label = "Mobile Number",
                 inputText = uiState.phone,
                 size = ODSTextFieldSize.SMALL,
-                leftIcon = ODSIconModel(imageVector = Icons.Filled.Phone)
+                leftIcon = ODSIconModel(drawableRes = ODSR.drawable.ic_phone)
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             onValueChange = onPhoneChange
@@ -63,7 +60,7 @@ fun AuthPhoneOtpSection(
                 label = "OTP Code",
                 inputText = uiState.otp,
                 size = ODSTextFieldSize.SMALL,
-                leftIcon = ODSIconModel(imageVector = Icons.Filled.Lock)
+                leftIcon = ODSIconModel(drawableRes = ODSR.drawable.ic_shield_check)
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             onValueChange = onOtpChange
@@ -135,7 +132,7 @@ fun AuthPhoneOtpSection(
             scheme = scheme,
             props = ODSButtonProps(
                 label = "Continue with Google",
-                buttonIcon = ODSIconModel(imageVector = Icons.Filled.AccountCircle),
+                buttonIcon = ODSIconModel(drawableRes = ODSR.drawable.ic_user),
                 leftIcon = true,
                 variant = ODSButtonVariant.SECONDARY,
                 size = ODSButtonSize.SMALL,

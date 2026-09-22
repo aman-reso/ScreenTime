@@ -4,10 +4,15 @@ import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.util.Log
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class AudioManagerHelper(private val context: Context) {
-
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
     private var toneGenerator: ToneGenerator? = null
     private var ringbackJob: Job? = null
@@ -124,6 +129,7 @@ class AudioManagerHelper(private val context: Context) {
         } catch (e: Exception) {
             Log.e("AudioHelper", "Failed to restore audio mode: ${e.message}")
         }
+        release()
     }
 
     fun release() {

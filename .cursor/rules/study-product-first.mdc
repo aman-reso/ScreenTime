@@ -1,0 +1,22 @@
+---
+description: Study the existing Zona/Chatty product before designing or adding new work
+alwaysApply: true
+---
+
+# Study first, then build
+
+This repo is **Zona / Chatty**, a dating product on the ScreenTime codebase — not a digital-wellness redesign unless the user says so.
+
+## Product (current)
+
+- Gradle root: `Chatty`. Theme: `zonaODSTheme`.
+- Tabs: Home feed, Discover map, Chats, Profile/Account.
+- Features: auth (Google/phone OTP), dating preferences onboarding, match discovery, chat, WebRTC voice/video, Zona Wallet, profile edit.
+- Modules: `feature/auth`, `discover`, `chat`, `call`, `wallet`, `profile`, `preferences` plus `odsystem`.
+
+## Before any new UI or feature
+
+1. Read existing screens, navigation (`Screen.kt`, `ScreenTimeNavigation.kt`), and nearby ODS usage.
+2. Match current flows, naming, and ODS patterns. Do not invent a parallel product or raw Compose UI.
+3. Reuse existing components and tokens. Do not start a new screen from scratch until you know what already exists.
+---

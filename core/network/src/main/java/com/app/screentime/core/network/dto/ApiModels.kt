@@ -8,6 +8,7 @@ data class ApiResponse<T>(
     val status_code: Int = 200,
     val message: String = "",
     val data: T? = null,
+    val error: String? = null,
     val timestamp: Long = 0L
 )
 
@@ -24,6 +25,7 @@ data class AuthResponse(
 data class UserDto(
     val id: String = "",
     val phone: String = "",
+    val email: String? = null,
     val name: String = "",
     val role: String = "user",
     val avatar_url: String? = null,

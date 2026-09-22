@@ -10,6 +10,20 @@ data class RegisterRequest(
 )
 
 @Serializable
+data class GoogleAuthRequest(
+    val id_token: String = "",
+    val idToken: String = "",
+    val token: String = "",
+    val credential: String = "",
+    val email: String? = null,
+    val name: String? = null,
+    val avatar_url: String? = null,
+    val avatarUrl: String? = null,
+    val birth_date: String? = null,
+    val role: String = "user"
+)
+
+@Serializable
 data class RechargeRequest(
     val amount: Double
 )

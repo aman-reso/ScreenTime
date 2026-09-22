@@ -57,9 +57,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     
-    // Material Icons
-    implementation(libs.material.icons.extended)
-    
     // Coil for image loading
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)

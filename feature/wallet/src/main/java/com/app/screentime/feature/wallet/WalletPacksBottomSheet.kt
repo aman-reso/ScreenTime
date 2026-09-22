@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -114,7 +116,10 @@ fun WalletPacksBottomSheet(
                             .height(120.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = scheme.basicAccent.getColor())
+                        ODSLoadingSpinner(
+                            scheme = scheme,
+                            props = ODSLoadingSpinnerProps(size = ODSLoadingSpinnerSize.LARGE)
+                        )
                     }
                 } else {
                     uiState.packs.forEach { pack ->

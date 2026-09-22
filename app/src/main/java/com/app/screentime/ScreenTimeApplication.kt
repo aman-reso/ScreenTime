@@ -3,13 +3,21 @@ package com.app.screentime
 import android.app.Application
 import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
+import coil.ImageLoader
+import coil.ImageLoaderFactory
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
-class ScreenTimeApplication : Application() {
+class ScreenTimeApplication : Application(), ImageLoaderFactory {
+
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .allowHardware(false)
+            .build()
+    }
 
     override fun onCreate() {
         super.onCreate()

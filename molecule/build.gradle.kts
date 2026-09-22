@@ -55,9 +55,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     
-    // Material Icons
-    implementation(libs.material.icons.extended)
-    
     // ODS System (from odsystem module) - API so it's exposed to consumers
     api(project(":odsystem"))
 }

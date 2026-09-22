@@ -4,13 +4,14 @@ import android.content.Context
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
+import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import androidx.core.content.edit
 
 sealed interface BiometricStatus {
     object Available : BiometricStatus
@@ -26,6 +27,13 @@ object BiometricAuthManager {
     private val _isUnlocked = MutableStateFlow(false)
     val isUnlocked: StateFlow<Boolean> = _isUnlocked.asStateFlow()
 
+    private val _isFingerprintLockEnabled = MutableStateFlow(false)
+    val isFingerprintLockEnabledFlow: StateFlow<Boolean> = _isFingerprintLockEnabled.asStateFlow()
+
+    fun init(context: Context) {
+        _isFingerprintLockEnabled.value = isFingerprintLockEnabled(context)
+    }
+
     fun isFingerprintLockEnabled(context: Context): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.getBoolean(KEY_FINGERPRINT_LOCK, false)
@@ -34,8 +42,11 @@ object BiometricAuthManager {
     fun setFingerprintLockEnabled(context: Context, enabled: Boolean) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit { putBoolean(KEY_FINGERPRINT_LOCK, enabled) }
+        _isFingerprintLockEnabled.value = enabled
         if (!enabled) {
             _isUnlocked.value = true
+        } else {
+            _isUnlocked.value = false
         }
     }
 
@@ -58,9 +69,10 @@ object BiometricAuthManager {
 
     fun authenticate(
         activity: FragmentActivity,
-        title: String = "Fingerprint Authentication",
-        subtitle: String = "Verify your fingerprint to continue",
-        description: String = "Scan your fingerprint on the sensor",
+        title: String = "App Security Lock",
+        subtitle: String = "Confirm your identity to continue",
+        description: String = "Touch the fingerprint sensor or use Face ID",
+        allowDeviceCredential: Boolean = false,
         negativeButtonText: String = "Cancel",
         onSuccess: () -> Unit,
         onError: (String) -> Unit = {}
@@ -91,15 +103,19 @@ object BiometricAuthManager {
             }
         }
 
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+        val promptInfoBuilder = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
             .setSubtitle(subtitle)
             .setDescription(description)
-            .setNegativeButtonText(negativeButtonText)
-            .setAllowedAuthenticators(BIOMETRIC_STRONG or BIOMETRIC_WEAK)
-            .build()
+
+        if (allowDeviceCredential) {
+            promptInfoBuilder.setAllowedAuthenticators(BIOMETRIC_STRONG or BIOMETRIC_WEAK or DEVICE_CREDENTIAL)
+        } else {
+            promptInfoBuilder.setNegativeButtonText(negativeButtonText)
+            promptInfoBuilder.setAllowedAuthenticators(BIOMETRIC_STRONG or BIOMETRIC_WEAK)
+        }
 
         val prompt = BiometricPrompt(activity, executor, callback)
-        prompt.authenticate(promptInfo)
+        prompt.authenticate(promptInfoBuilder.build())
     }
 }

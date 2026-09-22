@@ -25,14 +25,14 @@ import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.icon.ODSIcon
-import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.foundations.HexColor
+import com.app.screentime.core.ui.theme.ZonaColors
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
 import androidx.compose.ui.res.stringResource
 import com.app.screentime.config.R
+import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
@@ -60,9 +60,8 @@ fun HeroBalanceCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFFE5FF9E), // Radiant Cyber Lime
-                            Color(0xFFD7FF81), // Primary Cyber Lime
-                            Color(0xFFC4F26B)
+                            ZonaColors.ActionSoft.getColor(),
+                            ZonaColors.SurfaceElevated.getColor()
                         )
                     )
                 )
@@ -75,34 +74,34 @@ fun HeroBalanceCard(
                 ODSBox(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0x22000000))
+                        .background(ZonaColors.MediaOverlay.getColor().copy(alpha = 0.12f))
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     ODSText(
-                        text = if (isModel) "EARNINGS (INR)" else "COINS (USD)",
+                        text = "COINS BALANCE",
                         style = ODSTextStyles.microcopyBold,
-                        color = HexColor(0xff1e1145)
+                        color = ZonaColors.TextPrimary
                     )
                 }
 
-                // Huge Main Balance Number (Image 1 style: e.g. 194,284)
+                // Huge Main Balance Number
                 ODSColumn(gap = 2.dp) {
                     val formatted = String.format("%,d", balance.toInt())
                     ODSText(
                         text = formatted,
                         style = ODSTextStyles.titleL,
-                        color = HexColor(0xff1e1145)
+                        color = ZonaColors.TextPrimary
                     )
                     ODSText(
-                        text = if (isModel) "₹${(balance * 0.8).toInt()} withdrawable · +12.4% this week" else "+₹${(balance * 0.1).toInt()} · +1.6% this week",
+                        text = "Instant coins for voice & video calling",
                         style = ODSTextStyles.microcopyBold,
-                        color = HexColor(0xaa1e1145)
+                        color = ZonaColors.TextSecondary
                     )
                 }
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                // White Pill Button (Image 2 style)
+                // White Pill Button
                 ODSRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -111,23 +110,23 @@ fun HeroBalanceCard(
                     ODSBox(
                         modifier = Modifier
                             .clip(RoundedCornerShape(30.dp))
-                            .background(Color.White)
+                            .background(ZonaColors.SurfaceElevated.getColor())
                             .clickable(onClick = onTopUp)
                             .padding(horizontal = 20.dp, vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         ODSText(
-                            text = if (isModel) stringResource(R.string.wallet_withdraw_funds) else stringResource(R.string.wallet_top_up_coins),
+                            text = stringResource(R.string.wallet_top_up_coins),
                             style = ODSTextStyles.bodySBold,
-                            color = HexColor(0xff1e1145)
+                            color = ZonaColors.TextPrimary
                         )
                     }
 
-                    // Sparkle Icon (Image 2 style)
+                    // Sparkle Icon
                     ODSText(
                         text = "✦",
                         style = ODSTextStyles.titleL,
-                        color = HexColor(0xff7038db)
+                        color = ZonaColors.ActionPrimary
                     )
                 }
             }
@@ -146,7 +145,7 @@ fun TransactionCard(
 ) {
     val isCredit =
         tx.type == TransactionType.TOPUP || tx.type == TransactionType.BONUS || tx.type == TransactionType.REFUND
-    val bgHex = if (isHighlighted) HexColor(0xff4a2a7a) else scheme.basicBackgroundCard
+    val bgHex = if (isHighlighted) ZonaColors.SurfaceElevated else scheme.basicBackgroundCard
 
     ODSBox(
         modifier = Modifier.fillMaxWidth(),

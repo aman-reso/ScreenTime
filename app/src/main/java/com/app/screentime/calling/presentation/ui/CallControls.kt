@@ -7,12 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CallEnd
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -20,7 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.app.screentime.core.ui.theme.ZonaColors
+import com.telekom.odsystem.R
 
 @Composable
 fun CallControls(
@@ -44,12 +41,12 @@ fun CallControls(
             modifier = Modifier
                 .size(60.dp)
                 .clip(CircleShape)
-                .background(if (isAudioMuted) Color(0xFFFF5252) else Color(0x33FFFFFF))
+                .background(if (isAudioMuted) ZonaColors.FeedbackDanger.getColor() else ZonaColors.MediaOverlay.getColor().copy(alpha = 0.2f))
         ) {
             Icon(
-                imageVector = if (isAudioMuted) Icons.Default.MicOff else Icons.Default.Mic,
+                painter = painterResource(id = if (isAudioMuted) R.drawable.ic_mic_off else R.drawable.ic_mic),
                 contentDescription = "Toggle Mute",
-                tint = Color.White,
+                tint = ZonaColors.TextPrimary.getColor(),
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -60,12 +57,12 @@ fun CallControls(
             modifier = Modifier
                 .size(72.dp)
                 .clip(CircleShape)
-                .background(Color(0xFFE53935))
+                .background(ZonaColors.FeedbackDanger.getColor())
         ) {
             Icon(
-                imageVector = Icons.Default.CallEnd,
+                painter = painterResource(id = R.drawable.ic_phone_off),
                 contentDescription = "End Call",
-                tint = Color.White,
+                tint = ZonaColors.TextInverse.getColor(),
                 modifier = Modifier.size(36.dp)
             )
         }
@@ -76,12 +73,12 @@ fun CallControls(
             modifier = Modifier
                 .size(60.dp)
                 .clip(CircleShape)
-                .background(if (isSpeakerOn) Color(0xFF4CAF50) else Color(0x33FFFFFF))
+                .background(if (isSpeakerOn) ZonaColors.ActiveIndicator.getColor() else ZonaColors.MediaOverlay.getColor().copy(alpha = 0.2f))
         ) {
             Icon(
-                imageVector = if (isSpeakerOn) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                painter = painterResource(id = if (isSpeakerOn) R.drawable.ic_volume_2 else R.drawable.ic_volume_2),
                 contentDescription = "Toggle Speaker",
-                tint = Color.White,
+                tint = if (isSpeakerOn) ZonaColors.TextInverse.getColor() else ZonaColors.TextPrimary.getColor(),
                 modifier = Modifier.size(28.dp)
             )
         }

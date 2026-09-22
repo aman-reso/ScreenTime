@@ -19,11 +19,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import com.app.screentime.core.network.session.SessionManager
 import com.app.screentime.core.ui.security.BiometricAuthManager
@@ -31,7 +29,6 @@ import com.app.screentime.core.ui.security.BiometricLockScreen
 import com.app.screentime.core.ui.theme.AppThemeManager
 import com.app.screentime.core.ui.theme.ChattyTheme
 import com.app.screentime.feature.auth.AuthGateScreen
-import com.app.screentime.feature.auth.AuthViewModel
 import com.app.screentime.feature.call.ActiveCallManager
 import com.app.screentime.feature.call.CallStatus
 import com.app.screentime.feature.call.CallUiState
@@ -68,13 +65,20 @@ class MainActivity : AppCompatActivity() {
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
         )
 
+        AppThemeManager.init(this)
         handleIncomingCallIntent(intent)
 
         setContent {
+            val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
+            LaunchedEffect(isSystemDark) {
+                AppThemeManager.updateSystemDarkMode(isSystemDark)
+            }
             val currentTheme by AppThemeManager.currentTheme.collectAsState()
             val isUnlocked by BiometricAuthManager.isUnlocked.collectAsState()
-            val isFingerprintEnabled = remember {
-                BiometricAuthManager.isFingerprintLockEnabled(this@MainActivity)
+            val isFingerprintEnabled by BiometricAuthManager.isFingerprintLockEnabledFlow.collectAsState()
+
+            LaunchedEffect(Unit) {
+                BiometricAuthManager.init(this@MainActivity)
             }
 
             ChattyTheme {
@@ -106,6 +110,7 @@ class MainActivity : AppCompatActivity() {
                         modifier = Modifier.fillMaxSize(),
                         incomingCall = incomingCallData,
                         onClearIncomingCall = { incomingCallData = null },
+                        onLogout = { sessionManager.clearSession() },
                         scheme = currentTheme,
                         isInPipMode = isInPipMode
                     )
@@ -200,7 +205,7 @@ class MainActivity : AppCompatActivity() {
     private fun handleIncomingCallIntent(intent: Intent?) {
         val action = intent?.action
         if (action == ScreenTimeFirebaseMessagingService.ACTION_ACCEPT_CALL ||
-            action == com.app.screentime.feature.call.receiver.CallActionReceiver.ACTION_ACCEPT_CALL) {
+            action == CallActionReceiver.ACTION_ACCEPT_CALL) {
             val callerId = intent.getStringExtra(ScreenTimeFirebaseMessagingService.EXTRA_CALLER_ID)
                 ?: intent.getStringExtra("caller_id") ?: ""
             val callerName = intent.getStringExtra(ScreenTimeFirebaseMessagingService.EXTRA_CALLER_NAME)

@@ -54,6 +54,7 @@ android {
             "TOTP_DECODE_SECRET",
             "\"${localProperties.getProperty("TOTP_DECODE_SECRET", "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")}\""
         )
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "AIzaSyDHHAbUVtn4Q7NiTfXDCivan890cp3xCCg")
     }
 
     buildTypes {
@@ -70,7 +71,7 @@ android {
             )
         }
         debug {
-            isDebuggable = false
+            isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources = false
             proguardFiles(
@@ -127,6 +128,7 @@ dependencies {
     implementation(project(":feature:call"))
     implementation(project(":feature:wallet"))
     implementation(project(":feature:profile"))
+    implementation(project(":feature:preferences"))
 
     // Config module (translations)
     implementation(project(":config"))
@@ -159,6 +161,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.play.services.auth)
     ksp(libs.hilt.compiler)
 
     // Room dependencies
@@ -167,7 +170,6 @@ dependencies {
     ksp(libs.room.compiler)
 
     // Material dependencies
-    implementation(libs.material.icons.extended)
     implementation(libs.material3)
 
     // Navigation dependencies

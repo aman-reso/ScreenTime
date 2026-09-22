@@ -12,10 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CallEnd
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -26,11 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.app.screentime.calling.domain.model.CallState
+import com.app.screentime.core.ui.theme.ZonaColors
+import com.telekom.odsystem.R
 
 @Composable
 fun IncomingCallDialog(
@@ -41,7 +40,7 @@ fun IncomingCallDialog(
     Dialog(onDismissRequest = onDecline) {
         Card(
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
+            colors = CardDefaults.cardColors(containerColor = ZonaColors.SurfaceElevated.getColor()),
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             Column(
@@ -49,13 +48,13 @@ fun IncomingCallDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
-                    modifier = Modifier.size(80.dp).clip(CircleShape).background(Color(0x33FFFFFF)),
+                    modifier = Modifier.size(80.dp).clip(CircleShape).background(ZonaColors.MediaOverlay.getColor().copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Person,
+                        painter = painterResource(id = R.drawable.ic_user),
                         contentDescription = "Caller",
-                        tint = Color.White,
+                        tint = ZonaColors.TextPrimary.getColor(),
                         modifier = Modifier.size(44.dp)
                     )
                 }
@@ -65,13 +64,13 @@ fun IncomingCallDialog(
                     text = state.callerName,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = ZonaColors.TextPrimary.getColor()
                 )
 
                 Text(
                     text = "Incoming Voice Call • ₹%.2f/min".format(state.ratePerMin),
                     fontSize = 14.sp,
-                    color = Color(0xFF90CAF9),
+                    color = ZonaColors.TextSecondary.getColor(),
                     modifier = Modifier.padding(top = 4.dp)
                 )
 
@@ -83,17 +82,17 @@ fun IncomingCallDialog(
                     // Decline
                     IconButton(
                         onClick = onDecline,
-                        modifier = Modifier.size(56.dp).clip(CircleShape).background(Color(0xFFE53935))
+                        modifier = Modifier.size(56.dp).clip(CircleShape).background(ZonaColors.FeedbackDanger.getColor())
                     ) {
-                        Icon(Icons.Default.CallEnd, contentDescription = "Decline", tint = Color.White)
+                        Icon(painter = painterResource(id = R.drawable.ic_phone_off), contentDescription = "Decline", tint = ZonaColors.TextInverse.getColor())
                     }
 
                     // Accept
                     IconButton(
                         onClick = onAccept,
-                        modifier = Modifier.size(56.dp).clip(CircleShape).background(Color(0xFF43A047))
+                        modifier = Modifier.size(56.dp).clip(CircleShape).background(ZonaColors.ActiveIndicator.getColor())
                     ) {
-                        Icon(Icons.Default.Call, contentDescription = "Accept", tint = Color.White)
+                        Icon(painter = painterResource(id = R.drawable.ic_phone), contentDescription = "Accept", tint = ZonaColors.TextInverse.getColor())
                     }
                 }
             }

@@ -1,6 +1,9 @@
 package com.app.screentime.feature.auth
 
+import com.app.screentime.feature.auth.R
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,31 +13,31 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhoneInTalk
-import androidx.compose.material.icons.filled.Videocam
-import androidx.compose.material.icons.filled.VolunteerActivism
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.app.screentime.core.ui.components.EvermoreTopBar
+import com.app.screentime.core.ui.theme.ZonaColors
+import com.app.screentime.core.ui.theme.ZonaComposeColors
+import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSImage
+import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
 import com.telekom.odsystem.atoms.button.ODSButtonSize
 import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.extensions.background
 import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
@@ -42,181 +45,241 @@ import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
+/**
+ * ZONA Google Sign-In Authentication Screen.
+ * 100% constructed with Telekom ODS components.
+ * Matches Left Phone in uploaded mockups (Canvas #200B4D · Google button #FFFFFF · Brand accent #D7FF01 · Primary text #FFFFFF · Supporting text #BC9DFF).
+ */
 @Composable
 fun AuthLandingScreen(
-    scheme: ODSTheme,
-    onContinueAsUser: () -> Unit,
-    onContinueAsModel: () -> Unit,
-    onGuestClick: () -> Unit,
+    scheme: ODSTheme = zonaODSTheme,
+    uiState: AuthUiState = AuthUiState(),
+    onGoogleSignInClick: () -> Unit,
+    onRetryClick: () -> Unit = onGoogleSignInClick,
+    onPhoneChange: (String) -> Unit = {},
+    onOtpChange: (String) -> Unit = {},
+    onVerifyAndLogin: () -> Unit = {},
+    onGoogleLogin: () -> Unit = onGoogleSignInClick,
+    onGuestClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     ODSBox(
         modifier = modifier.fillMaxSize(),
-        background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
+        background = listOf(ODSColorModel(hexColor = ZonaColors.CanvasDark))
     ) {
+        // ── 1. Hero Image Header (Smiling Couple at night with bokeh city lights) ──
+        ODSBox(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(380.dp)
+                .align(Alignment.TopCenter)
+        ) {
+            ODSImage(
+                imageModel = ODSImageModel(
+                    url = "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1200&auto=format&fit=crop",
+                    contentDescription = "ZONA Couples"
+                ),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            ODSBox(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                ZonaComposeColors.CanvasDark.copy(alpha = 0.1f),
+                                ZonaComposeColors.CanvasDark.copy(alpha = 0.5f),
+                                ZonaComposeColors.CanvasDark
+                            ),
+                            startY = 100f,
+                            endY = 1100f
+                        )
+                    )
+            )
+        }
+
+        // ── 2. Foreground Content (Branding, Headings, Button & Legal) ──────
         ODSColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .statusBarsPadding()
                 .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            EvermoreTopBar(
-                title = "CONNECT",
-                scheme = scheme,
-                onMenuClick = onContinueAsUser
-            )
+            Spacer(modifier = Modifier.height(180.dp))
 
-            Spacer(modifier = Modifier.height(28.dp))
-
+            // ── Brand Badge & Headline ──────────────────────────────────────
             ODSColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 gap = 16.dp
             ) {
-                // Cyber Lime Pill Tag (4th color)
+                // "zona" Neon Lime Brand Badge
                 ODSBox(
-                    background = listOf(ODSColorModel(hexColor = HexColor(0xffd7ff81))),
-                    cornerRadius = ODSCorners(all = 20.dp),
-                    padding = ODSPadding(horizontal = 14.dp, vertical = 6.dp)
+                    background = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime)),
+                    cornerRadius = ODSCorners(all = 12.dp),
+                    padding = ODSPadding(horizontal = 16.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     ODSText(
-                        text = "✦ Real Conversations • Zero Barriers",
-                        style = ODSTextStyles.microcopyBold,
-                        color = HexColor(0xff371f7d)
+                        text = "zona",
+                        style = ODSTextStyles.titleM,
+                        color = ZonaColors.TextInverse
                     )
                 }
 
+                // Main Display Headline
                 ODSText(
-                    text = "Connect with top creators.\nVoice & video anytime.",
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicText,
+                    text = "Find Your Match\nIn Full Color.",
+                    style = ODSTextStyles.titleL,
+                    color = ZonaColors.TextPrimary,
                     textAlign = TextAlign.Center
                 )
 
-                // Feature Highlights Card with ODS (Background #2b1764, Icons #ff4365)
+                // Subtitle
+                ODSText(
+                    text = "Express yourself, match\nauthentically, live loudly.",
+                    style = ODSTextStyles.bodyMBold,
+                    color = ZonaColors.LavenderAlt,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // ── Error Banner (if error occurred) ────────────────────────────
+            if (!uiState.error.isNullOrBlank()) {
                 ODSBox(
                     modifier = Modifier.fillMaxWidth(),
-                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                    cornerRadius = ODSCorners(all = 14.dp),
                     border = ODSBorder(
                         width = 1.dp,
-                        colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
+                        colorList = listOf(ODSColorModel(hexColor = ZonaColors.ActionPrimary))
                     ),
-                    cornerRadius = ODSCorners(all = 20.dp),
-                    padding = ODSPadding(all = 16.dp)
+                    padding = ODSPadding(horizontal = 16.dp, vertical = 10.dp)
                 ) {
-                    ODSRow(
+                    ODSColumn(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        FeatureBadge(
-                            icon = Icons.Filled.PhoneInTalk,
-                            label = "1-on-1 Voice",
-                            scheme = scheme,
-                            badgeColor = HexColor(0xffff4365) // 2nd color: Icon color
-                        )
-                        FeatureBadge(
-                            icon = Icons.Filled.Videocam,
-                            label = "Live Video",
-                            scheme = scheme,
-                            badgeColor = HexColor(0xffff4365) // 2nd color: Icon color
-                        )
-                        FeatureBadge(
-                            icon = Icons.Filled.VolunteerActivism,
-                            label = "Private Tips",
-                            scheme = scheme,
-                            badgeColor = HexColor(0xffff4365) // 2nd color: Icon color
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Vertical Actions Container
-                ODSColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    gap = 12.dp
-                ) {
-                    // 1. Continue as User Button (Vertical)
-                    ODSButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        scheme = scheme,
-                        props = ODSButtonProps(
-                            label = "Continue as User",
-                            buttonIcon = ODSIconModel(imageVector = Icons.Filled.Person),
-                            leftIcon = true,
-                            variant = ODSButtonVariant.PRIMARY,
-                            size = ODSButtonSize.SMALL
-                        ),
-                        onClick = onContinueAsUser
-                    )
-
-                    // 2. Continue as Model Button (Vertical)
-                    ODSButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        scheme = scheme,
-                        props = ODSButtonProps(
-                            label = "Continue as Model",
-                            buttonIcon = ODSIconModel(imageVector = Icons.Filled.AutoAwesome),
-                            leftIcon = true,
-                            variant = ODSButtonVariant.SECONDARY,
-                            size = ODSButtonSize.SMALL
-                        ),
-                        onClick = onContinueAsModel
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // 3. Guest Exploration Option
-                    ODSBox(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onGuestClick),
-                        contentAlignment = Alignment.Center,
-                        padding = ODSPadding(vertical = 10.dp)
+                        gap = 8.dp,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         ODSText(
-                            text = "Explore as Guest →",
-                            style = ODSTextStyles.bodySBold,
-                            color = scheme.basicTextRecessive
+                            text = uiState.error,
+                            style = ODSTextStyles.bodySRegular,
+                            color = ZonaColors.ActionPrimary,
+                            textAlign = TextAlign.Center
+                        )
+                        ODSButton(
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = "Retry",
+                                variant = ODSButtonVariant.SECONDARY,
+                                size = ODSButtonSize.SMALL
+                            ),
+                            onClick = onRetryClick
                         )
                     }
                 }
             }
-        }
-    }
-}
 
-@Composable
-private fun FeatureBadge(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    scheme: ODSTheme,
-    badgeColor: HexColor
-) {
-    ODSColumn(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        gap = 6.dp
-    ) {
-        ODSBox(
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCardSubtle)),
-            cornerRadius = ODSCorners(all = 12.dp),
-            padding = ODSPadding(all = 10.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = badgeColor.getColor(),
-                modifier = Modifier.size(22.dp)
-            )
+            // ── Bottom Action & Legal ────────────────────────────────────────
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                gap = 16.dp
+            ) {
+                if (uiState.isLoading) {
+                    // Loading pill
+                    ODSBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        height = 56.dp,
+                        background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                        cornerRadius = ODSCorners(all = 28.dp),
+                        border = ODSBorder(
+                            width = 1.dp,
+                            colorList = listOf(ODSColorModel(hexColor = ZonaColors.Border))
+                        ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSRow(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            gap = 10.dp
+                        ) {
+                            ODSIcon(
+                                iconModel = ODSIconModel(
+                                    drawableRes = com.telekom.odsystem.R.drawable.ic_refresh_cw,
+                                    contentDescription = "Loading"
+                                ),
+                                tint = ZonaColors.ActiveLime.getColor(),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            ODSText(
+                                text = "Connecting...",
+                                style = ODSTextStyles.bodyMBold,
+                                color = ZonaColors.TextPrimary
+                            )
+                        }
+                    }
+                } else {
+                    // White Google Pill Button (matching mockup)
+                    ODSBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onGoogleSignInClick
+                            ),
+                        height = 56.dp,
+                        background = listOf(ODSColorModel(hexColor = ZonaColors.NeutralWhite)),
+                        cornerRadius = ODSCorners(all = 28.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSRow(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            gap = 12.dp
+                        ) {
+                            ODSIcon(
+                                iconModel = ODSIconModel(
+                                    drawableRes = R.drawable.ic_google_logo
+                                ),
+                                tint = HexColor.None.getColor(),
+                                modifier = Modifier.size(22.dp)
+                            )
+                            ODSText(
+                                text = "Continue with Google",
+                                style = ODSTextStyles.bodyMBold,
+                                color = ZonaColors.TextInverse
+                            )
+                        }
+                    }
+                }
+
+                // Legal Terms & Privacy
+                ODSColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    gap = 2.dp
+                ) {
+                    ODSText(
+                        text = "By continuing, you agree to ZONA's",
+                        style = ODSTextStyles.microcopyRegular,
+                        color = ZonaColors.LavenderAlt,
+                        textAlign = TextAlign.Center
+                    )
+                    ODSText(
+                        text = "Terms of Service  •  Privacy Policy",
+                        style = ODSTextStyles.microcopyBold,
+                        color = ZonaColors.LavenderAlt,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
-        ODSText(
-            text = label,
-            style = ODSTextStyles.microcopyBold,
-            color = scheme.basicText
-        )
     }
 }

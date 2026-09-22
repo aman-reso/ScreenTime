@@ -11,6 +11,9 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
+}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -35,6 +38,7 @@ include(":feature:chat")
 include(":feature:call")
 include(":feature:wallet")
 include(":feature:profile")
+include(":feature:preferences")
 include(":config")
 include(":analytics")
 include(":ads")

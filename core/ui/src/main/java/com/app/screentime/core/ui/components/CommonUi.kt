@@ -1,10 +1,13 @@
 package com.app.screentime.core.ui.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -12,15 +15,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.telekom.odsystem.atoms.*
+import com.telekom.odsystem.R
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.foundations.*
+import com.telekom.odsystem.foundations.HexColor
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.foundations.ODSTextStyle
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.ODSTextStyles
-import com.telekom.odsystem.tokens.tokens.*
+import com.telekom.odsystem.tokens.tokens.ODSTheme
+
 
 @Composable
 fun PompiereTitle(
@@ -64,7 +75,7 @@ fun EvermoreTopBar(
             modifier = Modifier.size(36.dp)
         ) {
             ODSIcon(
-                iconModel = ODSIconModel(imageVector = Icons.Default.Menu),
+                iconModel = ODSIconModel(drawableRes = R.drawable.ic_more_vertical),
                 tint = scheme.basicText.getColor()
             )
         }
@@ -76,9 +87,9 @@ fun OrganicBlobIllustration(
     modifier: Modifier = Modifier,
     scheme: ODSTheme = neutralScheme
 ) {
-    val lavenderColor = orchidSecondaryScheme.basicBackgroundSubtle.getColor()
-    val peachColor = cheddarSecondaryScheme.basicBackgroundSubtle.getColor()
-    val skyColor = hummingbirdSecondaryScheme.basicBackgroundSubtle.getColor()
+    val lavenderColor = scheme.basicAccentSecondary.getColor()
+    val peachColor = scheme.basicBackgroundCardSubtle.getColor()
+    val skyColor = scheme.basicStrokeSubtle.getColor()
 
     ODSBox(
         modifier = modifier
@@ -144,7 +155,7 @@ fun FeatureGridCard(
         ) {
             ODSBox(
                 modifier = Modifier.size(44.dp),
-                background = listOf(ODSColorModel(hexColor = orchidSecondaryScheme.basicBackgroundSubtle)),
+                background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
                 cornerRadius = ODSCorners(all = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -198,7 +209,7 @@ fun TestimonialCard(
                 ) {
                     ODSBox(
                         modifier = Modifier.size(46.dp),
-                        background = listOf(ODSColorModel(hexColor = cheddarSecondaryScheme.basicBackgroundSubtle)),
+                        background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
                         cornerRadius = ODSCorners(all = 23.dp),
                         contentAlignment = Alignment.Center
                     ) {

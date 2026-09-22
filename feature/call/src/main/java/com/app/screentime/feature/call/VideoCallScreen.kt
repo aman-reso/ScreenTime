@@ -5,46 +5,59 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.LocalActivity
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import com.telekom.odsystem.R as ODSR
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.telekom.odsystem.atoms.*
+import com.app.screentime.config.R
+import com.app.screentime.core.ui.theme.ZonaColors
+import com.app.screentime.core.ui.theme.zonaODSTheme
+import com.app.screentime.feature.call.webrtc.WebRtcVideoSurface
+import com.telekom.odsystem.atoms.ODSBorder
+import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.ODSColumn
+import com.telekom.odsystem.atoms.ODSImage
+import com.telekom.odsystem.atoms.ODSImageModel
+import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
 import com.telekom.odsystem.atoms.button.ODSButtonProps
 import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.foundations.*
-import com.telekom.odsystem.neutralScheme
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.foundations.ODSColorModel
+import com.telekom.odsystem.foundations.ODSCorners
+import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
-import androidx.compose.ui.res.stringResource
-import com.app.screentime.config.R
-import com.app.screentime.feature.call.webrtc.WebRtcVideoSurface
 import io.livekit.android.renderer.TextureViewRenderer
 import io.livekit.android.room.Room
 import io.livekit.android.room.track.LocalVideoTrack
@@ -53,6 +66,10 @@ import io.livekit.android.room.track.Track
 import io.livekit.android.room.track.VideoTrack
 import kotlinx.coroutines.delay
 
+/**
+ * 1-on-1 Video Call Screen (Matching media_1789898718933.png new-video-call).
+ * 100% constructed using Telekom ODS components and Zona design tokens.
+ */
 @Composable
 fun VideoCallScreen(
     modelId: String,
@@ -60,7 +77,7 @@ fun VideoCallScreen(
     modifier: Modifier = Modifier,
     ratePerMin: Double = 15.0,
     avatarUrl: String = "",
-    scheme: ODSTheme = neutralScheme,
+    scheme: ODSTheme = zonaODSTheme,
     onEndCall: () -> Unit = {},
     onNavigateToTopUp: () -> Unit = {},
     viewModel: CallViewModel = hiltViewModel()
@@ -147,14 +164,14 @@ fun VideoCallScreen(
         }
     }
 
-    // ── 1. CHECKING BALANCE SCREEN (ODS) ──────────────────────────────────────
+    // ── 1. CHECKING BALANCE SCREEN ──
     if (callState.status == CallStatus.CHECKING_BALANCE) {
         ODSBox(
             modifier = modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding(),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
+            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(
@@ -164,36 +181,35 @@ fun VideoCallScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 gap = 20.dp
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(54.dp),
-                    color = scheme.basicAccent.getColor(),
-                    strokeWidth = 4.dp
+                ODSLoadingSpinner(
+                    scheme = scheme,
+                    props = ODSLoadingSpinnerProps(size = ODSLoadingSpinnerSize.LARGE)
                 )
 
                 ODSText(
                     text = "Checking Wallet Balance...",
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicText
+                    style = ODSTextStyles.bodyL,
+                    color = ZonaColors.TextPrimary
                 )
 
                 ODSText(
-                    text = "Verifying coins for video call with ${modelName.ifBlank { "Creator" }} (₹${ratePerMin.toInt()}/min)",
+                    text = "Verifying coins for video call with ${modelName.ifBlank { "Jessica Maple" }} ($${ratePerMin.toInt()}/min)",
                     style = ODSTextStyles.bodyMRegular,
-                    color = scheme.basicTextRecessive
+                    color = ZonaColors.LavenderAlt
                 )
             }
         }
         return
     }
 
-    // ── 2. INSUFFICIENT BALANCE SCREEN (ODS) ──────────────────────────────────
+    // ── 2. INSUFFICIENT BALANCE SCREEN ──
     if (callState.status == CallStatus.INSUFFICIENT_BALANCE) {
         ODSBox(
             modifier = modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding(),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
+            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(
@@ -204,22 +220,22 @@ fun VideoCallScreen(
                 gap = 20.dp
             ) {
                 ODSBox(
-                    modifier = Modifier
-                        .size(88.dp)
-                        .clip(CircleShape),
-                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                    modifier = Modifier.size(88.dp),
+                    cornerRadius = ODSCorners(all = 44.dp),
+                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
-                        iconModel = ODSIconModel(imageVector = Icons.Outlined.LocalActivity),
-                        tint = scheme.basicAccent.getColor()
+                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_zap),
+                        tint = ZonaColors.ActiveLime.getColor(),
+                        modifier = Modifier.size(40.dp)
                     )
                 }
 
                 ODSText(
                     text = if (isCurrentUserModel) stringResource(R.string.call_caller_insufficient_balance) else stringResource(R.string.call_insufficient_balance),
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicText
+                    style = ODSTextStyles.bodyL,
+                    color = ZonaColors.TextPrimary
                 )
 
                 ODSText(
@@ -236,69 +252,55 @@ fun VideoCallScreen(
                         }
                     },
                     style = ODSTextStyles.bodyMRegular,
-                    color = scheme.basicTextRecessive
+                    color = ZonaColors.LavenderAlt
                 )
 
                 Spacer(Modifier.height(16.dp))
 
-                if (isCurrentUserModel) {
+                ODSRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     ODSButton(
-                        modifier = Modifier.fillMaxWidth(0.6f),
+                        modifier = Modifier.weight(1f),
                         scheme = scheme,
                         props = ODSButtonProps(
-                            label = stringResource(R.string.call_action_close),
-                            variant = ODSButtonVariant.PRIMARY
+                            label = stringResource(R.string.call_action_cancel),
+                            variant = ODSButtonVariant.SECONDARY
                         ),
                         onClick = {
                             viewModel.resetState()
                             onEndCall()
                         }
                     )
-                } else {
-                    ODSRow(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ODSButton(
-                            modifier = Modifier.weight(1f),
-                            scheme = scheme,
-                            props = ODSButtonProps(
-                                label = stringResource(R.string.call_action_cancel),
-                                variant = ODSButtonVariant.SECONDARY
-                            ),
-                            onClick = {
-                                viewModel.resetState()
-                                onEndCall()
-                            }
-                        )
 
-                        ODSButton(
-                            modifier = Modifier.weight(1f),
-                            scheme = scheme,
-                            props = ODSButtonProps(
-                                label = stringResource(R.string.call_action_recharge),
-                                variant = ODSButtonVariant.PRIMARY
-                            ),
-                            onClick = {
-                                viewModel.resetState()
-                                onNavigateToTopUp()
-                            }
-                        )
-                    }
+                    ODSButton(
+                        modifier = Modifier.weight(1f),
+                        scheme = scheme,
+                        props = ODSButtonProps(
+                            label = stringResource(R.string.call_action_recharge),
+                            variant = ODSButtonVariant.PRIMARY
+                        ),
+                        onClick = {
+                            viewModel.resetState()
+                            onNavigateToTopUp()
+                        }
+                    )
                 }
             }
         }
         return
     }
 
-    // ── 3. CALL ENDED SCREEN (ODS) ────────────────────────────────────────────
+    // ── 3. CALL ENDED SCREEN ──
     if (callState.status == CallStatus.ENDED && hasInitiatedCall) {
         ODSBox(
             modifier = modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding(),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
+            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(
@@ -309,38 +311,36 @@ fun VideoCallScreen(
                 gap = 20.dp
             ) {
                 ODSBox(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape),
-                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                    modifier = Modifier.size(80.dp),
+                    cornerRadius = ODSCorners(all = 40.dp),
+                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
-                        iconModel = ODSIconModel(imageVector = Icons.Filled.CallEnd),
-                        tint = scheme.functionalDestructiveStandard.getColor()
+                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
+                        tint = ZonaColors.ActionPrimary.getColor(),
+                        modifier = Modifier.size(36.dp)
                     )
                 }
 
                 ODSText(
                     text = stringResource(R.string.call_video_ended),
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicText
+                    style = ODSTextStyles.bodyL,
+                    color = ZonaColors.TextPrimary
                 )
 
+                val durStr = "%02d:%02d".format(callState.durationSec / 60, callState.durationSec % 60)
                 ODSText(
-                    text = callState.endReason ?: stringResource(
-                        R.string.call_duration_format,
-                        "%02d:%02d".format(callState.durationSec / 60, callState.durationSec % 60)
-                    ),
+                    text = callState.endReason ?: stringResource(R.string.call_duration_format, durStr),
                     style = ODSTextStyles.bodyMRegular,
-                    color = scheme.basicTextRecessive
+                    color = ZonaColors.LavenderAlt
                 )
 
                 if (callState.cost > 0) {
                     ODSText(
                         text = stringResource(R.string.call_total_charged, callState.cost),
                         style = ODSTextStyles.bodyMBold,
-                        color = scheme.basicAccent
+                        color = ZonaColors.ActiveLime
                     )
                 }
 
@@ -363,13 +363,16 @@ fun VideoCallScreen(
         return
     }
 
-    // ── 4. ACTIVE / DIALING VIDEO SCREEN (ODS + WebRTC / LiveKit Surfaces) ──
+    val minutes = callState.durationSec / 60
+    val seconds = callState.durationSec % 60
+    val formattedTime = "%02d:%02d".format(minutes, seconds)
+
+    // ── 4. ACTIVE VIDEO CALL SCREEN (new-video-call) ──
     ODSBox(
-        modifier = modifier
-            .fillMaxSize()
-            .background(scheme.basicBackground.getColor())
+        modifier = modifier.fillMaxSize(),
+        background = listOf(ODSColorModel(hexColor = ZonaColors.Background))
     ) {
-        // Remote Participant Video Feed (P2P WebRTC first, LiveKit as fallback)
+        // ── Full-Screen Remote Participant Video Feed ──
         if (remoteRtcVideoTrack != null && eglBase != null) {
             WebRtcVideoSurface(
                 videoTrack = remoteRtcVideoTrack,
@@ -383,60 +386,112 @@ fun VideoCallScreen(
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            // Placeholder avatar when remote video is not yet streaming
-            ODSBox(modifier = Modifier.fillMaxSize()) {
-                ODSImage(
-                    imageModel = ODSImageModel(
-                        url = if (avatarUrl.isNotBlank()) avatarUrl
-                        else "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85",
-                        contentDescription = modelName
-                    ),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+            // Fullscreen portrait image fallback (Jessica Maple)
+            ODSImage(
+                imageModel = ODSImageModel(
+                    url = avatarUrl.ifBlank {
+                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85"
+                    },
+                    contentDescription = modelName
+                ),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
 
-                // Dialing Ringing Overlay Badge
-                if (callState.status == CallStatus.DIALING) {
-                    ODSBox(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(scheme.basicBackgroundCardSubtle.getColor())
-                            .padding(horizontal = 24.dp, vertical = 14.dp)
+            // Dialing / Ringing Scrim Overlay
+            if (callState.status == CallStatus.DIALING) {
+                ODSBox(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 24.dp, vertical = 14.dp),
+                    cornerRadius = ODSCorners(all = 20.dp),
+                    background = listOf(ODSColorModel(hexColor = ZonaColors.OverlayLegacy))
+                ) {
+                    ODSColumn(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        gap = 6.dp
                     ) {
-                        ODSColumn(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            gap = 4.dp
-                        ) {
-                            ODSText(
-                                text = stringResource(R.string.call_calling_target, modelName.ifBlank { "Creator" }),
-                                style = ODSTextStyles.bodyMBold,
-                                color = scheme.basicText
-                            )
-                            ODSText(
-                                text = stringResource(R.string.call_ringing_p2p),
-                                style = ODSTextStyles.microcopyRegular,
-                                color = scheme.basicAccentSecondary
-                            )
-                        }
+                        ODSText(
+                            text = "Calling ${modelName.ifBlank { "Jessica Maple" }}...",
+                            style = ODSTextStyles.bodyMBold,
+                            color = ZonaColors.TextPrimary
+                        )
+                        ODSText(
+                            text = "Connecting secure video stream",
+                            style = ODSTextStyles.microcopyRegular,
+                            color = ZonaColors.ActiveLime
+                        )
                     }
                 }
             }
         }
 
-        // Local Camera PiP Box (P2P WebRTC first, LiveKit as fallback)
-        if (callState.isCameraOn) {
+        // ── Top Bar Overlay: Status Pill (Left) & Camera Switch (Right) ──
+        ODSRow(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Top-Left Status Pill: "● Jessica • 02:40"
+            ODSRow(
+                cornerRadius = ODSCorners(all = 20.dp),
+                background = listOf(ODSColorModel(hexColor = ZonaColors.MediaOverlay)),
+                padding = ODSPadding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                gap = 8.dp
+            ) {
+                // Neon Lime active indicator dot
+                ODSBox(
+                    modifier = Modifier.size(7.dp),
+                    cornerRadius = ODSCorners(all = 4.dp),
+                    background = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime))
+                )
+
+                ODSText(
+                    text = "${modelName.ifBlank { "Jessica" }} • $formattedTime",
+                    style = ODSTextStyles.bodySBold,
+                    color = ZonaColors.TextPrimary
+                )
+            }
+
+            // Top-Right Circular Camera Flip Button
             ODSBox(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .statusBarsPadding()
-                    .padding(top = 64.dp, end = 16.dp)
-                    .width(110.dp)
-                    .height(155.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(2.dp, scheme.basicAccentSecondary.getColor(), RoundedCornerShape(16.dp))
-                    .background(scheme.basicBackgroundCard.getColor())
+                    .size(42.dp)
+                    .clickable { viewModel.flipCamera() },
+                cornerRadius = ODSCorners(all = 21.dp),
+                background = listOf(ODSColorModel(hexColor = ZonaColors.MediaOverlay)),
+                contentAlignment = Alignment.Center
             ) {
+                ODSIcon(
+                    iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_refresh_cw),
+                    tint = ZonaColors.TextPrimary.getColor(),
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+
+        // ── Floating Top-Right PiP Self-View Video Card with Glowing Neon Lime Border ──
+        ODSBox(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(top = 68.dp, end = 16.dp)
+                .width(108.dp)
+                .height(148.dp),
+            cornerRadius = ODSCorners(all = 16.dp),
+            border = ODSBorder(
+                width = 3.dp,
+                colorList = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime))
+            ),
+            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
+            clipContent = true
+        ) {
+            if (callState.isCameraOn) {
                 if (localRtcVideoTrack != null && eglBase != null) {
                     WebRtcVideoSurface(
                         videoTrack = localRtcVideoTrack,
@@ -450,157 +505,134 @@ fun VideoCallScreen(
                         videoTrack = localVideoTrack,
                         modifier = Modifier.fillMaxSize()
                     )
+                } else {
+                    ODSImage(
+                        imageModel = ODSImageModel(
+                            url = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80",
+                            contentDescription = "Self Preview"
+                        ),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            } else {
+                ODSBox(
+                    modifier = Modifier.fillMaxSize(),
+                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSIcon(
+                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_video),
+                        tint = ZonaColors.LavenderAlt.getColor(),
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
         }
 
-        // Top Header
-        ODSRow(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            ODSBox(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .clickable {
-                        viewModel.endCall()
-                        viewModel.resetState()
-                        onEndCall()
-                    },
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCardSubtle)),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.arrow_right),
-                    tint = scheme.basicText.getColor(),
-                    modifier = Modifier.rotate(180f)
-                )
-            }
-
-            ODSColumn(horizontalAlignment = Alignment.CenterHorizontally) {
-                ODSText(
-                    text = modelName.ifBlank { stringResource(R.string.call_live_video) },
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicText
-                )
-                ODSText(
-                    text = if (callState.status == CallStatus.ACTIVE) {
-                        val durStr = "%02d:%02d".format(callState.durationSec / 60, callState.durationSec % 60)
-                        if (callState.isP2PConnected) stringResource(R.string.call_status_p2p_active, durStr)
-                        else if (callState.isUsingLiveKitFallback) stringResource(R.string.call_status_livekit_active, durStr)
-                        else durStr
-                    } else stringResource(R.string.call_ringing),
-                    style = ODSTextStyles.microcopyRegular,
-                    color = if (callState.isP2PConnected) scheme.basicAccent else scheme.basicAccentSecondary
-                )
-            }
-
-            // Real-time ₹ Cost Badge
-            ODSBox(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(scheme.basicBackgroundCardSubtle.getColor())
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                ODSText(
-                    text = "₹%.2f".format(callState.cost),
-                    style = ODSTextStyles.microcopyBold,
-                    color = scheme.basicAccent
-                )
-            }
-        }
-
-        // Bottom Controls
-        ODSRow(
+        // ── Bottom Translucent Controls Dock ──
+        ODSBox(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(bottom = 28.dp, start = 24.dp, end = 24.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+                .navigationBarsPadding(),
+            cornerRadius = ODSCorners(topLeft = 32.dp, topRight = 32.dp),
+            background = listOf(ODSColorModel(hexColor = ZonaColors.OverlayLegacy)),
+            padding = ODSPadding(top = 22.dp, bottom = 24.dp, left = 32.dp, right = 32.dp)
         ) {
-            // Flip Camera
-            ODSBox(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(scheme.basicBackgroundCardSubtle.getColor())
-                    .clickable { viewModel.flipCamera() },
-                contentAlignment = Alignment.Center
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                gap = 20.dp
             ) {
-                Icon(
-                    imageVector = Icons.Default.Cameraswitch,
-                    contentDescription = stringResource(R.string.call_action_flip_camera),
-                    tint = scheme.basicText.getColor(),
-                    modifier = Modifier.size(26.dp)
-                )
-            }
+                ODSRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 1. Mute Audio Button (Dark circle with outline)
+                    ODSBox(
+                        modifier = Modifier
+                            .size(62.dp)
+                            .clickable { viewModel.toggleMute() },
+                        cornerRadius = ODSCorners(all = 31.dp),
+                        background = listOf(
+                            ODSColorModel(
+                                hexColor = if (callState.isMuted) ZonaColors.SurfaceRaised else ZonaColors.MediaOverlay
+                            )
+                        ),
+                        border = ODSBorder(
+                            width = 1.5.dp,
+                            colorList = listOf(ODSColorModel(hexColor = ZonaColors.Border))
+                        ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSIcon(
+                            iconModel = ODSIconModel(
+                                drawableRes = if (callState.isMuted) ODSR.drawable.ic_mic_off else ODSR.drawable.ic_mic
+                            ),
+                            tint = ZonaColors.TextPrimary.getColor(),
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
 
-            // Toggle Camera On/Off
-            ODSBox(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(if (callState.isCameraOn) scheme.basicBackgroundCardSubtle.getColor() else scheme.functionalDestructiveStandard.getColor())
-                    .clickable { viewModel.toggleCamera() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (callState.isCameraOn) Icons.Default.Videocam else Icons.Default.VideocamOff,
-                    contentDescription = stringResource(R.string.call_action_toggle_camera),
-                    tint = scheme.basicText.getColor(),
-                    modifier = Modifier.size(26.dp)
-                )
-            }
+                    // 2. Centered End Call Button (Large Vibrant Coral)
+                    ODSBox(
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clickable {
+                                viewModel.endCall()
+                                viewModel.resetState()
+                                onEndCall()
+                            },
+                        cornerRadius = ODSCorners(all = 38.dp),
+                        background = listOf(ODSColorModel(hexColor = ZonaColors.ActionPrimary)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSIcon(
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
+                            tint = ZonaColors.TextPrimary.getColor(),
+                            modifier = Modifier.size(34.dp)
+                        )
+                    }
 
-            // Toggle Mic Mute/Unmute
-            ODSBox(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(if (!callState.isMuted) scheme.basicBackgroundCardSubtle.getColor() else scheme.functionalDestructiveStandard.getColor())
-                    .clickable { viewModel.toggleMute() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (!callState.isMuted) Icons.Default.Mic else Icons.Default.MicOff,
-                    contentDescription = stringResource(R.string.call_action_toggle_mic),
-                    tint = scheme.basicText.getColor(),
-                    modifier = Modifier.size(26.dp)
-                )
-            }
+                    // 3. Camera Toggle Button (Bright Neon Lime when Active!)
+                    ODSBox(
+                        modifier = Modifier
+                            .size(62.dp)
+                            .clickable { viewModel.toggleCamera() },
+                        cornerRadius = ODSCorners(all = 31.dp),
+                        background = listOf(
+                            ODSColorModel(
+                                hexColor = if (callState.isCameraOn) ZonaColors.ActiveLime else ZonaColors.SurfaceRaised
+                            )
+                        ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSIcon(
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_video),
+                            tint = if (callState.isCameraOn) ZonaColors.TextInverse.getColor() else ZonaColors.TextPrimary.getColor(),
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
 
-            // End Call Button
-            ODSBox(
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(CircleShape)
-                    .background(scheme.functionalDestructiveStandard.getColor())
-                    .clickable {
-                        viewModel.endCall()
-                        viewModel.resetState()
-                        onEndCall()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CallEnd,
-                    contentDescription = stringResource(R.string.call_action_end),
-                    tint = scheme.basicText.getColor(),
-                    modifier = Modifier.size(30.dp)
+                // Bottom Home Bar Indicator
+                ODSBox(
+                    modifier = Modifier
+                        .width(134.dp)
+                        .height(4.dp),
+                    cornerRadius = ODSCorners(all = 2.dp),
+                    background = listOf(ODSColorModel(hexColor = ZonaColors.Border))
                 )
             }
         }
     }
 }
 
+/**
+ * LiveKit hardware-accelerated video rendering view wrapper.
+ */
 @Composable
 fun LiveKitVideoSurface(
     room: Room,
@@ -615,9 +647,7 @@ fun LiveKitVideoSurface(
                 videoTrack.addRenderer(this)
             }
         },
-        update = { renderer ->
-            videoTrack.addRenderer(renderer)
-        },
+        update = { _ -> },
         onRelease = { renderer ->
             videoTrack.removeRenderer(renderer)
             renderer.release()

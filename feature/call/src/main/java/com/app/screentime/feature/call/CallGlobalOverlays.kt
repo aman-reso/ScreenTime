@@ -11,13 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CallEnd
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
-import androidx.compose.material.icons.filled.PhoneInTalk
-import androidx.compose.material.icons.outlined.Mic
+import com.telekom.odsystem.R as ODSR
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,7 +36,6 @@ import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.neutralScheme
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
-import com.telekom.odsystem.tokens.tokens.cheddarSecondaryScheme
 
 /**
  * Global incoming call popup/overlay that appears on ANY screen when an incoming call arrives.
@@ -129,7 +122,7 @@ fun IncomingCallGlobalOverlay(
                         contentAlignment = Alignment.Center
                     ) {
                         ODSIcon(
-                            iconModel = ODSIconModel(imageVector = Icons.Filled.Call),
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone),
                             tint = Color.White
                         )
                     }
@@ -143,27 +136,25 @@ fun IncomingCallGlobalOverlay(
                     ODSText(
                         text = "INCOMING VOICE CALL",
                         style = ODSTextStyles.microcopyBold,
-                        color = scheme.basicAccent
+                        color = scheme.basicAccentSecondary
                     )
                     ODSText(
-                        text = callState.remoteUserName.ifBlank { "Incoming Call" },
+                        text = callState.remoteUserName.ifBlank { "ScreenTime User" },
                         style = ODSTextStyles.bodyMBold,
-                        color = scheme.basicText
+                        color = scheme.basicTextDominant
                     )
-                    ODSText(
-                        text = if (isModel) {
-                            "+₹${callState.ratePerMin.toInt()}/min (Earnings)"
-                        } else {
-                            "₹${callState.ratePerMin.toInt()}/min"
-                        },
-                        style = ODSTextStyles.bodySRegular,
-                        color = scheme.basicTextRecessive
-                    )
+                    if (isModel && callState.ratePerMin > 0.0) {
+                        ODSText(
+                            text = "🪙 ${callState.ratePerMin.toInt()} coins/min",
+                            style = ODSTextStyles.microcopyRegular,
+                            color = scheme.basicAccent
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(8.dp))
 
-                // Action Buttons Row (Decline vs Accept)
+                // Action Buttons: Decline (Red) vs Accept (Green)
                 ODSRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -176,14 +167,14 @@ fun IncomingCallGlobalOverlay(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(56.dp)
                                 .clip(CircleShape)
                                 .background(scheme.functionalDestructiveStandard.getColor())
                                 .clickable { onDecline() },
                             contentAlignment = Alignment.Center
                         ) {
                             ODSIcon(
-                                iconModel = ODSIconModel(imageVector = Icons.Filled.CallEnd),
+                                iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
                                 tint = Color.White
                             )
                         }
@@ -209,7 +200,7 @@ fun IncomingCallGlobalOverlay(
                             contentAlignment = Alignment.Center
                         ) {
                             ODSIcon(
-                                iconModel = ODSIconModel(imageVector = Icons.Filled.Call),
+                                iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone),
                                 tint = Color.White
                             )
                         }
@@ -317,7 +308,7 @@ fun ActiveCallGlobalBanner(
                             .size(38.dp)
                             .clip(CircleShape)
                             .background(
-                                if (callState.isMuted) cheddarSecondaryScheme.basicBackgroundSubtle.getColor()
+                                if (callState.isMuted) scheme.basicAccentSecondary.getColor()
                                 else scheme.basicBackground.getColor()
                             )
                             .clickable { onToggleMute() },
@@ -325,7 +316,7 @@ fun ActiveCallGlobalBanner(
                     ) {
                         ODSIcon(
                             iconModel = ODSIconModel(
-                                imageVector = if (callState.isMuted) Icons.Filled.MicOff else Icons.Outlined.Mic
+                                drawableRes = if (callState.isMuted) ODSR.drawable.ic_mic_off else ODSR.drawable.ic_mic
                             ),
                             tint = if (callState.isMuted) scheme.basicAccent.getColor() else scheme.basicText.getColor()
                         )
@@ -341,7 +332,7 @@ fun ActiveCallGlobalBanner(
                         contentAlignment = Alignment.Center
                     ) {
                         ODSIcon(
-                            iconModel = ODSIconModel(imageVector = Icons.Filled.CallEnd),
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
                             tint = Color.White
                         )
                     }

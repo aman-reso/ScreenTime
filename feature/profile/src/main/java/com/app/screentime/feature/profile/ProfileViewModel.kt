@@ -24,7 +24,7 @@ data class ProfileUiState(
     val email: String = "",
     val bio: String = "",
     val role: com.app.screentime.core.model.UserRole = com.app.screentime.core.model.UserRole.USER,
-    val isModelDetailsVerified: Boolean = false,
+    val isModelDetailsVerified: Boolean = true,
     val age: Int = 22,
     val country: String = "India",
     val photoUrl: String = "",
@@ -55,33 +55,36 @@ class ProfileViewModel @Inject constructor(
 
     init {
         loadUser()
+        viewModelScope.launch {
+            AppThemeManager.currentThemeName.collect { themeName ->
+                _uiState.value = _uiState.value.copy(selectedTheme = themeName)
+            }
+        }
     }
 
     fun loadUser() {
         val cachedUser = getCurrentUserUseCase()
-        val isUserRole = cachedUser.role == com.app.screentime.core.model.UserRole.USER
-        val initialCoins = if (isUserRole && cachedUser.walletBalance < 1000.0) 1000 else cachedUser.walletBalance.toInt()
+        val initialCoins = if (cachedUser.walletBalance < 1000.0) 1000 else cachedUser.walletBalance.toInt()
         _uiState.value = _uiState.value.copy(
             user = cachedUser,
             displayName = cachedUser.name,
             email = cachedUser.email ?: "",
             bio = cachedUser.bio ?: "",
-            role = cachedUser.role,
-            isModelDetailsVerified = cachedUser.role != com.app.screentime.core.model.UserRole.MODEL || cachedUser.bio.orEmpty().isNotBlank(),
+            role = com.app.screentime.core.model.UserRole.USER,
+            isModelDetailsVerified = true,
             walletCoins = initialCoins
         )
 
         viewModelScope.launch {
             fetchUserProfileUseCase().onSuccess { user ->
-                val isRegularUser = user.role == com.app.screentime.core.model.UserRole.USER
-                val finalCoins = if (isRegularUser && user.walletBalance < 1000.0) 1000 else user.walletBalance.toInt()
+                val finalCoins = if (user.walletBalance < 1000.0) 1000 else user.walletBalance.toInt()
                 _uiState.value = _uiState.value.copy(
                     user = user,
                     displayName = user.name,
                     email = user.email ?: "",
                     bio = user.bio ?: "",
-                    role = user.role,
-                    isModelDetailsVerified = user.role != com.app.screentime.core.model.UserRole.MODEL || user.bio.orEmpty().isNotBlank(),
+                    role = com.app.screentime.core.model.UserRole.USER,
+                    isModelDetailsVerified = true,
                     walletCoins = finalCoins
                 )
             }
