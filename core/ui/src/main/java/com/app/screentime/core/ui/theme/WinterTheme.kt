@@ -18,11 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.core.view.WindowCompat
 import com.telekom.odsystem.R
 
-// Pompiere Font Family
-val PompiereFontFamily = FontFamily(
-    Font(R.font.pompiere_regular)
-)
-
 // Funnel Sans Font Family
 val FunnelSansFontFamily = FontFamily(
     Font(R.font.funnelsans_regular, FontWeight.Normal),

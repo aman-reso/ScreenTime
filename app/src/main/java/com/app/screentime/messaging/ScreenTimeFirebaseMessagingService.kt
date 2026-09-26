@@ -165,7 +165,7 @@ class ScreenTimeFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val notification = NotificationCompat.Builder(this, MSG_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.app_icon_round)
+            .setSmallIcon(R.drawable.app_icon)
             .setContentTitle(senderName)
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -223,7 +223,7 @@ class ScreenTimeFirebaseMessagingService : FirebaseMessagingService() {
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         val notificationBuilder = NotificationCompat.Builder(this, CALL_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.app_icon_round)
+            .setSmallIcon(R.drawable.app_logo)
             .setContentTitle("Incoming Voice Call")
             .setContentText("$callerName is calling you…")
             .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -279,7 +279,7 @@ class ScreenTimeFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val notification = NotificationCompat.Builder(this, SOCIAL_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.app_icon_round)
+            .setSmallIcon(R.drawable.app_logo)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -316,7 +316,7 @@ class ScreenTimeFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val notification = NotificationCompat.Builder(this, SOCIAL_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.app_icon_round)
+            .setSmallIcon(R.drawable.app_logo)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -350,7 +350,7 @@ class ScreenTimeFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val notification = NotificationCompat.Builder(this, SOCIAL_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.app_icon_round)
+            .setSmallIcon(R.drawable.app_logo)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -387,7 +387,7 @@ class ScreenTimeFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val notification = NotificationCompat.Builder(this, SOCIAL_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.app_icon_round)
+            .setSmallIcon(R.drawable.app_logo)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -421,7 +421,7 @@ class ScreenTimeFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val notification = NotificationCompat.Builder(this, WALLET_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.app_icon_round)
+            .setSmallIcon(R.drawable.app_logo)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))

@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+# Unset ANDROID_PREFS_ROOT to avoid AGP duplicate location exception when ANDROID_USER_HOME is also set
+unset ANDROID_PREFS_ROOT
+
 #
 # Copyright 2015 the original author or authors.
 #

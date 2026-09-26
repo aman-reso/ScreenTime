@@ -9,6 +9,7 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,6 +20,7 @@ data class ODSTextStyle(
     val fontFamily: Int,
     val fontSize: Int,
     val lineHeight: Int,
+    val fontWeight: FontWeight? = null
 ) {
 
     fun toTextStyle(): TextStyle {
@@ -26,6 +28,7 @@ data class ODSTextStyle(
             return TextStyle(
                 fontSize = fontSize.sp,
                 fontFamily = FontFamily.SansSerif,
+                fontWeight = fontWeight ?: FontWeight.Normal,
                 lineHeight = lineHeight.sp,
                 lineHeightStyle = LineHeightStyle(
                     alignment = LineHeightStyle.Alignment.Center,
@@ -37,9 +40,11 @@ data class ODSTextStyle(
             )
         }
 
+        val weight = fontWeight ?: FontWeight.Normal
         return TextStyle(
             fontSize = fontSize.sp,
-            fontFamily = FontFamily(Font(fontFamily)),
+            fontFamily = FontFamily(Font(fontFamily, weight = weight)),
+            fontWeight = weight,
             lineHeight = lineHeight.sp,
             lineHeightStyle = LineHeightStyle(
                 alignment = LineHeightStyle.Alignment.Center,
@@ -63,10 +68,10 @@ data class ODSTextStyle(
         textView.apply {
             // Set font family
             if (fontFamily == 0) {
-                setTypeface(null, Typeface.NORMAL) // Set to default typeface and normal style
+                setTypeface(null, if (fontWeight == FontWeight.Bold) Typeface.BOLD else Typeface.NORMAL)
             } else {
                 val typeface = ResourcesCompat.getFont(context, fontFamily)
-                setTypeface(typeface)
+                setTypeface(typeface, if (fontWeight == FontWeight.Bold) Typeface.BOLD else Typeface.NORMAL)
             }
             TextViewCompat.setLineHeight(this, fontLineHeight)
             textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize) // Set the desired text size

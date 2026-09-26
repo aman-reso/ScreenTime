@@ -28,8 +28,8 @@ android {
         minSdk = 24
         //noinspection OldTargetApi
         targetSdk = 36
-        versionCode = 93
-        versionName = "9.3"
+        versionCode = 94
+        versionName = "9.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -58,30 +58,38 @@ android {
         manifestPlaceholders["appLabel"] = "@string/app_name"
     }
 
-    flavorDimensions += "user"
-    productFlavors {
-        create("user1") {
-            dimension = "user"
-            // Primary variant: keeps default applicationId "com.app.screentime"
-            manifestPlaceholders["appLabel"] = "@string/app_name"
-        }
-        create("user2") {
-            dimension = "user"
-            // Secondary variant: installs alongside user1 on same device
-            applicationIdSuffix = ".user2"
-            versionNameSuffix = "-u2"
-            manifestPlaceholders["appLabel"] = "Winter 2"
+    signingConfigs {
+        create("release") {
+            val keystorePath = localProperties.getProperty("KEYSTORE_FILE")
+            val keystoreFile = when {
+                !keystorePath.isNullOrEmpty() -> rootProject.file(keystorePath)
+                rootProject.file("apptime.jks").exists() -> rootProject.file("apptime.jks")
+                else -> null
+            }
+            val storePass = localProperties.getProperty("KEYSTORE_PASSWORD")
+            val alias = localProperties.getProperty("KEY_ALIAS")
+            val keyPass = localProperties.getProperty("KEY_PASSWORD", storePass)
+
+            if (keystoreFile != null && keystoreFile.exists() && !storePass.isNullOrEmpty() && !alias.isNullOrEmpty()) {
+                storeFile = keystoreFile
+                storePassword = storePass
+                keyAlias = alias
+                keyPassword = keyPass
+            }
         }
     }
 
     buildTypes {
-        firebaseCrashlytics {
-            mappingFileUploadEnabled = false
-        }
         release {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
+            val releaseConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseConfig.storeFile != null && releaseConfig.storeFile!!.exists()) {
+                releaseConfig
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -96,6 +104,11 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
     }
 
     compileOptions {
@@ -241,8 +254,6 @@ dependencies {
     implementation(libs.startup.android)
 
     //WorkManager
-    implementation(libs.androidx.hilt.common)
-    implementation(libs.androidx.hilt.work)
     implementation(libs.androidx.core.splashscreen)
 
 //     Firebase

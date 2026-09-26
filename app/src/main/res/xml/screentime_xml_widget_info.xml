@@ -5,10 +5,8 @@
     android:targetCellWidth="2"
     android:targetCellHeight="2"
     android:updatePeriodMillis="1800000"
-    android:autoAdvanceViewId="@id/widget_total_time"
     android:description="@string/widget_description"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:initialLayout="@layout/widget_screentime"
-    android:previewImage="@mipmap/app_icon_round" />
+    android:previewImage="@drawable/app_icon" />
 

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
@@ -18,6 +19,7 @@ import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.foundations.ODSTextStyle
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
@@ -49,7 +51,12 @@ fun HomeTopBar(
     ) {
         ODSText(
             text = "Winter",
-            style = ODSTextStyles.titleS,
+            style = ODSTextStyle(
+                fontFamily = R.font.pacifico_regular,
+                fontSize = 24,
+                lineHeight = 24,
+                fontWeight = FontWeight.Bold
+            ),
             color = scheme.basicAccent
         )
         ODSRow(
