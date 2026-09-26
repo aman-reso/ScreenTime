@@ -29,7 +29,7 @@ class ScreenTimeApplication : Application(), ImageLoaderFactory {
         try {
             //  MobileAds.initialize(this)
         } catch (e: Exception) {
-            Log.e("Chatty", "Ads init failed: ${e.message}")
+            Log.e("Winter", "Ads init failed: ${e.message}")
         }
     }
 
@@ -37,9 +37,9 @@ class ScreenTimeApplication : Application(), ImageLoaderFactory {
         try {
             FirebaseApp.initializeApp(this)
             FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = true
-            FirebaseCrashlytics.getInstance().log("Chatty started")
+            FirebaseCrashlytics.getInstance().log("Winter started")
         } catch (e: Throwable) {
-            Log.e("Chatty", "Firebase init failed: ${e.message}")
+            Log.e("Winter", "Firebase init failed: ${e.message}")
         }
     }
 }

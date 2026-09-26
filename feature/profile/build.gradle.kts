@@ -35,7 +35,7 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
     implementation(project(":feature:wallet"))
-    implementation(project(":odsystem"))
+    implementation(project(":appdesign"))
 
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
@@ -50,4 +50,5 @@ dependencies {
 
     implementation(libs.androidx.biometric)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.coil.compose)
 }

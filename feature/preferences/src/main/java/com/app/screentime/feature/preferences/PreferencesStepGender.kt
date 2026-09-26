@@ -3,134 +3,37 @@ package com.app.screentime.feature.preferences
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
-import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
-import com.telekom.odsystem.atoms.icon.ODSIcon
-import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
-import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
-import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
- * Step 2: Gender Identity Preference.
- * Recreated with 100% ODS components strictly following GEMINI.md rules.
+ * Step 2: Gender Preference.
+ * Matches Figma mockup (Frame 2):
+ * - "What's your gender?"
+ * - "Select the option that best describes you."
+ * - Options: Male, Female, Non-binary
+ * - Selected: 2.dp #A7344D border, #A7344D text
+ * - Unselected: 1.dp #E2E8F0 border, #11111A text
  */
 
-val DEFAULT_GENDER_OPTIONS = listOf(
-    "Woman",
-    "Man",
-    "Non-binary",
-    "Genderqueer",
-    "Agender"
+val DEFAULT_GENDER_SELECTIONS = listOf(
+    "Male",
+    "Female",
+    "Non-binary"
 )
-
-@Composable
-fun GenderHeader(
-    scheme: ODSTheme,
-    modifier: Modifier = Modifier
-) {
-    ODSColumn(
-        modifier = modifier.fillMaxWidth(),
-        gap = ODSVariables.spacingComponent2
-    ) {
-        ODSText(
-            modifier = Modifier.fillMaxWidth(),
-            text = "How do you identify?",
-            style = ODSTextStyles.bodyMBold,
-            color = scheme.basicTextDominant
-        )
-        ODSText(
-            modifier = Modifier.fillMaxWidth(),
-            text = "Choose the identity that best represents you.",
-            style = ODSTextStyles.bodySRegular,
-            color = scheme.basicTextRecessive
-        )
-    }
-}
-
-@Composable
-fun GenderOptionCard(
-    gender: String,
-    isSelected: Boolean,
-    onSelect: () -> Unit,
-    scheme: ODSTheme,
-    modifier: Modifier = Modifier
-) {
-    ODSBox(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onSelect
-            ),
-        height = 52.dp,
-        background = listOf(
-            ODSColorModel(
-                hexColor = if (isSelected) scheme.basicAccentSecondary else scheme.basicBackgroundCard
-            )
-        ),
-        cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-        border = ODSBorder(
-            width = ODSVariables.strokes2,
-            colorList = listOf(
-                ODSColorModel(
-                    hexColor = if (isSelected) scheme.basicAccent else scheme.basicStrokeSubtle
-                )
-            )
-        ),
-        padding = ODSPadding(
-            horizontal = ODSVariables.spacingLayout1,
-            vertical = ODSVariables.spacingComponent3
-        )
-    ) {
-        ODSRow(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ODSText(
-                text = gender,
-                style = ODSTextStyles.bodyMBold,
-                color = scheme.basicTextDominant
-            )
-
-            if (isSelected) {
-                ODSBox(
-                    modifier = Modifier.size(22.dp),
-                    background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-                    cornerRadius = ODSCorners(all = ODSVariables.radiusFull),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSIcon(
-                        iconModel = ODSIconModel(
-                            drawableRes = R.drawable.ic_check,
-                            contentDescription = "Selected"
-                        ),
-                        tint = scheme.basicBackgroundCard.getColor(),
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun PreferencesStepGender(
@@ -138,25 +41,84 @@ fun PreferencesStepGender(
     onGenderSelect: (String) -> Unit,
     scheme: ODSTheme,
     modifier: Modifier = Modifier,
-    genders: List<String> = DEFAULT_GENDER_OPTIONS
+    genders: List<String> = DEFAULT_GENDER_SELECTIONS,
+    error: String? = null
 ) {
+    val primaryTextColor = scheme.basicTextDominant
+    val secondaryTextColor = scheme.basicTextRecessive
+    val accentColor = scheme.basicAccent
+    val inactiveBorderColor = scheme.basicStrokeSubtle
+
     ODSColumn(
         modifier = modifier.fillMaxWidth(),
-        gap = ODSVariables.spacingComponent6
+        gap = 28.dp,
+        verticalAlignment = Alignment.Top,
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Top
     ) {
-        GenderHeader(scheme = scheme)
-
+        // ── 1. Heading & Subtitle ──────────────────────────────────────────
         ODSColumn(
             modifier = Modifier.fillMaxWidth(),
-            gap = ODSVariables.spacingComponent3
+            gap = 8.dp,
+            verticalAlignment = Alignment.Top,
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
+        ) {
+            ODSText(
+                modifier = Modifier.fillMaxWidth(),
+                text = "What's your gender?",
+                style = ODSTextStyles.titleL,
+                color = primaryTextColor
+            )
+            ODSText(
+                modifier = Modifier.fillMaxWidth(),
+                text = "Select the option that best describes you.",
+                style = ODSTextStyles.bodyMRegular,
+                color = secondaryTextColor
+            )
+        }
+
+        // ── 2. Option Cards ────────────────────────────────────────────────
+        ODSColumn(
+            modifier = Modifier.fillMaxWidth(),
+            gap = 12.dp,
+            verticalAlignment = Alignment.Top,
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
         ) {
             genders.forEach { gender ->
-                GenderOptionCard(
-                    gender = gender,
-                    isSelected = selectedGender == gender,
-                    onSelect = { onGenderSelect(gender) },
-                    scheme = scheme
-                )
+                val isSelected = selectedGender.equals(gender, ignoreCase = true)
+                ODSBox(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onGenderSelect(gender) }
+                        ),
+                    cornerRadius = ODSCorners(all = 16.dp),
+                    border = ODSBorder(
+                        width = if (isSelected) 2.dp else 1.dp,
+                        colorList = listOf(
+                            ODSColorModel(
+                                hexColor = if (isSelected) accentColor else inactiveBorderColor
+                            )
+                        )
+                    ),
+                    background = listOf(
+                        ODSColorModel(
+                            hexColor = if (isSelected) scheme.basicAccentSecondary else scheme.basicBackgroundCard
+                        )
+                    ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSText(
+                        text = gender,
+                        style = ODSTextStyles.bodyMBold,
+                        color = if (isSelected) accentColor else primaryTextColor
+                    )
+                }
             }
         }
     }

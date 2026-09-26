@@ -27,13 +27,14 @@ import com.app.screentime.core.network.session.SessionManager
 import com.app.screentime.core.ui.security.BiometricAuthManager
 import com.app.screentime.core.ui.security.BiometricLockScreen
 import com.app.screentime.core.ui.theme.AppThemeManager
-import com.app.screentime.core.ui.theme.ChattyTheme
+import com.app.screentime.core.ui.theme.WinterTheme
 import com.app.screentime.feature.auth.AuthGateScreen
 import com.app.screentime.feature.call.ActiveCallManager
 import com.app.screentime.feature.call.CallStatus
 import com.app.screentime.feature.call.CallUiState
 import com.app.screentime.feature.call.receiver.CallActionReceiver
 import com.app.screentime.messaging.ScreenTimeFirebaseMessagingService
+import com.app.screentime.navigation.Screen
 import com.app.screentime.navigation.ScreenTimeNavigation
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
@@ -52,7 +53,14 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var activeCallManager: Lazy<ActiveCallManager>
 
+    @Inject
+    lateinit var realtimeChatSyncManager: Lazy<com.app.screentime.feature.chat.domain.usecase.RealtimeChatSyncManager>
+
+    @Inject
+    lateinit var fcmTokenManager: Lazy<com.app.screentime.core.network.session.FcmTokenManager>
+
     private var incomingCallData by mutableStateOf<Pair<String, String>?>(null)
+    private var pendingNotificationScreen by mutableStateOf<Screen?>(null)
     private var isInPipMode by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,6 +75,7 @@ class MainActivity : AppCompatActivity() {
 
         AppThemeManager.init(this)
         handleIncomingCallIntent(intent)
+        pendingNotificationScreen = extractScreenFromIntent(intent)
 
         setContent {
             val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
@@ -81,7 +90,7 @@ class MainActivity : AppCompatActivity() {
                 BiometricAuthManager.init(this@MainActivity)
             }
 
-            ChattyTheme {
+            WinterTheme {
                 val isLoggedIn by sessionManager.isLoggedInFlow.collectAsState()
                 android.util.Log.i("STARTUP_TRACE", "👤 [${System.currentTimeMillis() - t0}ms] isLoggedIn=$isLoggedIn, isInPipMode=$isInPipMode")
 
@@ -89,6 +98,8 @@ class MainActivity : AppCompatActivity() {
                     if (isLoggedIn) {
                         withContext(Dispatchers.IO) {
                             activeCallManager.get().ensureConnected()
+                            realtimeChatSyncManager.get().ensureConnected()
+                            fcmTokenManager.get().syncFcmToken()
                         }
                         startPiPObserver()
                     }
@@ -110,6 +121,8 @@ class MainActivity : AppCompatActivity() {
                         modifier = Modifier.fillMaxSize(),
                         incomingCall = incomingCallData,
                         onClearIncomingCall = { incomingCallData = null },
+                        pendingNotificationScreen = pendingNotificationScreen,
+                        onClearPendingNotificationScreen = { pendingNotificationScreen = null },
                         onLogout = { sessionManager.clearSession() },
                         scheme = currentTheme,
                         isInPipMode = isInPipMode
@@ -200,6 +213,87 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIncomingCallIntent(intent)
+        val targetScreen = extractScreenFromIntent(intent)
+        if (targetScreen != null) {
+            pendingNotificationScreen = targetScreen
+        }
+    }
+
+    private fun extractScreenFromIntent(intent: Intent?): Screen? {
+        if (intent == null) return null
+        val screenKey = (intent.getStringExtra("screen")
+            ?: intent.getStringExtra("route")
+            ?: intent.getStringExtra("type")
+            ?: intent.getStringExtra("event")
+            ?: intent.getStringExtra("action")
+            ?: "").trim()
+
+        val partnerId = (intent.getStringExtra("partner_id")
+            ?: intent.getStringExtra("sender_id")
+            ?: intent.getStringExtra("model_id")
+            ?: intent.getStringExtra("user_id")
+            ?: intent.getStringExtra("from_user_id")
+            ?: "").trim()
+
+        val partnerName = (intent.getStringExtra("partner_name")
+            ?: intent.getStringExtra("sender_name")
+            ?: intent.getStringExtra("model_name")
+            ?: intent.getStringExtra("user_name")
+            ?: intent.getStringExtra("name")
+            ?: "Friend").trim()
+
+        val conversationId = intent.getStringExtra("conversation_id")?.trim()?.ifBlank { null }
+
+        return when (screenKey.lowercase()) {
+            "chat", "direct_message", "incoming_message", "message", "chat_message", "chat_message_received" -> {
+                if (partnerId.isNotBlank()) {
+                    Screen.Chat(modelId = partnerId, modelName = partnerName, conversationId = conversationId)
+                } else {
+                    Screen.ChatList
+                }
+            }
+            "chats", "chat_list", "inbox", "incoming_message_request", "message_request", "message_request_accepted", "request_accepted" -> {
+                if (partnerId.isNotBlank()) {
+                    Screen.Chat(modelId = partnerId, modelName = partnerName, conversationId = conversationId)
+                } else {
+                    Screen.ChatList
+                }
+            }
+            "discover", "discover_map", "map" -> {
+                Screen.DiscoverMap
+            }
+            "home", "feed", "like_received", "new_like", "likes" -> {
+                Screen.Home
+            }
+            "profile", "user_profile", "profile_detail" -> {
+                if (partnerId.isNotBlank()) {
+                    Screen.ProfileDetail(userId = partnerId, userName = partnerName)
+                } else {
+                    Screen.Account
+                }
+            }
+            "notifications", "notification" -> {
+                Screen.Notifications
+            }
+            "account", "my_profile" -> {
+                Screen.Account
+            }
+            "wallet", "wallet_credited", "wallet_recharge", "credit_added" -> {
+                Screen.Wallet
+            }
+            "edit_profile" -> {
+                Screen.EditProfile
+            }
+            else -> {
+                if (partnerId.isNotBlank()) {
+                    Screen.Chat(modelId = partnerId, modelName = partnerName, conversationId = conversationId)
+                } else if (screenKey.isNotBlank()) {
+                    Screen.Notifications
+                } else {
+                    null
+                }
+            }
+        }
     }
 
     private fun handleIncomingCallIntent(intent: Intent?) {

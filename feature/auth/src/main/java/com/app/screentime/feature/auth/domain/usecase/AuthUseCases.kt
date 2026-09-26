@@ -2,15 +2,14 @@ package com.app.screentime.feature.auth.domain.usecase
 
 import com.app.screentime.core.model.User
 import com.app.screentime.core.model.UserRole
-import com.app.screentime.core.network.api.ChattyApi
+import com.app.screentime.core.network.api.WinterApi
 import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.core.network.session.SessionManager
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 class LoginUseCase @Inject constructor(
-    private val api: ChattyApi,
-    private val connectApi: com.app.screentime.core.network.api.ConnectApi,
+    private val api: WinterApi,
     private val sessionManager: SessionManager,
     private val preferencesManager: PreferencesManager
 ) {
@@ -22,32 +21,18 @@ class LoginUseCase @Inject constructor(
             var userPhone = phone
 
             try {
-                val connectResp = connectApi.verifyOtp(
-                    phone = phone,
-                    code = "123456",
-                    name = name.ifBlank { "User" }
-                )
-                token = connectResp.token
-                connectResp.tenant?.let {
-                    userId = it.id
-                    userName = it.full_name
-                    userPhone = it.phone
-                }
+                val response = api.registerOrLogin(phone, name, role)
+                token = response.token
+                userId = response.user.id
+                userName = response.user.name
+                userPhone = response.user.phone
             } catch (_: Exception) {
-                try {
-                    val response = api.registerOrLogin(phone, name, "user")
-                    token = response.token
-                    userId = response.user.id
-                    userName = response.user.name
-                    userPhone = response.user.phone
-                } catch (_: Exception) {
-                    token = "connect_dev_jwt_${System.currentTimeMillis()}"
-                    userId = "tenant_${phone.filter { it.isDigit() }.takeLast(4)}"
-                }
+                token = "dev_jwt_${System.currentTimeMillis()}"
+                userId = "user_${phone.filter { it.isDigit() }.takeLast(4)}"
             }
 
             val user = User(
-                id = userId.ifBlank { "tenant_demo" },
+                id = userId.ifBlank { "user_demo" },
                 phone = userPhone,
                 name = userName,
                 role = UserRole.USER,
@@ -73,12 +58,13 @@ class LoginUseCase @Inject constructor(
  * issues the app JWT token, and returns the authoritative session and user data.
  */
 class LoginWithGoogleUseCase @Inject constructor(
-    private val api: ChattyApi,
+    private val api: WinterApi,
     private val sessionManager: SessionManager,
     private val preferencesManager: PreferencesManager
 ) {
     suspend operator fun invoke(
-        idToken: String,
+        googleId: String? = null,
+        idToken: String? = null,
         email: String? = null,
         name: String? = null,
         avatarUrl: String? = null,
@@ -86,21 +72,28 @@ class LoginWithGoogleUseCase @Inject constructor(
     ): Result<User> {
         return try {
             val response = api.loginWithGoogle(
+                googleId = googleId,
                 idToken = idToken,
                 email = email,
                 name = name,
-                avatarUrl = avatarUrl,
-                role = "user"
+                photoUrl = avatarUrl,
+                role = role
             )
             val userDto = response.user
+            val resolvedName = userDto.getResolvedName().ifBlank { name ?: "User" }
             val user = User(
-                id = userDto.id.ifBlank { "google_${System.currentTimeMillis()}" },
+                id = userDto.id.ifBlank { googleId ?: idToken ?: "google_${System.currentTimeMillis()}" },
                 phone = userDto.phone.ifBlank { email ?: "" },
-                name = userDto.name.ifBlank { name ?: "User" },
+                name = resolvedName,
                 role = UserRole.USER,
                 avatarUrl = userDto.avatar_url ?: avatarUrl,
                 walletBalance = response.wallet?.balance ?: 1000.0
             )
+            val isNewUser = response.is_new_user
+            val onboardingDone = !isNewUser
+            sessionManager.isOnboardingCompleted = onboardingDone
+            preferencesManager.setOnboardingCompleted(onboardingDone)
+
             sessionManager.saveSession(response.token, user)
             preferencesManager.setToken(response.token)
             preferencesManager.setUserId(user.id)
@@ -137,5 +130,7 @@ class LogoutUseCase @Inject constructor(
     operator fun invoke() {
         sessionManager.clearSession()
         preferencesManager.clearAuth()
+        sessionManager.isOnboardingCompleted = false
+        preferencesManager.setOnboardingCompleted(false)
     }
 }

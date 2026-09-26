@@ -77,16 +77,31 @@ fun FollowingFeedCard(
             contentAlignment = Alignment.TopStart
         ) {
             val photoUrl = profile.coverUrl.ifBlank { profile.avatarUrl }
-            ODSImage(
-                imageModel = ODSImageModel(
-                    url = photoUrl.ifBlank {
-                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80"
-                    },
-                    contentDescription = profile.name
-                ),
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
+            if (photoUrl.isNotBlank()) {
+                ODSImage(
+                    imageModel = ODSImageModel(
+                        url = photoUrl,
+                        contentDescription = profile.name
+                    ),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                ODSBox(
+                    modifier = Modifier.fillMaxSize(),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            drawableRes = com.telekom.odsystem.R.drawable.ic_user,
+                            contentDescription = profile.name
+                        ),
+                        tint = scheme.basicTextRecessive.getColor(),
+                        modifier = Modifier.size(56.dp)
+                    )
+                }
+            }
         }
 
         // ── Bottom Content Row: Info & Chat CTA (Figma node-id 49-45) ───────

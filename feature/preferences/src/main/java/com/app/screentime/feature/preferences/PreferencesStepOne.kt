@@ -17,9 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import com.app.screentime.core.ui.theme.FunnelSansFontFamily
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -47,23 +46,27 @@ import java.time.LocalDate
 import java.time.Period
 
 /**
- * Step 1: Personal Basics (Name, Gender, Date of Birth, Height combined).
- * Conforms strictly to Figma node-id 77-7 and project design principles (GEMINI.md).
+ * Step 1: Personal Basics (Name, Gender with Vertical Radio Buttons, Date of Birth, Height in cm + feet/inches).
+ * Conforms strictly to Telekom ODS guidelines and project design rules.
  */
 @Composable
 fun PreferencesStepOne(
     name: String,
     onNameChange: (String) -> Unit,
+    nameError: String? = null,
     gender: String,
     onGenderChange: (String) -> Unit,
+    genderError: String? = null,
     day: String,
     month: String,
     year: String,
     onDayChange: (String) -> Unit,
     onMonthChange: (String) -> Unit,
     onYearChange: (String) -> Unit,
+    dobError: String? = null,
     heightCm: String,
     onHeightChange: (String) -> Unit,
+    heightError: String? = null,
     scheme: ODSTheme,
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier
@@ -79,17 +82,23 @@ fun PreferencesStepOne(
                 m.coerceIn(1, 12),
                 d.coerceIn(1, 31)
             )
-            Period.between(birthDate, LocalDate.now()).years.coerceAtLeast(18)
+            Period.between(birthDate, LocalDate.now()).years
         } catch (_: Exception) {
             24
         }
     }
 
-    val funnelFontSemiBold = remember {
-        FontFamily(Font(R.font.funnelsans_semibold, FontWeight.SemiBold))
-    }
+    val funnelFontSemiBold = FunnelSansFontFamily
 
-    val genders = listOf("Woman", "Man", "Non-binary")
+    // Gender options in standard display order
+    val genders = listOf("Man", "Woman", "Non-binary")
+
+    // Height in feet & inches calculation
+    val heightNum = heightCm.toIntOrNull() ?: 168
+    val totalInches = kotlin.math.round(heightNum / 2.54).toInt()
+    val feet = totalInches / 12
+    val inches = totalInches % 12
+    val heightFeetFormatted = "$feet'$inches\" ($feet ft $inches in)"
 
     ODSColumn(
         modifier = modifier.fillMaxWidth(),
@@ -116,96 +125,102 @@ fun PreferencesStepOne(
         }
 
         // ── 1. First Name Card ──────────────────────────────────────────────
-        ODSRow(
+        ODSColumn(
             modifier = Modifier.fillMaxWidth(),
-            gap = ODSVariables.spacingComponent4,
-            padding = ODSPadding(all = 14.dp),
-            cornerRadius = ODSCorners(all = 20.dp),
-            border = ODSBorder(
-                width = ODSVariables.strokes2,
-                colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+            gap = 4.dp
         ) {
-            ODSColumn(
-                cornerRadius = ODSCorners(all = 16.dp),
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                gap = ODSVariables.spacingComponent4,
+                padding = ODSPadding(all = 14.dp),
+                cornerRadius = ODSCorners(all = 20.dp),
+                border = ODSBorder(
+                    width = ODSVariables.strokes2,
+                    colorList = listOf(
+                        ODSColorModel(
+                            hexColor = if (nameError != null) scheme.functionalDestructiveStandard else scheme.basicStroke
+                        )
+                    )
+                ),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
-                width = 32.dp,
-                height = 32.dp
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
             ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.ic_user,
-                        contentDescription = "User"
-                    ),
-                    tint = scheme.basicAccent.getColor(),
-                    modifier = Modifier.size(16.dp)
-                )
+                ODSColumn(
+                    cornerRadius = ODSCorners(all = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
+                    width = 32.dp,
+                    height = 32.dp
+                ) {
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            drawableRes = R.drawable.ic_user,
+                            contentDescription = "User"
+                        ),
+                        tint = scheme.basicAccent.getColor(),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+
+                ODSColumn(
+                    modifier = Modifier.weight(1f),
+                    gap = ODSVariables.spacingComponent1,
+                    verticalAlignment = Alignment.Top,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    ODSText(
+                        text = "YOUR FIRST NAME",
+                        style = ODSTextStyles.microcopyBold,
+                        color = scheme.basicTextRecessive
+                    )
+                    BasicTextField(
+                        value = name,
+                        onValueChange = onNameChange,
+                        textStyle = TextStyle(
+                            color = scheme.basicTextDominant.getColor(),
+                            fontSize = 16.sp,
+                            fontFamily = funnelFontSemiBold,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        cursorBrush = SolidColor(scheme.basicAccent.getColor()),
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { onSubmit() }),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
-            ODSColumn(
-                modifier = Modifier.weight(1f),
-                gap = ODSVariables.spacingComponent1,
-                verticalAlignment = Alignment.Top,
-                horizontalAlignment = Alignment.Start
-            ) {
+            if (nameError != null) {
                 ODSText(
-                    text = "YOUR FIRST NAME",
-                    style = ODSTextStyles.microcopyBold,
-                    color = scheme.basicTextRecessive
-                )
-                BasicTextField(
-                    value = name,
-                    onValueChange = onNameChange,
-                    textStyle = TextStyle(
-                        color = scheme.basicTextDominant.getColor(),
-                        fontSize = 16.sp,
-                        fontFamily = funnelFontSemiBold,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    cursorBrush = SolidColor(scheme.basicAccent.getColor()),
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Words,
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(onDone = { onSubmit() }),
-                    modifier = Modifier.fillMaxWidth()
+                    text = nameError,
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.functionalDestructiveStandard,
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
         }
 
-        // Divider with 12.dp top and bottom margin
+        // Divider
         ODSDivider(
             scheme = scheme,
             props = ODSDividerProps(variant = ODSDividerVariant.HORIZONTAL),
             modifier = Modifier.padding(vertical = 12.dp)
         )
 
-        // ── 2. Gender Selection Card ────────────────────────────────────────
-        ODSRow(
+        // ── 2. Gender Selection (Vertical Radio Button List) ─────────────────
+        ODSColumn(
             modifier = Modifier.fillMaxWidth(),
-            gap = ODSVariables.spacingComponent4,
-            padding = ODSPadding(all = 14.dp),
-            cornerRadius = ODSCorners(all = 20.dp),
-            border = ODSBorder(
-                width = ODSVariables.strokes2,
-                colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+            gap = 6.dp
         ) {
-            ODSColumn(
-                cornerRadius = ODSCorners(all = 16.dp),
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
-                width = 32.dp,
-                height = 32.dp
+                gap = ODSVariables.spacingComponent2
             ) {
                 ODSIcon(
                     iconModel = ODSIconModel(
@@ -215,63 +230,97 @@ fun PreferencesStepOne(
                     tint = scheme.basicAccent.getColor(),
                     modifier = Modifier.size(16.dp)
                 )
-            }
-
-            ODSColumn(
-                modifier = Modifier.weight(1f),
-                gap = ODSVariables.spacingComponent2,
-                verticalAlignment = Alignment.Top,
-                horizontalAlignment = Alignment.Start
-            ) {
                 ODSText(
                     text = "GENDER",
                     style = ODSTextStyles.microcopyBold,
                     color = scheme.basicTextRecessive
                 )
+            }
 
-                ODSRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    gap = ODSVariables.spacingComponent2,
-                    horizontalAlignment = Alignment.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    genders.forEach { g ->
-                        val isSelected = gender == g
-                        ODSRow(
-                            modifier = Modifier.clickable(
+            // Vertical list of Radio Options
+            ODSColumn(
+                modifier = Modifier.fillMaxWidth(),
+                gap = 8.dp
+            ) {
+                genders.forEach { g ->
+                    val isSelected = gender.equals(g, ignoreCase = true)
+                    ODSRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
                                 onClick = { onGenderChange(g) }
                             ),
-                            padding = ODSPadding(top = 8.dp, bottom = 8.dp, left = 14.dp, right = 14.dp),
-                            cornerRadius = ODSCorners(all = 12.dp),
+                        padding = ODSPadding(
+                            horizontal = 16.dp,
+                            vertical = 14.dp
+                        ),
+                        cornerRadius = ODSCorners(all = 16.dp),
+                        border = ODSBorder(
+                            width = if (isSelected) 2.dp else 1.dp,
+                            colorList = listOf(
+                                ODSColorModel(
+                                    hexColor = if (isSelected) scheme.basicAccent else scheme.basicStroke
+                                )
+                            )
+                        ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        background = listOf(
+                            ODSColorModel(
+                                hexColor = if (isSelected) scheme.basicAccentSecondary else scheme.basicBackgroundCard
+                            )
+                        )
+                    ) {
+                        ODSText(
+                            text = g,
+                            style = ODSTextStyles.bodySBold,
+                            color = if (isSelected) scheme.basicAccent else scheme.basicTextDominant
+                        )
+
+                        // Custom ODS Radio Indicator
+                        ODSBox(
+                            modifier = Modifier.size(22.dp),
+                            cornerRadius = ODSCorners(all = 11.dp),
                             border = ODSBorder(
-                                width = 1.dp,
+                                width = 2.dp,
                                 colorList = listOf(
                                     ODSColorModel(
                                         hexColor = if (isSelected) scheme.basicAccent else scheme.basicStroke
                                     )
                                 )
                             ),
-                            verticalAlignment = Alignment.CenterVertically,
                             background = listOf(
                                 ODSColorModel(
-                                    hexColor = if (isSelected) scheme.basicAccentSecondary else scheme.basicBackgroundCard
+                                    hexColor = if (isSelected) scheme.basicBackgroundCard else scheme.basicBackgroundCard
                                 )
-                            )
+                            ),
+                            contentAlignment = Alignment.Center
                         ) {
-                            ODSText(
-                                text = g,
-                                style = ODSTextStyles.bodySBold,
-                                color = if (isSelected) scheme.basicAccent else scheme.basicTextDominant
-                            )
+                            if (isSelected) {
+                                ODSBox(
+                                    modifier = Modifier.size(12.dp),
+                                    cornerRadius = ODSCorners(all = 6.dp),
+                                    background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                                )
+                            }
                         }
                     }
                 }
             }
+
+            if (genderError != null) {
+                ODSText(
+                    text = genderError,
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.functionalDestructiveStandard,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
         }
 
-        // Divider with 12.dp top and bottom margin
+        // Divider
         ODSDivider(
             scheme = scheme,
             props = ODSDividerProps(variant = ODSDividerVariant.HORIZONTAL),
@@ -296,7 +345,11 @@ fun PreferencesStepOne(
                     cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
                     border = ODSBorder(
                         width = ODSVariables.strokes2,
-                        colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                        colorList = listOf(
+                            ODSColorModel(
+                                hexColor = if (dobError != null) scheme.functionalDestructiveStandard else scheme.basicStroke
+                            )
+                        )
                     ),
                     background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
                 ) {
@@ -327,7 +380,11 @@ fun PreferencesStepOne(
                     cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
                     border = ODSBorder(
                         width = ODSVariables.strokes2,
-                        colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                        colorList = listOf(
+                            ODSColorModel(
+                                hexColor = if (dobError != null) scheme.functionalDestructiveStandard else scheme.basicStroke
+                            )
+                        )
                     ),
                     background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
                 ) {
@@ -358,7 +415,11 @@ fun PreferencesStepOne(
                     cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
                     border = ODSBorder(
                         width = ODSVariables.strokes2,
-                        colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                        colorList = listOf(
+                            ODSColorModel(
+                                hexColor = if (dobError != null) scheme.functionalDestructiveStandard else scheme.basicStroke
+                            )
+                        )
                     ),
                     background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
                 ) {
@@ -381,6 +442,15 @@ fun PreferencesStepOne(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+            }
+
+            if (dobError != null) {
+                ODSText(
+                    text = dobError,
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.functionalDestructiveStandard,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
 
             // Age Indicator Card
@@ -419,85 +489,103 @@ fun PreferencesStepOne(
                 }
 
                 ODSText(
-                    text = "You will be shown as $calculatedAge years old",
+                    text = if (calculatedAge >= 18) "You will be shown as $calculatedAge years old" else "Age: $calculatedAge (Must be 18+)",
                     style = ODSTextStyles.bodySBold,
-                    color = scheme.basicTextDominant
+                    color = if (calculatedAge >= 18) scheme.basicTextDominant else scheme.functionalDestructiveStandard
                 )
             }
         }
 
-        // Divider with 12.dp top and bottom margin
+        // Divider
         ODSDivider(
             scheme = scheme,
             props = ODSDividerProps(variant = ODSDividerVariant.HORIZONTAL),
             modifier = Modifier.padding(vertical = 12.dp)
         )
 
-        // ── 4. Height Card & Slider ──────────────────────────────────────────
-        ODSRow(
+        // ── 4. Height Card & Slider (cm + feet/inches) ──────────────────────
+        ODSColumn(
             modifier = Modifier.fillMaxWidth(),
-            gap = ODSVariables.spacingComponent4,
-            padding = ODSPadding(all = 14.dp),
-            cornerRadius = ODSCorners(all = 20.dp),
-            border = ODSBorder(
-                width = ODSVariables.strokes2,
-                colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+            gap = 4.dp
         ) {
-            ODSColumn(
-                cornerRadius = ODSCorners(all = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
-                width = 32.dp,
-                height = 32.dp
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.filter,
-                        contentDescription = "Height"
-                    ),
-                    tint = scheme.basicAccent.getColor(),
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            ODSColumn(
-                modifier = Modifier.weight(1f),
-                gap = ODSVariables.spacingComponent2,
-                verticalAlignment = Alignment.Top,
-                horizontalAlignment = Alignment.Start
-            ) {
-                ODSRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    ODSText(
-                        text = "HEIGHT",
-                        style = ODSTextStyles.microcopyBold,
-                        color = scheme.basicTextRecessive
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                gap = ODSVariables.spacingComponent4,
+                padding = ODSPadding(all = 14.dp),
+                cornerRadius = ODSCorners(all = 20.dp),
+                border = ODSBorder(
+                    width = ODSVariables.strokes2,
+                    colorList = listOf(
+                        ODSColorModel(
+                            hexColor = if (heightError != null) scheme.functionalDestructiveStandard else scheme.basicStroke
+                        )
                     )
-                    ODSText(
-                        text = "$heightCm cm",
-                        style = ODSTextStyles.bodySBold,
-                        color = scheme.basicAccent
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+            ) {
+                ODSColumn(
+                    cornerRadius = ODSCorners(all = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
+                    width = 32.dp,
+                    height = 32.dp
+                ) {
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            drawableRes = R.drawable.filter,
+                            contentDescription = "Height"
+                        ),
+                        tint = scheme.basicAccent.getColor(),
+                        modifier = Modifier.size(16.dp)
                     )
                 }
 
-                Slider(
-                    value = heightCm.toFloatOrNull() ?: 168f,
-                    onValueChange = { onHeightChange(it.toInt().toString()) },
-                    valueRange = 140f..210f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = scheme.basicAccent.getColor(),
-                        activeTrackColor = scheme.basicAccent.getColor(),
-                        inactiveTrackColor = scheme.basicAccentSecondary.getColor()
-                    ),
-                    modifier = Modifier.fillMaxWidth().height(24.dp)
+                ODSColumn(
+                    modifier = Modifier.weight(1f),
+                    gap = ODSVariables.spacingComponent2,
+                    verticalAlignment = Alignment.Top,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    ODSRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        ODSText(
+                            text = "HEIGHT",
+                            style = ODSTextStyles.microcopyBold,
+                            color = scheme.basicTextRecessive
+                        )
+                        ODSText(
+                            text = "$heightCm cm • $heightFeetFormatted",
+                            style = ODSTextStyles.bodySBold,
+                            color = scheme.basicAccent
+                        )
+                    }
+
+                    Slider(
+                        value = heightCm.toFloatOrNull() ?: 168f,
+                        onValueChange = { onHeightChange(it.toInt().toString()) },
+                        valueRange = 140f..210f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = scheme.basicAccent.getColor(),
+                            activeTrackColor = scheme.basicAccent.getColor(),
+                            inactiveTrackColor = scheme.basicAccentSecondary.getColor()
+                        ),
+                        modifier = Modifier.fillMaxWidth().height(24.dp)
+                    )
+                }
+            }
+
+            if (heightError != null) {
+                ODSText(
+                    text = heightError,
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.functionalDestructiveStandard,
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
         }

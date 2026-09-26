@@ -56,5 +56,5 @@ dependencies {
     implementation(libs.androidx.material3)
     
     // ODS System (from odsystem module) - API so it's exposed to consumers
-    api(project(":odsystem"))
+    api(project(":appdesign"))
 }

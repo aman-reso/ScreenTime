@@ -39,9 +39,9 @@ object ODSTextStyles {
     val linkSRegular =
         ODSTextStyle(fontFamily = R.font.funnelsans_regular, fontSize = 14, lineHeight = 18)
     val microcopyBold =
-        ODSTextStyle(fontFamily = R.font.funnelsans_semibold, fontSize = 12, lineHeight = 16)
+        ODSTextStyle(fontFamily = R.font.funnelsans_semibold, fontSize = 14, lineHeight = 16)
     val microcopyRegular =
-        ODSTextStyle(fontFamily = R.font.funnelsans_regular, fontSize = 12, lineHeight = 16)
+        ODSTextStyle(fontFamily = R.font.funnelsans_regular, fontSize = 14, lineHeight = 16)
     val microcopyMedium =
         ODSTextStyle(fontFamily = R.font.funnelsans_medium, fontSize = 12, lineHeight = 16)
     val paragraph =

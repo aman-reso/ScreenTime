@@ -38,9 +38,7 @@ class ODSTabItemStyle {
     var lineContainerHorizontalArrangement: Arrangement.Horizontal? = null // Not used in mobile
     var lineContainerBackgroundColor: List<ODSColorModel>? = null // Not used in mobile
     fun getStyle(
-        scheme: ODSTheme,
-        props: ODSTabItemProps,
-        state: ODSActions
+        scheme: ODSTheme, props: ODSTabItemProps, state: ODSActions
     ): ODSTabItemStyle {
         val style = ODSTabItemStyle()
         style.minWidth = DSTabItemTokens.minWidth
@@ -85,7 +83,7 @@ class ODSTabItemStyle {
         }
         style.labelTextAlign = DSTabItemTokens.labelTextAlign
         if (props.selected) {
-            style.labelColor = scheme.basicText
+            style.labelColor = scheme.basicAccent
         }
         if (!props.selected) {
             style.labelColor = scheme.basicTextRecessive

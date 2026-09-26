@@ -11,24 +11,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.app.screentime.feature.discover.components.DiscoverMapShimmer
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Dash
 import com.google.android.gms.maps.model.Gap
-import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -61,38 +60,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 import kotlinx.coroutines.launch
 
 /**
- * Genuine Dark Map Style JSON matching Zona theme.
- */
-private const val DARK_MAP_STYLE = """
-[
-  {"elementType": "geometry", "stylers": [{"color": "#181326"}]},
-  {"elementType": "labels.text.fill", "stylers": [{"color": "#8F82A4"}]},
-  {"elementType": "labels.text.stroke", "stylers": [{"color": "#181326"}]},
-  {"featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{"color": "#E1D4EC"}]},
-  {"featureType": "poi", "elementType": "labels.text.fill", "stylers": [{"color": "#76658E"}]},
-  {"featureType": "poi.park", "elementType": "geometry", "stylers": [{"color": "#201833"}]},
-  {"featureType": "road", "elementType": "geometry", "stylers": [{"color": "#2A1E40"}]},
-  {"featureType": "road", "elementType": "geometry.stroke", "stylers": [{"color": "#1D152C"}]},
-  {"featureType": "road.highway", "elementType": "geometry", "stylers": [{"color": "#3B2658"}]},
-  {"featureType": "transit", "elementType": "geometry", "stylers": [{"color": "#26193D"}]},
-  {"featureType": "water", "elementType": "geometry", "stylers": [{"color": "#0F0B18"}]}
-]
-"""
-
-data class MapProfile(
-    val id: String,
-    val name: String,
-    val age: Int,
-    val avatarUrl: String,
-    val activityText: String,
-    val distanceText: String,
-    val isRecentlyActive: Boolean,
-    val hasCoralBadge: Boolean,
-    val latLng: LatLng
-)
-
-/**
- * Discover Map Screen powered by genuine Google Maps.
+ * Discover Map Screen powered by Google Maps and backed by DiscoverMapViewModel.
  *
  * Rules:
  * 1. 100% ODS components for overlays and controls.
@@ -100,19 +68,26 @@ data class MapProfile(
  * 3. Compact button sizing.
  * 4. Maximum text size 16sp with Funnel Sans font.
  * 5. All padding, margins, gaps, and corner radii use `ODSVariables`.
+ * 6. Pure presentation: all mapping, data resolution, and state reside in DiscoverMapViewModel.
  */
 @Composable
 fun DiscoverMapScreen(
     onNavigateToChat: (modelId: String, modelName: String) -> Unit,
-    onNavigateToList: () -> Unit = {},
     onNavigateToProfile: (userId: String, userName: String) -> Unit = { _, _ -> },
-    onOpenTerms: () -> Unit = {},
     modifier: Modifier = Modifier,
     scheme: ODSTheme = zonaODSTheme,
     initialEmptyRadius: Boolean = false,
-    isLoading: Boolean = false
+    viewModel: DiscoverMapViewModel = hiltViewModel()
 ) {
-    if (isLoading) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(initialEmptyRadius) {
+        if (initialEmptyRadius) {
+            viewModel.setEmptyRadius(true)
+        }
+    }
+
+    if (uiState.isLoading && uiState.candidates.isEmpty()) {
         DiscoverMapShimmer(
             modifier = modifier,
             scheme = scheme
@@ -120,79 +95,23 @@ fun DiscoverMapScreen(
         return
     }
 
-    var isEmptyRadius by remember { mutableStateOf(initialEmptyRadius) }
     val coroutineScope = rememberCoroutineScope()
-
-    // ── Radius restriction ───────────────────────────────────────────────
-    // Zoom 10f ≈ 20 km radius on a standard phone screen.
-    // The SDK minZoomPreference blocks pinch-zoom; LaunchedEffect guards
-    // against edge-cases (e.g. rapid two-finger swipe past the limit).
     val minZoom = 10f
 
-    // Center user location in Manhattan, NYC
-    val userLocation = remember { LatLng(40.7306, -73.9910) }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(uiState.userLocation, 13f)
+    }
 
-    val profiles = remember {
-        listOf(
-            MapProfile(
-                id = "chloe_22",
-                name = "Chloe",
-                age = 22,
-                avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
-                activityText = "Active 5m ago",
-                distanceText = "1.2 km away",
-                isRecentlyActive = true,
-                hasCoralBadge = true,
-                latLng = LatLng(40.7240, -73.9980)
-            ),
-            MapProfile(
-                id = "marcus_25",
-                name = "Marcus",
-                age = 25,
-                avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop",
-                activityText = "Active 15m ago",
-                distanceText = "2.8 km away",
-                isRecentlyActive = false,
-                hasCoralBadge = false,
-                latLng = LatLng(40.7484, -73.9857)
-            ),
-            MapProfile(
-                id = "sophia_23",
-                name = "Sophia",
-                age = 23,
-                avatarUrl = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=600&auto=format&fit=crop",
-                activityText = "Active 1h ago",
-                distanceText = "3.4 km away",
-                isRecentlyActive = false,
-                hasCoralBadge = false,
-                latLng = LatLng(40.7128, -74.0060)
-            ),
-            MapProfile(
-                id = "elena_24",
-                name = "Elena",
-                age = 24,
-                avatarUrl = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=600&auto=format&fit=crop",
-                activityText = "Active now",
-                distanceText = "4.1 km away",
-                isRecentlyActive = true,
-                hasCoralBadge = true,
-                latLng = LatLng(40.7580, -73.9855)
-            )
+    LaunchedEffect(uiState.userLocation) {
+        cameraPositionState.animate(
+            CameraUpdateFactory.newLatLngZoom(uiState.userLocation, 13f),
+            durationMs = 500
         )
     }
 
-    var selectedProfile by remember { mutableStateOf(profiles[0]) }
-    var showMatchRulesDialog by remember { mutableStateOf(false) }
-
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(userLocation, 13f)
-    }
-
-    // Live zoom level — drives Zoom Out button enabled/disabled state
     val currentZoom by remember { derivedStateOf { cameraPositionState.position.zoom } }
     val canZoomOut by remember { derivedStateOf { currentZoom > minZoom + 0.1f } }
 
-    // Safety guard: if pinch-gesture sneaks past minZoomPreference, snap back
     LaunchedEffect(cameraPositionState) {
         snapshotFlow { cameraPositionState.position.zoom }
             .collect { zoom ->
@@ -208,9 +127,7 @@ fun DiscoverMapScreen(
     val mapProperties = remember {
         MapProperties(
             mapType = MapType.NORMAL,
-            minZoomPreference = minZoom  // SDK-level 20 km radius cap
-            // Note: Custom dark style removed — MapStyleOptions can silently blank all tiles
-            // if the JSON fails to parse at runtime. The map now uses default tiles reliably.
+            minZoomPreference = minZoom
         )
     }
 
@@ -223,6 +140,8 @@ fun DiscoverMapScreen(
         )
     }
 
+    val selectedCandidate = uiState.selectedCandidate
+    val selectedProfile = selectedCandidate?.profile
 
     ODSBox(
         modifier = modifier.fillMaxSize(),
@@ -237,33 +156,43 @@ fun DiscoverMapScreen(
         ) {
             // User's own location marker
             MarkerComposable(
-                state = rememberUpdatedMarkerState(position = userLocation),
+                state = rememberUpdatedMarkerState(position = uiState.userLocation),
                 onClick = { true }
             ) {
                 ODSBox(
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(36.dp),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
                     cornerRadius = ODSCorners(all = ODSVariables.radiusFull),
                     border = ODSBorder(
                         width = ODSVariables.strokes2,
-                        colorList = listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                        colorList = listOf(ODSColorModel(hexColor = scheme.basicBackground))
                     ),
-                    clipContent = true
+                    contentAlignment = Alignment.Center,
+                    effect = ODSEffect(
+                        elevations = listOf(
+                            ODSElevation(
+                                x = 0, y = 2, blur = 8, spread = 2,
+                                color = HexColor(0x66D81B60),
+                                type = ODSElevationType.DROP_SHADOW
+                            )
+                        )
+                    )
                 ) {
-                    ODSImage(
-                        imageModel = ODSImageModel(
-                            url = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop",
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            drawableRes = R.drawable.ic_map_pin,
                             contentDescription = "My Location"
                         ),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        tint = scheme.basicTextOnAccent.getColor(),
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
             // Real 5 km Search Radius Circle (when in Empty Radius view)
-            if (isEmptyRadius) {
+            if (uiState.isEmptyRadius) {
                 Circle(
-                    center = userLocation,
+                    center = uiState.userLocation,
                     radius = 5000.0,
                     fillColor = scheme.basicAccent.getColor().copy(alpha = 0.08f),
                     strokeColor = scheme.basicAccent.getColor(),
@@ -271,16 +200,16 @@ fun DiscoverMapScreen(
                     strokePattern = listOf(Dash(20f), Gap(15f))
                 )
             } else {
-                // Genuine Map Profile Markers
-                profiles.forEach { profile ->
-                    val isSelected = profile.id == selectedProfile.id
+                // Genuine Map Profile Markers directly from ViewModel & Mapper
+                uiState.candidates.forEach { candidate ->
+                    val isSelected = candidate.profile.id == selectedProfile?.id
                     MarkerComposable(
-                        state = rememberUpdatedMarkerState(position = profile.latLng),
+                        state = rememberUpdatedMarkerState(position = candidate.latLng),
                         onClick = {
-                            selectedProfile = profile
+                            viewModel.selectCandidate(candidate)
                             coroutineScope.launch {
                                 cameraPositionState.animate(
-                                    CameraUpdateFactory.newLatLng(profile.latLng),
+                                    CameraUpdateFactory.newLatLng(candidate.latLng),
                                     durationMs = 500
                                 )
                             }
@@ -305,15 +234,15 @@ fun DiscoverMapScreen(
                             ) {
                                 ODSImage(
                                     imageModel = ODSImageModel(
-                                        url = profile.avatarUrl,
-                                        contentDescription = profile.name
+                                        url = candidate.profile.avatarUrl,
+                                        contentDescription = candidate.profile.name
                                     ),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
 
-                            if (profile.hasCoralBadge) {
+                            if (candidate.profile.tags.isNotEmpty()) {
                                 ODSBox(
                                     modifier = Modifier
                                         .offset(y = (-4).dp)
@@ -329,7 +258,7 @@ fun DiscoverMapScreen(
             }
         }
 
-        // ── 2. Top Floating Controls: Profile Card / Search + Filters ────
+        // ── 2. Top Floating Controls: Profile Card / Search Bar ──────────
         ODSColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -340,8 +269,8 @@ fun DiscoverMapScreen(
                 ),
             gap = ODSVariables.spacingComponent4
         ) {
-            if (isEmptyRadius) {
-                // Top Search Bar (in empty radius mode)
+            if (uiState.isEmptyRadius || selectedProfile == null) {
+                // Top Search Bar (in empty radius mode or when no candidate selected)
                 ODSBox(
                     modifier = Modifier.fillMaxWidth(),
                     background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
@@ -373,7 +302,7 @@ fun DiscoverMapScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             ODSText(
-                                text = "Manhattan, NY",
+                                text = uiState.cityName,
                                 style = ODSTextStyles.bodyMBold,
                                 color = scheme.basicText
                             )
@@ -390,14 +319,19 @@ fun DiscoverMapScreen(
                     }
                 }
             } else {
-                // Floating Profile Card for Currently Selected Profile (Matching Figma node-id 10-1101)
+                // Floating Profile Card for Currently Selected Profile
                 ODSRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = { onNavigateToProfile(selectedProfile.id, selectedProfile.name) }
+                            onClick = {
+                                onNavigateToChat(
+                                    selectedProfile.id,
+                                    selectedProfile.name
+                                )
+                            }
                         ),
                     gap = ODSVariables.spacingLayout1,
                     padding = ODSPadding(all = ODSVariables.spacingComponent4),
@@ -441,7 +375,7 @@ fun DiscoverMapScreen(
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.Top
                     ) {
-                        if (selectedProfile.isRecentlyActive) {
+                        if (selectedProfile.isOnline) {
                             ODSRow(
                                 padding = ODSPadding(
                                     top = ODSVariables.spacingComponent2,
@@ -463,20 +397,33 @@ fun DiscoverMapScreen(
                             }
                         }
 
+                        val titleText = if (selectedProfile.age > 0) {
+                            "${selectedProfile.name}, ${selectedProfile.age}"
+                        } else {
+                            selectedProfile.name
+                        }
+
                         ODSText(
-                            text = "${selectedProfile.name}, ${selectedProfile.age}",
+                            text = titleText,
                             style = ODSTextStyles.bodyMBold,
                             color = scheme.basicTextDominant
                         )
 
+                        val subtitleText = listOfNotNull(
+                            selectedProfile.matchedPreferences.takeIf { it.isNotBlank() },
+                            selectedProfile.distance.takeIf { it.isNotBlank() }
+                        ).joinToString(" • ").ifBlank {
+                            selectedProfile.location.ifBlank { "Nearby" }
+                        }
+
                         ODSText(
-                            text = "${selectedProfile.activityText} • ${selectedProfile.distanceText}",
+                            text = subtitleText,
                             style = ODSTextStyles.microcopyRegular,
                             color = scheme.basicTextRecessive
                         )
                     }
 
-                    // Message / Match Action Button
+                    // Message / Direct Match Action Button
                     ODSRow(
                         cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -500,7 +447,12 @@ fun DiscoverMapScreen(
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
-                                onClick = { showMatchRulesDialog = true }
+                                onClick = {
+                                    onNavigateToChat(
+                                        selectedProfile.id,
+                                        selectedProfile.name
+                                    )
+                                }
                             )
                     ) {
                         ODSIcon(
@@ -511,121 +463,6 @@ fun DiscoverMapScreen(
                     }
                 }
             }
-
-            // Filter Chips Row: [ Map | List ] -- [< 5 km] -- [Online]
-            ODSRow(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                gap = ODSVariables.spacingComponent3
-            ) {
-                // Map / List Toggle
-                ODSBox(
-                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-                    cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-                    border = ODSBorder(
-                        width = ODSVariables.strokes1,
-                        colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-                    ),
-                    padding = ODSPadding(all = ODSVariables.spacingComponent1)
-                ) {
-                    ODSRow(verticalAlignment = Alignment.CenterVertically) {
-                        // Map Active
-                        ODSBox(
-                            background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-                            cornerRadius = ODSCorners(all = ODSVariables.radiusSmall),
-                            padding = ODSPadding(
-                                horizontal = ODSVariables.spacingLayout1,
-                                vertical = ODSVariables.spacingComponent2
-                            ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            ODSText(
-                                text = "Map",
-                                style = ODSTextStyles.bodySBold,
-                                color = scheme.basicBackground
-                            )
-                        }
-
-                        // List Inactive
-                        ODSBox(
-                            modifier = Modifier.clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onNavigateToList
-                            ),
-                            padding = ODSPadding(
-                                horizontal = ODSVariables.spacingLayout1,
-                                vertical = ODSVariables.spacingComponent2
-                            ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            ODSText(
-                                text = "List",
-                                style = ODSTextStyles.bodySBold,
-                                color = scheme.basicTextRecessive
-                            )
-                        }
-                    }
-                }
-
-                // "< 5 km" Filter Chip (toggles empty radius demonstration)
-                ODSBox(
-                    modifier = Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {
-                            isEmptyRadius = !isEmptyRadius
-                            coroutineScope.launch {
-                                cameraPositionState.animate(
-                                    CameraUpdateFactory.newLatLngZoom(
-                                        userLocation,
-                                        if (isEmptyRadius) 12f else 13f
-                                    ),
-                                    durationMs = 500
-                                )
-                            }
-                        }
-                    ),
-                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-                    cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-                    border = ODSBorder(
-                        width = ODSVariables.strokes1,
-                        colorList = listOf(ODSColorModel(hexColor = if (isEmptyRadius) scheme.basicAccent else scheme.basicStroke))
-                    ),
-                    padding = ODSPadding(
-                        horizontal = ODSVariables.spacingComponent4,
-                        vertical = ODSVariables.spacingComponent3
-                    ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSText(
-                        text = "< 5 km",
-                        style = ODSTextStyles.bodySBold,
-                        color = if (isEmptyRadius) scheme.basicAccent else scheme.basicText
-                    )
-                }
-
-                // "Online" Filter Chip
-                ODSBox(
-                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-                    cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-                    border = ODSBorder(
-                        width = ODSVariables.strokes1,
-                        colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-                    ),
-                    padding = ODSPadding(
-                        horizontal = ODSVariables.spacingComponent4,
-                        vertical = ODSVariables.spacingComponent3
-                    ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSText(
-                        text = "Online",
-                        style = ODSTextStyles.bodySBold,
-                        color = scheme.basicText
-                    )
-                }
-            }
         }
 
         // ── 3. Floating Map Controls (Re-center, Zoom In & Zoom Out) ─────
@@ -634,7 +471,7 @@ fun DiscoverMapScreen(
                 .align(Alignment.BottomEnd)
                 .padding(
                     end = ODSVariables.spacingLayout1,
-                    bottom = ODSVariables.spacingComponent9  // 40dp — keeps clear of bottom card
+                    bottom = ODSVariables.spacingComponent9
                 ),
             gap = ODSVariables.spacingComponent3,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -647,7 +484,7 @@ fun DiscoverMapScreen(
                     .clickable {
                         coroutineScope.launch {
                             cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(userLocation, 13f),
+                                CameraUpdateFactory.newLatLngZoom(uiState.userLocation, 13f),
                                 durationMs = 500
                             )
                         }
@@ -682,7 +519,10 @@ fun DiscoverMapScreen(
                     .size(44.dp)
                     .clickable {
                         coroutineScope.launch {
-                            cameraPositionState.animate(CameraUpdateFactory.zoomIn(), durationMs = 300)
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.zoomIn(),
+                                durationMs = 300
+                            )
                         }
                     },
                 background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
@@ -710,7 +550,6 @@ fun DiscoverMapScreen(
             }
 
             // Zoom Out (−)
-            // Zoom Out (−) — disabled at 20 km radius limit
             ODSBox(
                 modifier = Modifier
                     .size(44.dp)
@@ -720,7 +559,10 @@ fun DiscoverMapScreen(
                         enabled = canZoomOut,
                         onClick = {
                             coroutineScope.launch {
-                                cameraPositionState.animate(CameraUpdateFactory.zoomOut(), durationMs = 300)
+                                cameraPositionState.animate(
+                                    CameraUpdateFactory.zoomOut(),
+                                    durationMs = 300
+                                )
                             }
                         }
                     ),
@@ -759,8 +601,8 @@ fun DiscoverMapScreen(
             }
         }
 
-        // ── 4. Bottom Empty State Card (Figma node 29-161) ───────────────
-        if (isEmptyRadius) {
+        // ── 4. Bottom Empty State Card ───────────────────────────────────
+        if (uiState.isEmptyRadius || uiState.candidates.isEmpty()) {
             ODSColumn(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -769,9 +611,9 @@ fun DiscoverMapScreen(
                         horizontal = ODSVariables.spacingLayout1,
                         vertical = ODSVariables.spacingLayout2
                     ),
-                gap = ODSVariables.spacingComponent6,          // 20dp
-                padding = ODSPadding(all = ODSVariables.spacingLayout1), // 16dp
-                cornerRadius = ODSCorners(all = ODSVariables.radiusLarge), // 24dp
+                gap = ODSVariables.spacingComponent6,
+                padding = ODSPadding(all = ODSVariables.spacingLayout1),
+                cornerRadius = ODSCorners(all = ODSVariables.radiusLarge),
                 border = ODSBorder(
                     width = ODSVariables.strokes2,
                     colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
@@ -790,29 +632,27 @@ fun DiscoverMapScreen(
                     )
                 )
             ) {
-                // ── Info Section ─────────────────────────────────────────
+                // Info Section
                 ODSColumn(
                     modifier = Modifier.fillMaxWidth(),
-                    gap = ODSVariables.spacingComponent3,      // 8dp
+                    gap = ODSVariables.spacingComponent3,
                     verticalAlignment = Alignment.Top,
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Top
                 ) {
-                    // Header row: badge + radius label
                     ODSRow(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // "EMPTY SEARCH RADIUS" badge
                         ODSRow(
                             padding = ODSPadding(
-                                top = ODSVariables.spacingComponent2,     // 4dp
-                                bottom = ODSVariables.spacingComponent2,  // 4dp
-                                left = ODSVariables.spacingComponent3,    // 8dp
-                                right = ODSVariables.spacingComponent3    // 8dp
+                                top = ODSVariables.spacingComponent2,
+                                bottom = ODSVariables.spacingComponent2,
+                                left = ODSVariables.spacingComponent3,
+                                right = ODSVariables.spacingComponent3
                             ),
-                            cornerRadius = ODSCorners(all = ODSVariables.radiusSmall), // 8dp
+                            cornerRadius = ODSCorners(all = ODSVariables.radiusSmall),
                             horizontalAlignment = Alignment.Start,
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start,
@@ -825,7 +665,6 @@ fun DiscoverMapScreen(
                             )
                         }
 
-                        // "Radius: 5 km" label
                         ODSText(
                             text = "Radius: 5 km",
                             style = ODSTextStyles.bodySBold,
@@ -833,7 +672,6 @@ fun DiscoverMapScreen(
                         )
                     }
 
-                    // Title
                     ODSText(
                         modifier = Modifier.fillMaxWidth(),
                         text = "No nearby people found",
@@ -841,7 +679,6 @@ fun DiscoverMapScreen(
                         color = scheme.basicText
                     )
 
-                    // Description
                     ODSText(
                         modifier = Modifier.fillMaxWidth(),
                         text = "It's pretty quiet within 5 km right now. Try expanding your search distance to discover people in neighboring districts.",
@@ -850,15 +687,13 @@ fun DiscoverMapScreen(
                     )
                 }
 
-                // ── Action Buttons Row ───────────────────────────────────
                 ODSRow(
                     modifier = Modifier.fillMaxWidth(),
-                    gap = ODSVariables.spacingComponent4,      // 12dp
+                    gap = ODSVariables.spacingComponent4,
                     horizontalAlignment = Alignment.Start,
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start
                 ) {
-                    // Primary: Expand Distance
                     ODSRow(
                         modifier = Modifier
                             .weight(1f)
@@ -866,16 +701,17 @@ fun DiscoverMapScreen(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
                                 onClick = {
-                                    isEmptyRadius = false
+                                    viewModel.setEmptyRadius(false)
+                                    viewModel.loadCandidates()
                                     coroutineScope.launch {
                                         cameraPositionState.animate(
-                                            CameraUpdateFactory.newLatLngZoom(userLocation, 13f),
+                                            CameraUpdateFactory.newLatLngZoom(uiState.userLocation, 13f),
                                             durationMs = 500
                                         )
                                     }
                                 }
                             ),
-                        gap = ODSVariables.spacingComponent3,  // 8dp
+                        gap = ODSVariables.spacingComponent3,
                         padding = ODSPadding(
                             top = ODSVariables.spacingComponent5,
                             bottom = ODSVariables.spacingComponent5,
@@ -903,7 +739,7 @@ fun DiscoverMapScreen(
                                 contentDescription = "Expand Distance"
                             ),
                             tint = scheme.basicTextOnAccent.getColor(),
-                            modifier = Modifier.size(ODSVariables.spacingComponent5) // 16dp
+                            modifier = Modifier.size(ODSVariables.spacingComponent5)
                         )
                         ODSText(
                             text = "Expand Distance",
@@ -917,7 +753,7 @@ fun DiscoverMapScreen(
                         modifier = Modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = { /* TODO: Open location picker */ }
+                            onClick = { /* Open location picker */ }
                         ),
                         padding = ODSPadding(
                             top = ODSVariables.spacingComponent5,
@@ -942,23 +778,6 @@ fun DiscoverMapScreen(
                     }
                 }
             }
-        }
-
-        // ── 5. "Before You Match..." Dialog ──────────────────────────────
-        if (showMatchRulesDialog) {
-            BeforeYouMatchDialog(
-                onAccept = {
-                    showMatchRulesDialog = false
-                    onNavigateToChat(selectedProfile.id, selectedProfile.name)
-                },
-                onDecline = {
-                    showMatchRulesDialog = false
-                },
-                onReadTerms = {
-                    showMatchRulesDialog = false
-                    onOpenTerms()
-                }
-            )
         }
     }
 }

@@ -97,8 +97,8 @@ fun QuickSettingsRow(
 
             ODSText(
                 text = title,
-                style = ODSTextStyles.bodySBold,
-                color = scheme.basicTextDominant
+                style = ODSTextStyles.microcopyBold,
+                color = scheme.basicText
             )
         }
 
@@ -143,6 +143,7 @@ fun QuickSettingsCard(
     onThemeClick: () -> Unit,
     onLanguageClick: () -> Unit,
     onVisibilityClick: () -> Unit,
+    onControlAccountClick: () -> Unit,
     scheme: ODSTheme,
     modifier: Modifier = Modifier
 ) {
@@ -167,8 +168,8 @@ fun QuickSettingsCard(
         ) {
             ODSText(
                 text = themeName,
-                style = ODSTextStyles.bodySBold,
-                color = scheme.basicTextDominant
+                style = ODSTextStyles.microcopyRegular,
+                color = scheme.basicTextRecessive
             )
         }
 
@@ -183,14 +184,13 @@ fun QuickSettingsCard(
         ) {
             ODSText(
                 text = languageName,
-                style = ODSTextStyles.bodySBold,
-                color = scheme.basicTextDominant
+                style = ODSTextStyles.microcopyRegular,
+                color = scheme.basicTextRecessive
             )
         }
 
         QuickSettingsDivider(scheme = scheme)
 
-        // ── 3. Profile Visibility Row ──────────────────────────────────────
         QuickSettingsRow(
             iconRes = R.drawable.ic_eye,
             title = "Profile visibility",
@@ -211,10 +211,26 @@ fun QuickSettingsCard(
             ) {
                 ODSText(
                     text = visibilityStatus,
-                    style = ODSTextStyles.microcopyBold,
-                    color = scheme.basicTextDominant
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.basicTextRecessive
                 )
             }
+        }
+
+        QuickSettingsDivider(scheme = scheme)
+
+        // ── 4. Control Account Row ─────────────────────────────────────────
+        QuickSettingsRow(
+            iconRes = R.drawable.ic_settings,
+            title = "Control Account",
+            onClick = onControlAccountClick,
+            scheme = scheme
+        ) {
+            ODSText(
+                text = "Manage",
+                style = ODSTextStyles.microcopyRegular,
+                color = scheme.basicAccent
+            )
         }
     }
 }
@@ -230,6 +246,7 @@ fun AccountQuickSettings(
     onThemeClick: () -> Unit,
     onLanguageClick: () -> Unit,
     onVisibilityClick: () -> Unit,
+    onControlAccountClick: () -> Unit = {},
     scheme: ODSTheme,
     modifier: Modifier = Modifier
 ) {
@@ -247,6 +264,7 @@ fun AccountQuickSettings(
             onThemeClick = onThemeClick,
             onLanguageClick = onLanguageClick,
             onVisibilityClick = onVisibilityClick,
+            onControlAccountClick = onControlAccountClick,
             scheme = scheme
         )
     }

@@ -45,7 +45,6 @@ fun DiscoverLoadingScreen(
             .fillMaxSize(),
         clipContent = true,
         horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.SpaceBetween,
         background = listOf(
             ODSColorModel(
                 gradient = ODSLinearGradientModel(
@@ -60,8 +59,6 @@ fun DiscoverLoadingScreen(
             )
         )
     ) {
-
-        // ── 2. Stories Shimmer Row (5 Avatars) ─────────────────────────────
         ODSRow(
             modifier = Modifier.fillMaxWidth(),
             gap = ODSVariables.spacingComponent4, // 12.dp
@@ -69,7 +66,7 @@ fun DiscoverLoadingScreen(
             clipContent = true,
             horizontalAlignment = Alignment.Start,
             verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.Start
+            horizontalArrangement = Arrangement.Start,
         ) {
             repeat(5) { i ->
                 val ringColor = if (i < 2) scheme.basicAccent else scheme.basicStroke
@@ -116,7 +113,6 @@ fun DiscoverLoadingScreen(
             }
         }
 
-        // ── 3. Feed Card Shimmer Skeleton (Figma node-id 24-56) ────────────
         ODSColumn(
             modifier = Modifier.fillMaxWidth(),
             gap = ODSVariables.spacingComponent4,
@@ -141,14 +137,12 @@ fun DiscoverLoadingScreen(
                 verticalArrangement = Arrangement.Top,
                 background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
             ) {
-                // Photo Area Skeleton (190.dp height)
                 ODSBox(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(190.dp)
                         .zonaShimmer()
                 ) {
-                    // Match Badge on Top-Start
                     ODSRow(
                         modifier = Modifier
                             .align(Alignment.TopStart)

@@ -20,6 +20,8 @@ data class DatingDiscoveryUiState(
     val canLoadMore: Boolean = true,
     val currentPage: Int = 1,
     val models: List<ModelProfile> = emptyList(),
+    val matches: List<com.app.screentime.core.model.DiscoveryMatch> = emptyList(),
+    val isMatchesLoading: Boolean = false,
     val currentIndex: Int = 0,
     val likedModelIds: Set<String> = emptySet(),
     val isMatched: Boolean = false,
@@ -46,7 +48,8 @@ class DatingDiscoveryViewModel @Inject constructor(
     private val getDiscoveryDeckUseCase: GetDiscoveryDeckUseCase,
     private val likeProfileUseCase: LikeProfileUseCase,
     private val superLikeProfileUseCase: SuperLikeProfileUseCase,
-    private val dislikeProfileUseCase: DislikeProfileUseCase
+    private val dislikeProfileUseCase: DislikeProfileUseCase,
+    private val getMatchesUseCase: com.app.screentime.feature.discover.domain.usecase.GetMatchesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DatingDiscoveryUiState(isLoading = true))
@@ -54,6 +57,7 @@ class DatingDiscoveryViewModel @Inject constructor(
 
     init {
         loadDiscoveryDeck()
+        loadMatches()
     }
 
     /**
@@ -157,6 +161,7 @@ class DatingDiscoveryViewModel @Inject constructor(
                     isMatched = true,
                     matchedModel = current
                 )
+                loadMatches()
             }
         }
 
@@ -174,6 +179,7 @@ class DatingDiscoveryViewModel @Inject constructor(
 
         viewModelScope.launch {
             superLikeProfileUseCase(current.id)
+            loadMatches()
         }
 
         _uiState.value = _uiState.value.copy(
@@ -191,19 +197,41 @@ class DatingDiscoveryViewModel @Inject constructor(
 
     fun onLikeById(id: String) {
         val target = _uiState.value.models.find { it.id == id } ?: return
+        if (id in _uiState.value.likedModelIds) {
+            _uiState.value = _uiState.value.copy(
+                likedModelIds = _uiState.value.likedModelIds - id
+            )
+            return
+        }
         viewModelScope.launch {
             val result = likeProfileUseCase(id)
-            val isMatch = result.getOrDefault(true)
+            val isMatch = result.getOrDefault(false)
             if (isMatch) {
                 _uiState.value = _uiState.value.copy(
                     isMatched = true,
                     matchedModel = target
                 )
+                loadMatches()
             }
         }
         _uiState.value = _uiState.value.copy(
             likedModelIds = _uiState.value.likedModelIds + id
         )
+    }
+
+    fun loadMatches(page: Int = 1) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isMatchesLoading = true)
+            val result = getMatchesUseCase(page = page, limit = 10)
+            result.onSuccess { list ->
+                _uiState.value = _uiState.value.copy(
+                    matches = list,
+                    isMatchesLoading = false
+                )
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(isMatchesLoading = false)
+            }
+        }
     }
 
     fun onDislikeById(id: String) {

@@ -3,16 +3,15 @@
     <!-- 🌙 App main theme - Light Mode -->
     <style name="Theme.ScreenTime" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:supportsPictureInPicture">true</item>
-        <!-- Pure white background for light mode -->
         <item name="android:windowBackground">@color/background_dark</item>
         <item name="android:colorBackground">@color/background_dark</item>
     </style>
 
-    <!-- 🚀 Splash Screen Theme -->
+    <!-- 🚀 Splash Screen Theme (Matching AuthGateScreen style and illustration) -->
     <style name="Theme.ScreenTime.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/background_dark</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/app_icon</item>
-        <item name="windowSplashScreenAnimationDuration">200</item>
+        <item name="windowSplashScreenBackground">@color/splash_auth_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/login_scene</item>
+        <item name="windowSplashScreenAnimationDuration">300</item>
         <item name="postSplashScreenTheme">@style/Theme.ScreenTime</item>
     </style>
 

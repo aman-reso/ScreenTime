@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSRow
+import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.molecules.tabs.ODSTabItemModel
 import com.telekom.odsystem.molecules.tabs.ODSTabs
 import com.telekom.odsystem.molecules.tabs.ODSTabsProps
@@ -26,11 +27,11 @@ fun FeedTabsHeader(
 ) {
     ODSRow(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = ODSVariables.spacingComponent6,
-                vertical = ODSVariables.spacingComponent2
-            ),
+            .fillMaxWidth(),
+        padding = ODSPadding(
+            horizontal = ODSVariables.spacingComponent5,
+            bottom = ODSVariables.spacingComponent5
+        ),
         gap = ODSVariables.spacingComponent6,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -52,7 +53,8 @@ fun FeedTabsHeader(
                     size = ODSTabsSize.SMALL,
                     tabElements = listOf(
                         ODSTabItemModel(label = "For you"),
-                        ODSTabItemModel(label = "Following")
+                        ODSTabItemModel(label = "Following"),
+                        ODSTabItemModel(label = "Matches")
                     )
                 ),
                 onSelectedTabChange = {

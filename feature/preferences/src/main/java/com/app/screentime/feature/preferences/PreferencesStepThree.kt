@@ -22,7 +22,6 @@ import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
-import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 private data class IntentOption(
@@ -32,7 +31,11 @@ private data class IntentOption(
 )
 
 /**
- * Step 3: Relationship Intent Selection.
+ * Step 6: Relationship Intent Selection.
+ * Matches unified Figma design system layout:
+ * - "What's your relationship intent?"
+ * - "Be upfront about what you're looking for right now."
+ * - Options: Long-term partner, Casual & fun, New friends, Open to anything
  */
 @Composable
 fun PreferencesStepThree(
@@ -41,6 +44,11 @@ fun PreferencesStepThree(
     onIntentSelect: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val primaryTextColor = scheme.basicTextDominant
+    val secondaryTextColor = scheme.basicTextRecessive
+    val accentColor = scheme.basicAccent
+    val inactiveBorderColor = scheme.basicStrokeSubtle
+
     val intentOptions = remember {
         listOf(
             IntentOption(
@@ -68,32 +76,43 @@ fun PreferencesStepThree(
 
     ODSColumn(
         modifier = modifier.fillMaxWidth(),
-        gap = ODSVariables.spacingComponent5
+        gap = 28.dp,
+        verticalAlignment = Alignment.Top,
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Top
     ) {
+        // ── 1. Heading & Subtitle ──────────────────────────────────────────
         ODSColumn(
             modifier = Modifier.fillMaxWidth(),
-            gap = ODSVariables.spacingComponent2
+            gap = 8.dp,
+            verticalAlignment = Alignment.Top,
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
         ) {
             ODSText(
                 modifier = Modifier.fillMaxWidth(),
                 text = "What's your relationship intent?",
-                style = ODSTextStyles.bodyMBold,
-                color = scheme.basicTextDominant
+                style = ODSTextStyles.titleL,
+                color = primaryTextColor
             )
             ODSText(
                 modifier = Modifier.fillMaxWidth(),
                 text = "Be upfront about what you're looking for right now.",
-                style = ODSTextStyles.microcopyRegular,
-                color = scheme.basicTextRecessive
+                style = ODSTextStyles.bodyMRegular,
+                color = secondaryTextColor
             )
         }
 
+        // ── 2. Intent Options List ─────────────────────────────────────────
         ODSColumn(
             modifier = Modifier.fillMaxWidth(),
-            gap = ODSVariables.spacingComponent3
+            gap = 12.dp,
+            verticalAlignment = Alignment.Top,
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
         ) {
             intentOptions.forEach { opt ->
-                val isSelected = selectedIntent == opt.title
+                val isSelected = selectedIntent.equals(opt.title, ignoreCase = true)
                 ODSBox(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -102,24 +121,21 @@ fun PreferencesStepThree(
                             indication = null,
                             onClick = { onIntentSelect(opt.title) }
                         ),
+                    cornerRadius = ODSCorners(all = 16.dp),
+                    border = ODSBorder(
+                        width = if (isSelected) 2.dp else 1.dp,
+                        colorList = listOf(
+                            ODSColorModel(
+                                hexColor = if (isSelected) accentColor else inactiveBorderColor
+                            )
+                        )
+                    ),
                     background = listOf(
                         ODSColorModel(
                             hexColor = if (isSelected) scheme.basicAccentSecondary else scheme.basicBackgroundCard
                         )
                     ),
-                    cornerRadius = ODSCorners(all = ODSVariables.radiusLarge),
-                    border = ODSBorder(
-                        width = ODSVariables.strokes2,
-                        colorList = listOf(
-                            ODSColorModel(
-                                hexColor = if (isSelected) scheme.basicAccent else scheme.basicStroke
-                            )
-                        )
-                    ),
-                    padding = ODSPadding(
-                        horizontal = ODSVariables.spacingLayout1,
-                        vertical = ODSVariables.spacingComponent4
-                    )
+                    padding = ODSPadding(all = 16.dp)
                 ) {
                     ODSRow(
                         modifier = Modifier.fillMaxWidth(),
@@ -130,45 +146,42 @@ fun PreferencesStepThree(
                             modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start,
-                            gap = ODSVariables.spacingComponent4
+                            gap = 12.dp
                         ) {
-                            // Emoji Container
                             ODSBox(
-                                modifier = Modifier.size(44.dp),
+                                modifier = Modifier.size(40.dp),
                                 background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
-                                cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
+                                cornerRadius = ODSCorners(all = 12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 ODSText(
                                     text = opt.emoji,
-                                    style = ODSTextStyles.bodyMBold
+                                    style = ODSTextStyles.bodyL
                                 )
                             }
 
-                            // Text Column
                             ODSColumn(
                                 modifier = Modifier.weight(1f),
-                                gap = ODSVariables.spacingComponent1
+                                gap = 4.dp
                             ) {
                                 ODSText(
                                     text = opt.title,
                                     style = ODSTextStyles.bodyMBold,
-                                    color = scheme.basicTextDominant
+                                    color = if (isSelected) accentColor else primaryTextColor
                                 )
                                 ODSText(
                                     text = opt.subtitle,
                                     style = ODSTextStyles.microcopyRegular,
-                                    color = scheme.basicTextRecessive
+                                    color = secondaryTextColor
                                 )
                             }
                         }
 
-                        // Selected Accent Checkmark Badge
                         if (isSelected) {
                             ODSBox(
                                 modifier = Modifier.size(24.dp),
-                                background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-                                cornerRadius = ODSCorners(all = ODSVariables.radiusFull),
+                                background = listOf(ODSColorModel(hexColor = accentColor)),
+                                cornerRadius = ODSCorners(all = 12.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 ODSIcon(
@@ -176,7 +189,7 @@ fun PreferencesStepThree(
                                         drawableRes = R.drawable.ic_check,
                                         contentDescription = "Selected"
                                     ),
-                                    tint = scheme.basicBackgroundCard.getColor(),
+                                    tint = scheme.basicTextOnAccent.getColor(),
                                     modifier = Modifier.size(14.dp)
                                 )
                             }

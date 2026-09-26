@@ -129,7 +129,7 @@ fun ThemeSelectionDialog(
                         // Option 1: System Default
                         ThemeOptionRow(
                             title = "System default",
-                            subtitle = "Zona will automatically match your active system appearance settings.",
+                            subtitle = "Winter will automatically match your active system appearance settings.",
                             isSelected = selectedTheme == "System default",
                             onClick = { selectedTheme = "System default" },
                             scheme = scheme

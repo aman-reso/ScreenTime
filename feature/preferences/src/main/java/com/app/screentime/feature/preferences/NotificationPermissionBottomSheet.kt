@@ -198,43 +198,18 @@ private fun NotificationAskingContent(
                     }
                 }
 
-                // Sub-heading column with badge and descriptions
+                // Sub-heading column with title and description
                 ODSColumn(
                     modifier = Modifier.fillMaxWidth(),
-                    gap = ODSVariables.spacingComponent3, // 8.dp
+                    gap = ODSVariables.spacingComponent2,
                     verticalAlignment = Alignment.Top,
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Top
                 ) {
-                    // "instant connection" badge pill
-                    ODSRow(
-                        padding = ODSPadding(
-                            top = ODSVariables.spacingComponent2,
-                            bottom = ODSVariables.spacingComponent2,
-                            left = 10.dp,
-                            right = 10.dp
-                        ),
-                        cornerRadius = ODSCorners(all = ODSVariables.radiusSmall),
-                        border = ODSBorder(
-                            width = ODSVariables.strokes1,
-                            colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-                        ),
-                        horizontalAlignment = Alignment.Start,
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.Start,
-                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
-                    ) {
-                        ODSText(
-                            text = "instant connection",
-                            style = ODSTextStyles.microcopyBold,
-                            color = scheme.basicTextDominant
-                        )
-                    }
-
                     // Main Title
                     ODSText(
                         modifier = Modifier.fillMaxWidth(),
-                        text = "Never Miss a Spark.",
+                        text = "Never Miss a Match",
                         style = ODSTextStyles.bodyMBold,
                         color = scheme.basicTextDominant,
                         textAlign = TextAlign.Center
@@ -243,7 +218,7 @@ private fun NotificationAskingContent(
                     // Subtitle
                     ODSText(
                         modifier = Modifier.fillMaxWidth(),
-                        text = "The ZONA universe moves fast. Turn on notifications so you can claim your energy in real-time.",
+                        text = "Turn on notifications to know instantly when someone likes, matches, or messages you.",
                         style = ODSTextStyles.bodySRegular,
                         color = scheme.basicTextRecessive,
                         textAlign = TextAlign.Center
@@ -360,15 +335,15 @@ private fun FigmaBenefitCard(
         horizontalAlignment = Alignment.Start,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,
-        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle))
+        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
     ) {
-        // 40x40dp white rounded container with 20x20dp vector
+        // 40x40dp rounded container with icon
         ODSColumn(
             cornerRadius = ODSCorners(all = ODSVariables.spacingComponent4), // 12.dp
             verticalAlignment = Alignment.CenterVertically,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)), // #FFFFFF
+            background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
             width = 40.dp,
             height = 40.dp
         ) {
@@ -404,7 +379,7 @@ private fun FigmaBenefitCard(
                 modifier = Modifier.fillMaxWidth(),
                 text = subtitle,
                 style = ODSTextStyles.microcopyRegular,
-                color = scheme.basicTextDominant
+                color = scheme.basicTextRecessive
             )
         }
     }

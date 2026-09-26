@@ -26,7 +26,7 @@ import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
- * Zona Wallet Card Component for "My Account" Screen (Figma node-id 10-1163).
+ * Points Card Component for "My Account" Screen.
  *
  * Rules:
  * 1. 100% ODS components.
@@ -36,10 +36,9 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
  */
 @Composable
 fun AccountWalletCard(
-    balanceFormatted: String = "$24.50",
-    creditsCount: Int = 120,
+    pointsCount: Int = 1000,
     scheme: ODSTheme = zonaODSTheme,
-    onAddFundsClick: () -> Unit = {},
+    onBuyPointsClick: () -> Unit = {},
     onTransactionsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -59,47 +58,12 @@ fun AccountWalletCard(
         verticalArrangement = Arrangement.Top,
         background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
     ) {
-        // ── 1. Header: Wallet Icon + "Zona Wallet" | "Refreshes weekly" ─────
+        // ── 1. Header: Points Balance Metric ─────────────────────────────────
         ODSRow(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            ODSRow(
-                gap = ODSVariables.spacingComponent3,
-                horizontalAlignment = Alignment.Start,
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.ic_credit_card,
-                        contentDescription = "Wallet"
-                    ),
-                    tint = scheme.basicAccent.getColor(),
-                    modifier = Modifier.size(ODSVariables.sizingComponent8)
-                )
-                ODSText(
-                    text = "Zona Wallet",
-                    style = ODSTextStyles.bodyMBold, // 16sp
-                    color = scheme.basicText
-                )
-            }
-
-            ODSText(
-                text = "Refreshes weekly",
-                style = ODSTextStyles.microcopyRegular, // 12sp
-                color = scheme.basicTextRecessive
-            )
-        }
-
-        // ── 2. Balance & Credits Metrics ─────────────────────────────────────
-        ODSRow(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Available Balance
             ODSColumn(
                 gap = ODSVariables.spacingComponent1,
                 verticalAlignment = Alignment.Top,
@@ -107,39 +71,24 @@ fun AccountWalletCard(
                 verticalArrangement = Arrangement.Top
             ) {
                 ODSText(
-                    text = "AVAILABLE BALANCE",
-                    style = ODSTextStyles.microcopyBold, // 12sp
-                    color = scheme.basicTextRecessive
-                )
-                ODSText(
-                    text = balanceFormatted,
-                    style = ODSTextStyles.bodyMBold, // 16sp
-                    color = scheme.basicText
-                )
-            }
-
-            // Zona Credits
-            ODSColumn(
-                gap = ODSVariables.spacingComponent1,
-                verticalAlignment = Alignment.Top,
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.Top
-            ) {
-                ODSText(
-                    text = "ZONA CREDITS",
+                    text = "AVAILABLE POINTS",
                     style = ODSTextStyles.microcopyBold, // 12sp
                     color = scheme.basicTextRecessive
                 )
                 ODSRow(
                     gap = ODSVariables.spacingComponent2,
                     horizontalAlignment = Alignment.Start,
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     ODSText(
-                        text = "$creditsCount",
+                        text = "💎",
+                        style = ODSTextStyles.bodyMBold,
+                        color = scheme.basicAccent
+                    )
+                    ODSText(
+                        text = "$pointsCount",
                         style = ODSTextStyles.bodyMBold, // 16sp
-                        color = scheme.basicText
+                        color = scheme.basicTextDominant
                     )
                     ODSText(
                         text = "pts",
@@ -150,7 +99,7 @@ fun AccountWalletCard(
             }
         }
 
-        // ── 3. Action Buttons: [ Add Funds ] [ Transaction history ] ─────────
+        // ── 2. Action Buttons: [ Buy Points ] [ Transactions ] ──────────────
         ODSRow(
             modifier = Modifier.fillMaxWidth(),
             gap = ODSVariables.spacingComponent4,
@@ -158,14 +107,14 @@ fun AccountWalletCard(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.Start
         ) {
-            // "Add Funds" (Soft Pink Button)
+            // "Buy Points" (Soft Pink Button)
             ODSRow(
                 modifier = Modifier
                     .weight(1f)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onAddFundsClick
+                        onClick = onBuyPointsClick
                     ),
                 gap = ODSVariables.spacingComponent3,
                 padding = ODSPadding(all = ODSVariables.spacingComponent4),
@@ -178,19 +127,19 @@ fun AccountWalletCard(
                 ODSIcon(
                     iconModel = ODSIconModel(
                         drawableRes = R.drawable.ic_plus,
-                        contentDescription = "Add"
+                        contentDescription = "Buy Points"
                     ),
                     tint = scheme.basicAccent.getColor(),
                     modifier = Modifier.size(ODSVariables.sizingComponent7)
                 )
                 ODSText(
-                    text = "Add Funds",
+                    text = "Buy Points",
                     style = ODSTextStyles.bodySBold, // 14sp
                     color = scheme.basicAccent
                 )
             }
 
-            // "Transaction history" (Card Outline Button)
+            // "Transactions" (Card Outline Button)
             ODSRow(
                 modifier = Modifier
                     .weight(1f)
@@ -220,3 +169,4 @@ fun AccountWalletCard(
         }
     }
 }
+

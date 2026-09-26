@@ -1,6 +1,6 @@
 package com.app.screentime.feature.wallet
 
-import android.widget.Toast
+import com.app.screentime.core.ui.util.showODSToast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -153,7 +153,7 @@ fun AddFundsScreen(
             }
 
             ODSText(
-                text = "Add Funds",
+                text = "Buy Points",
                 style = ODSTextStyles.bodyMBold,
                 color = scheme.basicTextDominant
             )
@@ -192,15 +192,15 @@ fun AddFundsScreen(
                         verticalArrangement = Arrangement.Top
                     ) {
                         ODSText(
-                            text = "CURRENT BALANCE",
+                            text = "AVAILABLE POINTS",
                             style = ODSTextStyles.microcopyBold,
                             color = scheme.basicTextDominant
                         )
-                        ODSText(
-                            text = "$24.50",
-                            style = ODSTextStyles.bodyMBold,
-                            color = scheme.basicTextDominant
-                        )
+//                        ODSText(
+//                            text = "💎 ${if (walletCoins > 0) walletCoins else 1000} pts",
+//                            style = ODSTextStyles.bodyMBold,
+//                            color = scheme.basicTextDominant
+//                        )
                     }
 
                     ODSColumn(
@@ -210,20 +210,20 @@ fun AddFundsScreen(
                         verticalArrangement = Arrangement.Top
                     ) {
                         ODSText(
-                            text = "ZONA CREDITS",
+                            text = "WINTER POINTS",
                             style = ODSTextStyles.microcopyBold,
                             color = scheme.basicTextDominant
                         )
-                        ODSText(
-                            text = "120 pts",
-                            style = ODSTextStyles.bodyMBold,
-                            color = scheme.basicAccent
-                        )
+//                        ODSText(
+//                            text = "${if (walletCoins > 0) walletCoins else 1000} pts",
+//                            style = ODSTextStyles.bodyMBold,
+//                            color = scheme.basicAccent
+//                        )
                     }
                 }
             }
 
-            // ── Item 2: Select Credit Package Section ──────────────────────────
+            // ── Item 2: Select Points Package Section ──────────────────────────
             item {
                 ODSColumn(
                     modifier = Modifier
@@ -235,7 +235,7 @@ fun AddFundsScreen(
                     verticalArrangement = Arrangement.Top
                 ) {
                     ODSText(
-                        text = "Select Credit Package",
+                        text = "Select Points Package",
                         style = ODSTextStyles.bodyMBold,
                         color = scheme.basicTextDominant
                     )
@@ -448,7 +448,7 @@ fun AddFundsScreen(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
                                     onClick = {
-                                        Toast.makeText(context, "Payment method selection", Toast.LENGTH_SHORT).show()
+                                        context.showODSToast("Payment method selection")
                                     }
                                 )
                         )
@@ -506,11 +506,7 @@ fun AddFundsScreen(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = {
-                            Toast.makeText(
-                                context,
-                                "Successfully purchased ${selectedPackage.creditsCount} credits!",
-                                Toast.LENGTH_LONG
-                            ).show()
+                            context.showODSToast("Successfully purchased ${selectedPackage.creditsCount} credits!")
                             onPaymentSuccess()
                         }
                     ),

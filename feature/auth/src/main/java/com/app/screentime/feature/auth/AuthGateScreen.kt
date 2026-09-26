@@ -32,8 +32,20 @@ fun AuthGateScreen(
 
     val webClientId = remember(context) {
         try {
-            val resId = context.resources.getIdentifier("google_web_client_id", "string", context.packageName)
-            if (resId != 0) context.getString(resId) else ""
+            val defaultResId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+            val customResId = context.resources.getIdentifier("google_web_client_id", "string", context.packageName)
+            val raw = when {
+                defaultResId != 0 -> context.getString(defaultResId)
+                customResId != 0 -> context.getString(customResId)
+                else -> ""
+            }
+            // A valid Google OAuth Web Client ID has format "<project_number>-<hash>.apps.googleusercontent.com"
+            val parts = raw.substringBefore(".apps.googleusercontent.com").split("-")
+            if (raw.endsWith(".apps.googleusercontent.com") && parts.size >= 2 && parts[1].length >= 10 && !raw.startsWith("YOUR_")) {
+                raw
+            } else {
+                ""
+            }
         } catch (_: Exception) {
             ""
         }
@@ -43,7 +55,7 @@ fun AuthGateScreen(
         val builder = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
             .requestProfile()
-        if (webClientId.isNotBlank() && !webClientId.startsWith("YOUR_")) {
+        if (webClientId.isNotBlank()) {
             builder.requestIdToken(webClientId)
         }
         GoogleSignIn.getClient(context, builder.build())

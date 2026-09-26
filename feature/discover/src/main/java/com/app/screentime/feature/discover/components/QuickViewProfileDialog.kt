@@ -267,9 +267,7 @@ fun QuickViewProfileDialog(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
                                 onClick = {
-                                    val targetId =
-                                        if (story.id == "my_match") "jessica_maple" else story.id
-                                    onLike(targetId)
+                                    onLike(story.id)
                                     onDismiss()
                                 }
                             ),
@@ -312,9 +310,7 @@ fun QuickViewProfileDialog(
                                     indication = null,
                                     onClick = {
                                         onDismiss()
-                                        val targetId =
-                                            if (story.id == "my_match") "jessica_maple" else story.id
-                                        onNavigateToChat(targetId, story.name)
+                                        onNavigateToChat(story.id, story.name)
                                     }
                                 ),
                             gap = ODSVariables.spacingComponent2,
@@ -353,9 +349,7 @@ fun QuickViewProfileDialog(
                                     indication = null,
                                     onClick = {
                                         onDismiss()
-                                        val targetId =
-                                            if (story.id == "my_match") "jessica_maple" else story.id
-                                        onNavigateToProfile(targetId, story.name)
+                                        onNavigateToProfile(story.id, story.name)
                                     }
                                 ),
                             gap = ODSVariables.spacingComponent2,

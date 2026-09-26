@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -12,7 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBox
@@ -21,11 +23,6 @@ import com.telekom.odsystem.atoms.ODSImage
 import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
-import com.telekom.odsystem.atoms.button.ODSButton
-import com.telekom.odsystem.atoms.button.ODSButtonButtonType
-import com.telekom.odsystem.atoms.button.ODSButtonProps
-import com.telekom.odsystem.atoms.button.ODSButtonSize
-import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.ODSColorModel
@@ -57,162 +54,158 @@ fun ChatTopBar(
     onProfileClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    ODSRow(
+    ConstraintLayout(
         modifier = modifier
             .fillMaxWidth()
             .padding(
                 top = ODSVariables.spacingComponent4,
-                bottom = ODSVariables.spacingComponent4,
                 start = ODSVariables.spacingLayout1,
                 end = ODSVariables.spacingLayout1
-            ),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Left group: Back Arrow + Avatar + Name & Status
-        ODSRow(
-            gap = ODSVariables.spacingComponent4,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
-        ) {
-            // Borderless Back Arrow Button (Ghost)
-            ODSButton(
-                scheme = scheme,
-                props = ODSButtonProps(
-                    buttonType = ODSButtonButtonType.ICON_ONLY,
-                    variant = ODSButtonVariant.GHOST,
-                    size = ODSButtonSize.SMALL,
-                    buttonIcon = ODSIconModel(
-                        drawableRes = R.drawable.ic_arrow_left,
-                        contentDescription = "Back"
-                    )
-                ),
-                onClick = onBackClick
             )
+    ) {
+        val (backIcon, profileGroup, audioCallBtn, videoCallBtn) = createRefs()
 
-            // User Info Row (Avatar + Name)
-            ODSRow(
-                gap = ODSVariables.spacingComponent4,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(
+        // 1. Back Arrow Icon
+        ODSIcon(
+            iconModel = ODSIconModel(
+                drawableRes = R.drawable.ic_arrow_left,
+                contentDescription = "Back"
+            ),
+            tint = scheme.basicText.getColor(),
+            modifier = Modifier
+                .size(ODSVariables.sizingComponent8)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onBackClick
+                )
+                .constrainAs(backIcon) {
+                    top.linkTo(parent.top)
+                    bottom.linkTo(parent.bottom)
+                    start.linkTo(parent.start)
+                }
+        )
+
+        // 2. User Profile Group (Avatar + Name)
+        val displayName = modelName.ifBlank { "User" }
+
+        ODSRow(
+            gap = ODSVariables.spacingComponent3,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onProfileClick
                 )
+                .constrainAs(profileGroup) {
+                    top.linkTo(parent.top)
+                    bottom.linkTo(parent.bottom)
+                    start.linkTo(backIcon.end, margin = ODSVariables.spacingComponent4)
+                    end.linkTo(audioCallBtn.start, margin = ODSVariables.spacingComponent2)
+                    width = Dimension.fillToConstraints
+                }
+        ) {
+            ODSRow(
+                cornerRadius = ODSCorners(all = ODSVariables.radiusLarge),
+                clipContent = true,
+                width = ODSVariables.sizingComponent12, // 32.dp
+                height = ODSVariables.sizingComponent12,
+                horizontalAlignment = Alignment.Start,
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.Start
             ) {
-                // Circular Avatar
-                ODSRow(
-                    cornerRadius = ODSCorners(all = ODSVariables.radiusLarge),
-                    clipContent = true,
-                    width = ODSVariables.sizingComponent13, // 40.dp
-                    height = ODSVariables.sizingComponent13,
-                    horizontalAlignment = Alignment.Start,
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.Start
-                ) {
+                if (!avatarUrl.isNullOrBlank()) {
                     ODSImage(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),
                         imageModel = ODSImageModel(
-                            url = avatarUrl
-                                ?: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+                            url = avatarUrl,
                             contentDescription = "avatar"
                         ),
                         contentScale = ContentScale.Crop
                     )
-                }
-
-                // Name & Active Status Indicator
-                ODSColumn(
-                    gap = ODSVariables.spacingComponent1,
-                    verticalAlignment = Alignment.Top,
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Top
-                ) {
-                    ODSText(
-                        text = if (modelName.isNotBlank()) modelName else "Jessica Maple",
-                        style = ODSTextStyles.bodyMBold, // 16sp
-                        color = scheme.basicText
-                    )
-
-                    ODSRow(
-                        gap = ODSVariables.spacingComponent2,
-                        horizontalAlignment = Alignment.Start,
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
+                } else {
+                    ODSBox(
+                        modifier = Modifier.fillMaxSize(),
+                        background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        if (isOnline) {
-                            // Soft Pink / Green Status Dot
-                            ODSBox(
-                                modifier = Modifier.size(6.dp),
-                                background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
-                                cornerRadius = ODSCorners(all = 3.dp)
-                            )
-                        }
-
                         ODSText(
-                            text = statusText,
-                            style = ODSTextStyles.microcopyRegular, // 12sp
-                            color = scheme.basicTextRecessive
+                            text = displayName.take(1).uppercase(),
+                            style = ODSTextStyles.bodySBold,
+                            color = scheme.basicAccent
                         )
                     }
                 }
             }
+
+            ODSColumn(
+                gap = ODSVariables.spacingComponent1,
+                verticalAlignment = Alignment.Top,
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top
+            ) {
+                ODSText(
+                    text = displayName,
+                    style = ODSTextStyles.bodyMBold, // 16sp
+                    color = scheme.basicText,
+                )
+            }
         }
 
-        // Right group: Voice Call & Video Call Rounded Cards
-        ODSRow(
-            gap = ODSVariables.spacingComponent3,
-            horizontalAlignment = Alignment.End,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End
-        ) {
-            // Audio Call Button
-            ODSBox(
-                modifier = Modifier
-                    .size(ODSVariables.sizingComponent13) // 40.dp
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onAudioCallClick
-                    ),
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-                cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.ic_phone,
-                        contentDescription = "Voice Call"
-                    ),
-                    tint = scheme.basicText.getColor(),
-                    modifier = Modifier.size(ODSVariables.sizingComponent8)
-                )
-            }
 
-            // Video Call Button
-            ODSBox(
-                modifier = Modifier
-                    .size(ODSVariables.sizingComponent13) // 40.dp
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onVideoCallClick
-                    ),
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-                cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.ic_video,
-                        contentDescription = "Video Call"
-                    ),
-                    tint = scheme.basicText.getColor(),
-                    modifier = Modifier.size(ODSVariables.sizingComponent8)
+        // 4. Audio Call Button
+        ODSBox(
+            modifier = Modifier
+                .size(ODSVariables.sizingComponent8) // 24.dp
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onAudioCallClick
                 )
-            }
+                .constrainAs(audioCallBtn) {
+                    top.linkTo(parent.top)
+                    bottom.linkTo(parent.bottom)
+                    end.linkTo(videoCallBtn.start, margin = ODSVariables.spacingComponent3)
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            ODSIcon(
+                iconModel = ODSIconModel(
+                    drawableRes = R.drawable.ic_phone,
+                    contentDescription = "Voice Call"
+                ),
+                tint = scheme.basicText.getColor(),
+                modifier = Modifier.size(ODSVariables.sizingComponent10) // 24.dp
+            )
+        }
+
+        // 3. Video Call Button
+        ODSBox(
+            modifier = Modifier
+                .size(ODSVariables.sizingComponent8) // 24.dp
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onVideoCallClick
+                )
+                .constrainAs(videoCallBtn) {
+                    top.linkTo(parent.top)
+                    bottom.linkTo(parent.bottom)
+                    end.linkTo(parent.end)
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            ODSIcon(
+                iconModel = ODSIconModel(
+                    drawableRes = R.drawable.video,
+                    contentDescription = "Video Call"
+                ),
+                tint = scheme.basicText.getColor(),
+                modifier = Modifier.size(ODSVariables.sizingComponent10) // 24.dp
+            )
         }
     }
 }

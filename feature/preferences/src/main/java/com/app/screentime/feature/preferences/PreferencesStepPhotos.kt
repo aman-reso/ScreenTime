@@ -1,5 +1,6 @@
 package com.app.screentime.feature.preferences
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -26,6 +27,9 @@ import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
@@ -34,7 +38,7 @@ import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
- * Step 9: Photos Gallery Setup.
+ * Step 2: Photos Gallery Setup.
  * Recreated with 100% ODS components strictly following GEMINI.md rules.
  */
 
@@ -67,6 +71,7 @@ fun PhotoSlotItem(
     photoUrl: String?,
     isMain: Boolean,
     isLarge: Boolean,
+    isLoading: Boolean = false,
     onAddClick: () -> Unit,
     onRemoveClick: () -> Unit,
     scheme: ODSTheme,
@@ -135,6 +140,25 @@ fun PhotoSlotItem(
                 )
             }
         }
+    } else if (isLoading) {
+        ODSBox(
+            modifier = modifier
+                .height(slotHeight),
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+            cornerRadius = ODSCorners(all = slotRadius),
+            border = ODSBorder(
+                width = ODSVariables.strokes2,
+                colorList = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary))
+            ),
+            contentAlignment = Alignment.Center
+        ) {
+            ODSLoadingSpinner(
+                scheme = scheme,
+                props = ODSLoadingSpinnerProps(
+                    size = if (isLarge) ODSLoadingSpinnerSize.SMALL else ODSLoadingSpinnerSize.SMALL
+                )
+            )
+        }
     } else {
         ODSBox(
             modifier = modifier
@@ -174,15 +198,18 @@ fun PhotoSlotItem(
 @Composable
 fun PreferencesStepPhotos(
     uploadedPhotos: List<String>,
+    isUploading: Boolean = false,
     scheme: ODSTheme,
-    onAddPhoto: (String) -> Unit,
+    onAddPhotos: (List<Uri>) -> Unit,
     onRemovePhoto: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris ->
-        uris.forEach { uri -> onAddPhoto(uri.toString()) }
+        if (uris.isNotEmpty()) {
+            onAddPhotos(uris)
+        }
     }
 
     ODSColumn(
@@ -202,6 +229,7 @@ fun PreferencesStepPhotos(
                 photoUrl = uploadedPhotos.getOrNull(0),
                 isMain = true,
                 isLarge = true,
+                isLoading = isUploading && uploadedPhotos.isEmpty(),
                 onAddClick = { photoPickerLauncher.launch("image/*") },
                 onRemoveClick = { onRemovePhoto(0) },
                 scheme = scheme,
@@ -212,6 +240,7 @@ fun PreferencesStepPhotos(
                 photoUrl = uploadedPhotos.getOrNull(1),
                 isMain = false,
                 isLarge = true,
+                isLoading = isUploading && uploadedPhotos.size == 1,
                 onAddClick = { photoPickerLauncher.launch("image/*") },
                 onRemoveClick = { onRemovePhoto(1) },
                 scheme = scheme,
@@ -231,6 +260,7 @@ fun PreferencesStepPhotos(
                     photoUrl = uploadedPhotos.getOrNull(i),
                     isMain = false,
                     isLarge = false,
+                    isLoading = isUploading && uploadedPhotos.size == i,
                     onAddClick = { photoPickerLauncher.launch("image/*") },
                     onRemoveClick = { onRemovePhoto(i) },
                     scheme = scheme,
@@ -276,7 +306,7 @@ fun PreferencesStepPhotos(
                         modifier = Modifier.size(18.dp)
                     )
                     ODSText(
-                        text = "Choose Gallery",
+                        text = if (isUploading) "Uploading..." else "Choose Gallery",
                         style = ODSTextStyles.bodySBold,
                         color = scheme.basicTextDominant
                     )

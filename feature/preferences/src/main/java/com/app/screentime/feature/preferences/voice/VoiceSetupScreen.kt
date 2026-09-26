@@ -193,7 +193,7 @@ fun VoiceSetupScreen(
         ) {
             item {
                 VoiceAssistantHeader(
-                    name = "Zona Assistant",
+                    name = "Winter Assistant",
                     isActive = isListening,
                     scheme = scheme
                 )

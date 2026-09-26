@@ -1,23 +1,26 @@
 package com.app.screentime.feature.preferences
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
@@ -26,221 +29,28 @@ import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
-import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import java.time.LocalDate
+
+private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+private enum class PickerType {
+    NONE, DAY, MONTH, YEAR
+}
 
 /**
  * Step 3: Date of Birth Preference.
- * Recreated with 100% ODS components strictly following GEMINI.md rules.
+ * Matches Figma mockup (Frame 3):
+ * - "When were you born?"
+ * - "Your profile shows your age, not your birthday."
+ * - Three dropdown cards: [ Day v ] [ Month v ] [ Year v ]
  */
-
-@Composable
-fun DobHeader(
-    scheme: ODSTheme,
-    modifier: Modifier = Modifier
-) {
-    ODSColumn(
-        modifier = modifier.fillMaxWidth(),
-        gap = ODSVariables.spacingComponent2
-    ) {
-        ODSText(
-            modifier = Modifier.fillMaxWidth(),
-            text = "When's your birthday?",
-            style = ODSTextStyles.bodyMBold,
-            color = scheme.basicTextDominant
-        )
-        ODSText(
-            modifier = Modifier.fillMaxWidth(),
-            text = "Your age will be visible on your profile card, but your exact date of birth is kept private.",
-            style = ODSTextStyles.bodySRegular,
-            color = scheme.basicTextRecessive
-        )
-    }
-}
-
-@Composable
-fun DobInputFields(
-    day: String,
-    month: String,
-    year: String,
-    onDayChange: (String) -> Unit,
-    onMonthChange: (String) -> Unit,
-    onYearChange: (String) -> Unit,
-    scheme: ODSTheme,
-    modifier: Modifier = Modifier
-) {
-    val funnelFontSemiBold = remember {
-        FontFamily(Font(R.font.funnelsans_semibold, FontWeight.SemiBold))
-    }
-
-    ODSRow(
-        modifier = modifier.fillMaxWidth(),
-        gap = ODSVariables.spacingComponent3,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Day input
-        ODSBox(
-            modifier = Modifier.weight(1f),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-            cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-            border = ODSBorder(
-                width = ODSVariables.strokes2,
-                colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-            ),
-            padding = ODSPadding(
-                horizontal = ODSVariables.spacingComponent3,
-                vertical = ODSVariables.spacingComponent4
-            )
-        ) {
-            ODSColumn(
-                modifier = Modifier.fillMaxWidth(),
-                gap = ODSVariables.spacingComponent1,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ODSText(
-                    text = "DD",
-                    style = ODSTextStyles.microcopyBold,
-                    color = scheme.basicTextRecessive
-                )
-                BasicTextField(
-                    value = day,
-                    onValueChange = { if (it.length <= 2) onDayChange(it) },
-                    textStyle = TextStyle(
-                        color = scheme.basicTextDominant.getColor(),
-                        fontSize = 16.sp,
-                        fontFamily = funnelFontSemiBold,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center
-                    ),
-                    cursorBrush = SolidColor(scheme.basicAccent.getColor()),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-
-        // Month input
-        ODSBox(
-            modifier = Modifier.weight(1f),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-            cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-            border = ODSBorder(
-                width = ODSVariables.strokes2,
-                colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-            ),
-            padding = ODSPadding(
-                horizontal = ODSVariables.spacingComponent3,
-                vertical = ODSVariables.spacingComponent4
-            )
-        ) {
-            ODSColumn(
-                modifier = Modifier.fillMaxWidth(),
-                gap = ODSVariables.spacingComponent1,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ODSText(
-                    text = "MM",
-                    style = ODSTextStyles.microcopyBold,
-                    color = scheme.basicTextRecessive
-                )
-                BasicTextField(
-                    value = month,
-                    onValueChange = { if (it.length <= 2) onMonthChange(it) },
-                    textStyle = TextStyle(
-                        color = scheme.basicTextDominant.getColor(),
-                        fontSize = 16.sp,
-                        fontFamily = funnelFontSemiBold,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center
-                    ),
-                    cursorBrush = SolidColor(scheme.basicAccent.getColor()),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-
-        // Year input
-        ODSBox(
-            modifier = Modifier.weight(1.4f),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-            cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-            border = ODSBorder(
-                width = ODSVariables.strokes2,
-                colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-            ),
-            padding = ODSPadding(
-                horizontal = ODSVariables.spacingComponent3,
-                vertical = ODSVariables.spacingComponent4
-            )
-        ) {
-            ODSColumn(
-                modifier = Modifier.fillMaxWidth(),
-                gap = ODSVariables.spacingComponent1,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ODSText(
-                    text = "YYYY",
-                    style = ODSTextStyles.microcopyBold,
-                    color = scheme.basicTextRecessive
-                )
-                BasicTextField(
-                    value = year,
-                    onValueChange = { if (it.length <= 4) onYearChange(it) },
-                    textStyle = TextStyle(
-                        color = scheme.basicTextDominant.getColor(),
-                        fontSize = 16.sp,
-                        fontFamily = funnelFontSemiBold,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center
-                    ),
-                    cursorBrush = SolidColor(scheme.basicAccent.getColor()),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DobAgeBadge(
-    calculatedAge: Int,
-    scheme: ODSTheme,
-    modifier: Modifier = Modifier
-) {
-    ODSRow(
-        modifier = modifier,
-        gap = ODSVariables.spacingComponent3,
-        padding = ODSPadding(
-            horizontal = ODSVariables.spacingLayout1,
-            vertical = ODSVariables.spacingComponent3
-        ),
-        cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-        background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        ODSIcon(
-            iconModel = ODSIconModel(
-                drawableRes = R.drawable.ic_cake,
-                contentDescription = "Age"
-            ),
-            tint = scheme.basicAccent.getColor(),
-            modifier = Modifier.size(ODSVariables.spacingComponent5)
-        )
-        ODSText(
-            text = "You will appear as $calculatedAge years old",
-            style = ODSTextStyles.bodySBold,
-            color = scheme.basicTextDominant
-        )
-    }
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PreferencesStepDob(
     day: String,
@@ -250,42 +60,253 @@ fun PreferencesStepDob(
     onMonthChange: (String) -> Unit,
     onYearChange: (String) -> Unit,
     scheme: ODSTheme,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    error: String? = null
 ) {
-    val calculatedAge = remember(day, month, year) {
-        try {
-            val y = year.toIntOrNull() ?: 1999
-            val m = month.toIntOrNull() ?: 1
-            val d = day.toIntOrNull() ?: 1
-            val currentYear = java.time.LocalDate.now().year
-            val birthDate = java.time.LocalDate.of(
-                y.coerceIn(1920, currentYear),
-                m.coerceIn(1, 12),
-                d.coerceIn(1, 31)
-            )
-            java.time.Period.between(birthDate, java.time.LocalDate.now()).years.coerceAtLeast(18)
-        } catch (_: Exception) {
-            24
+    val primaryTextColor = scheme.basicTextDominant
+    val secondaryTextColor = scheme.basicTextRecessive
+    val accentColor = scheme.basicAccent
+    val inactiveBorderColor = scheme.basicStrokeSubtle
+
+    var activePicker by remember { mutableStateOf(PickerType.NONE) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val currentYear = remember { LocalDate.now().year }
+    val daysList = remember { (1..31).map { it.toString() } }
+    val yearsList = remember { ((currentYear - 80)..(currentYear - 18)).reversed().map { it.toString() } }
+
+    val formattedMonth = remember(month) {
+        val mNum = month.toIntOrNull()
+        if (mNum != null && mNum in 1..12) {
+            MONTHS[mNum - 1]
+        } else if (MONTHS.contains(month)) {
+            month
+        } else {
+            "Jan"
         }
     }
 
     ODSColumn(
         modifier = modifier.fillMaxWidth(),
-        gap = ODSVariables.spacingComponent6
+        gap = 28.dp,
+        verticalAlignment = Alignment.Top,
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Top
     ) {
-        DobHeader(scheme = scheme)
-        DobInputFields(
-            day = day,
-            month = month,
-            year = year,
-            onDayChange = onDayChange,
-            onMonthChange = onMonthChange,
-            onYearChange = onYearChange,
-            scheme = scheme
+        // ── 1. Heading & Subtitle ──────────────────────────────────────────
+        ODSColumn(
+            modifier = Modifier.fillMaxWidth(),
+            gap = 8.dp,
+            verticalAlignment = Alignment.Top,
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
+        ) {
+            ODSText(
+                modifier = Modifier.fillMaxWidth(),
+                text = "When were you born?",
+                style = ODSTextStyles.titleL,
+                color = primaryTextColor
+            )
+            ODSText(
+                modifier = Modifier.fillMaxWidth(),
+                text = "Your profile shows your age, not your birthday.",
+                style = ODSTextStyles.bodyMRegular,
+                color = secondaryTextColor
+            )
+        }
+
+        // ── 2. Dropdown Pickers Row ────────────────────────────────────────
+        ODSColumn(
+            modifier = Modifier.fillMaxWidth(),
+            gap = 6.dp
+        ) {
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                gap = 12.dp,
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Day Picker Card
+                DobPickerCard(
+                    modifier = Modifier.weight(1f),
+                    value = day.ifBlank { "15" },
+                    isActive = activePicker == PickerType.DAY,
+                    accentColor = accentColor,
+                    inactiveBorderColor = inactiveBorderColor,
+                    primaryTextColor = primaryTextColor,
+                    secondaryTextColor = secondaryTextColor,
+                    cardBackground = scheme.basicBackgroundCard,
+                    onClick = { activePicker = PickerType.DAY }
+                )
+
+                // Month Picker Card (Highlighted by default or when active)
+                DobPickerCard(
+                    modifier = Modifier.weight(1.2f),
+                    value = formattedMonth,
+                    isActive = activePicker == PickerType.MONTH || activePicker == PickerType.NONE,
+                    accentColor = accentColor,
+                    inactiveBorderColor = inactiveBorderColor,
+                    primaryTextColor = primaryTextColor,
+                    secondaryTextColor = secondaryTextColor,
+                    cardBackground = scheme.basicBackgroundCard,
+                    onClick = { activePicker = PickerType.MONTH }
+                )
+
+                // Year Picker Card
+                DobPickerCard(
+                    modifier = Modifier.weight(1.3f),
+                    value = year.ifBlank { "1998" },
+                    isActive = activePicker == PickerType.YEAR,
+                    accentColor = accentColor,
+                    inactiveBorderColor = inactiveBorderColor,
+                    primaryTextColor = primaryTextColor,
+                    secondaryTextColor = secondaryTextColor,
+                    cardBackground = scheme.basicBackgroundCard,
+                    onClick = { activePicker = PickerType.YEAR }
+                )
+            }
+
+            if (error != null) {
+                ODSText(
+                    text = error,
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.functionalDestructiveStandard
+                )
+            }
+        }
+    }
+
+    // ── Bottom Sheet Selection Modal ───────────────────────────────────────
+    if (activePicker != PickerType.NONE) {
+        ModalBottomSheet(
+            onDismissRequest = { activePicker = PickerType.NONE },
+            sheetState = sheetState,
+            containerColor = scheme.basicBackgroundCard.getColor()
+        ) {
+            val title = when (activePicker) {
+                PickerType.DAY -> "Select Day"
+                PickerType.MONTH -> "Select Month"
+                PickerType.YEAR -> "Select Year"
+                PickerType.NONE -> ""
+            }
+            val itemsList = when (activePicker) {
+                PickerType.DAY -> daysList
+                PickerType.MONTH -> MONTHS
+                PickerType.YEAR -> yearsList
+                PickerType.NONE -> emptyList()
+            }
+            val selectedValue = when (activePicker) {
+                PickerType.DAY -> day
+                PickerType.MONTH -> formattedMonth
+                PickerType.YEAR -> year
+                PickerType.NONE -> ""
+            }
+
+            ODSColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp, top = 8.dp),
+                gap = 12.dp
+            ) {
+                ODSText(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    text = title,
+                    style = ODSTextStyles.bodyMBold,
+                    color = primaryTextColor
+                )
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 280.dp)
+                ) {
+                    items(itemsList) { item ->
+                        val isItemSel = item.equals(selectedValue, ignoreCase = true)
+                        ODSRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    when (activePicker) {
+                                        PickerType.DAY -> onDayChange(item)
+                                        PickerType.MONTH -> onMonthChange(item)
+                                        PickerType.YEAR -> onYearChange(item)
+                                        PickerType.NONE -> {}
+                                    }
+                                    activePicker = PickerType.NONE
+                                }
+                                .padding(horizontal = 24.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ODSText(
+                                text = item,
+                                style = if (isItemSel) ODSTextStyles.bodyMBold else ODSTextStyles.bodyMRegular,
+                                color = if (isItemSel) accentColor else primaryTextColor
+                            )
+                            if (isItemSel) {
+                                ODSIcon(
+                                    iconModel = ODSIconModel(
+                                        drawableRes = R.drawable.ic_check,
+                                        contentDescription = "Selected"
+                                    ),
+                                    tint = accentColor.getColor(),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DobPickerCard(
+    value: String,
+    isActive: Boolean,
+    accentColor: HexColor,
+    inactiveBorderColor: HexColor,
+    primaryTextColor: HexColor,
+    secondaryTextColor: HexColor,
+    cardBackground: HexColor,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ODSRow(
+        modifier = modifier
+            .height(54.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
+        cornerRadius = ODSCorners(all = 16.dp),
+        border = ODSBorder(
+            width = if (isActive) 2.dp else 1.dp,
+            colorList = listOf(
+                ODSColorModel(
+                    hexColor = if (isActive) accentColor else inactiveBorderColor
+                )
+            )
+        ),
+        padding = ODSPadding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        background = listOf(ODSColorModel(hexColor = cardBackground))
+    ) {
+        ODSText(
+            text = value,
+            style = ODSTextStyles.bodyMBold,
+            color = if (isActive) accentColor else primaryTextColor
         )
-        DobAgeBadge(
-            calculatedAge = calculatedAge,
-            scheme = scheme
+        ODSIcon(
+            iconModel = ODSIconModel(
+                drawableRes = R.drawable.ic_chevron_down,
+                contentDescription = "Select"
+            ),
+            tint = (if (isActive) accentColor else secondaryTextColor).getColor(),
+            modifier = Modifier.size(16.dp)
         )
     }
 }

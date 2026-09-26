@@ -51,5 +51,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
     api(libs.play.services.ads)
-    implementation(project(":odsystem"))
+    implementation(project(":appdesign"))
 }

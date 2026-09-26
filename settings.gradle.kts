@@ -26,9 +26,9 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Chatty"
+rootProject.name = "Winter"
 include(":app")
-include(":odsystem")
+include(":appdesign")
 include(":core:model")
 include(":core:network")
 include(":core:ui")

@@ -65,34 +65,6 @@ fun AccountTopBar(
             gap = ODSVariables.spacingComponent3,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Notifications Icon Button
-            ODSBox(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onNotificationsClick
-                    ),
-                padding = ODSPadding(all = ODSVariables.spacingComponent4),
-                cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-                border = ODSBorder(
-                    width = ODSVariables.strokes1,
-                    colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-                ),
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.ic_bell,
-                        contentDescription = "Notifications"
-                    ),
-                    tint = scheme.basicText.getColor(),
-                    modifier = Modifier.size(ODSVariables.sizingComponent8)
-                )
-            }
-
             // Edit Profile Button
             ODSBox(
                 modifier = Modifier

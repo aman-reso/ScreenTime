@@ -34,7 +34,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
-    implementation(project(":odsystem"))
+    implementation(project(":appdesign"))
 
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
@@ -49,4 +49,5 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
+    implementation(libs.play.services.location)
 }

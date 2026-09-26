@@ -62,14 +62,16 @@ class AuthViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
         try {
             val account = task.getResult(ApiException::class.java)
+            val googleId = account.id ?: "google_${System.currentTimeMillis()}"
             val idToken = account.idToken
                 ?: account.serverAuthCode
-                ?: "google_oauth_${account.id ?: System.currentTimeMillis()}"
+                ?: googleId
             val email = account.email
-            val name = account.displayName ?: account.givenName ?: "Google User"
-            val avatarUrl = account.photoUrl?.toString()
+            val name = account.displayName ?: account.givenName ?: "User"
+            val avatarUrl = account.photoUrl?.toString() ?: "https://lh3.googleusercontent.com/a/default-user"
 
             loginWithGoogle(
+                googleId = googleId,
                 idToken = idToken,
                 email = email,
                 name = name,
@@ -82,11 +84,13 @@ class AuthViewModel @Inject constructor(
                 12500 -> "Google Sign-In service error. Please try again."
                 10 -> {
                     // DEVELOPER_ERROR: Fall back to test Google identity so backend ownership flow can still be tested
+                    val rand = (1000..9999).random()
                     loginWithGoogle(
-                        idToken = "google_dev_token_${System.currentTimeMillis()}",
-                        email = "google.user@example.com",
-                        name = "Google User",
-                        avatarUrl = null
+                        googleId = "google_$rand",
+                        idToken = "google_dev_token_$rand",
+                        email = "user$rand@gmail.com",
+                        name = "User $rand",
+                        avatarUrl = "https://lh3.googleusercontent.com/a/default-user"
                     )
                     return
                 }
@@ -106,10 +110,11 @@ class AuthViewModel @Inject constructor(
 
     /**
      * Authenticate via Google Sign-In where the backend is the overall owner.
-     * The ID token and profile are sent to the backend server.
+     * Google ID, email, name, and photo URL are sent to POST /api/auth/google.
      */
     fun loginWithGoogle(
-        idToken: String,
+        googleId: String? = null,
+        idToken: String? = null,
         email: String? = null,
         name: String? = null,
         avatarUrl: String? = null,
@@ -121,6 +126,7 @@ class AuthViewModel @Inject constructor(
         )
         viewModelScope.launch {
             val result = loginWithGoogleUseCase(
+                googleId = googleId,
                 idToken = idToken,
                 email = email,
                 name = name,
@@ -132,7 +138,7 @@ class AuthViewModel @Inject constructor(
                     isLoading = false,
                     isSuccess = true,
                     name = user.name,
-                    email = email
+                    email = user.phone
                 )
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(
@@ -149,10 +155,11 @@ class AuthViewModel @Inject constructor(
     fun startGoogleSignInSimulation() {
         val rand = (1000..9999).random()
         loginWithGoogle(
+            googleId = "google_$rand",
             idToken = "google_token_simulated_$rand",
-            email = "google.user$rand@gmail.com",
-            name = "Google User $rand",
-            avatarUrl = null
+            email = "user$rand@gmail.com",
+            name = "User $rand",
+            avatarUrl = "https://lh3.googleusercontent.com/a/default-user"
         )
     }
 

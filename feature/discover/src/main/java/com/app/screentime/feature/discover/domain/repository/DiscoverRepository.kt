@@ -36,4 +36,9 @@ interface DiscoverRepository {
      * Retrieves detailed profile information for a specific user/model.
      */
     suspend fun getProfileDetails(profileId: String): Result<ModelProfile>
+
+    /**
+     * Fetches confirmed mutual matches from the discovery/matches API.
+     */
+    suspend fun getMatches(page: Int = 1, limit: Int = 10): Result<List<com.app.screentime.core.model.DiscoveryMatch>>
 }

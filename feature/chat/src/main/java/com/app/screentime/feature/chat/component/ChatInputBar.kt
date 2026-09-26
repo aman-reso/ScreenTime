@@ -62,7 +62,6 @@ fun ChatInputBar(
         horizontalArrangement = Arrangement.Start,
         background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
     ) {
-        // ── 1. Plus Button (Rounded card) ────────────────────────────────────
         ODSBox(
             modifier = Modifier
                 .size(44.dp)
@@ -85,7 +84,6 @@ fun ChatInputBar(
             )
         }
 
-        // ── 2. Input Pill Container with Smiley Emoji ─────────────────────────
         ODSRow(
             modifier = Modifier.weight(1f),
             gap = ODSVariables.spacingComponent3,
@@ -105,7 +103,6 @@ fun ChatInputBar(
             horizontalArrangement = Arrangement.Start,
             background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
         ) {
-            // Input TextField
             ODSBox(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.CenterStart
@@ -132,7 +129,6 @@ fun ChatInputBar(
                 )
             }
 
-            // Smiley Icon 🙂
             ODSIcon(
                 iconModel = ODSIconModel(
                     drawableRes = R.drawable.ic_smile,
@@ -143,7 +139,6 @@ fun ChatInputBar(
             )
         }
 
-        // ── 3. Magenta Send Button ───────────────────────────────────────────
         ODSBox(
             modifier = Modifier
                 .size(44.dp)

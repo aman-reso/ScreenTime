@@ -5,7 +5,7 @@ import com.app.screentime.calling.domain.repository.CallRepository
 import com.app.screentime.calling.domain.usecase.BillingTickHandler
 import com.app.screentime.calling.domain.usecase.CallUseCase
 import com.app.screentime.core.network.NetworkClient
-import com.app.screentime.core.network.api.ChattyApi
+import com.app.screentime.core.network.api.WinterApi
 import com.app.screentime.core.network.session.SessionManager
 import dagger.Binds
 import dagger.Module
@@ -43,7 +43,7 @@ abstract class CallingModule {
         fun provideCallUseCase(
             repository: CallRepository,
             billingHandler: BillingTickHandler,
-            api: ChattyApi,
+            api: WinterApi,
             sessionManager: SessionManager
         ): CallUseCase {
             return CallUseCase(repository, billingHandler, api, sessionManager)

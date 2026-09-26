@@ -13,15 +13,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.app.screentime.core.ui.theme.zonaODSTheme
+import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSImage
 import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.icon.ODSIcon
+import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
-import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
@@ -37,10 +39,10 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
  */
 @Composable
 fun AccountProfileHeader(
-    userName: String = "Alex Rivera",
-    subtitle: String = "Premium subscriber since Jan 2026",
+    userName: String = "User",
+    email: String? = null,
+    subtitle: String = "",
     avatarUrl: String? = null,
-    isPro: Boolean = true,
     scheme: ODSTheme = zonaODSTheme,
     onProfileClick: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -59,23 +61,39 @@ fun AccountProfileHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        // 72x72 Circular Avatar
-        ODSImage(
-            imageModel = ODSImageModel(
-                url = avatarUrl
-                    ?: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-                contentDescription = "avatar"
-            ),
-            width = 72.dp,
-            height = 72.dp,
-            cornerRadius = ODSCorners(all = 36.dp),
-            contentScale = ContentScale.Crop
-        )
+        if (!avatarUrl.isNullOrBlank()) {
+            ODSImage(
+                imageModel = ODSImageModel(
+                    url = avatarUrl,
+                    contentDescription = "avatar"
+                ),
+                width = 72.dp,
+                height = 72.dp,
+                cornerRadius = ODSCorners(all = 36.dp),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            ODSBox(
+                modifier = Modifier.size(72.dp),
+                cornerRadius = ODSCorners(all = 36.dp),
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                contentAlignment = Alignment.Center
+            ) {
+                ODSIcon(
+                    iconModel = ODSIconModel(
+                        drawableRes = R.drawable.ic_user,
+                        contentDescription = "avatar"
+                    ),
+                    tint = scheme.basicTextRecessive.getColor(),
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        }
 
-        // Name, PRO Badge, and Subscription Details
+        // Name, Email, PRO Badge, and Subscription Details
         ODSColumn(
             modifier = Modifier.weight(1f),
-            gap = ODSVariables.spacingComponent2,
+            gap = ODSVariables.spacingComponent1,
             verticalAlignment = Alignment.Top,
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Top
@@ -91,33 +109,23 @@ fun AccountProfileHeader(
                     style = ODSTextStyles.bodyMBold, // 16sp max text size
                     color = scheme.basicText
                 )
-
-                if (isPro) {
-                    // Soft Pink "PRO" Pill Badge
-                    ODSBox(
-                        padding = ODSPadding(
-                            top = ODSVariables.spacingComponent1,
-                            bottom = ODSVariables.spacingComponent1,
-                            left = ODSVariables.spacingComponent2,
-                            right = ODSVariables.spacingComponent2
-                        ),
-                        cornerRadius = ODSCorners(all = ODSVariables.radiusExtraSmall),
-                        background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary))
-                    ) {
-                        ODSText(
-                            text = "PRO",
-                            style = ODSTextStyles.microcopyBold, // 12sp / 10sp
-                            color = scheme.basicAccent
-                        )
-                    }
-                }
             }
 
-            ODSText(
-                text = subtitle,
-                style = ODSTextStyles.bodySRegular, // 14sp
-                color = scheme.basicTextRecessive
-            )
+            if (!email.isNullOrBlank()) {
+                ODSText(
+                    text = email,
+                    style = ODSTextStyles.bodySRegular, // 14sp
+                    color = scheme.basicTextRecessive
+                )
+            }
+
+            if (subtitle.isNotBlank()) {
+                ODSText(
+                    text = subtitle,
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.basicAccentSecondary
+                )
+            }
         }
     }
 }

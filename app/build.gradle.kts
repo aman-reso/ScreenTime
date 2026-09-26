@@ -55,6 +55,23 @@ android {
             "\"${localProperties.getProperty("TOTP_DECODE_SECRET", "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")}\""
         )
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "AIzaSyDHHAbUVtn4Q7NiTfXDCivan890cp3xCCg")
+        manifestPlaceholders["appLabel"] = "@string/app_name"
+    }
+
+    flavorDimensions += "user"
+    productFlavors {
+        create("user1") {
+            dimension = "user"
+            // Primary variant: keeps default applicationId "com.app.screentime"
+            manifestPlaceholders["appLabel"] = "@string/app_name"
+        }
+        create("user2") {
+            dimension = "user"
+            // Secondary variant: installs alongside user1 on same device
+            applicationIdSuffix = ".user2"
+            versionNameSuffix = "-u2"
+            manifestPlaceholders["appLabel"] = "Winter 2"
+        }
     }
 
     buildTypes {
@@ -134,7 +151,7 @@ dependencies {
     implementation(project(":config"))
 
     // ODS Library module with sources
-    implementation(project(":odsystem"))
+    implementation(project(":appdesign"))
 
     // Analytics module
     implementation(project(":analytics"))

@@ -29,11 +29,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.screentime.core.ui.theme.FunnelSansFontFamily
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -108,7 +107,7 @@ fun ChatListScreen(
     modifier: Modifier = Modifier,
     scheme: ODSTheme = zonaODSTheme,
     viewModel: ChatListViewModel = hiltViewModel(),
-    onNavigateToChat: (String, String) -> Unit = { _, _ -> },
+    onNavigateToChat: (String, String, String?) -> Unit = { _, _, _ -> },
     onNavigateToProfile: (String, String) -> Unit = { _, _ -> },
     onNavigateToDiscover: () -> Unit = {},
     forceEmptyState: Boolean = false
@@ -117,103 +116,32 @@ fun ChatListScreen(
     var searchQuery by remember { mutableStateOf("") }
     var previewEmptyState by remember { mutableStateOf(forceEmptyState) }
 
-    val funnelSansFontFamily = remember {
-        FontFamily(Font(R.font.funnelsans_regular))
-    }
-
-    val newMatches = remember {
-        listOf(
-            MatchAvatar(
-                id = "mia",
-                name = "Mia",
-                avatarUrl = "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80"
-            ),
-            MatchAvatar(
-                id = "daniel",
-                name = "Daniel",
-                avatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80"
-            ),
-            MatchAvatar(
-                id = "sora",
-                name = "Sora",
-                avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"
-            ),
-            MatchAvatar(
-                id = "tyler",
-                name = "Tyler",
-                avatarUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80"
-            )
-        )
-    }
-
-    // Default mock conversations matching Figma node-id 10-1225
-    val defaultFigmaConversations = remember {
-        listOf(
-            Conversation(
-                id = "jessica",
-                modelId = "jessica_maple",
-                modelName = "Jessica",
-                modelAvatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
-                lastMessage = "Hey! Let's meet at that coffee place we talked about ☕",
-                lastMessageTime = System.currentTimeMillis() - 2 * 60 * 1000,
-                unreadCount = 1,
-                isOnline = true
-            ),
-            Conversation(
-                id = "chloe",
-                modelId = "chloe",
-                modelName = "Chloe",
-                modelAvatarUrl = "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80",
-                lastMessage = "That sounds like a plan! See ya there.",
-                lastMessageTime = System.currentTimeMillis() - 3 * 3600 * 1000,
-                unreadCount = 0,
-                isOnline = false
-            ),
-            Conversation(
-                id = "isabella",
-                modelId = "isabella",
-                modelName = "Isabella",
-                modelAvatarUrl = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&auto=format&fit=crop&q=80",
-                lastMessage = "Sent a photo 📸",
-                lastMessageTime = System.currentTimeMillis() - 24 * 3600 * 1000,
-                unreadCount = 0,
-                isOnline = false
-            ),
-            Conversation(
-                id = "marcus",
-                modelId = "marcus",
-                modelName = "Marcus",
-                modelAvatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
-                lastMessage = "Let's match authentic!",
-                lastMessageTime = System.currentTimeMillis() - 3 * 24 * 3600 * 1000,
-                unreadCount = 0,
-                isOnline = false
-            )
-        )
-    }
+    val funnelSansFontFamily = FunnelSansFontFamily
 
     // Determine conversations to show
     val displayConversations = remember(uiState.conversations, searchQuery) {
-        val baseList = if (uiState.conversations.isNotEmpty()) {
+        if (searchQuery.isBlank()) {
             uiState.conversations
         } else {
-            defaultFigmaConversations
-        }
-        if (searchQuery.isBlank()) {
-            baseList
-        } else {
-            baseList.filter {
+            uiState.conversations.filter {
                 it.modelName.contains(searchQuery, ignoreCase = true) ||
                         it.lastMessage.contains(searchQuery, ignoreCase = true)
             }
         }
     }
 
-    val isActuallyEmpty =
-        (uiState.conversations.isEmpty() && defaultFigmaConversations.isEmpty()) || previewEmptyState
+    val isActuallyEmpty = uiState.conversations.isEmpty() || previewEmptyState
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.loadConversations()
+    }
+
+    if (uiState.isLoading && uiState.conversations.isEmpty() && !previewEmptyState) {
+        ChatListLoadingScreen(
+            modifier = modifier,
+            scheme = scheme
+        )
+        return
     }
 
     ODSBox(
@@ -222,155 +150,154 @@ fun ChatListScreen(
             .navigationBarsPadding()
     ) {
         PullToRefreshBox(
-            isRefreshing = uiState.isLoading,
-            onRefresh = { viewModel.loadConversations() },
-            modifier = Modifier
-                .fillMaxSize()
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = { viewModel.refresh() },
+            modifier = Modifier.fillMaxSize()
         ) {
-            ODSColumn(modifier = Modifier.fillMaxSize()) {
+            ODSColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+            ) {
+                // ── Top Header Bar ──────────────────────────────────────────
                 ODSRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    padding = ODSPadding(
-                        left = ODSVariables.spacingLayout1,
-                        right = ODSVariables.spacingLayout1
-                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = ODSVariables.spacingLayout1,
+                            vertical = ODSVariables.spacingComponent4
+                        ),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     ODSText(
-                        text = "Inbox",
+                        text = "Chats",
                         style = ODSTextStyles.bodyMBold,
                         color = scheme.basicTextDominant
                     )
                 }
-                if (uiState.isLoading && uiState.conversations.isEmpty() && !previewEmptyState) {
-                    ChatListLoadingScreen(
-                        modifier = modifier,
-                        scheme = scheme
-                    )
-                } else {
-                    ODSColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        background = listOf(
-                            ODSColorModel(
-                                gradient = ODSLinearGradientModel(
-                                    colorStops = arrayOf(
-                                        0.00f to scheme.basicBackground,
-                                        0.52f to scheme.basicBackgroundSubtle,
-                                        1.00f to scheme.basicBackgroundCard
-                                    ),
-                                    opacity = 1.00f,
-                                    angleInDegrees = 180f
-                                )
+
+                ODSColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    background = listOf(
+                        ODSColorModel(
+                            gradient = ODSLinearGradientModel(
+                                colorStops = arrayOf(
+                                    0.00f to scheme.basicBackground,
+                                    0.52f to scheme.basicBackgroundSubtle,
+                                    1.00f to scheme.basicBackgroundCard
+                                ),
+                                opacity = 1.00f,
+                                angleInDegrees = 180f
                             )
                         )
-                    ) {
-                        if (isActuallyEmpty) {
-                            InboxEmptyState(
-                                onNavigateToDiscover = onNavigateToDiscover,
-                                scheme = scheme,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                            )
-                        } else {
-                            // ── Scrollable Body Content using ODSLazyColumn (Rule #1) ─────
-                            ODSLazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .statusBarsPadding(),
-                                gap = ODSVariables.spacingComponent4
-                            ) {
-                                // ── Item 4: Search Bar ────────────────────────────────────
-                                item {
+                    )
+                ) {
+                    if (isActuallyEmpty) {
+                        InboxEmptyState(
+                            onNavigateToDiscover = onNavigateToDiscover,
+                            scheme = scheme,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                    } else {
+                        // ── Scrollable Body Content using ODSLazyColumn (Rule #1) ─────
+                        ODSLazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            gap = ODSVariables.spacingComponent4
+                        ) {
+                            // ── Item 4: Search Bar ────────────────────────────────────
+                            item {
+                                ODSRow(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = ODSVariables.spacingLayout1),
+                                    horizontalAlignment = Alignment.Start,
+                                    verticalAlignment = Alignment.Top,
+                                    horizontalArrangement = Arrangement.Start
+                                ) {
                                     ODSRow(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = ODSVariables.spacingLayout1),
+                                        modifier = Modifier.weight(1f),
+                                        gap = 10.dp,
+                                        padding = ODSPadding(all = 14.dp),
+                                        cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
+                                        border = ODSBorder(
+                                            width = 2.dp,
+                                            colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                                        ),
                                         horizontalAlignment = Alignment.Start,
-                                        verticalAlignment = Alignment.Top,
-                                        horizontalArrangement = Arrangement.Start
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Start,
+                                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
                                     ) {
-                                        ODSRow(
-                                            modifier = Modifier.weight(1f),
-                                            gap = 10.dp,
-                                            padding = ODSPadding(all = 14.dp),
-                                            cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-                                            border = ODSBorder(
-                                                width = 2.dp,
-                                                colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                                        ODSIcon(
+                                            iconModel = ODSIconModel(
+                                                drawableRes = R.drawable.ic_search,
+                                                contentDescription = "Search"
                                             ),
-                                            horizontalAlignment = Alignment.Start,
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Start,
-                                            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
-                                        ) {
-                                            ODSIcon(
-                                                iconModel = ODSIconModel(
-                                                    drawableRes = R.drawable.ic_search,
-                                                    contentDescription = "Search"
-                                                ),
-                                                tint = scheme.basicTextRecessive.getColor(),
-                                                modifier = Modifier.size(18.dp)
-                                            )
+                                            tint = scheme.basicTextRecessive.getColor(),
+                                            modifier = Modifier.size(18.dp)
+                                        )
 
-                                            BasicTextField(
-                                                value = searchQuery,
-                                                onValueChange = { searchQuery = it },
-                                                textStyle = TextStyle(
-                                                    fontFamily = funnelSansFontFamily,
-                                                    fontSize = 14.sp,
-                                                    color = scheme.basicTextDominant.getColor()
-                                                ),
-                                                cursorBrush = SolidColor(scheme.basicAccent.getColor()),
-                                                modifier = Modifier.weight(1f),
-                                                singleLine = true,
-                                                decorationBox = { innerTextField ->
-                                                    if (searchQuery.isEmpty()) {
-                                                        ODSText(
-                                                            text = "Search conversations...",
-                                                            style = ODSTextStyles.bodySRegular,
-                                                            color = scheme.basicTextRecessive
-                                                        )
-                                                    }
-                                                    innerTextField()
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // ── Item 5: Conversations Section Header ──────────────────
-                                item {
-                                    ODSColumn(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = ODSVariables.spacingLayout1),
-                                        gap = ODSVariables.spacingComponent3,
-                                        verticalAlignment = Alignment.Top,
-                                        horizontalAlignment = Alignment.Start,
-                                        verticalArrangement = Arrangement.Top
-                                    ) {
-                                        displayConversations.forEachIndexed { index, conv ->
-                                            ConversationItem(
-                                                index = index,
-                                                conv = conv,
-                                                scheme = scheme,
-                                                onClick = {
-                                                    onNavigateToChat(
-                                                        conv.modelId,
-                                                        conv.modelName
+                                        BasicTextField(
+                                            value = searchQuery,
+                                            onValueChange = { searchQuery = it },
+                                            textStyle = TextStyle(
+                                                fontFamily = funnelSansFontFamily,
+                                                fontSize = 14.sp,
+                                                color = scheme.basicTextDominant.getColor()
+                                            ),
+                                            cursorBrush = SolidColor(scheme.basicAccent.getColor()),
+                                            modifier = Modifier.weight(1f),
+                                            singleLine = true,
+                                            decorationBox = { innerTextField ->
+                                                if (searchQuery.isEmpty()) {
+                                                    ODSText(
+                                                        text = "Search conversations...",
+                                                        style = ODSTextStyles.bodySRegular,
+                                                        color = scheme.basicTextRecessive
                                                     )
                                                 }
-                                            )
-                                        }
+                                                innerTextField()
+                                            }
+                                        )
                                     }
                                 }
+                            }
 
-                                // Bottom navigation dock clearance spacer
-                                item {
-                                    Spacer(modifier = Modifier.height(96.dp))
+                            // ── Item 5: Conversations Section Header ──────────────────
+                            item {
+                                ODSColumn(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = ODSVariables.spacingLayout1),
+                                    gap = ODSVariables.spacingComponent3,
+                                    verticalAlignment = Alignment.Top,
+                                    horizontalAlignment = Alignment.Start,
+                                    verticalArrangement = Arrangement.Top
+                                ) {
+                                    displayConversations.forEachIndexed { index, conv ->
+                                        ConversationItem(
+                                            index = index,
+                                            conv = conv,
+                                            showDivider = index < displayConversations.lastIndex,
+                                            scheme = scheme,
+                                            onClick = {
+                                                onNavigateToChat(
+                                                    conv.modelId,
+                                                    conv.modelName,
+                                                    conv.id
+                                                )
+                                            }
+                                        )
+                                    }
                                 }
+                            }
+
+                            // Bottom navigation dock clearance spacer
+                            item {
+                                Spacer(modifier = Modifier.height(96.dp))
                             }
                         }
                     }
@@ -396,8 +323,6 @@ private fun InboxEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(Modifier.weight(0.35f))
-
         // ── Visual Emblem Illustration ───────────────────────────────────────
         ODSBox(
             modifier = Modifier.size(210.dp),
@@ -516,7 +441,7 @@ private fun InboxEmptyState(
             modifier = Modifier.padding(horizontal = ODSVariables.spacingLayout1)
         )
 
-        Spacer(Modifier.weight(0.65f))
+        Spacer(Modifier.height(ODSVariables.spacingComponent6))
 
         // ── Full-Width Primary Action CTA ─────────────────────────────────────
         ODSBox(

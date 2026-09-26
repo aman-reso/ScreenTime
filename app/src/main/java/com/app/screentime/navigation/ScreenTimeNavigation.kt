@@ -39,12 +39,22 @@ import com.app.screentime.feature.discover.DiscoverMapScreen
 import com.app.screentime.feature.discover.HomeFeedScreen
 import com.app.screentime.feature.discover.TermsOfServiceScreen
 import com.app.screentime.feature.preferences.PreferencesScreen
+import com.app.screentime.feature.profile.ControlAccountScreen
 import com.app.screentime.feature.profile.EditProfileScreen
 import com.app.screentime.feature.profile.NotificationsScreen
 import com.app.screentime.feature.profile.ProfileDetailScreen
 import com.app.screentime.feature.profile.UserProfileScreen
 import com.app.screentime.feature.wallet.AddFundsScreen
 import com.app.screentime.feature.wallet.TransactionsScreen
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.app.screentime.feature.preferences.NotificationPermissionBottomSheet
+import androidx.compose.material3.SnackbarHostState
+import com.app.screentime.core.ui.util.ODSSnackbarHost
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.foundations.ODSColorModel
@@ -80,13 +90,31 @@ fun ScreenTimeNavigation(
     deeplinkUri: Uri? = null,
     incomingCall: Pair<String, String>? = null,
     onClearIncomingCall: () -> Unit = {},
+    pendingNotificationScreen: Screen? = null,
+    onClearPendingNotificationScreen: () -> Unit = {},
     onLogout: () -> Unit = {},
     scheme: ODSTheme = zonaODSTheme,
     isInPipMode: Boolean = false,
     callViewModel: CallViewModel = hiltViewModel()
 ) {
-    val backStack = rememberNavBackStack(Screen.Home, Screen.DatingPreferences)
-    var selectedIndex by remember { mutableIntStateOf(0) } // Default active on Home (index 0)
+    val context = LocalContext.current
+    val isOnboardingCompleted = remember {
+        val prefs =
+            context.getSharedPreferences("screentime_prefs", android.content.Context.MODE_PRIVATE)
+        val sessionPrefs = context.getSharedPreferences(
+            "chatty_session_prefs",
+            android.content.Context.MODE_PRIVATE
+        )
+        prefs.getBoolean(
+            "onboarding_completed",
+            false
+        ) || sessionPrefs.getBoolean("onboarding_completed", false)
+    }
+    val initialScreen = if (isOnboardingCompleted) (pendingNotificationScreen
+        ?: Screen.Home) else Screen.DatingPreferences
+    val backStack = rememberNavBackStack(initialScreen)
+    val snackbarHostState = remember { SnackbarHostState() }
+    var selectedIndex by remember { mutableIntStateOf(if (isOnboardingCompleted) 0 else -1) }
     val callState by callViewModel.callState.collectAsState()
     val isModel = callViewModel.isCurrentUserModel()
 
@@ -100,6 +128,23 @@ fun ScreenTimeNavigation(
                 backStack.add(Screen.VoiceCall(callerId, callerName))
             }
             onClearIncomingCall()
+        }
+    }
+
+    LaunchedEffect(pendingNotificationScreen) {
+        pendingNotificationScreen?.let { targetScreen ->
+            if (backStack.lastOrNull() != targetScreen) {
+                if (targetScreen in bottomNavRoutes) {
+                    if (backStack.isNotEmpty()) {
+                        backStack[backStack.lastIndex] = targetScreen
+                    } else {
+                        backStack.add(targetScreen)
+                    }
+                } else {
+                    backStack.add(targetScreen)
+                }
+            }
+            onClearPendingNotificationScreen()
         }
     }
 
@@ -133,9 +178,24 @@ fun ScreenTimeNavigation(
             }
         }, entryProvider = entryProvider {
             entry<Screen.DatingPreferences> {
-                PreferencesScreen (modifier = Modifier.fillMaxSize(), scheme = scheme, onBack = {
-                    if (backStack.size > 1) backStack.removeLastOrNull()
+                PreferencesScreen(modifier = Modifier.fillMaxSize(), scheme = scheme, onBack = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    } else {
+                        backStack.removeLastOrNull()
+                        backStack.add(Screen.Home)
+                    }
                 }, onComplete = {
+                    val prefs = context.getSharedPreferences(
+                        "screentime_prefs",
+                        android.content.Context.MODE_PRIVATE
+                    )
+                    val sessionPrefs = context.getSharedPreferences(
+                        "chatty_session_prefs",
+                        android.content.Context.MODE_PRIVATE
+                    )
+                    prefs.edit().putBoolean("onboarding_completed", true).apply()
+                    sessionPrefs.edit().putBoolean("onboarding_completed", true).apply()
                     backStack.removeLastOrNull()
                     if (backStack.lastOrNull() != Screen.Home) {
                         backStack.add(Screen.Home)
@@ -156,6 +216,9 @@ fun ScreenTimeNavigation(
                     onNavigateToPreferences = {
                         backStack.add(Screen.DatingPreferences)
                     },
+                    onNavigateToNotifications = {
+                        backStack.add(Screen.Notifications)
+                    }
                 )
             }
 
@@ -173,6 +236,9 @@ fun ScreenTimeNavigation(
                     onNavigateToPreferences = {
                         backStack.add(Screen.DatingPreferences)
                     },
+                    onNavigateToNotifications = {
+                        backStack.add(Screen.Notifications)
+                    }
                 )
             }
 
@@ -181,12 +247,8 @@ fun ScreenTimeNavigation(
                 DiscoverMapScreen(
                     onNavigateToChat = { modelId, modelName ->
                         backStack.add(Screen.Chat(modelId, modelName))
-                    }, onNavigateToList = {
-                        backStack[backStack.lastIndex] = Screen.Home
                     }, onNavigateToProfile = { userId, userName ->
                         backStack.add(Screen.ProfileDetail(userId, userName))
-                    }, onOpenTerms = {
-                        backStack.add(Screen.TermsOfService)
                     }, modifier = Modifier.fillMaxSize(), scheme = scheme
                 )
             }
@@ -206,8 +268,8 @@ fun ScreenTimeNavigation(
                 ChatListScreen(
                     modifier = Modifier.fillMaxSize(),
                     scheme = scheme,
-                    onNavigateToChat = { modelId, modelName ->
-                        backStack.add(Screen.Chat(modelId, modelName))
+                    onNavigateToChat = { modelId, modelName, conversationId ->
+                        backStack.add(Screen.Chat(modelId, modelName, conversationId))
                     },
                     onNavigateToProfile = { userId, userName ->
                         backStack.add(Screen.ProfileDetail(userId, userName))
@@ -222,6 +284,7 @@ fun ScreenTimeNavigation(
                 ChatScreen(
                     modelId = key.modelId,
                     modelName = key.modelName,
+                    conversationId = key.conversationId,
                     modifier = Modifier.fillMaxSize(),
                     scheme = scheme,
                     onBackClick = { if (backStack.size > 1) backStack.removeLastOrNull() },
@@ -236,12 +299,12 @@ fun ScreenTimeNavigation(
                     })
             }
 
-            // ── Screen 4: User Profile Detail ("Jessica's Profile") ─────
+            // ── Screen 4: User Profile Detail ─────────────────────────
             entry<Screen.ProfileDetail> { key ->
                 ProfileDetailScreen(
                     userId = key.userId,
                     userName = key.userName,
-                    isMyProfile = key.userId == "me" || key.userId == "jessica_maple",
+                    isMyProfile = key.userId == "me",
                     onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
                     onNavigateToChat = { modelId, modelName ->
                         backStack.add(Screen.Chat(modelId, modelName))
@@ -346,11 +409,11 @@ fun ScreenTimeNavigation(
                 )
             }
 
-            // ── Tab 4: User Profile ("Jessica's Profile") ──────────────
+            // ── Tab 4: User Profile ─────────────────────────────────────
             entry<Screen.Profile> {
                 ProfileDetailScreen(
-                    userId = "jessica_maple",
-                    userName = "Jessica Maple",
+                    userId = "me",
+                    userName = "My Profile",
                     isMyProfile = true,
                     onBack = {
                         if (backStack.size > 1) backStack.removeLastOrNull()
@@ -380,9 +443,19 @@ fun ScreenTimeNavigation(
                     onNavigateToTransactions = { backStack.add(Screen.Transactions) },
                     onNavigateToEditProfile = { backStack.add(Screen.EditProfile) },
                     onNavigateToNotifications = { backStack.add(Screen.Notifications) },
+                    onNavigateToControlAccount = { backStack.add(Screen.ControlAccount) },
                     onNavigateToProfileDetail = { userId, userName ->
                         backStack.add(Screen.ProfileDetail(userId, userName))
                     })
+            }
+
+            // ── Control Account Screen ──────────────────────────────────
+            entry<Screen.ControlAccount> {
+                ControlAccountScreen(
+                    onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
+                    onLogout = onLogout,
+                    scheme = scheme
+                )
             }
         })
 
@@ -469,5 +542,12 @@ fun ScreenTimeNavigation(
                     callViewModel.rejectIncomingCall()
                 })
         }
+
+        // ── Global ODS Toast / Snackbar Host ─────────────────────────────────
+        ODSSnackbarHost(
+            hostState = snackbarHostState,
+            scheme = scheme,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }

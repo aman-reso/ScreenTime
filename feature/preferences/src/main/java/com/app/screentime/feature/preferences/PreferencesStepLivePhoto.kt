@@ -26,7 +26,6 @@ import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSEffect
@@ -209,11 +208,20 @@ fun PreferencesStepLivePhoto(
     scheme: ODSTheme,
     modifier: Modifier = Modifier
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
         if (bitmap != null) {
-            onCaptureLivePhoto("https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop")
+            try {
+                val file = java.io.File(context.cacheDir, "live_photo_${System.currentTimeMillis()}.jpg")
+                java.io.FileOutputStream(file).use { out ->
+                    bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, out)
+                }
+                onCaptureLivePhoto(android.net.Uri.fromFile(file).toString())
+            } catch (e: Exception) {
+                // File writing failed
+            }
         }
     }
 

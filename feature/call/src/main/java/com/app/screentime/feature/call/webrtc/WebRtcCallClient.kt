@@ -2,7 +2,7 @@ package com.app.screentime.feature.call.webrtc
 
 import android.content.Context
 import android.util.Log
-import com.app.screentime.core.network.websocket.ChattyWebSocketClient
+import com.app.screentime.core.network.websocket.WinterWebSocketClient
 import com.app.screentime.core.network.websocket.WSEventTypes
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.JsonObject
@@ -10,10 +10,11 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import livekit.org.webrtc.*
 import java.util.concurrent.Executors
+import kotlin.time.Duration.Companion.milliseconds
 
 class WebRtcCallClient(
     private val context: Context,
-    private val wsClient: ChattyWebSocketClient,
+    private val wsClient: WinterWebSocketClient,
     private val callId: String,
     private val remoteUserId: String,
     private val isVideo: Boolean,
@@ -74,7 +75,7 @@ class WebRtcCallClient(
 
             // Fallback timeout: if P2P does not connect within 10 seconds, trigger LiveKit fallback
             connectionTimeoutJob = scope.launch {
-                delay(10000)
+                delay(10000.milliseconds)
                 if (!isClosed && peerConnection?.iceConnectionState() != PeerConnection.IceConnectionState.CONNECTED &&
                     peerConnection?.iceConnectionState() != PeerConnection.IceConnectionState.COMPLETED
                 ) {
@@ -307,9 +308,11 @@ class WebRtcCallClient(
 
     private fun sendIceCandidate(candidate: IceCandidate) {
         val payloadObj = buildJsonObject {
+            put("candidate", candidate.sdp)
+            put("sdpMid", candidate.sdpMid)
+            put("sdpMLineIndex", candidate.sdpMLineIndex)
             put("sdp_mid", candidate.sdpMid)
             put("sdp_m_line_index", candidate.sdpMLineIndex)
-            put("candidate", candidate.sdp)
         }
         wsClient.sendWebRTCSignaling(WSEventTypes.WEBRTC_ICE_CANDIDATE, callId, remoteUserId, payloadObj.toString())
     }

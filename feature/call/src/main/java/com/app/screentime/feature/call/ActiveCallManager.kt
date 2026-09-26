@@ -2,9 +2,9 @@ package com.app.screentime.feature.call
 
 import android.content.Context
 import android.util.Log
-import com.app.screentime.core.network.api.ChattyApi
+import com.app.screentime.core.network.api.WinterApi
 import com.app.screentime.core.network.session.SessionManager
-import com.app.screentime.core.network.websocket.ChattyWebSocketClient
+import com.app.screentime.core.network.websocket.WinterWebSocketClient
 import com.app.screentime.core.network.websocket.WSEventTypes
 import com.app.screentime.core.network.websocket.WSMessage
 import com.app.screentime.feature.call.domain.usecase.AcceptCallUseCase
@@ -40,9 +40,9 @@ import livekit.org.webrtc.VideoTrack as RtcVideoTrack
 @Singleton
 class ActiveCallManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val api: ChattyApi,
+    private val api: WinterApi,
     private val sessionManager: SessionManager,
-    private val wsClient: ChattyWebSocketClient,
+    private val wsClient: WinterWebSocketClient,
     private val startCallUseCase: StartCallUseCase,
     private val acceptCallUseCase: AcceptCallUseCase,
     private val rejectCallUseCase: RejectCallUseCase,
@@ -138,7 +138,7 @@ class ActiveCallManager @Inject constructor(
                 }
             }
 
-            WSEventTypes.CALL_ACTIVE -> {
+            WSEventTypes.CALL_ACTIVE, WSEventTypes.CALL_ACCEPTED -> {
                 incomingCallTimeoutJob?.cancel()
                 CallNotificationHelper.cancelIncomingCallNotification(context)
                 audioHelper.stopDialingTone()
@@ -308,31 +308,15 @@ class ActiveCallManager @Inject constructor(
                     }
                     return@launch
                 }
-                val token = sessionManager.token ?: ""
-                val callTypeStr = if (_callState.value.callType == CallType.VIDEO) "video" else "voice"
-                
-                var livekitUrl = "wss://connecto-7sxi06vp.livekit.cloud"
-                var roomToken = ""
-
-                try {
-                    if (token.isNotBlank()) {
-                        val tokenResp = api.getCallToken(token, targetUserId, callTypeStr)
-                        livekitUrl = tokenResp.livekit_url
-                        roomToken = tokenResp.token
-                    } else {
-                        throw Exception("No auth token")
-                    }
-                } catch (e: Exception) {
-                    Log.w("ActiveCallManager", "Backend call token endpoint returned: ${e.message}, using direct fallback")
-                    val myId = sessionManager.userId ?: "user_${System.currentTimeMillis()}"
-                    val roomName = if (myId < targetUserId) "call_${myId}_${targetUserId}" else "call_${targetUserId}_${myId}"
-                    roomToken = generateClientLiveKitToken(
-                        apiKey = "APImr59LGqwEVuj",
-                        apiSecret = "cvdsoq3pKQusl4HfAHPxSeGXvHcM5atVOWQ2WozyxF2",
-                        identity = myId,
-                        roomName = roomName
-                    )
-                }
+                val myId = sessionManager.userId ?: "user_${System.currentTimeMillis()}"
+                val roomName = if (myId < targetUserId) "call_${myId}_${targetUserId}" else "call_${targetUserId}_${myId}"
+                val livekitUrl = "wss://connecto-7sxi06vp.livekit.cloud"
+                val roomToken = generateClientLiveKitToken(
+                    apiKey = "APImr59LGqwEVuj",
+                    apiSecret = "cvdsoq3pKQusl4HfAHPxSeGXvHcM5atVOWQ2WozyxF2",
+                    identity = myId,
+                    roomName = roomName
+                )
 
                 room.connect(livekitUrl, roomToken)
                 room.localParticipant.setMicrophoneEnabled(!_callState.value.isMuted)
@@ -398,19 +382,23 @@ class ActiveCallManager @Inject constructor(
         )
 
         val isModel = isCurrentUserModel()
-        val token = sessionManager.token ?: ""
+        val token = sessionManager.getToken() ?: ""
 
         scope.launch {
             try {
                 if (!isModel && token.isNotBlank()) {
                     try {
                         val check = api.checkCallBalance(token, targetId, if (callType == CallType.VIDEO) "video" else "voice")
-                        val effectiveBalance = maxOf(1000.0, check.balance)
-                        val effectiveRate = check.rate_per_min.takeIf { it > 0 } ?: ratePerMin
-                        val effectiveMinRequired = check.min_required.takeIf { it > 0 } ?: effectiveRate
+                        val effectiveBalance = check.effectiveBalance
+                        val effectiveRate = check.effectiveRate.takeIf { it > 0 } ?: ratePerMin
+                        val effectiveMinRequired = check.effectiveMinRequired
 
-                        if (!check.can_call && effectiveBalance < effectiveMinRequired) {
+                        if (!check.isCallAllowed || (effectiveMinRequired > 0.0 && effectiveBalance < effectiveMinRequired)) {
                             audioHelper.stopDialingTone()
+                            val balanceMsg = when {
+                                check.message.isNotBlank() && !check.message.contains("Balance check completed", ignoreCase = true) -> check.message
+                                else -> "Insufficient balance to place call."
+                            }
                             _callState.value = CallUiState(
                                 status = CallStatus.INSUFFICIENT_BALANCE,
                                 callType = callType,
@@ -419,14 +407,20 @@ class ActiveCallManager @Inject constructor(
                                 ratePerMin = effectiveRate,
                                 currentBalance = effectiveBalance,
                                 minRequiredBalance = effectiveMinRequired,
-                                balanceMessage = check.message.ifBlank { "Insufficient balance to place call." }
+                                balanceMessage = balanceMsg
                             )
                             return@launch
                         } else {
+                            val durationSec = when {
+                                check.max_duration_sec > 0 -> check.max_duration_sec
+                                effectiveRate > 0 -> ((effectiveBalance / effectiveRate) * 60).toInt()
+                                else -> 0
+                            }
                             _callState.value = _callState.value.copy(
+                                ratePerMin = effectiveRate,
                                 currentBalance = effectiveBalance,
                                 minRequiredBalance = effectiveMinRequired,
-                                remainingSec = if (check.max_duration_sec > 0) check.max_duration_sec else ((effectiveBalance / effectiveRate) * 60).toInt()
+                                remainingSec = durationSec
                             )
                         }
                     } catch (e: Exception) {
@@ -446,7 +440,7 @@ class ActiveCallManager @Inject constructor(
                 initWebRtc(targetId, callId, isVideo = callType == CallType.VIDEO, isCaller = true)
 
                 // 2. Send Call Request via WebSocket Signaling
-                startCallUseCase(targetId, if (callType == CallType.VIDEO) "video" else "voice")
+                startCallUseCase(targetId, if (callType == CallType.VIDEO) "video" else "voice", sessionId = callId)
             } catch (e: Exception) {
                 Log.e("ActiveCallManager", "Failed to start call: ${e.message}", e)
                 cleanupAndEnd(reason = "Failed to connect: ${e.message}")
@@ -523,6 +517,11 @@ class ActiveCallManager @Inject constructor(
             }
         }
     }
+
+    fun hangup(reason: String? = null) {
+        endCall(reason)
+    }
+
 
     fun toggleMute() {
         val newMuted = !_callState.value.isMuted

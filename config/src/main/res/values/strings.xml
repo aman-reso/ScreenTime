@@ -1,7 +1,7 @@
 <resources>
     <!-- App Name -->
-    <string name="app_name">Chatty</string>
-    <string name="google_web_client_id">203569877791-apps.googleusercontent.com</string>
+    <string name="app_name">Winter</string>
+    <string name="google_web_client_id">203569877791-c1ke6b8kg28gg7og5ish10oo26b9ffsb.apps.googleusercontent.com</string>
     <string name="sign_in_with_google">Sign in with Google</string>
     <string name="continue_with_google">Continue with Google</string>
     <string name="widget_description">Monitor your daily screen time and app usage</string>

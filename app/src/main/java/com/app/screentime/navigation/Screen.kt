@@ -45,7 +45,7 @@ sealed class Screen : NavKey {
 
     // ── Communication & Call Screens ──────────────────────────────────────────
     @Serializable
-    data class Chat(val modelId: String, val modelName: String) : Screen()
+    data class Chat(val modelId: String, val modelName: String, val conversationId: String? = null) : Screen()
 
     @Serializable
     data class VoiceCall(
@@ -96,4 +96,7 @@ sealed class Screen : NavKey {
 
     @Serializable
     object Account : Screen()
+
+    @Serializable
+    object ControlAccount : Screen()
 }

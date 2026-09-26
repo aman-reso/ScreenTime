@@ -1,6 +1,7 @@
 package com.app.screentime.feature.profile
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,61 +73,21 @@ fun NotificationsScreen(
 
     val notifications = remember {
         listOf(
-            NotificationItem(id = "sec_today", title = "TODAY", timeAgo = "", message = "", category = "", isUnread = false, isSectionHeader = true),
+            NotificationItem(id = "sec_today", title = "ACTIVITY", timeAgo = "", message = "", category = "", isUnread = false, isSectionHeader = true),
             NotificationItem(
                 id = "n1",
-                title = "New Match! 🎉",
-                timeAgo = "2m ago",
-                message = "You and Elena matched! Send her a message to kick off the conversation.",
-                category = "Matches",
-                isUnread = true,
-                actionText = "Say Hello 👋",
-                avatarUrl = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&auto=format&fit=crop&q=80"
-            ),
-            NotificationItem(
-                id = "n2",
-                title = "Jessica Ross",
-                timeAgo = "15m ago",
-                message = "Hey Alex! Are we still on for coffee this Thursday? ☕",
-                category = "Messages",
-                isUnread = true,
-                actionText = "Reply",
-                avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80"
-            ),
-            NotificationItem(
-                id = "n3",
-                title = "Someone liked you!",
-                timeAgo = "2h ago",
-                message = "A premium subscriber from Manhattan liked your profile. Reveal who they are!",
-                category = "Matches",
-                isUnread = true,
-                actionText = "Reveal Matches ✨",
-                avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"
-            ),
-            NotificationItem(id = "sec_yest", title = "YESTERDAY", timeAgo = "", message = "", category = "", isUnread = false, isSectionHeader = true),
-            NotificationItem(
-                id = "n4",
-                title = "Profile Views",
-                timeAgo = "1d ago",
-                message = "Elena and 3 other people viewed your profile yesterday. Keep it active!",
-                category = "Activity",
-                isUnread = false,
-                iconRes = R.drawable.ic_eye
-            ),
-            NotificationItem(
-                id = "n5",
                 title = "Security Alert",
-                timeAgo = "1d ago",
-                message = "Account Secured: Your password was updated successfully. If this wasn't you, contact support immediately.",
+                timeAgo = "Just now",
+                message = "Account Secured: Logged in successfully.",
                 category = "Activity",
                 isUnread = false,
                 iconRes = R.drawable.ic_info
             ),
             NotificationItem(
-                id = "n6",
-                title = "Zona Wallet Refreshed",
-                timeAgo = "1d ago",
-                message = "Your weekly premium allowance has been loaded! +120 ZONA Credits successfully added.",
+                id = "n2",
+                title = "Connect Wallet Active",
+                timeAgo = "Today",
+                message = "Your wallet is active and ready for calls and messaging.",
                 category = "Activity",
                 isUnread = false,
                 iconRes = R.drawable.coin_icon
@@ -152,7 +114,7 @@ fun NotificationsScreen(
                 .navigationBarsPadding(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // ── Top Bar (Rule #4: Generic 16sp Title) ─────────────────────────
+            // ── Top Bar ───────────────────────────────────────────────────────
             ODSRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -161,48 +123,36 @@ fun NotificationsScreen(
                         vertical = ODSVariables.spacingComponent4
                     ),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Start,
+                gap = ODSVariables.spacingComponent3
             ) {
-                ODSRow(
-                    gap = ODSVariables.spacingComponent3,
-                    horizontalAlignment = Alignment.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ODSText(
-                        text = "Notifications",
-                        style = ODSTextStyles.bodyMBold, // Max 16sp generic title
-                        color = scheme.basicTextDominant
-                    )
-                    ODSRow(
-                        padding = ODSPadding(top = 2.dp, bottom = 2.dp, left = 8.dp, right = 8.dp),
-                        cornerRadius = ODSCorners(all = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
-                    ) {
-                        ODSText(
-                            text = "3 New",
-                            style = ODSTextStyles.microcopyBold,
-                            color = scheme.basicBackgroundCard
+                ODSIcon(
+                    iconModel = ODSIconModel(
+                        drawableRes = R.drawable.ic_arrow_left,
+                        contentDescription = "Back"
+                    ),
+                    tint = scheme.basicTextDominant.getColor(),
+                    modifier = Modifier
+                        .size(ODSVariables.sizingComponent8)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onBack
                         )
-                    }
-                }
+                )
 
                 ODSText(
-                    modifier = Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { /* Mark all read */ }
-                    ),
-                    text = "Mark all read",
-                    style = ODSTextStyles.bodySBold,
-                    color = scheme.basicAccent
+                    text = "Notifications",
+                    style = ODSTextStyles.bodyMBold,
+                    color = scheme.basicTextDominant
                 )
             }
 
-            // ── Filter Tabs Row ─────────────────────────────────────────────
+            // ── Filter Tabs Row (Horizontally Scrollable) ─────────────────────
             ODSRow(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = ODSVariables.spacingLayout1),
                 gap = ODSVariables.spacingComponent3,
                 verticalAlignment = Alignment.CenterVertically

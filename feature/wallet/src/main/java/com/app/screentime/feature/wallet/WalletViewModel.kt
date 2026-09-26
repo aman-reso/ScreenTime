@@ -2,12 +2,12 @@ package com.app.screentime.feature.wallet
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.screentime.core.model.UserRole
 import com.app.screentime.core.model.WalletTransaction
 import com.app.screentime.core.network.dto.WalletPackDto
 import com.app.screentime.core.network.dto.toWalletTransaction
-import com.app.screentime.feature.wallet.domain.usecase.GetWalletPacksUseCase
-import com.app.screentime.feature.wallet.domain.usecase.GetWalletUseCase
-import com.app.screentime.feature.wallet.domain.usecase.RechargeWalletUseCase
+import com.app.screentime.core.network.session.SessionManager
+import com.app.screentime.feature.wallet.domain.usecase.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,15 +15,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-import com.app.screentime.core.network.session.SessionManager
-import com.app.screentime.core.model.UserRole
-
 data class WalletUiState(
     val balance: Double = 0.0,
+    val creditBalance: Int = 0,
+    val voiceMinutesAvailable: Int = 0,
+    val videoMinutesAvailable: Int = 0,
     val totalSpent: Double = 0.0,
     val totalEarned: Double = 0.0,
     val welcomeBonus: Double = 0.0,
     val transactions: List<WalletTransaction> = emptyList(),
+    val transactionsPage: Int = 1,
+    val hasMoreTransactions: Boolean = false,
+    val isLoadingTransactions: Boolean = false,
     val packs: List<WalletPackDto> = emptyList(),
     val selectedPack: WalletPackDto? = null,
     val isModel: Boolean = false,
@@ -36,6 +39,8 @@ data class WalletUiState(
 @HiltViewModel
 class WalletViewModel @Inject constructor(
     private val getWalletUseCase: GetWalletUseCase,
+    private val getWalletTransactionsUseCase: GetWalletTransactionsUseCase,
+    private val getWalletInfoUseCase: GetWalletInfoUseCase,
     private val getWalletPacksUseCase: GetWalletPacksUseCase,
     private val rechargeWalletUseCase: RechargeWalletUseCase,
     private val sessionManager: SessionManager
@@ -43,8 +48,7 @@ class WalletViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(
         WalletUiState(
-            isModel = false,
-            balance = 1000.0
+            isModel = sessionManager.userRole == UserRole.MODEL
         )
     )
     val uiState: StateFlow<WalletUiState> = _uiState.asStateFlow()
@@ -52,21 +56,27 @@ class WalletViewModel @Inject constructor(
     init {
         loadWallet()
         loadPacks()
+        loadTransactions(page = 1, refresh = true)
     }
 
     fun loadWallet() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            getWalletInfoUseCase().onSuccess { info ->
+                _uiState.value = _uiState.value.copy(
+                    creditBalance = info.credit_balance,
+                    voiceMinutesAvailable = info.voice_minutes_available,
+                    videoMinutesAvailable = info.video_minutes_available
+                )
+            }
             getWalletUseCase().onSuccess { response ->
-                val txs = response.transactions?.map { it.toWalletTransaction() } ?: emptyList()
-                val isUser = sessionManager.userRole == UserRole.USER
-                val displayBalance = if (isUser && response.wallet.balance < 1000.0) 1000.0 else response.wallet.balance
+                val serverBalance = response.wallet.balance
+                val displayBalance = if (serverBalance > 0.0) serverBalance else (_uiState.value.creditBalance.toDouble())
                 _uiState.value = _uiState.value.copy(
                     balance = displayBalance,
                     totalSpent = response.wallet.total_spent,
                     totalEarned = response.wallet.total_earned,
                     welcomeBonus = response.wallet.bonus_given,
-                    transactions = txs,
                     isLoading = false
                 )
             }.onFailure { error ->
@@ -75,6 +85,37 @@ class WalletViewModel @Inject constructor(
                     error = error.localizedMessage
                 )
             }
+        }
+    }
+
+    fun loadTransactions(page: Int = 1, refresh: Boolean = false) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingTransactions = true)
+            getWalletTransactionsUseCase(page = page, limit = 20).onSuccess { data ->
+                val txs = data.items.map { it.toWalletTransaction() }
+                val merged = if (refresh) txs else (_uiState.value.transactions + txs).distinctBy { it.id }
+                
+                // If the latest transaction has running balance_after, sync hero balance
+                val latestBalance = txs.firstOrNull()?.balanceAfter?.takeIf { it > 0.0 }
+                val currentBal = latestBalance ?: _uiState.value.balance
+
+                _uiState.value = _uiState.value.copy(
+                    transactions = merged,
+                    balance = currentBal,
+                    transactionsPage = data.page,
+                    hasMoreTransactions = data.has_more,
+                    isLoadingTransactions = false
+                )
+            }.onFailure {
+                _uiState.value = _uiState.value.copy(isLoadingTransactions = false)
+            }
+        }
+    }
+
+    fun loadNextTransactionsPage() {
+        val state = _uiState.value
+        if (!state.isLoadingTransactions && state.hasMoreTransactions) {
+            loadTransactions(page = state.transactionsPage + 1, refresh = false)
         }
     }
 
@@ -105,6 +146,7 @@ class WalletViewModel @Inject constructor(
                     rechargeSuccess = true
                 )
                 loadWallet()
+                loadTransactions(page = 1, refresh = true)
                 onSuccess()
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(

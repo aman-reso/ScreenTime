@@ -15,14 +15,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.screentime.core.model.Conversation
 import com.app.screentime.core.ui.theme.zonaODSTheme
-import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSImage
 import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
-import com.telekom.odsystem.foundations.HexColor
+import com.telekom.odsystem.atoms.divider.ODSDivider
+import com.telekom.odsystem.atoms.divider.ODSDividerProps
+import com.telekom.odsystem.atoms.divider.ODSDividerVariant
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
@@ -37,19 +38,19 @@ private fun formatRelativeTime(epochMs: Long): String {
         diff < 3_600_000 -> "${diff / 60_000}m ago"
         diff < 86_400_000 -> "${diff / 3_600_000}h ago"
         diff < 172_800_000 -> "Yesterday"
-        else -> "${diff / 86_400_000} days ago"
+        else -> "${diff / 86_400_000}d ago"
     }
 }
 
 /**
- * Conversation List Item (Matching Figma node-id 10-1225: https://figma.com/design/1TELYpr19qLAv99DexRNpi/Untitled?node-id=10-1225).
- *
+ * Conversation List Item (Matching Figma RADD node-id 25-251).
  * 100% constructed with Telekom ODS components and Zona tokens.
  */
 @Composable
 fun ConversationItem(
     index: Int,
     conv: Conversation,
+    showDivider: Boolean = true,
     scheme: ODSTheme = zonaODSTheme,
     onClick: () -> Unit
 ) {
@@ -62,13 +63,13 @@ fun ConversationItem(
             0 -> "2m ago"
             1 -> "3h ago"
             2 -> "Yesterday"
-            else -> "3 days ago"
+            else -> "3d ago"
         }
     }
 
     val messageText = if (conv.lastMessage.isNotBlank()) conv.lastMessage else "Say hello! 👋"
 
-    ODSRow(
+    ODSColumn(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
@@ -76,106 +77,98 @@ fun ConversationItem(
                 indication = null,
                 onClick = onClick
             ),
-        gap = 14.dp,
+        gap = 12.dp,
         padding = ODSPadding(
-            horizontal = ODSVariables.spacingLayout1,
-            vertical = ODSVariables.spacingComponent4
+            horizontal = ODSVariables.spacingComponent3
         ),
-        cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-        border = if (hasUnread) {
-            ODSBorder(
-                width = 1.dp,
-                colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
-            )
-        } else {
-            null
-        },
+        verticalAlignment = Alignment.Top,
         horizontalAlignment = Alignment.Start,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start,
-        background = if (hasUnread) {
-            listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
-        } else {
-            emptyList()
-        }
+        verticalArrangement = Arrangement.Top
     ) {
-        // ── 1. Circular Avatar (56.dp) ──────────────────────────────────────────
         ODSRow(
-            cornerRadius = ODSCorners(all = 28.dp),
-            clipContent = true,
-            horizontalAlignment = Alignment.Start,
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.Start,
-            width = 56.dp,
-            height = 56.dp
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            if (conv.modelAvatarUrl.isNotBlank()) {
-                ODSImage(
-                    modifier = Modifier.fillMaxSize(),
-                    imageModel = ODSImageModel(
-                        url = conv.modelAvatarUrl,
-                        contentDescription = conv.modelName
-                    ),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                ODSBox(
-                    modifier = Modifier.fillMaxSize(),
-                    background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSText(
-                        text = conv.modelName.take(1).uppercase(),
-                        style = ODSTextStyles.bodySBold,
-                        color = scheme.basicAccent
-                    )
-                }
-            }
-        }
-
-        // ── 2. Content Column: Name, Timestamp, Message, Unread Dot ────────────
-        ODSColumn(
-            modifier = Modifier.weight(1f),
-            gap = 4.dp,
-            verticalAlignment = Alignment.Top,
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Top
-        ) {
-            // Top Row: Name and Relative Time
+            // Left Content Row: Avatar (48.dp) + Name & Message
             ODSRow(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                ODSText(
-                    text = conv.modelName,
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicTextDominant
-                )
-                ODSText(
-                    text = timeText,
-                    style = ODSTextStyles.microcopyBold,
-                    color = if (hasUnread) scheme.basicTextDominant else scheme.basicTextRecessive
-                )
-            }
-
-            // Bottom Row: Message snippet and Unread Dot
-            ODSRow(
-                modifier = Modifier.fillMaxWidth(),
-                gap = ODSVariables.spacingComponent3,
+                modifier = Modifier.weight(1f),
+                gap = 12.dp,
                 horizontalAlignment = Alignment.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
-                ODSText(
-                    modifier = Modifier.weight(1f),
-                    text = messageText,
-                    style = if (hasUnread) ODSTextStyles.bodySRegular else ODSTextStyles.bodySRegular,
-                    color = if (hasUnread) scheme.basicTextDominant else scheme.basicTextRecessive,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
-                )
+                // 48x48 Circular Avatar
+                ODSColumn(
+                    cornerRadius = ODSCorners(all = 24.dp),
+                    clipContent = true,
+                    verticalAlignment = Alignment.Top,
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.Top,
+                    width = 48.dp,
+                    height = 48.dp
+                ) {
+                    if (conv.modelAvatarUrl.isNotBlank()) {
+                        ODSImage(
+                            modifier = Modifier.fillMaxSize(),
+                            imageModel = ODSImageModel(
+                                url = conv.modelAvatarUrl,
+                                contentDescription = conv.modelName
+                            ),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        ODSBox(
+                            modifier = Modifier.fillMaxSize(),
+                            background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSText(
+                                text = conv.modelName.take(1).uppercase(),
+                                style = ODSTextStyles.bodySBold,
+                                color = scheme.basicAccent
+                            )
+                        }
+                    }
+                }
 
+                // Name & Message Column
+                ODSColumn(
+                    modifier = Modifier.weight(1f),
+                    gap = 4.dp,
+                    verticalAlignment = Alignment.Top,
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    ODSText(
+                        text = conv.modelName,
+                        style = ODSTextStyles.bodyMBold,
+                        color = scheme.basicText
+                    )
+                    ODSText(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = messageText,
+                        style = ODSTextStyles.bodySRegular,
+                        color = if (hasUnread) scheme.basicText else scheme.basicTextRecessive,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+                }
+            }
+
+            // Right Column: Time & Unread Indicator
+            ODSColumn(
+                gap = 6.dp,
+                verticalAlignment = Alignment.Top,
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.Top,
+                width = 60.dp
+            ) {
+                ODSText(
+                    text = timeText,
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.basicTextRecessive
+                )
                 if (hasUnread) {
                     ODSBox(
                         modifier = Modifier.size(8.dp),
@@ -184,6 +177,14 @@ fun ConversationItem(
                     )
                 }
             }
+        }
+
+        // Bottom Divider Line
+        if (showDivider) {
+            ODSDivider(
+                scheme = scheme,
+                props = ODSDividerProps(variant = ODSDividerVariant.HORIZONTAL)
+            )
         }
     }
 }

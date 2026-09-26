@@ -5,7 +5,7 @@ import com.app.screentime.calling.data.model.CallSocketMessage
 import com.app.screentime.calling.domain.model.CallSession
 import com.app.screentime.calling.domain.model.CallState
 import com.app.screentime.calling.domain.repository.CallRepository
-import com.app.screentime.core.network.api.ChattyApi
+import com.app.screentime.core.network.api.WinterApi
 import com.app.screentime.core.network.session.SessionManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +14,7 @@ import javax.inject.Inject
 class CallUseCase @Inject constructor(
     private val repository: CallRepository,
     private val billingHandler: BillingTickHandler,
-    private val api: ChattyApi,
+    private val api: WinterApi,
     private val sessionManager: SessionManager
 ) {
     val callState: StateFlow<CallState> = repository.callState
@@ -22,14 +22,17 @@ class CallUseCase @Inject constructor(
 
     suspend fun startCall(receiverId: String, receiverName: String, ratePerMin: Double, callType: String = "voice") {
         val isModel = sessionManager.userRole == com.app.screentime.core.model.UserRole.MODEL
-        val token = sessionManager.token
+        val token = sessionManager.getToken()
         if (!isModel && !token.isNullOrBlank()) {
             try {
                 val check = api.checkCallBalance(token, receiverId, callType)
-                val effectiveBalance = maxOf(1000.0, check.balance)
-                val effectiveMinRequired = check.min_required.takeIf { it > 0 } ?: ratePerMin
-                if (!check.can_call && effectiveBalance < effectiveMinRequired) {
-                    val errorMsg = check.message.ifBlank { "Insufficient balance to place call. Please recharge." }
+                val effectiveBalance = check.effectiveBalance
+                val effectiveMinRequired = check.effectiveMinRequired.takeIf { it > 0 } ?: ratePerMin
+                if (!check.isCallAllowed || (effectiveMinRequired > 0.0 && effectiveBalance < effectiveMinRequired)) {
+                    val errorMsg = when {
+                        check.message.isNotBlank() && !check.message.contains("Balance check completed", ignoreCase = true) -> check.message
+                        else -> "Insufficient balance to place call. Please recharge."
+                    }
                     repository.setCallState(CallState.Ended(errorMsg, null))
                     return
                 }

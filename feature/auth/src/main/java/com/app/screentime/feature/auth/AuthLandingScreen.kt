@@ -1,7 +1,5 @@
 package com.app.screentime.feature.auth
 
-import com.app.screentime.feature.auth.R
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -17,18 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.app.screentime.core.ui.theme.ZonaColors
-import com.app.screentime.core.ui.theme.ZonaComposeColors
 import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
-import com.telekom.odsystem.atoms.ODSImage
-import com.telekom.odsystem.atoms.ODSImageModel
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
 import com.telekom.odsystem.atoms.button.ODSButton
@@ -37,7 +29,6 @@ import com.telekom.odsystem.atoms.button.ODSButtonSize
 import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
-import com.telekom.odsystem.extensions.background
 import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
@@ -46,15 +37,15 @@ import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
- * ZONA Google Sign-In Authentication Screen.
+ * ZONA / Winter Onboarding & Sign-In Screen.
  * 100% constructed with Telekom ODS components.
- * Matches Left Phone in uploaded mockups (Canvas #200B4D · Google button #FFFFFF · Brand accent #D7FF01 · Primary text #FFFFFF · Supporting text #BC9DFF).
  */
 @Composable
 fun AuthLandingScreen(
     scheme: ODSTheme = zonaODSTheme,
     uiState: AuthUiState = AuthUiState(),
     onGoogleSignInClick: () -> Unit,
+    onPhoneSignInClick: () -> Unit = {},
     onRetryClick: () -> Unit = onGoogleSignInClick,
     onPhoneChange: (String) -> Unit = {},
     onOtpChange: (String) -> Unit = {},
@@ -65,143 +56,133 @@ fun AuthLandingScreen(
 ) {
     ODSBox(
         modifier = modifier.fillMaxSize(),
-        background = listOf(ODSColorModel(hexColor = ZonaColors.CanvasDark))
+        background = listOf(ODSColorModel(hexColor = HexColor("#BCBCF0")))
     ) {
-        // ── 1. Hero Image Header (Smiling Couple at night with bokeh city lights) ──
-        ODSBox(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(380.dp)
-                .align(Alignment.TopCenter)
-        ) {
-            ODSImage(
-                imageModel = ODSImageModel(
-                    url = "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1200&auto=format&fit=crop",
-                    contentDescription = "ZONA Couples"
-                ),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            ODSBox(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                ZonaComposeColors.CanvasDark.copy(alpha = 0.1f),
-                                ZonaComposeColors.CanvasDark.copy(alpha = 0.5f),
-                                ZonaComposeColors.CanvasDark
-                            ),
-                            startY = 100f,
-                            endY = 1100f
-                        )
-                    )
-            )
-        }
-
-        // ── 2. Foreground Content (Branding, Headings, Button & Legal) ──────
         ODSColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 20.dp),
+                .padding(horizontal = 24.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(180.dp))
-
-            // ── Brand Badge & Headline ──────────────────────────────────────
+            // ── Top Content Section ─────────────────────────────────────────
             ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                gap = 16.dp
+                gap = 12.dp
             ) {
-                // "zona" Neon Lime Brand Badge
-                ODSBox(
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime)),
-                    cornerRadius = ODSCorners(all = 12.dp),
-                    padding = ODSPadding(horizontal = 16.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSText(
-                        text = "zona",
-                        style = ODSTextStyles.titleM,
-                        color = ZonaColors.TextInverse
-                    )
-                }
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Main Display Headline
-                ODSText(
-                    text = "Find Your Match\nIn Full Color.",
-                    style = ODSTextStyles.titleL,
-                    color = ZonaColors.TextPrimary,
-                    textAlign = TextAlign.Center
-                )
-
-                // Subtitle
-                ODSText(
-                    text = "Express yourself, match\nauthentically, live loudly.",
-                    style = ODSTextStyles.bodyMBold,
-                    color = ZonaColors.LavenderAlt,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // ── Error Banner (if error occurred) ────────────────────────────
-            if (!uiState.error.isNullOrBlank()) {
-                ODSBox(
-                    modifier = Modifier.fillMaxWidth(),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
-                    cornerRadius = ODSCorners(all = 14.dp),
-                    border = ODSBorder(
-                        width = 1.dp,
-                        colorList = listOf(ODSColorModel(hexColor = ZonaColors.ActionPrimary))
+                ODSIcon(
+                    iconModel = ODSIconModel(
+                        drawableRes = R.drawable.login_scene,
+                        contentDescription = "Winter Illustration"
                     ),
-                    padding = ODSPadding(horizontal = 16.dp, vertical = 10.dp)
+                    tint = HexColor.None.getColor(),
+                    modifier = Modifier
+                )
+
+                // Headline & Subtitle
+                ODSColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    gap = 8.dp,
+                    horizontalAlignment = Alignment.Start
                 ) {
                     ODSColumn(
                         modifier = Modifier.fillMaxWidth(),
-                        gap = 8.dp,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        gap = 4.dp,
+                        horizontalAlignment = Alignment.Start
                     ) {
                         ODSText(
-                            text = uiState.error,
-                            style = ODSTextStyles.bodySRegular,
-                            color = ZonaColors.ActionPrimary,
-                            textAlign = TextAlign.Center
+                            text = "Discover, Chat,",
+                            style = ODSTextStyles.titleL,
+                            color = HexColor("#11111A")
                         )
-                        ODSButton(
-                            scheme = scheme,
-                            props = ODSButtonProps(
-                                label = "Retry",
-                                variant = ODSButtonVariant.SECONDARY,
-                                size = ODSButtonSize.SMALL
-                            ),
-                            onClick = onRetryClick
-                        )
+                        ODSRow(
+                            gap = 8.dp,
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            ODSText(
+                                text = "& Find Your",
+                                style = ODSTextStyles.titleL,
+                                color = HexColor("#11111A")
+                            )
+
+                            // Highlighted "Spark." Pill Badge
+                            ODSBox(
+                                padding = ODSPadding(horizontal = 16.dp, vertical = 4.dp),
+                                cornerRadius = ODSCorners(all = 14.dp),
+                                background = listOf(ODSColorModel(hexColor = HexColor("#11111A"))),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ODSText(
+                                    text = "Spark.",
+                                    style = ODSTextStyles.titleL,
+                                    color = HexColor("#FFFFFF")
+                                )
+                            }
+                        }
+                    }
+
+                    ODSText(
+                        text = "Unveil your quirks, passions, and adventures. Let's match, chat, and explore.",
+                        style = ODSTextStyles.bodyMBold,
+                        color = HexColor("#4D4D66")
+                    )
+                }
+
+                if (!uiState.error.isNullOrBlank()) {
+                    ODSBox(
+                        modifier = Modifier.fillMaxWidth(),
+                        background = listOf(ODSColorModel(hexColor = HexColor("#FFFFFF"))),
+                        cornerRadius = ODSCorners(all = 14.dp),
+                        border = ODSBorder(
+                            width = 1.dp,
+                            colorList = listOf(ODSColorModel(hexColor = HexColor("#A7344D")))
+                        ),
+                        padding = ODSPadding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        ODSColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            gap = 8.dp,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            ODSText(
+                                text = uiState.error,
+                                style = ODSTextStyles.bodySRegular,
+                                color = HexColor("#A7344D"),
+                                textAlign = TextAlign.Center
+                            )
+                            ODSButton(
+                                scheme = scheme,
+                                props = ODSButtonProps(
+                                    label = "Retry",
+                                    variant = ODSButtonVariant.SECONDARY,
+                                    size = ODSButtonSize.SMALL
+                                ),
+                                onClick = onRetryClick
+                            )
+                        }
                     }
                 }
             }
 
-            // ── Bottom Action & Legal ────────────────────────────────────────
+            // ── Bottom Action Section (Always anchored at the bottom) ────────
             ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
+                gap = 10.dp,
                 horizontalAlignment = Alignment.CenterHorizontally,
-                gap = 16.dp
+                verticalAlignment = Alignment.Top
             ) {
                 if (uiState.isLoading) {
-                    // Loading pill
                     ODSBox(
                         modifier = Modifier.fillMaxWidth(),
-                        height = 56.dp,
-                        background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
-                        cornerRadius = ODSCorners(all = 28.dp),
-                        border = ODSBorder(
-                            width = 1.dp,
-                            colorList = listOf(ODSColorModel(hexColor = ZonaColors.Border))
-                        ),
+                        height = 48.dp,
+                        background = listOf(ODSColorModel(hexColor = HexColor("#A7344D"))),
+                        cornerRadius = ODSCorners(all = 24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         ODSRow(
@@ -214,68 +195,108 @@ fun AuthLandingScreen(
                                     drawableRes = com.telekom.odsystem.R.drawable.ic_refresh_cw,
                                     contentDescription = "Loading"
                                 ),
-                                tint = ZonaColors.ActiveLime.getColor(),
+                                tint = HexColor("#FFFFFF").getColor(),
                                 modifier = Modifier.size(20.dp)
                             )
                             ODSText(
                                 text = "Connecting...",
                                 style = ODSTextStyles.bodyMBold,
-                                color = ZonaColors.TextPrimary
+                                color = HexColor("#FFFFFF")
                             )
                         }
                     }
                 } else {
-                    // White Google Pill Button (matching mockup)
-                    ODSBox(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onGoogleSignInClick
-                            ),
-                        height = 56.dp,
-                        background = listOf(ODSColorModel(hexColor = ZonaColors.NeutralWhite)),
-                        cornerRadius = ODSCorners(all = 28.dp),
-                        contentAlignment = Alignment.Center
+                    ODSColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        gap = 8.dp,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        ODSRow(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            gap = 12.dp
-                        ) {
-                            ODSIcon(
-                                iconModel = ODSIconModel(
-                                    drawableRes = R.drawable.ic_google_logo
+                        // 1. Magenta "Sign in with Google" Pill Button
+                        ODSBox(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = onGoogleSignInClick
                                 ),
-                                tint = HexColor.None.getColor(),
-                                modifier = Modifier.size(22.dp)
-                            )
-                            ODSText(
-                                text = "Continue with Google",
-                                style = ODSTextStyles.bodyMBold,
-                                color = ZonaColors.TextInverse
-                            )
+                            height = 48.dp,
+                            background = listOf(ODSColorModel(hexColor = HexColor("#A7344D"))),
+                            cornerRadius = ODSCorners(all = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSRow(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                gap = 10.dp
+                            ) {
+                                ODSIcon(
+                                    iconModel = ODSIconModel(
+                                        drawableRes = R.drawable.ic_google_logo
+                                    ),
+                                    tint = HexColor.None.getColor(),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                ODSText(
+                                    text = "Sign in with Google",
+                                    style = ODSTextStyles.bodyMBold,
+                                    color = HexColor("#FFFFFF")
+                                )
+                            }
+                        }
+
+                        // 2. "Continue with Phone Number" Pill Button
+                        ODSBox(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = onPhoneSignInClick
+                                ),
+                            height = 48.dp,
+                            background = listOf(ODSColorModel(hexColor = HexColor("#11111A"))),
+                            cornerRadius = ODSCorners(all = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSRow(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                gap = 10.dp
+                            ) {
+                                ODSIcon(
+                                    iconModel = ODSIconModel(
+                                        drawableRes = com.telekom.odsystem.R.drawable.ic_phone
+                                    ),
+                                    tint = HexColor("#FFFFFF").getColor(),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                ODSText(
+                                    text = "Continue with Phone Number",
+                                    style = ODSTextStyles.bodyMBold,
+                                    color = HexColor("#FFFFFF")
+                                )
+                            }
                         }
                     }
                 }
 
-                // Legal Terms & Privacy
+                // Security & Legal Terms Footnote
                 ODSColumn(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    gap = 2.dp
+                    gap = 2.dp,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     ODSText(
-                        text = "By continuing, you agree to ZONA's",
-                        style = ODSTextStyles.microcopyRegular,
-                        color = ZonaColors.LavenderAlt,
+                        text = "By tapping Login, you agree to our Terms of Service.",
+                        style = ODSTextStyles.bodySRegular,
+                        color = HexColor("#4D4D66"),
                         textAlign = TextAlign.Center
                     )
                     ODSText(
-                        text = "Terms of Service  •  Privacy Policy",
-                        style = ODSTextStyles.microcopyBold,
-                        color = ZonaColors.LavenderAlt,
+                        text = "Learn how we process your data in our Privacy Policy.",
+                        style = ODSTextStyles.bodySRegular,
+                        color = HexColor("#4D4D66"),
                         textAlign = TextAlign.Center
                     )
                 }

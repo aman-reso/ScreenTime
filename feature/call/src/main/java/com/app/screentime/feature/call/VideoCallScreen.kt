@@ -129,6 +129,15 @@ fun VideoCallScreen(
                     ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         )
     }
+    var hasNotificationPermission by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+        )
+    }
     var hasInitiatedCall by rememberSaveable { mutableStateOf(false) }
 
     val targetId = when {
@@ -145,6 +154,10 @@ fun VideoCallScreen(
                 (result[Manifest.permission.RECORD_AUDIO] == true ||
                         ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
         hasCameraPermission = cameraGranted
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            hasNotificationPermission = result[Manifest.permission.POST_NOTIFICATIONS] == true ||
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        }
         val isAnsweringCall = callState.status == CallStatus.ACTIVE || callState.status == CallStatus.INCOMING
         if (cameraGranted && !hasInitiatedCall && targetId.isNotBlank() && !isAnsweringCall) {
             hasInitiatedCall = true
@@ -155,7 +168,7 @@ fun VideoCallScreen(
     LaunchedEffect(Unit) {
         val isAnsweringCall = callState.status == CallStatus.ACTIVE || callState.status == CallStatus.INCOMING
         if (!hasInitiatedCall && targetId.isNotBlank() && !isAnsweringCall) {
-            if (hasCameraPermission) {
+            if (hasCameraPermission && hasNotificationPermission) {
                 hasInitiatedCall = true
                 viewModel.startOutgoingCall(targetId, modelName, ratePerMin, CallType.VIDEO)
             } else {
@@ -193,7 +206,7 @@ fun VideoCallScreen(
                 )
 
                 ODSText(
-                    text = "Verifying coins for video call with ${modelName.ifBlank { "Jessica Maple" }} ($${ratePerMin.toInt()}/min)",
+                    text = "Verifying coins for video call with ${modelName.ifBlank { "User" }} ($${ratePerMin.toInt()}/min)",
                     style = ODSTextStyles.bodyMRegular,
                     color = ZonaColors.LavenderAlt
                 )
@@ -386,17 +399,29 @@ fun VideoCallScreen(
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            // Fullscreen portrait image fallback (Jessica Maple)
-            ODSImage(
-                imageModel = ODSImageModel(
-                    url = avatarUrl.ifBlank {
-                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85"
-                    },
-                    contentDescription = modelName
-                ),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+            // Fullscreen portrait image or placeholder
+            if (avatarUrl.isNotBlank()) {
+                ODSImage(
+                    imageModel = ODSImageModel(
+                        url = avatarUrl,
+                        contentDescription = modelName
+                    ),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                ODSBox(
+                    modifier = Modifier.fillMaxSize(),
+                    background = listOf(ODSColorModel(hexColor = ZonaColors.Dark.background)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSIcon(
+                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_user),
+                        tint = ZonaColors.LavenderAlt.getColor(),
+                        modifier = Modifier.size(96.dp)
+                    )
+                }
+            }
 
             // Dialing / Ringing Scrim Overlay
             if (callState.status == CallStatus.DIALING) {
@@ -412,7 +437,7 @@ fun VideoCallScreen(
                         gap = 6.dp
                     ) {
                         ODSText(
-                            text = "Calling ${modelName.ifBlank { "Jessica Maple" }}...",
+                            text = "Calling ${modelName.ifBlank { "User" }}...",
                             style = ODSTextStyles.bodyMBold,
                             color = ZonaColors.TextPrimary
                         )
@@ -436,7 +461,7 @@ fun VideoCallScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top-Left Status Pill: "● Jessica • 02:40"
+            // Top-Left Status Pill
             ODSRow(
                 cornerRadius = ODSCorners(all = 20.dp),
                 background = listOf(ODSColorModel(hexColor = ZonaColors.MediaOverlay)),
@@ -452,7 +477,7 @@ fun VideoCallScreen(
                 )
 
                 ODSText(
-                    text = "${modelName.ifBlank { "Jessica" }} • $formattedTime",
+                    text = "${modelName.ifBlank { "User" }} • $formattedTime",
                     style = ODSTextStyles.bodySBold,
                     color = ZonaColors.TextPrimary
                 )
@@ -506,14 +531,17 @@ fun VideoCallScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    ODSImage(
-                        imageModel = ODSImageModel(
-                            url = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80",
-                            contentDescription = "Self Preview"
-                        ),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    ODSBox(
+                        modifier = Modifier.fillMaxSize(),
+                        background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSIcon(
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.video),
+                            tint = ZonaColors.LavenderAlt.getColor(),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             } else {
                 ODSBox(
@@ -522,7 +550,7 @@ fun VideoCallScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
-                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_video),
+                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.video),
                         tint = ZonaColors.LavenderAlt.getColor(),
                         modifier = Modifier.size(32.dp)
                     )
@@ -610,7 +638,7 @@ fun VideoCallScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         ODSIcon(
-                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_video),
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.video),
                             tint = if (callState.isCameraOn) ZonaColors.TextInverse.getColor() else ZonaColors.TextPrimary.getColor(),
                             modifier = Modifier.size(28.dp)
                         )

@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,13 +34,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,12 +62,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.core.model.ModelProfile
 import com.app.screentime.core.ui.theme.ZonaColors
 import com.app.screentime.core.ui.theme.zonaODSTheme
+import androidx.compose.runtime.LaunchedEffect
 import com.app.screentime.feature.discover.components.FeedTabsHeader
 import com.app.screentime.feature.discover.components.FollowingFeedCard
 import com.app.screentime.feature.discover.components.HomeFeedCard
 import com.app.screentime.feature.discover.components.HomeFeedEmptyCard
+import com.app.screentime.feature.discover.components.HomeTopBar
+import com.app.screentime.feature.discover.components.MatchFeedCard
 import com.app.screentime.feature.discover.components.QuickViewProfileDialog
 import com.app.screentime.feature.discover.components.StoriesRow
+import com.app.screentime.feature.discover.tabs.ForYouTabContent
+import com.app.screentime.feature.discover.tabs.FollowingTabContent
+import com.app.screentime.feature.discover.tabs.MatchesTabContent
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
@@ -69,6 +91,7 @@ import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
@@ -120,7 +143,7 @@ fun Modifier.zonaShimmer(): Modifier = composed {
  * and loading / error states in media_1789901587908.png:
  * - status-bar
  * - feed-tabs ("For You" active with Neon Lime indicator, "Following" inactive)
- * - stories-row (My Match, Maya, Jordan, Elena, Rohan with glowing rings)
+ * - stories-row (Dynamic stories from live candidates)
  * - feed-list (Vertical feed of profile cards with photo, match badge, profile header, location, bio, and actions-row)
  * - Shimmer loading state (with exact #25115C, #311873, and 3.92% white linear gradient)
  * - Connection Lost state (with 💔 illustration, ⚡ 503 badge, Try Again, and Go Back Home buttons)
@@ -133,45 +156,55 @@ fun HomeFeedScreen(
     onNavigateToChat: (modelId: String, modelName: String) -> Unit = { _, _ -> },
     onNavigateToProfile: (userId: String, userName: String) -> Unit = { _, _ -> },
     onNavigateToPreferences: () -> Unit = {},
-    viewModel: DatingDiscoveryViewModel = hiltViewModel()
+    onNavigateToNotifications: () -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-    var selectedTab by remember { mutableIntStateOf(0) } // 0: For You, 1: Following
-    var selectedStoryForQuickView by remember { mutableStateOf<HomeStoryItem?>(null) }
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
+    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
 
-    // Curated stories row matching mockup
-    val stories = remember {
-        listOf(
-            HomeStoryItem(
-                id = "my_match",
-                name = "My Match",
-                avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
-                isHighlighted = true
-            ), HomeStoryItem(
-                id = "maya_patel",
-                name = "Maya",
-                avatarUrl = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
-                isHighlighted = true
-            ), HomeStoryItem(
-                id = "jordan_lee",
-                name = "Jordan",
-                avatarUrl = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80",
-                isHighlighted = false
-            ), HomeStoryItem(
-                id = "elena_rostova",
-                name = "Elena",
-                avatarUrl = "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80",
-                isHighlighted = false
-            ), HomeStoryItem(
-                id = "rohan_sharma",
-                name = "Rohan",
-                avatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
-                isHighlighted = false
-            )
-        )
+    val defaultTopBarHeight = 64.dp
+    var topBarHeightPx by remember { mutableFloatStateOf(with(density) { defaultTopBarHeight.toPx() }) }
+    var topBarOffsetHeightPx by remember { mutableFloatStateOf(0f) }
+
+    val nestedScrollConnection = remember(topBarHeightPx) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                // When scrolling UP (delta < 0), collapse the Winter top bar first
+                if (delta < 0f && topBarOffsetHeightPx > -topBarHeightPx) {
+                    val newOffset = (topBarOffsetHeightPx + delta).coerceIn(-topBarHeightPx, 0f)
+                    val consumed = newOffset - topBarOffsetHeightPx
+                    topBarOffsetHeightPx = newOffset
+                    return Offset(0f, consumed)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                // When scrolling DOWN (available.y > 0) and the child feed is at the top,
+                // smoothly expand the Winter top bar back into view
+                if (available.y > 0f && topBarOffsetHeightPx < 0f) {
+                    val newOffset =
+                        (topBarOffsetHeightPx + available.y).coerceIn(-topBarHeightPx, 0f)
+                    val consumedY = newOffset - topBarOffsetHeightPx
+                    topBarOffsetHeightPx = newOffset
+                    return Offset(0f, consumedY)
+                }
+                return Offset.Zero
+            }
+        }
     }
 
+    val currentTopBarHeight = with(density) {
+        (topBarHeightPx + topBarOffsetHeightPx).coerceIn(0f, topBarHeightPx).toDp()
+    }
+    val topBarProgress = if (topBarHeightPx > 0f) {
+        ((topBarHeightPx + topBarOffsetHeightPx) / topBarHeightPx).coerceIn(0f, 1f)
+    } else 1f
 
     ODSBox(
         modifier = modifier.fillMaxSize(),
@@ -183,166 +216,95 @@ fun HomeFeedScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+                .nestedScroll(nestedScrollConnection)
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(currentTopBarHeight)
+                    .clipToBounds()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset { IntOffset(x = 0, y = topBarOffsetHeightPx.roundToInt()) }
+                        .alpha(topBarProgress)
+                        .onGloballyPositioned { coordinates ->
+                            val measured = coordinates.size.height.toFloat()
+                            if (measured > 0f && (topBarHeightPx == 0f || (topBarOffsetHeightPx == 0f && topBarHeightPx != measured))) {
+                                topBarHeightPx = measured
+                            }
+                        }
+                ) {
+                    HomeTopBar(
+                        modifier = Modifier,
+                        scheme = scheme,
+                        onNotificationsClick = onNavigateToNotifications,
+                        onPreferencesClick = onNavigateToPreferences
+                    )
+                }
+            }
+
+            // Sticky Tabs Header - stays pinned at the top when scrolling cards
             FeedTabsHeader(
                 modifier = Modifier,
-                selectedTab = selectedTab,
-                onTabSelect = { selectedTab = it },
+                selectedTab = pagerState.currentPage,
+                onTabSelect = { index ->
+                    if (index == pagerState.currentPage && topBarOffsetHeightPx < 0f) {
+                        coroutineScope.launch {
+                            androidx.compose.animation.core.animate(
+                                initialValue = topBarOffsetHeightPx,
+                                targetValue = 0f,
+                                animationSpec = androidx.compose.animation.core.tween(durationMillis = 250)
+                            ) { value, _ ->
+                                topBarOffsetHeightPx = value
+                            }
+                        }
+                    } else {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    }
+                },
                 scheme = scheme
             )
-            if (uiState.isLoading) {
-                DiscoverLoadingScreen(
-                    modifier = modifier,
-                    scheme = scheme
-                )
-            } else {
-                ODSLazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    gap = ODSVariables.spacingComponent3,
-                )
-                {
-                    when {
 
-                        uiState.error != null -> {
-                            item {
-                                ConnectionLostContent(
-                                    errorMessage = uiState.error,
-                                    onTryAgain = { viewModel.loadDiscoveryDeck() },
-                                    onGoBackHome = { viewModel.resetDeck() },
-                                    modifier = Modifier
-                                )
-                            }
-                        }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                when (page) {
+                    0 -> {
+                        ForYouTabContent(
+                            scheme = scheme,
+                            onNavigateToChat = onNavigateToChat,
+                            onNavigateToProfile = onNavigateToProfile
+                        )
+                    }
 
-                        uiState.models.isEmpty() -> {
-                            item {
-                                StoriesRow(
-                                    stories = stories, onStoryClick = { story ->
-                                        selectedStoryForQuickView = story
-                                    }, scheme = scheme
-                                )
+                    1 -> {
+                        FollowingTabContent(
+                            scheme = scheme,
+                            onNavigateToChat = onNavigateToChat,
+                            onNavigateToProfile = onNavigateToProfile,
+                            onExploreClick = {
+                                coroutineScope.launch { pagerState.animateScrollToPage(0) }
                             }
-                            item {
-                                HomeFeedEmptyCard(
-                                    onRefreshFeed = { viewModel.resetDeck() })
-                            }
-                        }
+                        )
+                    }
 
-                        else -> {
-                            item {
-                                StoriesRow(
-                                    stories = stories, onStoryClick = { story ->
-                                        selectedStoryForQuickView = story
-                                    }, scheme = scheme
-                                )
+                    2 -> {
+                        MatchesTabContent(
+                            scheme = scheme,
+                            onNavigateToChat = onNavigateToChat,
+                            onNavigateToProfile = onNavigateToProfile,
+                            onExploreClick = {
+                                coroutineScope.launch { pagerState.animateScrollToPage(0) }
                             }
-                            if (selectedTab == 0) {
-                                // "For you" feed tab
-                                itemsIndexed(
-                                    items = uiState.models,
-                                    key = { _, profile -> profile.id }
-                                ) { index, profile ->
-                                    if (index >= uiState.models.size - 2) {
-                                        viewModel.loadNextPage()
-                                    }
-                                    HomeFeedCard(
-                                        profile = profile,
-                                        scheme = scheme,
-                                        onCardClick = {
-                                            onNavigateToProfile(profile.id, profile.name)
-                                        },
-                                        onDislike = {
-                                            viewModel.onDislikeById(profile.id)
-                                        },
-                                        onChat = {
-                                            onNavigateToChat(profile.id, profile.name)
-                                        },
-                                        onLike = {
-                                            viewModel.onLikeById(profile.id)
-                                        }
-                                    )
-                                }
-                            } else {
-                                itemsIndexed(
-                                    items = uiState.models,
-                                    key = { _, profile -> profile.id }
-                                ) { index, profile ->
-                                    if (index >= uiState.models.size - 2) {
-                                        viewModel.loadNextPage()
-                                    }
-                                    FollowingFeedCard(
-                                        profile = profile,
-                                        scheme = scheme,
-                                        onCardClick = {
-                                            onNavigateToProfile(profile.id, profile.name)
-                                        },
-                                        onChat = {
-                                            onNavigateToChat(profile.id, profile.name)
-                                        }
-                                    )
-                                }
-                            }
-
-                            if (uiState.isLoadingMore) {
-                                item {
-                                    ODSBox(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = ODSVariables.spacingComponent5),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        ODSLoadingSpinner(
-                                            scheme = scheme,
-                                            props = ODSLoadingSpinnerProps(size = ODSLoadingSpinnerSize.SMALL)
-                                        )
-                                    }
-                                }
-                            }
-
-                            item {
-                                ODSBox(
-                                    modifier = Modifier.height(ODSVariables.spacingComponent10 + ODSVariables.spacingComponent8)
-                                )
-                            }
-                        }
+                        )
                     }
                 }
             }
-        }
-        AnimatedVisibility(
-            visible = uiState.isMatched && uiState.matchedModel != null,
-            enter = fadeIn() + scaleIn(),
-            exit = fadeOut() + scaleOut()
-        ) {
-            val match = uiState.matchedModel
-            if (match != null) {
-                MatchModal(matchedModel = match, onChat = {
-                    viewModel.dismissMatchDialog()
-                    onNavigateToChat(match.id, match.name)
-                }, onKeepBrowsing = {
-                    viewModel.dismissMatchDialog()
-                })
-            }
-        }
-
-        selectedStoryForQuickView?.let { story ->
-            QuickViewProfileDialog(
-                story = story,
-                onDismiss = { selectedStoryForQuickView = null },
-                onNavigateToProfile = { userId, userName ->
-                    selectedStoryForQuickView = null
-                    onNavigateToProfile(userId, userName)
-                },
-                onNavigateToChat = { modelId, modelName ->
-                    selectedStoryForQuickView = null
-                    onNavigateToChat(modelId, modelName)
-                },
-                onLike = { modelId ->
-                    viewModel.onLikeById(modelId)
-                },
-                scheme = scheme
-            )
         }
     }
 }
@@ -362,53 +324,7 @@ fun HomeFeedShimmerContent(modifier: Modifier = Modifier) {
         gap = 16.dp,
         padding = ODSPadding(bottom = 96.dp)
     ) {
-        ODSRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            gap = 16.dp,
-            padding = ODSPadding(horizontal = 20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            for (i in 0 until 5) {
-                val ringColor = if (i < 2) ZonaColors.ActionPrimary else ZonaColors.Border
-                ODSColumn(
-                    horizontalAlignment = Alignment.CenterHorizontally, gap = 6.dp
-                ) {
-                    ODSBox(
-                        modifier = Modifier.size(64.dp),
-                        cornerRadius = ODSCorners(all = 32.dp),
-                        border = ODSBorder(
-                            width = 2.dp, colorList = listOf(
-                                ODSColorModel(ringColor)
-                            )
-                        ),
-                        padding = ODSPadding(all = 3.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ODSBox(
-                            modifier = Modifier
-                                .size(54.dp)
-                                .zonaShimmer(),
-                            cornerRadius = ODSCorners(all = 27.dp),
-                            clipContent = true
-                        )
-                    }
 
-                    // Name shimmer pill placeholder
-                    ODSBox(
-                        modifier = Modifier
-                            .width(42.dp)
-                            .height(10.dp)
-                            .zonaShimmer(),
-                        cornerRadius = ODSCorners(all = 5.dp),
-                        clipContent = true
-                    )
-                }
-            }
-        }
-
-        // 2. feed-list shimmer (Profile Card)
         ODSBox(
             modifier = Modifier
                 .fillMaxWidth()
@@ -543,7 +459,7 @@ fun HomeFeedShimmerContent(modifier: Modifier = Modifier) {
 @Composable
 private fun BrokenHeartIllustration() {
     ODSBox(
-        modifier = Modifier.size(170.dp), background = listOf(
+        modifier = Modifier.size(80.dp), background = listOf(
             ODSColorModel(ZonaColors.SurfaceElevated)
         ), cornerRadius = ODSCorners(all = 85.dp), border = ODSBorder(
             width = 1.5.dp, colorList = listOf(ODSColorModel(ZonaColors.Border))
@@ -553,45 +469,11 @@ private fun BrokenHeartIllustration() {
         ODSIcon(
             iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.ic_heart_crack),
             tint = ZonaColors.ActionPrimary.getColor(),
-            modifier = Modifier.size(76.dp)
+            modifier = Modifier.size(50.dp)
         )
-
-        // Overlaid top pill badge "⚡ 503"
-        ODSBox(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 26.dp),
-            background = listOf(
-                ODSColorModel(ZonaColors.ActionPrimary)
-            ),
-            cornerRadius = ODSCorners(all = 12.dp),
-            padding = ODSPadding(horizontal = 8.dp, vertical = 3.dp)
-        ) {
-            ODSRow(
-                gap = 3.dp, verticalAlignment = Alignment.CenterVertically
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(drawableRes = com.telekom.odsystem.R.drawable.ic_zap),
-                    tint = ZonaColors.TextInverse.getColor(),
-                    modifier = Modifier.size(13.dp)
-                )
-                ODSText(
-                    text = "503", style = ODSTextStyles.bodySBold, color = ZonaColors.TextInverse
-                )
-            }
-        }
     }
 }
 
-/**
- * Connection Lost Screen.
- * Faithfully matches Left side of media_1789901587908.png:
- * - Broken heart illustration with ⚡ 503 badge
- * - "Connection Lost" title
- * - Description & "ERR_CODE: API_RETRY_FAILED_TIMEOUT"
- * - "Try Again" Neon Lime CTA
- * - "Go Back Home" Dark Purple secondary button
- */
 @Composable
 fun ConnectionLostContent(
     errorMessage: String? = null,
@@ -602,12 +484,12 @@ fun ConnectionLostContent(
     ODSColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
         gap = 16.dp
     ) {
-        Spacer(modifier = Modifier.weight(0.5f))
 
         BrokenHeartIllustration()
 
@@ -615,8 +497,8 @@ fun ConnectionLostContent(
 
         // Headline
         ODSText(
-            text = "Connection Lost",
-            style = ODSTextStyles.titleL,
+            text = "Something went wrong",
+            style = ODSTextStyles.titleS,
             color = ZonaColors.TextPrimary,
             textAlign = TextAlign.Center
         )
@@ -624,22 +506,12 @@ fun ConnectionLostContent(
         // Subtitle
         ODSText(
             text = "We couldn't reach the matches feed. Please verify your connection or try again.",
-            style = ODSTextStyles.bodyMRegular,
+            style = ODSTextStyles.microcopyRegular,
             color = ZonaColors.TextSecondary,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        // Error code tag
-        ODSText(text = errorMessage?.ifBlank { "ERR_CODE: API_RETRY_FAILED_TIMEOUT" }
-            ?: "ERR_CODE: API_RETRY_FAILED_TIMEOUT",
-            style = ODSTextStyles.bodySBold,
-            color = ZonaColors.TextSecondary,
-            textAlign = TextAlign.Center)
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Button 1: Try Again (Primary CTA)
         ODSBox(
             modifier = Modifier
                 .fillMaxWidth()
@@ -656,109 +528,6 @@ fun ConnectionLostContent(
                 text = "Try Again", style = ODSTextStyles.bodyLBold, color = ZonaColors.TextInverse
             )
         }
-
-        // Button 2: Go Back Home (Secondary Button)
-        ODSBox(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onGoBackHome
-                ), background = listOf(
-                ODSColorModel(ZonaColors.ActionSoft)
-            ), cornerRadius = ODSCorners(all = 26.dp), border = ODSBorder(
-                width = 1.dp, colorList = listOf(
-                    ODSColorModel(ZonaColors.Border)
-                )
-            ), contentAlignment = Alignment.Center
-        ) {
-            ODSText(
-                text = "Go Back Home",
-                style = ODSTextStyles.bodyLBold,
-                color = ZonaColors.TextPrimary
-            )
-        }
-
-        Spacer(modifier = Modifier.height(84.dp))
     }
 }
 
-/**
- * Match Modal popup when both users like each other.
- */
-@Composable
-private fun MatchModal(
-    matchedModel: ModelProfile, onChat: () -> Unit, onKeepBrowsing: () -> Unit
-) {
-    ODSBox(
-        modifier = Modifier
-            .fillMaxSize()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onKeepBrowsing
-            ), background = listOf(
-            ODSColorModel(ZonaColors.MediaOverlay)
-        ), contentAlignment = Alignment.Center
-    ) {
-        ODSBox(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp), background = listOf(
-                ODSColorModel(ZonaColors.Surface)
-            ), cornerRadius = ODSCorners(all = 28.dp), border = ODSBorder(
-                width = 2.dp, colorList = listOf(
-                    ODSColorModel(ZonaColors.ActionPrimary)
-                )
-            ), padding = ODSPadding(all = 24.dp)
-        ) {
-            ODSColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                gap = 14.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                ODSText(
-                    text = "It's a Match! ⚡",
-                    style = ODSTextStyles.titleM,
-                    color = ZonaColors.ActionPrimary
-                )
-
-                ODSText(
-                    text = "You and ${matchedModel.name} liked each other!",
-                    style = ODSTextStyles.bodyMRegular,
-                    color = ZonaColors.TextSecondary
-                )
-
-                ODSImage(
-                    imageModel = ODSImageModel(
-                        url = matchedModel.avatarUrl.ifBlank { matchedModel.coverUrl },
-                        contentDescription = matchedModel.name
-                    ),
-                    modifier = Modifier.size(100.dp),
-                    cornerRadius = ODSCorners(all = 50.dp),
-                    contentScale = ContentScale.Crop
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                ODSButton(
-                    scheme = zonaODSTheme, props = ODSButtonProps(
-                        label = "Send Message",
-                        variant = ODSButtonVariant.PRIMARY,
-                        size = ODSButtonSize.LARGE
-                    ), onClick = onChat, modifier = Modifier.fillMaxWidth()
-                )
-
-                ODSButton(
-                    scheme = zonaODSTheme, props = ODSButtonProps(
-                        label = "Keep Browsing",
-                        variant = ODSButtonVariant.GHOST,
-                        size = ODSButtonSize.SMALL
-                    ), onClick = onKeepBrowsing, modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
-}

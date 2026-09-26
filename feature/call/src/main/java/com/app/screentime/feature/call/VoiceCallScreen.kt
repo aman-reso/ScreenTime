@@ -97,6 +97,15 @@ fun VoiceCallScreen(
             ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         )
     }
+    var hasNotificationPermission by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+        )
+    }
     var hasInitiatedCall by rememberSaveable { mutableStateOf(false) }
 
     val isCurrentUserModel = viewModel.isCurrentUserModel()
@@ -114,6 +123,10 @@ fun VoiceCallScreen(
         val micGranted = result[Manifest.permission.RECORD_AUDIO] == true ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         hasMicPermission = micGranted
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            hasNotificationPermission = result[Manifest.permission.POST_NOTIFICATIONS] == true ||
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        }
         if (micGranted && !hasInitiatedCall && !isIncomingOrActive && targetId.isNotBlank()) {
             hasInitiatedCall = true
             viewModel.startOutgoingCall(targetId, modelName)
@@ -122,7 +135,7 @@ fun VoiceCallScreen(
 
     LaunchedEffect(Unit) {
         if (!hasInitiatedCall && !isIncomingOrActive && targetId.isNotBlank()) {
-            if (hasMicPermission) {
+            if (hasMicPermission && hasNotificationPermission) {
                 hasInitiatedCall = true
                 viewModel.startOutgoingCall(targetId, modelName)
             } else {
@@ -176,7 +189,7 @@ fun VoiceCallScreen(
                 )
 
                 ODSText(
-                    text = callState.endReason ?: "Call with ${modelName.ifBlank { "Jessica Maple" }} has ended.",
+                    text = callState.endReason ?: "Call with ${modelName.ifBlank { "User" }} has ended.",
                     style = ODSTextStyles.bodyMRegular,
                     color = ZonaColors.LavenderAlt
                 )
@@ -370,7 +383,7 @@ fun VoiceCallScreen(
                 )
 
                 ODSText(
-                    text = "Zona needs microphone permission to transmit your voice during audio calls.",
+                    text = "Winter needs microphone permission to transmit your voice during audio calls.",
                     style = ODSTextStyles.bodyMRegular,
                     color = ZonaColors.LavenderAlt
                 )
@@ -475,23 +488,29 @@ fun VoiceCallScreen(
                     clipContent = true,
                     contentAlignment = Alignment.Center
                 ) {
-                    ODSImage(
-                        imageModel = ODSImageModel(
-                            url = avatarUrl.ifBlank {
-                                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
-                            },
-                            contentDescription = modelName
-                        ),
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                    if (avatarUrl.isNotBlank()) {
+                        ODSImage(
+                            imageModel = ODSImageModel(
+                                url = avatarUrl,
+                                contentDescription = modelName
+                            ),
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        ODSIcon(
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_user),
+                            tint = ZonaColors.LavenderAlt.getColor(),
+                            modifier = Modifier.size(56.dp)
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(28.dp))
 
-                // Display Name ("Jessica Maple")
+                // Display Name
                 ODSText(
-                    text = modelName.ifBlank { "Jessica Maple" },
+                    text = modelName.ifBlank { "User" },
                     style = ODSTextStyles.bodyL,
                     color = ZonaColors.TextPrimary
                 )
@@ -810,7 +829,7 @@ private fun VoiceCallPipLayout(
                     color = ZonaColors.ActiveLime
                 )
                 ODSText(
-                    text = modelName.ifBlank { "Jessica Maple" },
+                    text = modelName.ifBlank { "User" },
                     style = ODSTextStyles.bodyMBold,
                     color = ZonaColors.TextPrimary
                 )
@@ -827,16 +846,22 @@ private fun VoiceCallPipLayout(
                 clipContent = true,
                 contentAlignment = Alignment.Center
             ) {
-                ODSImage(
-                    imageModel = ODSImageModel(
-                        url = avatarUrl.ifBlank {
-                            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
-                        },
-                        contentDescription = modelName
-                    ),
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                if (avatarUrl.isNotBlank()) {
+                    ODSImage(
+                        imageModel = ODSImageModel(
+                            url = avatarUrl,
+                            contentDescription = modelName
+                        ),
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    ODSIcon(
+                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_user),
+                        tint = ZonaColors.LavenderAlt.getColor(),
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
 
             // Mini Actions: Mute & End Call
