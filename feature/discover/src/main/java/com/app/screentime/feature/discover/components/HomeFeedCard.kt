@@ -48,6 +48,7 @@ import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * "For You" Feed Card Component (Figma node-id 29-4).
@@ -213,7 +214,7 @@ fun HomeFeedCard(
                             if (!isDismissing) {
                                 isDismissing = true
                                 coroutineScope.launch {
-                                    delay(200)
+                                    delay(200.milliseconds)
                                     onDislike()
                                 }
                             }
