@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winter — Find Your Person, Not Just a Match</title>
+    <meta name="description" content="Winter is a premium modern dating app built to foster intentional connections, warm dates, and cozy long-term romance.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #2D2D2D;
+            background: #FFFFFF;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { text-decoration: none; color: inherit; }
+        img { max-width: 100%; display: block; }
+        ul { list-style: none; }
+
+        /* ===== DESIGN TOKENS ===== */
+        :root {
+            --maroon: #6B1D2A;
+            --maroon-dark: #5A1623;
+            --maroon-light: #8B2E3F;
+            --pink-bg: #FFF0F0;
+            --pink-card: #FDF2F2;
+            --pink-badge: #FCE4EC;
+            --pink-soft: #FFF5F5;
+            --gold: #D4A853;
+            --text-primary: #1A1A1A;
+            --text-secondary: #555555;
+            --text-muted: #888888;
+            --white: #FFFFFF;
+            --border: #F0E8E8;
+            --shadow-sm: 0 1px 3px rgba(107, 29, 42, 0.06);
+            --shadow-md: 0 4px 16px rgba(107, 29, 42, 0.08);
+            --shadow-lg: 0 8px 32px rgba(107, 29, 42, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --radius-full: 100px;
+            --max-width: 1200px;
+        }
+
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ===== SECTION BADGE ===== */
+        .badge {
+            display: inline-block;
+            padding: 6px 18px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--maroon);
+            background: var(--pink-badge);
+            border-radius: var(--radius-full);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+        .section-header .badge { margin-bottom: 20px; }
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 40px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+        .section-header p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(107, 29, 42, 0.06);
+            transition: box-shadow 0.3s ease;
+        }
+        .navbar.scrolled { box-shadow: var(--shadow-sm); }
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--maroon);
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 36px;
+        }
+        .nav-links a {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--maroon); }
+        .nav-cta {
+            padding: 10px 24px;
+            background: var(--maroon);
+            color: var(--white) !important;
+            border-radius: var(--radius-full);
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .nav-cta:hover {
+            background: var(--maroon-dark);
+            transform: translateY(-1px);
+        }
+        .mobile-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .mobile-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            padding: 140px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 72px;
+            left: 50%;
+            width: 4px;
+            height: 24px;
+            background: var(--maroon);
+            border-radius: 2px;
+            transform: translateX(-50%);
+        }
+        .hero .container {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+        }
+        .hero-content { flex: 1; max-width: 560px; }
+        .hero-visual { flex: 1; display: flex; justify-content: center; }
+
+        .hero-content .badge { margin-bottom: 28px; }
+        .hero-content h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1.15;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+        .hero-content .subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 32px;
+            max-width: 480px;
+        }
+        .hero-ctas {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--maroon);
+            color: var(--white);
+            border-radius: var(--radius-full);
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .btn-primary:hover { background: var(--maroon-dark); transform: translateY(-1px); }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: transparent;
+            color: var(--text-primary);
+            border: 1.5px solid #D0D0D0;
+            border-radius: var(--radius-full);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .btn-secondary:hover { border-color: var(--maroon); background: var(--pink-soft); }
+        .trust-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .trust-stars { display: flex; gap: 2px; }
+        .trust-stars svg { width: 16px; height: 16px; fill: var(--gold); }
+
+        /* Phone mockup */
+        .phone-mockup {
+            position: relative;
+            width: 300px;
+            height: 580px;
+            background: #1A1A1A;
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: var(--shadow-lg), 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(180deg, #3D2B1F 0%, #5C3D2E 40%, #4A2F20 100%);
+        }
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 28px;
+            background: #1A1A1A;
+            border-radius: 0 0 18px 18px;
+            z-index: 5;
+        }
+        .phone-status {
+            position: absolute;
+            top: 6px;
+            left: 24px;
+            font-size: 12px;
+            color: white;
+            font-weight: 600;
+            z-index: 6;
+        }
+        .phone-card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            border-radius: 0 0 30px 30px;
+        }
+        .phone-card-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .phone-card-name span {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .phone-card-name .verified {
+            width: 18px; height: 18px;
+            background: #4FC3F7;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .phone-card-name .verified svg { width: 10px; height: 10px; fill: white; }
+        .match-badge-phone {
+            position: absolute;
+            top: 20px;
+            right: 0;
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px 0 0 4px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .phone-card-bio {
+            font-size: 12px;
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        .phone-card-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .phone-card-tags span {
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 11px;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            background: var(--pink-bg);
+            padding: 48px 0;
+        }
+        .stats-bar .container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            text-align: center;
+        }
+        .stat-item {}
+        .stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--maroon);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .stat-number .star { color: var(--gold); }
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* ===== CORE FEATURES ===== */
+        .features {
+            padding: 100px 0;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+        .feature-card {
+            background: var(--pink-card);
+            border-radius: var(--radius-lg);
+            padding: 32px 24px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--white);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .feature-icon svg { width: 24px; height: 24px; color: var(--maroon); stroke: var(--maroon); fill: none; }
+        .feature-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        .feature-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ===== THE JOURNEY ===== */
+        .journey {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .journey-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        .journey-step { text-align: center; }
+        .journey-image {
+            width: 100%;
+            height: 220px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .journey-image img, .journey-image-placeholder {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .journey-image-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .journey-number {
+            width: 36px;
+            height: 36px;
+            background: var(--maroon);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 auto 16px;
+        }
+        .journey-step h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        .journey-step p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        /* ===== INSIDE THE APP ===== */
+        .inside-app {
+            padding: 100px 0;
+            background: var(--pink-bg);
+        }
+        .app-screens {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        .app-phone {
+            width: 240px;
+            height: 480px;
+            background: #1A1A1A;
+            border-radius: 36px;
+            padding: 10px;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s;
+        }
+        .app-phone:hover { transform: translateY(-8px); }
+        .app-phone-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 28px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .app-phone.center-phone {
+            width: 260px;
+            height: 520px;
+            transform: translateY(-10px);
+        }
+        .app-phone.center-phone:hover { transform: translateY(-18px); }
+
+        /* placeholder gradient screens */
+        .screen-profile {
+            background: linear-gradient(180deg, #E8D5C4 0%, #F5EBE0 40%, #FFFFFF 60%);
+        }
+        .screen-chat {
+            background: linear-gradient(180deg, #F8E8E0 0%, #FFF0E8 40%, #FFFFFF 60%);
+        }
+        .screen-icebreaker {
+            background: linear-gradient(180deg, #F0D4D8 0%, #FDE8E8 40%, #FFFFFF 60%);
+        }
+        .screen-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 12px;
+            padding: 16px;
+        }
+        .screen-content .screen-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(107, 29, 42, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .screen-content .screen-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--maroon);
+            fill: none;
+        }
+        .screen-content .screen-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+        }
+        .screen-content .screen-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* ===== SUCCESS STORIES ===== */
+        .stories {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .stories-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+        }
+        .story-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px 28px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .story-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .story-quote {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.7;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+        .story-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .story-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--white);
+        }
+        .story-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .story-location {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ===== TRUST & PROTECTION ===== */
+        .trust {
+            padding: 100px 0;
+            background: var(--white);
+        }
+        .trust .container {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+        }
+        .trust-image {
+            flex: 1;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            min-height: 440px;
+        }
+        .trust-illustration {
+            width: 100%;
+            height: 100%;
+            min-height: 440px;
+            background: linear-gradient(135deg, #F8E0D0 0%, #FAE8D8 30%, #FDF0E8 60%, #FFF5F0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-xl);
+            position: relative;
+            overflow: hidden;
+        }
+        .trust-illustration::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(107,29,42,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .trust-illustration svg {
+            width: 120px;
+            height: 120px;
+            opacity: 0.6;
+        }
+        .trust-content { flex: 1; }
+        .trust-content .badge { margin-bottom: 20px; }
+        .trust-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 38px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+        .trust-content > p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+        .trust-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .trust-feature {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .trust-check {
+            width: 28px;
+            height: 28px;
+            background: var(--maroon);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .trust-check svg { width: 14px; height: 14px; fill: var(--white); }
+        .trust-feature h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .trust-feature p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ===== CTA BANNER ===== */
+        .cta-banner {
+            padding: 80px 0;
+        }
+        .cta-card {
+            background: linear-gradient(135deg, var(--pink-bg) 0%, #F8E0E0 50%, #F0D0D0 100%);
+            border-radius: var(--radius-xl);
+            padding: 60px 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-content { flex: 1; max-width: 480px; }
+        .cta-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 40px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+        .cta-content p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 28px;
+        }
+        .store-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .store-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: var(--text-primary);
+            color: var(--white);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 500;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .store-btn:hover { background: #333; transform: translateY(-2px); }
+        .store-btn svg { width: 24px; height: 24px; fill: var(--white); }
+        .store-btn .store-text { display: flex; flex-direction: column; }
+        .store-btn .store-label { font-size: 10px; font-weight: 400; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .store-btn .store-name { font-size: 16px; font-weight: 700; line-height: 1.2; }
+        .cta-phone {
+            width: 280px;
+            height: 500px;
+            background: #1A1A1A;
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            flex-shrink: 0;
+        }
+        .cta-phone-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 30px;
+            background: linear-gradient(180deg, #FDE8E0 0%, #FFF0E8 50%, #FFFFFF 100%);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cta-screen-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        .cta-screen-content .cta-logo {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 32px;
+            color: var(--maroon);
+        }
+        .cta-screen-content p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer-divider {
+            height: 1px;
+            background: var(--border);
+            position: relative;
+        }
+        .footer-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 32px;
+            height: 4px;
+            background: var(--maroon);
+            border-radius: 2px;
+        }
+        .footer {
+            padding: 64px 0 0;
+        }
+        .footer-main {
+            display: flex;
+            gap: 80px;
+            margin-bottom: 48px;
+        }
+        .footer-brand { flex: 1; max-width: 320px; }
+        .footer-logo {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--maroon);
+            margin-bottom: 16px;
+        }
+        .footer-brand p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        .footer-columns {
+            display: flex;
+            gap: 72px;
+            flex: 1;
+        }
+        .footer-col h4 {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+        .footer-col a {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            transition: color 0.2s;
+        }
+        .footer-col a:hover { color: var(--maroon); }
+        .footer-bottom {
+            border-top: 1px solid var(--border);
+            padding: 24px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .footer-copyright {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .footer-social {
+            display: flex;
+            gap: 20px;
+        }
+        .footer-social a {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+        .footer-social a:hover { color: var(--maroon); }
+        .footer-social svg { width: 20px; height: 20px; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .hero .container { flex-direction: column; text-align: center; }
+            .hero-content { max-width: 100%; }
+            .hero-content .subtitle { margin-left: auto; margin-right: auto; }
+            .hero-ctas { justify-content: center; }
+            .trust-line { justify-content: center; }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-bar .container { grid-template-columns: repeat(2, 1fr); }
+            .trust .container { flex-direction: column; }
+            .cta-card { flex-direction: column; text-align: center; padding: 48px 40px; }
+            .cta-content { max-width: 100%; }
+            .store-buttons { justify-content: center; }
+            .footer-main { flex-direction: column; gap: 40px; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-toggle { display: flex; }
+            .nav-links.active {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 72px;
+                left: 0;
+                right: 0;
+                background: var(--white);
+                padding: 24px;
+                gap: 20px;
+                box-shadow: var(--shadow-md);
+                border-top: 1px solid var(--border);
+            }
+            .hero-content h1 { font-size: 36px; }
+            .section-header h2 { font-size: 32px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .journey-grid { grid-template-columns: 1fr; }
+            .stories-grid { grid-template-columns: 1fr; }
+            .stats-bar .container { grid-template-columns: 1fr 1fr; }
+            .stat-number { font-size: 32px; }
+            .trust-features { grid-template-columns: 1fr; }
+            .footer-columns { flex-direction: column; gap: 32px; }
+            .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+            .phone-mockup { width: 260px; height: 500px; }
+            .app-phone { width: 200px; height: 400px; }
+            .app-phone.center-phone { width: 220px; height: 440px; }
+            .cta-phone { width: 240px; height: 420px; }
+        }
+        @media (max-width: 480px) {
+            .hero-content h1 { font-size: 30px; }
+            .section-header h2 { font-size: 28px; }
+            .cta-content h2 { font-size: 28px; }
+            .trust-content h2 { font-size: 28px; }
+            .hero-ctas { flex-direction: column; align-items: center; }
+            .store-buttons { flex-direction: column; align-items: center; }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== NAVBAR ===== -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="#" class="nav-logo">winter</a>
+            <div class="nav-links" id="navLinks">
+                <a href="#features">Features</a>
+                <a href="#journey">How It Works</a>
+                <a href="#trust">Safety</a>
+                <a href="#download">Download</a>
+                <a href="#download" class="nav-cta">Get Started</a>
+            </div>
+            <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <div class="hero-content fade-in">
+                <span class="badge">A NEW ERA OF ROMANCE</span>
+                <h1>Find Your Person, Not Just a Match</h1>
+                <p class="subtitle">Winter is designed for those seeking deep, intentional connections. We filter out the noise so you can connect in cozy, meaningful ways.</p>
+                <div class="hero-ctas">
+                    <a href="#download" class="btn-primary">Create Your Profile →</a>
+                    <a href="#journey" class="btn-secondary">See How It Works</a>
+                </div>
+                <div class="trust-line">
+                    <div class="trust-stars">
+                        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    </div>
+                    <span>Trusted by over 2 million intentional daters</span>
+                </div>
+            </div>
+            <div class="hero-visual fade-in">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="phone-notch"></div>
+                        <span class="phone-status">9:41</span>
+                        <div class="match-badge-phone">98% Match</div>
+                        <div class="phone-card-overlay">
+                            <div class="phone-card-name">
+                                <span>Clara, 27</span>
+                                <div class="verified">
+                                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                                </div>
+                            </div>
+                            <p class="phone-card-bio">"Let's find a cozy coffee shop and talk about books we've read twice."</p>
+                            <div class="phone-card-tags">
+                                <span>Art</span>
+                                <span>Indie Music</span>
+                                <span>Winter Cabins</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== STATS BAR ===== -->
+    <section class="stats-bar">
+        <div class="container">
+            <div class="stat-item fade-in">
+                <div class="stat-number">2M+</div>
+                <div class="stat-label">Meaningful Matches</div>
+            </div>
+            <div class="stat-item fade-in">
+                <div class="stat-number">150+</div>
+                <div class="stat-label">Countries Active</div>
+            </div>
+            <div class="stat-item fade-in">
+                <div class="stat-number">4.8<span class="star">★</span></div>
+                <div class="stat-label">App Store Rating</div>
+            </div>
+            <div class="stat-item fade-in">
+                <div class="stat-number">85%</div>
+                <div class="stat-label">First Date Success Rate</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CORE FEATURES ===== -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="badge">CORE FEATURES</span>
+                <h2>Cozy Features for Intentional Daters</h2>
+                <p>We build dating tools that celebrate real personalities. Connect naturally through systems engineered for trust, safety, and depth.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            <line x1="12" y1="9" x2="12" y2="15"/>
+                            <line x1="9" y1="12" x2="15" y2="12"/>
+                        </svg>
+                    </div>
+                    <h3>Smart Matching</h3>
+                    <p>Our AI-powered compatibility system prioritizes values, communication styles, and mutual vibes over endless swiping.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 12l2 2 4-4"/>
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                    </div>
+                    <h3>Verified Profiles</h3>
+                    <p>With multi-factor identity and photo verification, connect confidently knowing every person is exactly who they claim to be.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="23 7 16 12 23 17 23 7"/>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                        </svg>
+                    </div>
+                    <h3>Cozy Video Dates</h3>
+                    <p>Break the ice safely and warmly with built-in interactive icebreakers directly inside our encrypted high-def video chat.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                            <line x1="7" y1="7" x2="7.01" y2="7"/>
+                        </svg>
+                    </div>
+                    <h3>Interest Tags</h3>
+                    <p>Instantly discover shared passions, weekend rituals, and long-term values to spark comfortable conversations from day one.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== THE JOURNEY ===== -->
+    <section class="journey" id="journey">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="badge">THE JOURNEY</span>
+                <h2>Your Path to Real Connection</h2>
+                <p>We simplify the courtship journey without sacrificing depth. Here is exactly how we help you cozy up with someone special.</p>
+            </div>
+            <div class="journey-grid">
+                <div class="journey-step fade-in">
+                    <div class="journey-image">
+                        <div class="journey-image-placeholder" style="background: linear-gradient(135deg, #D4A574 0%, #C4956A 50%, #E8C9A8 100%);">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                        </div>
+                    </div>
+                    <div class="journey-number">1</div>
+                    <h3>Create Profile</h3>
+                    <p>Share your values, personality traits, and cozy winter preferences to craft an authentic persona.</p>
+                </div>
+                <div class="journey-step fade-in">
+                    <div class="journey-image">
+                        <div class="journey-image-placeholder" style="background: linear-gradient(135deg, #F8E0D8 0%, #FDE8E0 50%, #FDF0E8 100%);">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="rgba(107,29,42,0.3)" stroke="rgba(107,29,42,0.5)" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </div>
+                    </div>
+                    <div class="journey-number">2</div>
+                    <h3>Get Matched</h3>
+                    <p>Receive one curated, high-compatibility recommendation per day selected carefully by our mindful matching algorithm.</p>
+                </div>
+                <div class="journey-step fade-in">
+                    <div class="journey-image">
+                        <div class="journey-image-placeholder" style="background: linear-gradient(135deg, #8B6F5C 0%, #A08070 50%, #C4A898 100%);">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </div>
+                    </div>
+                    <div class="journey-number">3</div>
+                    <h3>Start Connecting</h3>
+                    <p>Break the ice through our custom conversation sparks or a secure cozy voice call when you both feel ready.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== INSIDE THE APP ===== -->
+    <section class="inside-app" id="app">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="badge">INSIDE THE APP</span>
+                <h2>Designed for Real Connections</h2>
+                <p>Say goodbye to superficial layouts. Winter provides an elegant, warm, and highly engaging interface that lets your true self shine through effortlessly.</p>
+            </div>
+            <div class="app-screens fade-in">
+                <div class="app-phone">
+                    <div class="app-phone-inner screen-profile">
+                        <div class="screen-content">
+                            <div class="screen-icon">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <span class="screen-label">Profile Discovery</span>
+                            <span class="screen-desc">Browse curated profiles with rich details</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="app-phone center-phone">
+                    <div class="app-phone-inner screen-chat">
+                        <div class="screen-content">
+                            <div class="screen-icon">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <span class="screen-label">Cozy Chat</span>
+                            <span class="screen-desc">Warm conversations with smart prompts</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="app-phone">
+                    <div class="app-phone-inner screen-icebreaker">
+                        <div class="screen-content">
+                            <div class="screen-icon">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                            </div>
+                            <span class="screen-label">Icebreakers</span>
+                            <span class="screen-desc">Fun questions to spark connection</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SUCCESS STORIES ===== -->
+    <section class="stories" id="stories">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="badge">SUCCESS STORIES</span>
+                <h2>Cozy Stories from Cozy Couples</h2>
+            </div>
+            <div class="stories-grid">
+                <div class="story-card fade-in">
+                    <p class="story-quote">"Winter totally shifted my perspective. Instead of matching with hundreds of strangers, I was introduced to Sarah. We talked about winter hiking for hours before our first coffee."</p>
+                    <div class="story-author">
+                        <div class="story-avatar">
+                            <div class="avatar-placeholder" style="background: linear-gradient(135deg, #8B6F5C, #A08070);">M</div>
+                        </div>
+                        <div>
+                            <div class="story-name">Marcus Reynolds</div>
+                            <div class="story-location">Denver, CO</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="story-card fade-in">
+                    <p class="story-quote">"I love the pace. One profile a day makes you actually read the prompts and notice detail. The verified profiles made me feel totally comfortable matching."</p>
+                    <div class="story-author">
+                        <div class="story-avatar">
+                            <div class="avatar-placeholder" style="background: linear-gradient(135deg, #C4956A, #D4A574);">C</div>
+                        </div>
+                        <div>
+                            <div class="story-name">Clara Vance</div>
+                            <div class="story-location">Chicago, IL</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="story-card fade-in">
+                    <p class="story-quote">"The interactive video dates allowed us to feel each other's vibe without the stress of an awkward first meetup. We have been happily together for 10 months now!"</p>
+                    <div class="story-author">
+                        <div class="story-avatar">
+                            <div class="avatar-placeholder" style="background: linear-gradient(135deg, #5C7080, #708090);">A</div>
+                        </div>
+                        <div>
+                            <div class="story-name">Akihiro Tanaka</div>
+                            <div class="story-location">Seattle, WA</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== TRUST & PROTECTION ===== -->
+    <section class="trust" id="trust">
+        <div class="container">
+            <div class="trust-image fade-in">
+                <div class="trust-illustration">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="var(--maroon)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="trust-content fade-in">
+                <span class="badge">TRUST & PROTECTION</span>
+                <h2>Your Safety, Our Absolute Priority</h2>
+                <p>We take modern dating safety seriously. Our community is monitored 24/7 with zero tolerance for bad behavior, letting you focus safely on what matters.</p>
+                <div class="trust-features">
+                    <div class="trust-feature">
+                        <div class="trust-check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                        </div>
+                        <div>
+                            <h4>Photo Verification</h4>
+                            <p>Every profile undergoes selfie-matching verification before being visible.</p>
+                        </div>
+                    </div>
+                    <div class="trust-feature">
+                        <div class="trust-check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                        </div>
+                        <div>
+                            <h4>Block & Report</h4>
+                            <p>Easily, instantly, and anonymously block or report profiles with confidence.</p>
+                        </div>
+                    </div>
+                    <div class="trust-feature">
+                        <div class="trust-check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                        </div>
+                        <div>
+                            <h4>Private Mode</h4>
+                            <p>Browse incognito. Control exactly who sees your profile, images, and matching history.</p>
+                        </div>
+                    </div>
+                    <div class="trust-feature">
+                        <div class="trust-check">
+                            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                        </div>
+                        <div>
+                            <h4>24/7 Support</h4>
+                            <p>Our dedicated, empathetic customer trust team is always active and ready to support.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== CTA BANNER ===== -->
+    <section class="cta-banner" id="download">
+        <div class="container">
+            <div class="cta-card fade-in">
+                <div class="cta-content">
+                    <h2>Ready to Find Your Winter?</h2>
+                    <p>Download the app today, build your curated cozy profile, and get connected with intentional singles near you immediately.</p>
+                    <div class="store-buttons">
+                        <a href="#" class="store-btn">
+                            <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                            <div class="store-text">
+                                <span class="store-label">Download on the</span>
+                                <span class="store-name">App Store</span>
+                            </div>
+                        </a>
+                        <a href="#" class="store-btn">
+                            <svg viewBox="0 0 24 24"><path d="M3 20.5v-17c0-.59.34-1.11.84-1.35L13.69 12l-9.85 9.85c-.5-.24-.84-.76-.84-1.35zm13.81-5.38L6.05 21.34l8.49-8.49 2.27 2.27zm3.35-1.86c.39.22.64.64.64 1.11 0 .47-.25.89-.64 1.11l-2.08 1.19-2.5-2.5 2.5-2.5 2.08 1.19zM6.05 2.66l10.76 6.22-2.27 2.27-8.49-8.49z"/></svg>
+                            <div class="store-text">
+                                <span class="store-label">Get it on</span>
+                                <span class="store-name">Google Play</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="cta-phone">
+                    <div class="cta-phone-inner">
+                        <div class="cta-screen-content">
+                            <div class="cta-logo">winter</div>
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="rgba(107,29,42,0.2)" stroke="var(--maroon)" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            <p>Find your cozy connection</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <div class="footer-divider"></div>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-main">
+                <div class="footer-brand">
+                    <div class="footer-logo">winter</div>
+                    <p>Winter is a premium modern dating app built to foster intentional connections, warm dates, and cozy long-term romance.</p>
+                </div>
+                <div class="footer-columns">
+                    <div class="footer-col">
+                        <h4>Company</h4>
+                        <a href="#">About Us</a>
+                        <a href="#">Careers</a>
+                        <a href="#">Blog</a>
+                        <a href="#">Press</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Features</h4>
+                        <a href="#">Smart Match</a>
+                        <a href="#">Verification</a>
+                        <a href="#">Cozy Call</a>
+                        <a href="#">Events</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Legal</h4>
+                        <a href="terms.html">Terms of Service</a>
+                        <a href="privacy-policy.html">Privacy Policy</a>
+                        <a href="cookie-policy.html">Cookie Policy</a>
+                        <a href="#">Safety Tips</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-copyright">© 2026 Winter App Inc. All rights reserved. Made with love for cozy daters.</div>
+                <div class="footer-social">
+                    <a href="#" aria-label="Instagram">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                    </a>
+                    <a href="#" aria-label="Twitter">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
+                    </a>
+                    <a href="#" aria-label="Facebook">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===== SCRIPTS ===== -->
+    <script>
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 10);
+        });
+
+        // Mobile menu toggle
+        const mobileToggle = document.getElementById('mobileToggle');
+        const navLinks = document.getElementById('navLinks');
+        mobileToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+        // Close mobile menu on link click
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => navLinks.classList.remove('active'));
+        });
+
+        // Scroll-triggered fade-in animations
+        const fadeElements = document.querySelectorAll('.fade-in');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        fadeElements.forEach(el => observer.observe(el));
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

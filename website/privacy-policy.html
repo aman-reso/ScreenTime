@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy | Winter</title>
+  <meta name="description" content="Privacy Policy for Winter Dating App. Learn how we collect, use, and protect your personal information, WebRTC call privacy, biometric security, and user rights.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #3C444F;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Minimal Top Navigation Header */
+    .top-header {
+      background: #FFFFFF;
+      border-bottom: 1px solid #E9EBEE;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-header-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .logo {
+      font-family: 'Pacifico', cursive;
+      font-size: 28px;
+      color: #6B1D2A;
+      text-decoration: none;
+      line-height: 1;
+    }
+    /* Main Content */
+    .content-container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    h1.doc-title {
+      font-size: 34px;
+      font-weight: 700;
+      color: #111418;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .doc-meta {
+      font-size: 14px;
+      color: #7C8591;
+      margin-bottom: 28px;
+    }
+    .intro-text {
+      font-size: 16px;
+      line-height: 1.7;
+      color: #21262E;
+      margin-bottom: 24px;
+    }
+    /* Summary Callout Box */
+    .callout-box {
+      background: #FFF5F5;
+      border-left: 4px solid #6B1D2A;
+      border-radius: 4px;
+      padding: 18px 20px;
+      margin: 24px 0;
+      font-size: 14px;
+      color: #3C444F;
+      line-height: 1.6;
+    }
+    .callout-box strong {
+      color: #111418;
+    }
+    /* Quick Jump / TOC */
+    .toc-container {
+      background: #F8F9FA;
+      border: 1px solid #E9EBEE;
+      border-radius: 8px;
+      padding: 24px 28px;
+      margin: 32px 0 40px;
+    }
+    .toc-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111418;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+    .toc-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toc-list li a {
+      color: #6B1D2A;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .toc-list li a:hover {
+      text-decoration: underline;
+    }
+    /* Content Headings */
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111418;
+      margin-top: 44px;
+      margin-bottom: 16px;
+      line-height: 1.35;
+      padding-top: 16px;
+      border-top: 1px solid #F0F2F4;
+    }
+    h2:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #111418;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+    p {
+      margin-bottom: 16px;
+    }
+    ul, ol {
+      padding-left: 24px;
+      margin-bottom: 18px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    a {
+      color: #6B1D2A;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    a:hover {
+      color: #8B2E3F;
+    }
+    strong {
+      color: #111418;
+      font-weight: 600;
+    }
+    .contact-card {
+      background: #F8F9FA;
+      border: 1px solid #E9EBEE;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-top: 20px;
+    }
+    .contact-card p {
+      margin-bottom: 6px;
+    }
+    .contact-card p:last-child {
+      margin-bottom: 0;
+    }
+    /* Minimal Clean Footer */
+    .page-footer {
+      border-top: 1px solid #E9EBEE;
+      padding: 32px 24px;
+      background: #FAFAFA;
+      font-size: 13px;
+      color: #7C8591;
+    }
+    .footer-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      text-align: center;
+    }
+    .footer-links {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .footer-links a {
+      color: #656E7B;
+      text-decoration: none;
+    }
+    .footer-links a:hover {
+      color: #6B1D2A;
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      .content-container {
+        padding: 28px 18px 60px;
+      }
+      h1.doc-title {
+        font-size: 28px;
+      }
+      h2 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header with Brand Logo -->
+  <header class="top-header">
+    <div class="top-header-inner">
+      <a href="/" class="logo">winter</a>
+    </div>
+  </header>
+
+  <!-- Main Legal Document Content -->
+  <main class="content-container">
+    <h1 class="doc-title">Privacy Policy</h1>
+    <div class="doc-meta">Effective Date: 27 September 2026</div>
+
+    <p class="intro-text">
+      Hi there! Welcome to Winter's Privacy Policy. We know that reading legal documents may not always seem engaging, but please take a few moments to review this page. A lot of care has been put into making this policy as clear, honest, and accessible as possible. Here, we outline what information is collected, why it is collected, and how we protect your personal privacy throughout your dating journey.
+    </p>
+
+    <div class="callout-box">
+      <strong>Key Privacy Commitments:</strong>
+      <ul style="margin: 8px 0 0 18px; padding-left: 0;">
+        <li><strong>Zero Audio/Video Recording:</strong> 1-on-1 audio and video calls operate peer-to-peer over encrypted WebRTC tunnels. Streams are never recorded or stored on our servers.</li>
+        <li><strong>No Biometric Data Transmission:</strong> The optional Biometric Fingerprint Lock relies exclusively on Android's secure hardware enclave (TEE/Keystore). Your biometric data never leaves your device.</li>
+        <li><strong>Privacy-First Matching:</strong> Other users never see your phone number, real email address, or exact location coordinates.</li>
+      </ul>
+    </div>
+
+    <!-- Table of Contents -->
+    <nav class="toc-container" aria-label="Table of Contents">
+      <div class="toc-title">Table of Contents</div>
+      <ul class="toc-list">
+        <li><a href="#who-we-are">1. Who We Are</a></li>
+        <li><a href="#where-it-applies">2. Where This Privacy Policy Applies</a></li>
+        <li><a href="#data-we-collect">3. Data We Collect</a></li>
+        <li><a href="#how-we-use-data">4. Why and How We Use Your Data</a></li>
+        <li><a href="#how-we-share-data">5. How We Share Data</a></li>
+        <li><a href="#webrtc-privacy">6. WebRTC Calling &amp; Media Privacy</a></li>
+        <li><a href="#biometric-security">7. Biometric Security &amp; Device Protection</a></li>
+        <li><a href="#your-rights">8. Your Rights &amp; Choices</a></li>
+        <li><a href="#data-retention">9. How Long We Retain Your Data</a></li>
+        <li><a href="#childrens-privacy">10. Children's Privacy (Strict 18+ Only)</a></li>
+        <li><a href="#data-security">11. Data Security Safeguards</a></li>
+        <li><a href="#policy-changes">12. Changes to This Privacy Policy</a></li>
+        <li><a href="#contact-us">13. How to Contact Us</a></li>
+      </ul>
+    </nav>
+
+    <!-- 1. Who We Are -->
+    <h2 id="who-we-are">1. Who We Are</h2>
+    <p>
+      Winter ("Winter", "we", "us", or "our") is a modern dating platform designed to foster intentional connections, thoughtful conversations, and cozy romance.
+    </p>
+    <p>
+      The entity responsible for processing your personal information (the "data controller") under this Privacy Policy is <strong>Winter App Inc.</strong>
+    </p>
+
+    <!-- 2. Where This Privacy Policy Applies -->
+    <h2 id="where-it-applies">2. Where This Privacy Policy Applies</h2>
+    <p>
+      This Privacy Policy applies to the Winter mobile application, the Winter website (located at winterdating.web.app), and any related services, features, or content offered by Winter (collectively, the "Services").
+    </p>
+
+    <!-- 3. Data We Collect -->
+    <h2 id="data-we-collect">3. Data We Collect</h2>
+    <p>
+      We cannot help you build meaningful connections without collecting certain information about you. We collect data in three main ways: information you choose to give us, information generated through your use of our services, and information from third parties.
+    </p>
+
+    <h3>A. Information You Provide Directly</h3>
+    <ul>
+      <li><strong>Account &amp; Profile Information:</strong> When you create an account, you provide us with basic profile details including your name, gender, date of birth, dating preferences, biography, interests, and profile photographs.</li>
+      <li><strong>Chats &amp; In-App Messages:</strong> Text conversations, emoji reactions, and media shared between matched users to facilitate your connection.</li>
+      <li><strong>Customer Support Inquiries:</strong> Details and correspondence you share when reaching out to our support or reporting an issue.</li>
+    </ul>
+
+    <h3>B. Information Collected Automatically</h3>
+    <ul>
+      <li><strong>Device Information:</strong> Device model, operating system version, app version, language settings, and temporary IP addresses used to establish peer connections.</li>
+      <li><strong>Usage &amp; Interaction Data:</strong> Activity timestamps, feature interactions, profile views, match actions, and call session durations (metadata only, not audio/video streams).</li>
+      <li><strong>Push Notification Tokens:</strong> Secure push tokens (such as Firebase Cloud Messaging) used exclusively to notify you of incoming calls, matches, and messages.</li>
+    </ul>
+
+    <!-- 4. How We Use Data -->
+    <h2 id="how-we-use-data">4. Why and How We Use Your Data</h2>
+    <p>We process your data for the following legitimate purposes:</p>
+    <ul>
+      <li><strong>Delivering Core Services:</strong> Creating and managing your account, displaying your profile to compatible daters, and enabling real-time chats and calls.</li>
+      <li><strong>Safety and Fraud Prevention:</strong> Detecting, preventing, and addressing fraud, harassment, impersonation, spam, and conduct that violates our Community Guidelines.</li>
+      <li><strong>Managing Purchases &amp; Wallet:</strong> Managing virtual call coin balances, talk-time credits, and purchase verifications.</li>
+      <li><strong>Improving Features:</strong> Analyzing anonymized usage patterns to enhance system reliability and overall experience.</li>
+      <li><strong>Legal Compliance:</strong> Complying with applicable laws, regulations, and legal requests.</li>
+    </ul>
+
+    <!-- 5. How We Share Data -->
+    <h2 id="how-we-share-data">5. How We Share Data</h2>
+    <p>
+      We believe your personal life is personal. We <strong>do not sell, rent, or trade your personal data</strong> to third-party data brokers or advertisers. Data is shared only under specific circumstances:
+    </p>
+    <ul>
+      <li><strong>With Other Users:</strong> When you publish profile information (such as your photos, bio, interests, and age), it becomes visible to potential matches within the service according to your discovery settings.</li>
+      <li><strong>With Service Providers:</strong> Trusted cloud and infrastructure partners (such as Google Firebase for push notifications and hosting, TURN servers for call routing) operating under strict data protection terms.</li>
+      <li><strong>Payment Processors:</strong> Official Google Play Billing or authorized payment gateways for coin purchases. Your payment card numbers and banking credentials are handled directly by the processors and never stored by Winter.</li>
+      <li><strong>Legal &amp; Safety Requirements:</strong> Where required by law, subpoena, or court order, or when necessary to protect personal safety or prevent illegal acts.</li>
+    </ul>
+
+    <!-- 6. WebRTC Calling & Media Privacy -->
+    <h2 id="webrtc-privacy">6. WebRTC Calling &amp; Media Privacy</h2>
+    <p>
+      Winter provides live 1-on-1 audio and video calling through standard WebRTC peer-to-peer protocols:
+    </p>
+    <ul>
+      <li>Call media is transmitted directly between callers over encrypted DTLS-SRTP channels whenever network conditions allow.</li>
+      <li>Our relay servers (TURN) assist in routing encrypted packets through firewalls when direct peer connection is not possible. <strong>Our servers do not decrypt, listen to, record, or store your live audio or video conversations.</strong></li>
+      <li>Calls never reveal your personal phone number or email address to the other party.</li>
+    </ul>
+
+    <!-- 7. Biometric Security & Device Protection -->
+    <h2 id="biometric-security">7. Biometric Security &amp; Device Protection</h2>
+    <p>
+      Winter provides an optional Biometric Security Lock using the Android BiometricPrompt framework:
+    </p>
+    <ul>
+      <li>All biometric verification (fingerprint or face) takes place strictly inside your device's isolated hardware security module (Trusted Execution Environment / Secure Enclave).</li>
+      <li><strong>Winter never accesses, collects, or transmits your raw biometric data.</strong> The device operating system simply informs the app whether the unlock was successful.</li>
+    </ul>
+
+    <!-- 8. Your Rights & Choices -->
+    <h2 id="your-rights">8. Your Rights &amp; Choices</h2>
+    <p>
+      You are in control of your personal data. You have the right to:
+    </p>
+    <ul>
+      <li><strong>Access Your Information:</strong> Review your profile details, chat history, and account settings directly in the app.</li>
+      <li><strong>Correct or Update Details:</strong> Update your bio, photos, and preferences anytime in your Profile Settings.</li>
+      <li><strong>Control Visibility:</strong> Toggle your discovery status or switch to Private Mode to pause showing your profile to new daters.</li>
+      <li><strong>Delete Your Account:</strong> You can delete your account at any time directly through <code>Settings &gt; Account &gt; Delete Account</code>.</li>
+    </ul>
+
+    <!-- 9. How Long We Retain Your Data -->
+    <h2 id="data-retention">9. How Long We Retain Your Data</h2>
+    <p>
+      We keep your personal information only as long as you maintain an active account with Winter.
+    </p>
+    <p>
+      Upon account deletion, your profile is immediately taken down from discovery and search. Associated personal messages and profile data are completely purged from our active databases within 30 days, except where brief retention is required to fulfill statutory legal obligations or resolve safety reports.
+    </p>
+
+    <!-- 10. Children's Privacy -->
+    <h2 id="childrens-privacy">10. Children's Privacy (Strict 18+ Only)</h2>
+    <p>
+      Winter is strictly for individuals who are <strong>18 years of age or older</strong>. We do not permit individuals under 18 to create accounts, and we do not knowingly collect personal data from minors. If you suspect an underage user has created an account, please report it to our team immediately, and we will take prompt action to remove the account.
+    </p>
+
+    <!-- 11. Data Security Safeguards -->
+    <h2 id="data-security">11. Data Security Safeguards</h2>
+    <p>
+      We employ rigorous administrative, physical, and technical measures to safeguard your personal data, including TLS 1.3 network transport encryption, authenticated WebSockets, encrypted server databases, and optional anti-screenshot flags on sensitive screens.
+    </p>
+
+    <!-- 12. Changes to This Privacy Policy -->
+    <h2 id="policy-changes">12. Changes to This Privacy Policy</h2>
+    <p>
+      Because we are constantly evolving our services and safety features, this Privacy Policy may be updated periodically. When significant changes occur, we will update the "Effective Date" at the top of this document and provide appropriate notice through the app or website.
+    </p>
+
+    <!-- 13. How to Contact Us -->
+    <h2 id="contact-us">13. How to Contact Us</h2>
+    <p>
+      If you have questions, feedback, or data privacy requests concerning this Privacy Policy, please reach out to our privacy compliance team:
+    </p>
+    <div class="contact-card">
+      <p><strong>Winter Privacy &amp; Support Team</strong></p>
+      <p>Email: <a href="mailto:support@winterdating.app">support@winterdating.app</a></p>
+      <p>Response Time: Within 24-48 business hours</p>
+    </div>
+  </main>
+
+  <!-- Page Footer -->
+  <footer class="page-footer">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="/terms.html">Terms of Use</a>
+        <a href="/privacy-policy.html">Privacy Policy</a>
+        <a href="/cookie-policy.html">Cookie Policy</a>
+      </div>
+      <div>&copy; 2026 Winter App Inc. All rights reserved.</div>
+    </div>
+  </footer>
+
+</body>
+</html>
