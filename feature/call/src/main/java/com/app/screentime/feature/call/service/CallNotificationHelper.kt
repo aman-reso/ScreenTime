@@ -9,18 +9,122 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.media.AudioAttributes
+import android.media.Ringtone
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
 import com.app.screentime.feature.call.R
 import com.app.screentime.feature.call.receiver.CallActionReceiver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 object CallNotificationHelper {
     const val INCOMING_CALL_CHANNEL_ID = "chatty_incoming_call_channel"
     const val MISSED_CALL_CHANNEL_ID = "chatty_missed_call_channel"
     const val INCOMING_CALL_NOTIFICATION_ID = 4001
     const val MISSED_CALL_NOTIFICATION_ID = 4002
+
+    private var fallbackRingtone: Ringtone? = null
+    private var fallbackRingJob: Job? = null
+    private val helperScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    fun areNotificationsEnabled(context: Context): Boolean {
+        val manager = NotificationManagerCompat.from(context)
+        if (!manager.areNotificationsEnabled()) return false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = manager.getNotificationChannel(INCOMING_CALL_CHANNEL_ID)
+            if (channel != null && channel.importance == NotificationManager.IMPORTANCE_NONE) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private fun startFallbackRingtoneIfNotificationsOff(context: Context) {
+        if (areNotificationsEnabled(context)) {
+            return
+        }
+
+        stopFallbackRingtone(context)
+
+        fallbackRingJob = helperScope.launch {
+            try {
+                val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+                val ringtone = RingtoneManager.getRingtone(context.applicationContext, ringtoneUri)?.apply {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        audioAttributes = AudioAttributes.Builder()
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                            .build()
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        isLooping = true
+                    }
+                }
+                fallbackRingtone = ringtone
+
+                val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+                    vm?.defaultVibrator
+                } else {
+                    @Suppress("DEPRECATION")
+                    context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                }
+
+                ringtone?.play()
+                val pattern = longArrayOf(0, 1000, 800, 1000, 800, 1000, 800, 1000, 800, 1000)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator?.vibrate(pattern, -1)
+                }
+
+                Log.d("CallNotificationHelper", "Notifications turned off: ringing phone for 10 seconds")
+
+                // Ring phone for 10 seconds
+                delay(10_000)
+
+                stopFallbackRingtone(context)
+            } catch (e: Exception) {
+                Log.w("CallNotificationHelper", "Fallback ringtone error: ${e.message}")
+            }
+        }
+    }
+
+    fun stopFallbackRingtone(context: Context? = null) {
+        fallbackRingJob?.cancel()
+        fallbackRingJob = null
+        try {
+            fallbackRingtone?.stop()
+        } catch (_: Exception) {}
+        fallbackRingtone = null
+
+        context?.let { ctx ->
+            try {
+                val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val vm = ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+                    vm?.defaultVibrator
+                } else {
+                    @Suppress("DEPRECATION")
+                    ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                }
+                vibrator?.cancel()
+            } catch (_: Exception) {}
+        }
+    }
 
     fun createChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -148,13 +252,23 @@ object CallNotificationHelper {
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(INCOMING_CALL_NOTIFICATION_ID, notification)
+        try {
+            notificationManager.notify(INCOMING_CALL_NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            Log.e("CallNotificationHelper", "Failed to notify: ${e.message}")
+        }
+
+        // If notifications are turned off by user/system, ring phone directly for 10 seconds
+        startFallbackRingtoneIfNotificationsOff(context)
     }
 
     fun cancelIncomingCallNotification(context: Context) {
+        stopFallbackRingtone(context)
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(INCOMING_CALL_NOTIFICATION_ID)
+        try {
+            notificationManager.cancel(INCOMING_CALL_NOTIFICATION_ID)
+        } catch (_: Exception) {}
     }
 
     fun showMissedCallNotification(context: Context, callerName: String) {
@@ -186,7 +300,11 @@ object CallNotificationHelper {
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(MISSED_CALL_NOTIFICATION_ID, notification)
+        try {
+            notificationManager.notify(MISSED_CALL_NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            Log.e("CallNotificationHelper", "Failed to post missed call notification: ${e.message}")
+        }
     }
 
     private fun getAppIconBitmap(context: Context): Bitmap? {
