@@ -5,10 +5,14 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.app.screentime.feature.call.R
 import com.app.screentime.feature.call.receiver.CallActionReceiver
 
 object CallNotificationHelper {
@@ -98,8 +102,15 @@ object CallNotificationHelper {
         val title = if (isVideo) "Incoming Video Call" else "Incoming Voice Call"
         val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
 
+        val appIcon = getAppIconBitmap(context)
+
         val notification = NotificationCompat.Builder(context, INCOMING_CALL_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_phone_call)
+            .setSmallIcon(R.drawable.ic_call_notification)
+            .apply {
+                if (appIcon != null) {
+                    setLargeIcon(appIcon)
+                }
+            }
             .setContentTitle(title)
             .setContentText("$callerName is calling you...")
             .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -111,11 +122,11 @@ object CallNotificationHelper {
             .setFullScreenIntent(acceptPendingIntent, true)
             .setContentIntent(acceptPendingIntent)
             .addAction(
-                android.R.drawable.ic_menu_close_clear_cancel,
+                R.drawable.ic_call_notification,
                 "Decline",
                 rejectPendingIntent
             )
-            .addAction(android.R.drawable.stat_sys_phone_call, "Answer", acceptPendingIntent)
+            .addAction(R.drawable.ic_call_notification, "Answer", acceptPendingIntent)
             .build()
 
         val notificationManager =
@@ -140,8 +151,15 @@ object CallNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val appIcon = getAppIconBitmap(context)
+
         val notification = NotificationCompat.Builder(context, MISSED_CALL_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.sym_call_missed)
+            .setSmallIcon(R.drawable.ic_call_missed)
+            .apply {
+                if (appIcon != null) {
+                    setLargeIcon(appIcon)
+                }
+            }
             .setContentTitle("Missed Call")
             .setContentText("You missed a call from $callerName")
             .setAutoCancel(true)
@@ -152,5 +170,25 @@ object CallNotificationHelper {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(MISSED_CALL_NOTIFICATION_ID, notification)
+    }
+
+    private fun getAppIconBitmap(context: Context): Bitmap? {
+        return try {
+            val pm = context.packageManager
+            val drawable = pm.getApplicationIcon(context.packageName)
+            if (drawable is BitmapDrawable && drawable.bitmap != null) {
+                drawable.bitmap
+            } else {
+                val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 128
+                val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 128
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                bitmap
+            }
+        } catch (e: Exception) {
+            null
+        }
     }
 }
