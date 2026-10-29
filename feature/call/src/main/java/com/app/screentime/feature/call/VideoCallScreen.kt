@@ -3,6 +3,7 @@ package com.app.screentime.feature.call
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -35,7 +36,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.config.R
-import com.app.screentime.core.ui.theme.ZonaColors
 import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.app.screentime.feature.call.webrtc.WebRtcVideoSurface
 import com.telekom.odsystem.atoms.ODSBorder
@@ -53,11 +53,15 @@ import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import io.livekit.android.compose.ui.RendererType
+import io.livekit.android.compose.ui.ScaleType
+import io.livekit.android.compose.ui.VideoTrackView
 import io.livekit.android.renderer.TextureViewRenderer
 import io.livekit.android.room.Room
 import io.livekit.android.room.track.LocalVideoTrack
@@ -65,10 +69,12 @@ import io.livekit.android.room.track.RemoteVideoTrack
 import io.livekit.android.room.track.Track
 import io.livekit.android.room.track.VideoTrack
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * 1-on-1 Video Call Screen (Matching media_1789898718933.png new-video-call).
- * 100% constructed using Telekom ODS components and Zona design tokens.
+ * 1-on-1 Video Call Screen.
+ * Uses Telekom ODS components and ODSTheme scheme consistently.
  */
 @Composable
 fun VideoCallScreen(
@@ -91,21 +97,78 @@ fun VideoCallScreen(
     val remoteRtcVideoTrack by viewModel.remoteWebRtcVideoTrack.collectAsState()
     val eglBase = viewModel.webRtcEglBase
 
-    var remoteVideoTrack by remember { mutableStateOf<RemoteVideoTrack?>(null) }
-    var localVideoTrack by remember { mutableStateOf<LocalVideoTrack?>(null) }
+    var remoteVideoTrack by remember { mutableStateOf<VideoTrack?>(null) }
+    var localVideoTrack by remember { mutableStateOf<VideoTrack?>(null) }
 
-    // Observe LiveKit room tracks for active video streams
+    fun findRemoteVideoTrack(r: Room): VideoTrack? {
+        for (participant in r.remoteParticipants.values) {
+            for (pair in participant.videoTrackPublications) {
+                val t = (pair.second as? VideoTrack) ?: (pair.first.track as? VideoTrack)
+                if (t != null) return t
+            }
+            for (pub in participant.trackPublications.values) {
+                val t = pub.track as? VideoTrack
+                if (t != null) return t
+            }
+            val camTrack = participant.getTrackPublication(Track.Source.CAMERA)?.track as? VideoTrack
+            if (camTrack != null) return camTrack
+        }
+        return null
+    }
+
+    fun findLocalVideoTrack(r: Room): VideoTrack? {
+        for (pair in r.localParticipant.videoTrackPublications) {
+            val t = (pair.second as? VideoTrack) ?: (pair.first.track as? VideoTrack)
+            if (t != null) return t
+        }
+        for (pub in r.localParticipant.trackPublications.values) {
+            val t = pub.track as? VideoTrack
+            if (t != null) return t
+        }
+        val camTrack = r.localParticipant.getTrackPublication(Track.Source.CAMERA)?.track as? VideoTrack
+        if (camTrack != null) return camTrack
+        return null
+    }
+
+    // Observe LiveKit room tracks for active video streams both reactively via events and periodic scan
     LaunchedEffect(room) {
+        launch {
+            try {
+                room.events.events.collect {
+                    val r = findRemoteVideoTrack(room)
+                    if (r != null && r != remoteVideoTrack) {
+                        Log.i("VideoCallScreen", "🎥 Remote video track updated from event: $r")
+                        remoteVideoTrack = r
+                    }
+                    val l = findLocalVideoTrack(room)
+                    if (l != null && l != localVideoTrack) {
+                        Log.i("VideoCallScreen", "🎥 Local video track updated from event: $l")
+                        localVideoTrack = l
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("VideoCallScreen", "Room events collection ended: ${e.message}")
+            }
+        }
+
         while (true) {
-            val localPub = room.localParticipant.getTrackPublication(Track.Source.CAMERA)
-            localVideoTrack = localPub?.track as? LocalVideoTrack
+            val r = findRemoteVideoTrack(room)
+            if (r != remoteVideoTrack) {
+                remoteVideoTrack = r
+            }
 
-            val remotePub = room.remoteParticipants.values
-                .firstOrNull()
-                ?.getTrackPublication(Track.Source.CAMERA)
-            remoteVideoTrack = remotePub?.track as? RemoteVideoTrack
+            val l = findLocalVideoTrack(room)
+            if (l != localVideoTrack) {
+                localVideoTrack = l
+            }
 
-            delay(400)
+            if (callState.isCameraOn && l == null && room.state == Room.State.CONNECTED) {
+                try {
+                    room.localParticipant.setCameraEnabled(true)
+                } catch (_: Exception) {}
+            }
+
+            delay(250.milliseconds)
         }
     }
 
@@ -154,6 +217,9 @@ fun VideoCallScreen(
                 (result[Manifest.permission.RECORD_AUDIO] == true ||
                         ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
         hasCameraPermission = cameraGranted
+        if (cameraGranted) {
+            viewModel.setCameraEnabled(true)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             hasNotificationPermission = result[Manifest.permission.POST_NOTIFICATIONS] == true ||
                     ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
@@ -167,7 +233,13 @@ fun VideoCallScreen(
 
     LaunchedEffect(Unit) {
         val isAnsweringCall = callState.status == CallStatus.ACTIVE || callState.status == CallStatus.INCOMING
-        if (!hasInitiatedCall && targetId.isNotBlank() && !isAnsweringCall) {
+        if (isAnsweringCall) {
+            if (hasCameraPermission) {
+                viewModel.setCameraEnabled(true)
+            } else {
+                permissionLauncher.launch(permissionsToRequest)
+            }
+        } else if (!hasInitiatedCall && targetId.isNotBlank()) {
             if (hasCameraPermission && hasNotificationPermission) {
                 hasInitiatedCall = true
                 viewModel.startOutgoingCall(targetId, modelName, ratePerMin, CallType.VIDEO)
@@ -184,7 +256,7 @@ fun VideoCallScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding(),
-            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(
@@ -202,13 +274,13 @@ fun VideoCallScreen(
                 ODSText(
                     text = "Checking Wallet Balance...",
                     style = ODSTextStyles.bodyL,
-                    color = ZonaColors.TextPrimary
+                    color = scheme.basicText
                 )
 
                 ODSText(
                     text = "Verifying coins for video call with ${modelName.ifBlank { "User" }} ($${ratePerMin.toInt()}/min)",
                     style = ODSTextStyles.bodyMRegular,
-                    color = ZonaColors.LavenderAlt
+                    color = scheme.basicTextRecessive
                 )
             }
         }
@@ -222,7 +294,7 @@ fun VideoCallScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding(),
-            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(
@@ -235,12 +307,12 @@ fun VideoCallScreen(
                 ODSBox(
                     modifier = Modifier.size(88.dp),
                     cornerRadius = ODSCorners(all = 44.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_zap),
-                        tint = ZonaColors.ActiveLime.getColor(),
+                        tint = scheme.basicAccent.getColor(),
                         modifier = Modifier.size(40.dp)
                     )
                 }
@@ -248,7 +320,7 @@ fun VideoCallScreen(
                 ODSText(
                     text = if (isCurrentUserModel) stringResource(R.string.call_caller_insufficient_balance) else stringResource(R.string.call_insufficient_balance),
                     style = ODSTextStyles.bodyL,
-                    color = ZonaColors.TextPrimary
+                    color = scheme.basicText
                 )
 
                 ODSText(
@@ -265,7 +337,7 @@ fun VideoCallScreen(
                         }
                     },
                     style = ODSTextStyles.bodyMRegular,
-                    color = ZonaColors.LavenderAlt
+                    color = scheme.basicTextRecessive
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -313,7 +385,7 @@ fun VideoCallScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding(),
-            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(
@@ -326,12 +398,12 @@ fun VideoCallScreen(
                 ODSBox(
                     modifier = Modifier.size(80.dp),
                     cornerRadius = ODSCorners(all = 40.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
-                        tint = ZonaColors.ActionPrimary.getColor(),
+                        tint = HexColor("#FF4D4F", 1.0f).getColor(),
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -339,21 +411,21 @@ fun VideoCallScreen(
                 ODSText(
                     text = stringResource(R.string.call_video_ended),
                     style = ODSTextStyles.bodyL,
-                    color = ZonaColors.TextPrimary
+                    color = scheme.basicText
                 )
 
                 val durStr = "%02d:%02d".format(callState.durationSec / 60, callState.durationSec % 60)
                 ODSText(
                     text = callState.endReason ?: stringResource(R.string.call_duration_format, durStr),
                     style = ODSTextStyles.bodyMRegular,
-                    color = ZonaColors.LavenderAlt
+                    color = scheme.basicTextRecessive
                 )
 
                 if (callState.cost > 0) {
                     ODSText(
                         text = stringResource(R.string.call_total_charged, callState.cost),
                         style = ODSTextStyles.bodyMBold,
-                        color = ZonaColors.ActiveLime
+                        color = scheme.basicAccent
                     )
                 }
 
@@ -380,73 +452,125 @@ fun VideoCallScreen(
     val seconds = callState.durationSec % 60
     val formattedTime = "%02d:%02d".format(minutes, seconds)
 
-    // ── 4. ACTIVE VIDEO CALL SCREEN (new-video-call) ──
+    // ── 4. ACTIVE VIDEO CALL SCREEN ──
     ODSBox(
         modifier = modifier.fillMaxSize(),
-        background = listOf(ODSColorModel(hexColor = ZonaColors.Background))
+        background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
     ) {
-        // ── Full-Screen Remote Participant Video Feed ──
-        if (remoteRtcVideoTrack != null && eglBase != null) {
-            WebRtcVideoSurface(
-                videoTrack = remoteRtcVideoTrack,
-                eglBase = eglBase,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (remoteVideoTrack != null) {
-            LiveKitVideoSurface(
-                room = room,
-                videoTrack = remoteVideoTrack,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            // Fullscreen portrait image or placeholder
-            if (avatarUrl.isNotBlank()) {
-                ODSImage(
-                    imageModel = ODSImageModel(
-                        url = avatarUrl,
-                        contentDescription = modelName
-                    ),
-                    contentScale = ContentScale.Crop,
+        val isRemoteVideoActive = remoteVideoTrack != null || (remoteRtcVideoTrack != null && eglBase != null)
+
+        // ── Main Video Feed ──
+        // When remote is connected, show remote video.
+        // While dialing / before answer, show local camera preview full-screen (WhatsApp / FaceTime behavior)!
+        if (isRemoteVideoActive) {
+            if (remoteRtcVideoTrack != null && eglBase != null) {
+                WebRtcVideoSurface(
+                    videoTrack = remoteRtcVideoTrack,
+                    eglBase = eglBase,
                     modifier = Modifier.fillMaxSize()
                 )
-            } else {
-                ODSBox(
-                    modifier = Modifier.fillMaxSize(),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.Dark.background)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSIcon(
-                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_user),
-                        tint = ZonaColors.LavenderAlt.getColor(),
-                        modifier = Modifier.size(96.dp)
-                    )
-                }
+            } else if (remoteVideoTrack != null) {
+                LiveKitVideoSurface(
+                    room = room,
+                    videoTrack = remoteVideoTrack,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
-
-            // Dialing / Ringing Scrim Overlay
-            if (callState.status == CallStatus.DIALING) {
-                ODSBox(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(horizontal = 24.dp, vertical = 14.dp),
-                    cornerRadius = ODSCorners(all = 20.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.OverlayLegacy))
-                ) {
-                    ODSColumn(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        gap = 6.dp
+        } else {
+            // Local Camera Preview on Full Screen
+            if (localVideoTrack != null && callState.isCameraOn) {
+                LiveKitVideoSurface(
+                    room = room,
+                    videoTrack = localVideoTrack,
+                    modifier = Modifier.fillMaxSize(),
+                    isMirror = callState.isFrontCamera
+                )
+            } else if (localRtcVideoTrack != null && eglBase != null && callState.isCameraOn) {
+                WebRtcVideoSurface(
+                    videoTrack = localRtcVideoTrack,
+                    eglBase = eglBase,
+                    modifier = Modifier.fillMaxSize(),
+                    isMirror = callState.isFrontCamera
+                )
+            } else {
+                // Fallback while camera starts: remote avatar or placeholder
+                if (avatarUrl.isNotBlank()) {
+                    ODSImage(
+                        imageModel = ODSImageModel(
+                            url = avatarUrl,
+                            contentDescription = modelName
+                        ),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    ODSBox(
+                        modifier = Modifier.fillMaxSize(),
+                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        ODSText(
-                            text = "Calling ${modelName.ifBlank { "User" }}...",
-                            style = ODSTextStyles.bodyMBold,
-                            color = ZonaColors.TextPrimary
-                        )
-                        ODSText(
-                            text = "Connecting secure video stream",
-                            style = ODSTextStyles.microcopyRegular,
-                            color = ZonaColors.ActiveLime
+                        ODSIcon(
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_user),
+                            tint = scheme.basicTextRecessive.getColor(),
+                            modifier = Modifier.size(96.dp)
                         )
                     }
+                }
+            }
+        }
+
+        // ── Dialing / Ringing Center Overlay (when waiting for remote user to answer) ──
+        if (!isRemoteVideoActive) {
+            ODSColumn(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                gap = 14.dp
+            ) {
+                if (avatarUrl.isNotBlank()) {
+                    ODSBox(
+                        modifier = Modifier.size(96.dp),
+                        cornerRadius = ODSCorners(all = 48.dp),
+                        border = ODSBorder(
+                            width = 2.5.dp,
+                            colorList = listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                        ),
+                        clipContent = true
+                    ) {
+                        ODSImage(
+                            imageModel = ODSImageModel(url = avatarUrl, contentDescription = modelName),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+                ODSText(
+                    text = modelName.ifBlank { "User" },
+                    style = ODSTextStyles.bodyL,
+                    color = scheme.basicText
+                )
+                ODSRow(
+                    cornerRadius = ODSCorners(all = 16.dp),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+                    border = ODSBorder(
+                        width = 1.dp,
+                        colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                    ),
+                    padding = ODSPadding(horizontal = 14.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    gap = 8.dp
+                ) {
+                    ODSBox(
+                        modifier = Modifier.size(8.dp),
+                        cornerRadius = ODSCorners(all = 4.dp),
+                        background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                    )
+                    ODSText(
+                        text = if (callState.status == CallStatus.DIALING) "Ringing..." else "Calling...",
+                        style = ODSTextStyles.bodySBold,
+                        color = scheme.basicText
+                    )
                 }
             }
         }
@@ -464,22 +588,32 @@ fun VideoCallScreen(
             // Top-Left Status Pill
             ODSRow(
                 cornerRadius = ODSCorners(all = 20.dp),
-                background = listOf(ODSColorModel(hexColor = ZonaColors.MediaOverlay)),
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+                border = ODSBorder(
+                    width = 1.dp,
+                    colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                ),
                 padding = ODSPadding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 gap = 8.dp
             ) {
-                // Neon Lime active indicator dot
+                // Active indicator dot
                 ODSBox(
                     modifier = Modifier.size(7.dp),
                     cornerRadius = ODSCorners(all = 4.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime))
+                    background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
                 )
 
+                val pillText = when {
+                    callState.status == CallStatus.DIALING -> "${modelName.ifBlank { "User" }} • Ringing..."
+                    isRemoteVideoActive -> "${modelName.ifBlank { "User" }} • $formattedTime"
+                    else -> "${modelName.ifBlank { "User" }} • $formattedTime"
+                }
+
                 ODSText(
-                    text = "${modelName.ifBlank { "User" }} • $formattedTime",
+                    text = pillText,
                     style = ODSTextStyles.bodySBold,
-                    color = ZonaColors.TextPrimary
+                    color = scheme.basicText
                 )
             }
 
@@ -489,71 +623,79 @@ fun VideoCallScreen(
                     .size(42.dp)
                     .clickable { viewModel.flipCamera() },
                 cornerRadius = ODSCorners(all = 21.dp),
-                background = listOf(ODSColorModel(hexColor = ZonaColors.MediaOverlay)),
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+                border = ODSBorder(
+                    width = 1.dp,
+                    colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                ),
                 contentAlignment = Alignment.Center
             ) {
                 ODSIcon(
                     iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_refresh_cw),
-                    tint = ZonaColors.TextPrimary.getColor(),
+                    tint = scheme.basicText.getColor(),
                     modifier = Modifier.size(22.dp)
                 )
             }
         }
 
-        // ── Floating Top-Right PiP Self-View Video Card with Glowing Neon Lime Border ──
-        ODSBox(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .statusBarsPadding()
-                .padding(top = 68.dp, end = 16.dp)
-                .width(108.dp)
-                .height(148.dp),
-            cornerRadius = ODSCorners(all = 16.dp),
-            border = ODSBorder(
-                width = 3.dp,
-                colorList = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime))
-            ),
-            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
-            clipContent = true
-        ) {
-            if (callState.isCameraOn) {
-                if (localRtcVideoTrack != null && eglBase != null) {
-                    WebRtcVideoSurface(
-                        videoTrack = localRtcVideoTrack,
-                        eglBase = eglBase,
-                        modifier = Modifier.fillMaxSize(),
-                        isMirror = callState.isFrontCamera
-                    )
-                } else if (localVideoTrack != null) {
-                    LiveKitVideoSurface(
-                        room = room,
-                        videoTrack = localVideoTrack,
-                        modifier = Modifier.fillMaxSize()
-                    )
+        // ── Floating Top-Right PiP Self-View Video Card (Visible only when Remote Video is active) ──
+        if (isRemoteVideoActive) {
+            ODSBox(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(top = 68.dp, end = 16.dp)
+                    .width(108.dp)
+                    .height(148.dp)
+                    .clickable { viewModel.flipCamera() },
+                cornerRadius = ODSCorners(all = 16.dp),
+                border = ODSBorder(
+                    width = 2.dp,
+                    colorList = listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                ),
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+                clipContent = true
+            ) {
+                if (callState.isCameraOn) {
+                    if (localRtcVideoTrack != null && eglBase != null) {
+                        WebRtcVideoSurface(
+                            videoTrack = localRtcVideoTrack,
+                            eglBase = eglBase,
+                            modifier = Modifier.fillMaxSize(),
+                            isMirror = callState.isFrontCamera
+                        )
+                    } else if (localVideoTrack != null) {
+                        LiveKitVideoSurface(
+                            room = room,
+                            videoTrack = localVideoTrack,
+                            modifier = Modifier.fillMaxSize(),
+                            isMirror = callState.isFrontCamera
+                        )
+                    } else {
+                        ODSBox(
+                            modifier = Modifier.fillMaxSize(),
+                            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSIcon(
+                                iconModel = ODSIconModel(drawableRes = ODSR.drawable.video),
+                                tint = scheme.basicTextRecessive.getColor(),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                 } else {
                     ODSBox(
                         modifier = Modifier.fillMaxSize(),
-                        background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
                         contentAlignment = Alignment.Center
                     ) {
                         ODSIcon(
                             iconModel = ODSIconModel(drawableRes = ODSR.drawable.video),
-                            tint = ZonaColors.LavenderAlt.getColor(),
-                            modifier = Modifier.size(24.dp)
+                            tint = scheme.basicTextRecessive.getColor(),
+                            modifier = Modifier.size(32.dp)
                         )
                     }
-                }
-            } else {
-                ODSBox(
-                    modifier = Modifier.fillMaxSize(),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSIcon(
-                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.video),
-                        tint = ZonaColors.LavenderAlt.getColor(),
-                        modifier = Modifier.size(32.dp)
-                    )
                 }
             }
         }
@@ -565,33 +707,56 @@ fun VideoCallScreen(
                 .fillMaxWidth()
                 .navigationBarsPadding(),
             cornerRadius = ODSCorners(topLeft = 32.dp, topRight = 32.dp),
-            background = listOf(ODSColorModel(hexColor = ZonaColors.OverlayLegacy)),
-            padding = ODSPadding(top = 22.dp, bottom = 24.dp, left = 32.dp, right = 32.dp)
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+            border = ODSBorder(
+                width = 1.dp,
+                colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+            ),
+            padding = ODSPadding(top = 22.dp, bottom = 24.dp, left = 24.dp, right = 24.dp)
         ) {
             ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                gap = 20.dp
+                gap = 16.dp
             ) {
+                // Calling & Connecting status text without outline, positioned right above action buttons
+                if (callState.status == CallStatus.DIALING) {
+                    ODSColumn(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        gap = 4.dp
+                    ) {
+                        ODSText(
+                            text = "Calling ${modelName.ifBlank { "User" }}...",
+                            style = ODSTextStyles.bodyMBold,
+                            color = scheme.basicText
+                        )
+                        ODSText(
+                            text = "Connecting secure video stream",
+                            style = ODSTextStyles.microcopyRegular,
+                            color = scheme.basicAccent
+                        )
+                    }
+                }
+
                 ODSRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // 1. Mute Audio Button (Dark circle with outline)
+                    // 1. Mute Audio Button
                     ODSBox(
                         modifier = Modifier
-                            .size(62.dp)
+                            .size(56.dp)
                             .clickable { viewModel.toggleMute() },
-                        cornerRadius = ODSCorners(all = 31.dp),
+                        cornerRadius = ODSCorners(all = 28.dp),
                         background = listOf(
                             ODSColorModel(
-                                hexColor = if (callState.isMuted) ZonaColors.SurfaceRaised else ZonaColors.MediaOverlay
+                                hexColor = if (callState.isMuted) scheme.basicAccent else scheme.basicBackgroundSubtle
                             )
                         ),
                         border = ODSBorder(
-                            width = 1.5.dp,
-                            colorList = listOf(ODSColorModel(hexColor = ZonaColors.Border))
+                            width = 1.dp,
+                            colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
                         ),
                         contentAlignment = Alignment.Center
                     ) {
@@ -599,59 +764,83 @@ fun VideoCallScreen(
                             iconModel = ODSIconModel(
                                 drawableRes = if (callState.isMuted) ODSR.drawable.ic_mic_off else ODSR.drawable.ic_mic
                             ),
-                            tint = ZonaColors.TextPrimary.getColor(),
-                            modifier = Modifier.size(26.dp)
+                            tint = if (callState.isMuted) scheme.basicTextOnAccent.getColor() else scheme.basicText.getColor(),
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
-                    // 2. Centered End Call Button (Large Vibrant Coral)
+                    // 2. Camera Toggle (On/Off) Button
                     ODSBox(
                         modifier = Modifier
-                            .size(76.dp)
-                            .clickable {
-                                viewModel.endCall()
-                                viewModel.resetState()
-                                onEndCall()
-                            },
-                        cornerRadius = ODSCorners(all = 38.dp),
-                        background = listOf(ODSColorModel(hexColor = ZonaColors.ActionPrimary)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ODSIcon(
-                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
-                            tint = ZonaColors.TextPrimary.getColor(),
-                            modifier = Modifier.size(34.dp)
-                        )
-                    }
-
-                    // 3. Camera Toggle Button (Bright Neon Lime when Active!)
-                    ODSBox(
-                        modifier = Modifier
-                            .size(62.dp)
+                            .size(56.dp)
                             .clickable { viewModel.toggleCamera() },
-                        cornerRadius = ODSCorners(all = 31.dp),
+                        cornerRadius = ODSCorners(all = 28.dp),
                         background = listOf(
                             ODSColorModel(
-                                hexColor = if (callState.isCameraOn) ZonaColors.ActiveLime else ZonaColors.SurfaceRaised
+                                hexColor = if (callState.isCameraOn) scheme.basicAccent else scheme.basicBackgroundSubtle
                             )
+                        ),
+                        border = ODSBorder(
+                            width = 1.dp,
+                            colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
                         ),
                         contentAlignment = Alignment.Center
                     ) {
                         ODSIcon(
                             iconModel = ODSIconModel(drawableRes = ODSR.drawable.video),
-                            tint = if (callState.isCameraOn) ZonaColors.TextInverse.getColor() else ZonaColors.TextPrimary.getColor(),
-                            modifier = Modifier.size(28.dp)
+                            tint = if (callState.isCameraOn) scheme.basicTextOnAccent.getColor() else scheme.basicText.getColor(),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    // 3. Camera Flip / Rotate Button
+                    ODSBox(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clickable { viewModel.flipCamera() },
+                        cornerRadius = ODSCorners(all = 28.dp),
+                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
+                        border = ODSBorder(
+                            width = 1.dp,
+                            colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                        ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSIcon(
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_refresh_cw),
+                            tint = scheme.basicText.getColor(),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    // 4. Centered End Call Button (Red/Vibrant)
+                    ODSBox(
+                        modifier = Modifier
+                            .size(66.dp)
+                            .clickable {
+                                viewModel.endCall()
+                                viewModel.resetState()
+                                onEndCall()
+                            },
+                        cornerRadius = ODSCorners(all = 33.dp),
+                        background = listOf(ODSColorModel(hexColor = HexColor("#FF4D4F", 1.0f))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSIcon(
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
+                            tint = HexColor("#FFFFFF", 1.0f).getColor(),
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                 }
 
-                // Bottom Home Bar Indicator
+                // Bottom Indicator Pill
                 ODSBox(
                     modifier = Modifier
                         .width(134.dp)
                         .height(4.dp),
                     cornerRadius = ODSCorners(all = 2.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.Border))
+                    background = listOf(ODSColorModel(hexColor = scheme.basicStroke))
                 )
             }
         }
@@ -659,27 +848,22 @@ fun VideoCallScreen(
 }
 
 /**
- * LiveKit hardware-accelerated video rendering view wrapper.
+ * LiveKit hardware-accelerated video rendering view using official LiveKit Compose VideoTrackView.
  */
 @Composable
 fun LiveKitVideoSurface(
     room: Room,
     videoTrack: VideoTrack?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isMirror: Boolean = false
 ) {
     if (videoTrack == null) return
-    AndroidView(
-        factory = { ctx ->
-            TextureViewRenderer(ctx).apply {
-                room.initVideoRenderer(this)
-                videoTrack.addRenderer(this)
-            }
-        },
-        update = { _ -> },
-        onRelease = { renderer ->
-            videoTrack.removeRenderer(renderer)
-            renderer.release()
-        },
-        modifier = modifier
+    VideoTrackView(
+        videoTrack = videoTrack,
+        modifier = modifier,
+        passedRoom = room,
+        mirror = isMirror,
+        scaleType = ScaleType.Fill,
+        rendererType = RendererType.Texture
     )
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.livekit.android.room.Room
 import kotlinx.coroutines.flow.StateFlow
+import livekit.org.webrtc.VideoTrack
 import javax.inject.Inject
 
 @HiltViewModel
@@ -16,8 +17,8 @@ class CallViewModel @Inject constructor(
     val room: Room
         get() = activeCallManager.getRoom()
 
-    val localWebRtcVideoTrack: StateFlow<livekit.org.webrtc.VideoTrack?> = activeCallManager.localWebRtcVideoTrack
-    val remoteWebRtcVideoTrack: StateFlow<livekit.org.webrtc.VideoTrack?> = activeCallManager.remoteWebRtcVideoTrack
+    val localWebRtcVideoTrack: StateFlow<VideoTrack?> = activeCallManager.localWebRtcVideoTrack
+    val remoteWebRtcVideoTrack: StateFlow<VideoTrack?> = activeCallManager.remoteWebRtcVideoTrack
     val webRtcEglBase: livekit.org.webrtc.EglBase?
         get() = activeCallManager.webRtcEglBase
 
@@ -48,6 +49,10 @@ class CallViewModel @Inject constructor(
 
     fun toggleSpeaker() {
         activeCallManager.toggleSpeaker()
+    }
+
+    fun setCameraEnabled(enabled: Boolean) {
+        activeCallManager.setCameraEnabled(enabled)
     }
 
     fun toggleCamera() {

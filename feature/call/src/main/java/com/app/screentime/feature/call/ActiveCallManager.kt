@@ -132,6 +132,7 @@ class ActiveCallManager @Inject constructor(
                     remoteUserId = callerId,
                     remoteUserName = callerName,
                     ratePerMin = rate,
+                    isCameraOn = isVideo,
                     livekitUrl = msg.livekit_url,
                     livekitToken = msg.livekit_token ?: msg.token,
                     roomName = msg.room_name
@@ -189,6 +190,7 @@ class ActiveCallManager @Inject constructor(
                     ratePerMin = msg.credits_per_minute ?: msg.rate_per_min
                     ?: _callState.value.ratePerMin,
                     isSpeaker = isVideo,
+                    isCameraOn = isVideo,
                     livekitUrl = serverUrl,
                     livekitToken = serverToken,
                     roomName = roomName
@@ -366,7 +368,12 @@ class ActiveCallManager @Inject constructor(
                 room.localParticipant.setMicrophoneEnabled(!_callState.value.isMuted)
 
                 if (_callState.value.callType == CallType.VIDEO || _callState.value.isCameraOn) {
-                    room.localParticipant.setCameraEnabled(true)
+                    try {
+                        room.localParticipant.setCameraEnabled(true)
+                        Log.i("ActiveCallManager", "✅ Camera published on LiveKit room")
+                    } catch (e: Exception) {
+                        Log.w("ActiveCallManager", "⚠️ LiveKit setCameraEnabled failed: ${e.message}")
+                    }
                 }
 
                 // Monitor remote participant status (grace period for peer to join room, then detect disconnect)
@@ -548,7 +555,11 @@ class ActiveCallManager @Inject constructor(
         val isVideo = state.callType == CallType.VIDEO
         audioHelper.startCallAudio(isSpeaker = isVideo)
 
-        _callState.value = state.copy(status = CallStatus.ACTIVE, isSpeaker = isVideo)
+        _callState.value = state.copy(
+            status = CallStatus.ACTIVE,
+            isSpeaker = isVideo,
+            isCameraOn = isVideo
+        )
 
         // Connect to LiveKit SFU (using server credentials if provided or fallback)
         connectLiveKit(
@@ -657,6 +668,18 @@ class ActiveCallManager @Inject constructor(
         val newSpeaker = !_callState.value.isSpeaker
         _callState.value = _callState.value.copy(isSpeaker = newSpeaker)
         audioHelper.setSpeaker(newSpeaker)
+    }
+
+    fun setCameraEnabled(enabled: Boolean) {
+        _callState.value = _callState.value.copy(isCameraOn = enabled)
+        scope.launch(Dispatchers.IO) {
+            try {
+                getRoom().localParticipant.setCameraEnabled(enabled)
+                Log.i("ActiveCallManager", "Camera set to $enabled on LiveKit room")
+            } catch (e: Exception) {
+                Log.w("ActiveCallManager", "Failed to setCameraEnabled($enabled): ${e.message}")
+            }
+        }
     }
 
     fun toggleCamera() {
