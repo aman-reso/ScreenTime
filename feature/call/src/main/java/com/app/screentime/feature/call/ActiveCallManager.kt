@@ -23,6 +23,7 @@ import io.livekit.android.room.track.Track
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -365,11 +366,13 @@ class ActiveCallManager @Inject constructor(
                 room.localParticipant.setMicrophoneEnabled(!_callState.value.isMuted)
 
                 if (_callState.value.callType == CallType.VIDEO || _callState.value.isCameraOn) {
-                    try {
-                        room.localParticipant.setCameraEnabled(true)
-                        Log.i("ActiveCallManager", "✅ Camera published on LiveKit room")
-                    } catch (e: Exception) {
-                        Log.w("ActiveCallManager", "⚠️ LiveKit setCameraEnabled failed: ${e.message}")
+                    withContext(Dispatchers.Main) {
+                        try {
+                            room.localParticipant.setCameraEnabled(true)
+                            Log.i("ActiveCallManager", "✅ Camera published on LiveKit room")
+                        } catch (e: Exception) {
+                            Log.w("ActiveCallManager", "⚠️ LiveKit setCameraEnabled failed: ${e.message}")
+                        }
                     }
                 }
 
@@ -667,7 +670,7 @@ class ActiveCallManager @Inject constructor(
 
     fun setCameraEnabled(enabled: Boolean) {
         _callState.value = _callState.value.copy(isCameraOn = enabled)
-        scope.launch(Dispatchers.IO) {
+        scope.launch(Dispatchers.Main) {
             try {
                 getRoom().localParticipant.setCameraEnabled(enabled)
                 Log.i("ActiveCallManager", "Camera set to $enabled on LiveKit room")
@@ -680,15 +683,19 @@ class ActiveCallManager @Inject constructor(
     fun toggleCamera() {
         val newCameraState = !_callState.value.isCameraOn
         _callState.value = _callState.value.copy(isCameraOn = newCameraState)
-        scope.launch(Dispatchers.IO) {
-            liveKitRoom?.localParticipant?.setCameraEnabled(newCameraState)
+        scope.launch(Dispatchers.Main) {
+            try {
+                liveKitRoom?.localParticipant?.setCameraEnabled(newCameraState)
+            } catch (e: Exception) {
+                Log.w("ActiveCallManager", "Failed to toggleCamera: ${e.message}")
+            }
         }
     }
 
     fun flipCamera() {
         val isFront = !_callState.value.isFrontCamera
         _callState.value = _callState.value.copy(isFrontCamera = isFront)
-        scope.launch(Dispatchers.IO) {
+        scope.launch(Dispatchers.Main) {
             try {
                 val videoTrack =
                     liveKitRoom?.localParticipant?.getTrackPublication(Track.Source.CAMERA)?.track as? LocalVideoTrack

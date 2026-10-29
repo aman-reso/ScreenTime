@@ -62,14 +62,18 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 import io.livekit.android.compose.ui.RendererType
 import io.livekit.android.compose.ui.ScaleType
 import io.livekit.android.compose.ui.VideoTrackView
+import io.livekit.android.events.RoomEvent
 import io.livekit.android.renderer.TextureViewRenderer
 import io.livekit.android.room.Room
 import io.livekit.android.room.track.LocalVideoTrack
+import io.livekit.android.room.track.RemoteTrackPublication
 import io.livekit.android.room.track.RemoteVideoTrack
 import io.livekit.android.room.track.Track
 import io.livekit.android.room.track.VideoTrack
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -102,21 +106,43 @@ fun VideoCallScreen(
 
     fun findRemoteVideoTrack(r: Room): VideoTrack? {
         for (participant in r.remoteParticipants.values) {
+            val camPub = participant.getTrackPublication(Track.Source.CAMERA)
+            if (camPub is RemoteTrackPublication) {
+                if (!camPub.subscribed) {
+                    camPub.setSubscribed(true)
+                }
+                val t = camPub.track as? VideoTrack
+                if (t != null) return t
+            }
+
             for (pair in participant.videoTrackPublications) {
-                val t = (pair.second as? VideoTrack) ?: (pair.first.track as? VideoTrack)
+                val pub = pair.first as? RemoteTrackPublication
+                if (pub != null && !pub.subscribed) {
+                    pub.setSubscribed(true)
+                }
+                val t = (pair.second as? VideoTrack) ?: (pub?.track as? VideoTrack)
                 if (t != null) return t
             }
+
             for (pub in participant.trackPublications.values) {
-                val t = pub.track as? VideoTrack
-                if (t != null) return t
+                val remotePub = pub as? RemoteTrackPublication
+                if (remotePub != null && remotePub.kind == Track.Kind.VIDEO) {
+                    if (!remotePub.subscribed) {
+                        remotePub.setSubscribed(true)
+                    }
+                    val t = remotePub.track as? VideoTrack
+                    if (t != null) return t
+                }
             }
-            val camTrack = participant.getTrackPublication(Track.Source.CAMERA)?.track as? VideoTrack
-            if (camTrack != null) return camTrack
         }
         return null
     }
 
     fun findLocalVideoTrack(r: Room): VideoTrack? {
+        val camPub = r.localParticipant.getTrackPublication(Track.Source.CAMERA)
+        val camTrack = camPub?.track as? VideoTrack
+        if (camTrack != null) return camTrack
+
         for (pair in r.localParticipant.videoTrackPublications) {
             val t = (pair.second as? VideoTrack) ?: (pair.first.track as? VideoTrack)
             if (t != null) return t
@@ -125,8 +151,6 @@ fun VideoCallScreen(
             val t = pub.track as? VideoTrack
             if (t != null) return t
         }
-        val camTrack = r.localParticipant.getTrackPublication(Track.Source.CAMERA)?.track as? VideoTrack
-        if (camTrack != null) return camTrack
         return null
     }
 
@@ -134,16 +158,42 @@ fun VideoCallScreen(
     LaunchedEffect(room) {
         launch {
             try {
-                room.events.events.collect {
-                    val r = findRemoteVideoTrack(room)
-                    if (r != null && r != remoteVideoTrack) {
-                        Log.i("VideoCallScreen", "🎥 Remote video track updated from event: $r")
-                        remoteVideoTrack = r
-                    }
-                    val l = findLocalVideoTrack(room)
-                    if (l != null && l != localVideoTrack) {
-                        Log.i("VideoCallScreen", "🎥 Local video track updated from event: $l")
-                        localVideoTrack = l
+                room.events.events.collect { event ->
+                    when (event) {
+                        is RoomEvent.TrackSubscribed -> {
+                            val vt = event.track as? VideoTrack
+                            if (vt != null) {
+                                Log.i("VideoCallScreen", "🎥 TrackSubscribed: $vt")
+                                remoteVideoTrack = vt
+                            }
+                        }
+                        is RoomEvent.TrackUnsubscribed -> {
+                            if (event.track == remoteVideoTrack) {
+                                Log.i("VideoCallScreen", "🎥 TrackUnsubscribed: ${event.track}")
+                                remoteVideoTrack = findRemoteVideoTrack(room)
+                            }
+                        }
+                        is RoomEvent.TrackPublished -> {
+                            (event.publication as? RemoteTrackPublication)?.setSubscribed(true)
+                            val r = findRemoteVideoTrack(room)
+                            if (r != null) remoteVideoTrack = r
+                        }
+                        is RoomEvent.ParticipantConnected, is RoomEvent.Connected -> {
+                            val r = findRemoteVideoTrack(room)
+                            if (r != null) remoteVideoTrack = r
+                            val l = findLocalVideoTrack(room)
+                            if (l != null) localVideoTrack = l
+                        }
+                        else -> {
+                            val r = findRemoteVideoTrack(room)
+                            if (r != null && r != remoteVideoTrack) {
+                                remoteVideoTrack = r
+                            }
+                            val l = findLocalVideoTrack(room)
+                            if (l != null && l != localVideoTrack) {
+                                localVideoTrack = l
+                            }
+                        }
                     }
                 }
             } catch (e: Exception) {
