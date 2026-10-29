@@ -225,15 +225,23 @@ fun VideoCallScreen(
                     ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
         }
         val isAnsweringCall = callState.status == CallStatus.ACTIVE || callState.status == CallStatus.INCOMING
-        if (cameraGranted && !hasInitiatedCall && targetId.isNotBlank() && !isAnsweringCall) {
+        if (cameraGranted && callState.status == CallStatus.INCOMING) {
+            viewModel.acceptIncomingCall()
+        } else if (cameraGranted && !hasInitiatedCall && targetId.isNotBlank() && !isAnsweringCall) {
             hasInitiatedCall = true
             viewModel.startOutgoingCall(targetId, modelName, ratePerMin, CallType.VIDEO)
         }
     }
 
     LaunchedEffect(Unit) {
-        val isAnsweringCall = callState.status == CallStatus.ACTIVE || callState.status == CallStatus.INCOMING
-        if (isAnsweringCall) {
+        if (callState.status == CallStatus.INCOMING) {
+            if (hasCameraPermission) {
+                viewModel.setCameraEnabled(true)
+                viewModel.acceptIncomingCall()
+            } else {
+                permissionLauncher.launch(permissionsToRequest)
+            }
+        } else if (callState.status == CallStatus.ACTIVE) {
             if (hasCameraPermission) {
                 viewModel.setCameraEnabled(true)
             } else {

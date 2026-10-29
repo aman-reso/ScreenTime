@@ -163,11 +163,23 @@ class CallForegroundService : Service() {
             Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
 
+        val hasManageOwnCalls = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.MANAGE_OWN_CALLS
+        ) == PackageManager.PERMISSION_GRANTED
+
         val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            if (hasRecordAudio) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-            } else {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+            when {
+                hasRecordAudio && hasManageOwnCalls -> {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                }
+                hasManageOwnCalls -> {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+                }
+                hasRecordAudio -> {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                }
+                else -> 0
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (hasRecordAudio) {
@@ -181,29 +193,22 @@ class CallForegroundService : Service() {
 
         try {
             ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, serviceType)
-        } catch (e: Exception) {
-            Log.e("CallForegroundService", "startForeground failed with type $serviceType: ${e.message}", e)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && serviceType != ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL) {
-                try {
-                    ServiceCompat.startForeground(
-                        this,
-                        NOTIFICATION_ID,
-                        notification,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
-                    )
-                } catch (e2: Exception) {
-                    Log.e("CallForegroundService", "Fallback phoneCall startForeground failed: ${e2.message}", e2)
-                    try {
-                        ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, 0)
-                    } catch (e3: Exception) {
-                        Log.e("CallForegroundService", "Fallback 0 startForeground failed: ${e3.message}", e3)
-                    }
-                }
-            } else {
+        } catch (e: SecurityException) {
+            Log.e("CallForegroundService", "SecurityException starting foreground with type $serviceType: ${e.message}")
+            if (serviceType != 0) {
                 try {
                     ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, 0)
-                } catch (e3: Exception) {
-                    Log.e("CallForegroundService", "Fallback 0 startForeground failed: ${e3.message}", e3)
+                } catch (e2: Exception) {
+                    Log.e("CallForegroundService", "Fallback 0 startForeground failed: ${e2.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("CallForegroundService", "startForeground failed with type $serviceType: ${e.message}", e)
+            if (serviceType != 0) {
+                try {
+                    ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, 0)
+                } catch (e2: Exception) {
+                    Log.e("CallForegroundService", "Fallback 0 startForeground failed: ${e2.message}")
                 }
             }
         }

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.config.R
-import com.app.screentime.core.ui.theme.ZonaColors
 import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
@@ -59,8 +57,8 @@ import kotlin.time.Duration.Companion.milliseconds
 import com.telekom.odsystem.R as ODSR
 
 /**
- * 1-on-1 Voice Call Screen (Matching media_1789898718933.png new-audio-call).
- * 100% constructed using Telekom ODS components and Zona design tokens.
+ * 1-on-1 Voice Call Screen.
+ * Uses Telekom ODS components and ODSTheme scheme consistently.
  */
 @Composable
 fun VoiceCallScreen(
@@ -78,8 +76,6 @@ fun VoiceCallScreen(
     val callState by viewModel.callState.collectAsState()
     val context = LocalContext.current
     val isActuallyInPip = (context as? Activity)?.isInPictureInPictureMode == true || isInPipMode
-    var showKeypad by remember { mutableStateOf(false) }
-    var dialedDigits by remember { mutableStateOf("") }
 
     val permissionsToRequest = remember {
         val list = mutableListOf(Manifest.permission.RECORD_AUDIO)
@@ -94,13 +90,19 @@ fun VoiceCallScreen(
 
     var hasMicPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
         )
     }
     var hasNotificationPermission by remember {
         mutableStateOf(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
             } else {
                 true
             }
@@ -114,27 +116,42 @@ fun VoiceCallScreen(
         callState.remoteUserId.isNotBlank() -> callState.remoteUserId
         else -> ""
     }
-    val isIncomingOrActive = (callState.status == CallStatus.INCOMING || callState.status == CallStatus.ACTIVE) &&
-            callState.remoteUserId.isNotEmpty() && (callState.remoteUserId == targetId || targetId.isBlank())
+    val isIncomingOrActive =
+        (callState.status == CallStatus.INCOMING || callState.status == CallStatus.ACTIVE) &&
+                callState.remoteUserId.isNotEmpty() && (callState.remoteUserId == targetId || targetId.isBlank())
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
         val micGranted = result[Manifest.permission.RECORD_AUDIO] == true ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
         hasMicPermission = micGranted
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             hasNotificationPermission = result[Manifest.permission.POST_NOTIFICATIONS] == true ||
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
         }
-        if (micGranted && !hasInitiatedCall && !isIncomingOrActive && targetId.isNotBlank()) {
+        if (micGranted && callState.status == CallStatus.INCOMING) {
+            viewModel.acceptIncomingCall()
+        } else if (micGranted && !hasInitiatedCall && !isIncomingOrActive && targetId.isNotBlank()) {
             hasInitiatedCall = true
             viewModel.startOutgoingCall(targetId, modelName)
         }
     }
 
     LaunchedEffect(Unit) {
-        if (!hasInitiatedCall && !isIncomingOrActive && targetId.isNotBlank()) {
+        if (callState.status == CallStatus.INCOMING) {
+            if (hasMicPermission) {
+                viewModel.acceptIncomingCall()
+            } else {
+                permissionLauncher.launch(permissionsToRequest)
+            }
+        } else if (!hasInitiatedCall && !isIncomingOrActive && targetId.isNotBlank()) {
             if (hasMicPermission && hasNotificationPermission) {
                 hasInitiatedCall = true
                 viewModel.startOutgoingCall(targetId, modelName)
@@ -152,32 +169,29 @@ fun VoiceCallScreen(
         }
     }
 
-    // ── CALL ENDED SCREEN ──
     if (callState.status == CallStatus.ENDED) {
         ODSBox(
             modifier = modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding(),
-            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
+                .fillMaxSize(),
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(32.dp),
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 gap = 20.dp
             ) {
                 ODSBox(
                     modifier = Modifier.size(80.dp),
                     cornerRadius = ODSCorners(all = 40.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
-                        tint = ZonaColors.ActionPrimary.getColor(),
+                        tint = scheme.basicText.getColor(),
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -185,13 +199,14 @@ fun VoiceCallScreen(
                 ODSText(
                     text = "Call Ended",
                     style = ODSTextStyles.bodyL,
-                    color = ZonaColors.TextPrimary
+                    color = scheme.basicText
                 )
 
                 ODSText(
-                    text = callState.endReason ?: "Call with ${modelName.ifBlank { "User" }} has ended.",
+                    text = callState.endReason
+                        ?: "Call with ${modelName.ifBlank { "User" }} has ended.",
                     style = ODSTextStyles.bodyMRegular,
-                    color = ZonaColors.LavenderAlt
+                    color = scheme.basicTextRecessive
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -201,7 +216,7 @@ fun VoiceCallScreen(
                     scheme = scheme,
                     props = ODSButtonProps(
                         label = "Close",
-                        variant = ODSButtonVariant.PRIMARY
+                        variant = ODSButtonVariant.SECONDARY
                     ),
                     onClick = {
                         viewModel.resetState()
@@ -213,14 +228,11 @@ fun VoiceCallScreen(
         return
     }
 
-    // ── INSUFFICIENT BALANCE SCREEN ──
     if (callState.status == CallStatus.INSUFFICIENT_BALANCE) {
         ODSBox(
             modifier = modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding(),
-            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
+                .fillMaxSize(),
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(
@@ -233,20 +245,22 @@ fun VoiceCallScreen(
                 ODSBox(
                     modifier = Modifier.size(88.dp),
                     cornerRadius = ODSCorners(all = 44.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_zap),
-                        tint = ZonaColors.ActiveLime.getColor(),
+                        tint = scheme.basicAccent.getColor(),
                         modifier = Modifier.size(40.dp)
                     )
                 }
 
                 ODSText(
-                    text = if (isCurrentUserModel) stringResource(R.string.call_caller_insufficient_balance) else stringResource(R.string.call_insufficient_balance),
+                    text = if (isCurrentUserModel) stringResource(R.string.call_caller_insufficient_balance) else stringResource(
+                        R.string.call_insufficient_balance
+                    ),
                     style = ODSTextStyles.bodyL,
-                    color = ZonaColors.TextPrimary
+                    color = scheme.basicText
                 )
 
                 ODSText(
@@ -263,7 +277,7 @@ fun VoiceCallScreen(
                         }
                     },
                     style = ODSTextStyles.bodyMRegular,
-                    color = ZonaColors.LavenderAlt
+                    color = scheme.basicTextRecessive
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -338,6 +352,7 @@ fun VoiceCallScreen(
             formattedTime = formattedTime,
             callState = callState,
             avatarUrl = avatarUrl,
+            scheme = scheme,
             onEndCall = {
                 viewModel.endCall("Ended from PiP")
                 onEndCall()
@@ -350,10 +365,8 @@ fun VoiceCallScreen(
     if (!hasMicPermission) {
         ODSBox(
             modifier = modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding(),
-            background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
+                .fillMaxSize(),
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
             contentAlignment = Alignment.Center
         ) {
             ODSColumn(
@@ -366,12 +379,12 @@ fun VoiceCallScreen(
                 ODSBox(
                     modifier = Modifier.size(80.dp),
                     cornerRadius = ODSCorners(all = 40.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_mic),
-                        tint = ZonaColors.ActiveLime.getColor(),
+                        tint = scheme.basicAccent.getColor(),
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -379,13 +392,13 @@ fun VoiceCallScreen(
                 ODSText(
                     text = "Microphone Access Required",
                     style = ODSTextStyles.bodyL,
-                    color = ZonaColors.TextPrimary
+                    color = scheme.basicText
                 )
 
                 ODSText(
                     text = "Winter needs microphone permission to transmit your voice during audio calls.",
                     style = ODSTextStyles.bodyMRegular,
-                    color = ZonaColors.LavenderAlt
+                    color = scheme.basicTextRecessive
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -420,13 +433,11 @@ fun VoiceCallScreen(
         return
     }
 
-    // ── MAIN AUDIO CALL SCREEN (new-audio-call) ──
+    // ── MAIN AUDIO CALL SCREEN ──
     ODSBox(
         modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding(),
-        background = listOf(ODSColorModel(hexColor = ZonaColors.CanvasDark))
+            .fillMaxSize(),
+        background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
     ) {
         ODSColumn(
             modifier = Modifier.fillMaxSize(),
@@ -440,36 +451,28 @@ fun VoiceCallScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Circular Back Button
                 ODSBox(
                     modifier = Modifier
                         .size(42.dp)
-                        .clickable {
-                            onBack()
-                        },
+                        .clickable { onBack() },
                     cornerRadius = ODSCorners(all = 21.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_arrow_left),
-                        tint = ZonaColors.TextPrimary.getColor(),
+                        tint = scheme.basicText.getColor(),
                         modifier = Modifier.size(20.dp)
                     )
                 }
 
-                // Centered "Active Call"
                 ODSText(
                     text = "Active Call",
                     style = ODSTextStyles.bodyMBold,
-                    color = ZonaColors.TextAccent
+                    color = scheme.basicText
                 )
-
-                // Placeholder for symmetrical center alignment
                 ODSBox(modifier = Modifier.size(42.dp))
             }
 
-            // ── Center Content: Avatar with Neon Lime Ring, Name, Status Pill ──
             ODSColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -477,13 +480,12 @@ fun VoiceCallScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Large Avatar with Glowing Neon Lime Ring
                 ODSBox(
-                    modifier = Modifier.size(176.dp),
+                    modifier = Modifier.size(80.dp),
                     cornerRadius = ODSCorners(all = 88.dp),
                     border = ODSBorder(
-                        width = 3.5.dp,
-                        colorList = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime))
+                        width = 1.5.dp,
+                        colorList = listOf(ODSColorModel(hexColor = scheme.basicAccent))
                     ),
                     clipContent = true,
                     contentAlignment = Alignment.Center
@@ -499,249 +501,89 @@ fun VoiceCallScreen(
                         )
                     } else {
                         ODSIcon(
-                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_user),
-                            tint = ZonaColors.LavenderAlt.getColor(),
+                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.profile),
+                            tint = scheme.basicTextRecessive.getColor(),
                             modifier = Modifier.size(56.dp)
                         )
                     }
                 }
 
-                Spacer(Modifier.height(28.dp))
+                Spacer(Modifier.height(24.dp))
 
-                // Display Name
                 ODSText(
                     text = modelName.ifBlank { "User" },
                     style = ODSTextStyles.bodyL,
-                    color = ZonaColors.TextPrimary
+                    color = scheme.basicText
                 )
 
                 Spacer(Modifier.height(12.dp))
 
-                // Status Pill ("Connected • 04:25")
                 ODSRow(
                     cornerRadius = ODSCorners(all = 20.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
+                    border = ODSBorder(
+                        width = 1.dp,
+                        colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                    ),
                     padding = ODSPadding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     gap = 8.dp
                 ) {
-                    // Active green/lime dot
                     ODSBox(
                         modifier = Modifier.size(7.dp),
                         cornerRadius = ODSCorners(all = 4.dp),
-                        background = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime))
+                        background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
                     )
 
                     ODSText(
-                        text = if (callState.status == CallStatus.ACTIVE) "Connected • $formattedTime"
-                               else if (callState.status == CallStatus.DIALING) "Ringing..."
-                               else "Connected • $formattedTime",
+                        text = when (callState.status) {
+                            CallStatus.ACTIVE -> "Connected • $formattedTime"
+                            CallStatus.DIALING -> "Ringing..."
+                            else -> "Connected • $formattedTime"
+                        },
                         style = ODSTextStyles.bodySBold,
-                        color = ZonaColors.TextPrimary
+                        color = scheme.basicText
                     )
                 }
             }
 
-            // ── Bottom Control Panel ──
-            ODSBox(
+            ODSColumn(
                 modifier = Modifier.fillMaxWidth(),
-                cornerRadius = ODSCorners(topLeft = 32.dp, topRight = 32.dp),
-                background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
-                padding = ODSPadding(top = 32.dp, bottom = 24.dp, left = 24.dp, right = 24.dp)
+                horizontalAlignment = Alignment.CenterHorizontally,
+                gap = 26.dp
             ) {
-                ODSColumn(
+                ODSRow(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    gap = 26.dp
+                    verticalAlignment = Alignment.CenterVertically,
+                    gap = 24.dp
                 ) {
-                    // Row 1: Mute, Keypad, Speaker Controls
-                    ODSRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Mute Button
-                        AudioCallControlItem(
-                            iconRes = if (callState.isMuted) ODSR.drawable.ic_mic_off else ODSR.drawable.ic_mic,
-                            label = "Mute",
-                            isActive = callState.isMuted,
-                            activeBg = ZonaColors.Border,
-                            inactiveBg = ZonaColors.SurfaceRaised,
-                            iconTint = ZonaColors.TextPrimary,
-                            labelColor = ZonaColors.LavenderAlt,
-                            onClick = { viewModel.toggleMute() }
-                        )
-
-                        // Keypad Button
-                        AudioCallControlItem(
-                            iconRes = ODSR.drawable.ic_grid,
-                            label = "Keypad",
-                            isActive = showKeypad,
-                            activeBg = ZonaColors.Border,
-                            inactiveBg = ZonaColors.SurfaceRaised,
-                            iconTint = ZonaColors.TextPrimary,
-                            labelColor = ZonaColors.LavenderAlt,
-                            onClick = { showKeypad = !showKeypad }
-                        )
-
-                        // Speaker Button (Active Neon Lime!)
-                        AudioCallControlItem(
-                            iconRes = ODSR.drawable.ic_volume_2,
-                            label = "Speaker",
-                            isActive = callState.isSpeaker,
-                            activeBg = ZonaColors.ActiveLime,
-                            inactiveBg = ZonaColors.SurfaceRaised,
-                            iconTint = if (callState.isSpeaker) ZonaColors.TextPrimary else ZonaColors.TextPrimary,
-                            labelColor = if (callState.isSpeaker) ZonaColors.ActiveLime else ZonaColors.LavenderAlt,
-                            onClick = { viewModel.toggleSpeaker() }
-                        )
-                    }
-
-                    // Row 2: Large Circular Coral End Call Button
-                    ODSBox(
-                        modifier = Modifier
-                            .size(76.dp)
-                            .clickable {
-                                viewModel.endCall()
-                                onEndCall()
-                            },
-                        cornerRadius = ODSCorners(all = 38.dp),
-                        background = listOf(ODSColorModel(hexColor = ZonaColors.ActionPrimary)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ODSIcon(
-                            iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
-                            tint = ZonaColors.TextPrimary.getColor(),
-                            modifier = Modifier.size(34.dp)
-                        )
-                    }
-
-                    // Home Bottom Indicator Pill
-                    ODSBox(
-                        modifier = Modifier
-                            .width(134.dp)
-                            .height(4.dp),
-                        cornerRadius = ODSCorners(all = 2.dp),
-                        background = listOf(ODSColorModel(hexColor = ZonaColors.Border))
+                    AudioCallControlItem(
+                        iconRes = if (callState.isMuted) ODSR.drawable.ic_mic_off else ODSR.drawable.ic_mic,
+                        label = "Mute",
+                        isActive = callState.isMuted,
+                        scheme = scheme,
+                        onClick = { viewModel.toggleMute() }
                     )
-                }
-            }
-        }
 
-        // ── Interactive Keypad Bottom Overlay ──
-        if (showKeypad) {
-            ODSBox(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable { showKeypad = false },
-                background = listOf(ODSColorModel(hexColor = ZonaColors.OverlayLegacy)),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                ODSBox(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = false) {},
-                    cornerRadius = ODSCorners(topLeft = 28.dp, topRight = 28.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.Surface)),
-                    padding = ODSPadding(all = 24.dp)
-                ) {
-                    ODSColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        gap = 16.dp
-                    ) {
-                        ODSRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ODSText(
-                                text = "Keypad",
-                                style = ODSTextStyles.bodyMBold,
-                                color = ZonaColors.TextPrimary
-                            )
+                    AudioCallControlItem(
+                        iconRes = ODSR.drawable.ic_volume_2,
+                        label = "Speaker",
+                        isActive = callState.isSpeaker,
+                        scheme = scheme,
+                        onClick = { viewModel.toggleSpeaker() }
+                    )
 
-                            ODSBox(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clickable { showKeypad = false },
-                                cornerRadius = ODSCorners(all = 18.dp),
-                                background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                ODSIcon(
-                                    iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_close),
-                                    tint = ZonaColors.TextPrimary.getColor(),
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-
-                        // Dialed digits display
-                        ODSRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            gap = 8.dp
-                        ) {
-                            ODSText(
-                                text = dialedDigits.ifBlank { "Dial a number" },
-                                style = ODSTextStyles.bodyL,
-                                color = if (dialedDigits.isBlank()) ZonaColors.LavenderAlt else ZonaColors.TextPrimary
-                            )
-                            if (dialedDigits.isNotEmpty()) {
-                                ODSBox(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clickable {
-                                            dialedDigits = dialedDigits.dropLast(1)
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    ODSIcon(
-                                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.remove_type_standard),
-                                        tint = ZonaColors.LavenderAlt.getColor(),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        // Keypad grid 1-9, *, 0, #
-                        val keys = listOf(
-                            listOf("1", "2", "3"),
-                            listOf("4", "5", "6"),
-                            listOf("7", "8", "9"),
-                            listOf("*", "0", "#")
-                        )
-
-                        keys.forEach { rowKeys ->
-                            ODSRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                rowKeys.forEach { key ->
-                                    ODSBox(
-                                        modifier = Modifier
-                                            .size(56.dp)
-                                            .clickable { dialedDigits += key },
-                                        cornerRadius = ODSCorners(all = 28.dp),
-                                        background = listOf(ODSColorModel(hexColor = ZonaColors.SurfaceRaised)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        ODSText(
-                                            text = key,
-                                            style = ODSTextStyles.bodyL,
-                                            color = ZonaColors.TextPrimary
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    AudioCallControlItem(
+                        iconRes = ODSR.drawable.ic_phone_off,
+                        label = "End",
+                        isActive = true,
+                        scheme = scheme,
+                        onClick = {
+                            viewModel.endCall()
+                            onEndCall()
+                        })
                 }
             }
         }
@@ -749,17 +591,14 @@ fun VoiceCallScreen(
 }
 
 /**
- * Control action button with circular container and text label below.
+ * Control action button with circular container and text label below using ODSTheme scheme.
  */
 @Composable
 private fun AudioCallControlItem(
     iconRes: Int,
     label: String,
     isActive: Boolean,
-    activeBg: HexColor,
-    inactiveBg: HexColor,
-    iconTint: HexColor,
-    labelColor: HexColor,
+    scheme: ODSTheme,
     onClick: () -> Unit
 ) {
     ODSColumn(
@@ -771,14 +610,11 @@ private fun AudioCallControlItem(
                 .size(62.dp)
                 .clickable(onClick = onClick),
             cornerRadius = ODSCorners(all = 31.dp),
-            background = listOf(
-                ODSColorModel(hexColor = if (isActive) activeBg else inactiveBg)
-            ),
             contentAlignment = Alignment.Center
         ) {
             ODSIcon(
                 iconModel = ODSIconModel(drawableRes = iconRes),
-                tint = iconTint.getColor(),
+                tint = if (isActive) scheme.basicText.getColor() else scheme.basicTextRecessive.getColor(),
                 modifier = Modifier.size(26.dp)
             )
         }
@@ -786,13 +622,13 @@ private fun AudioCallControlItem(
         ODSText(
             text = label,
             style = ODSTextStyles.microcopyRegular,
-            color = labelColor
+            color = if (isActive) scheme.basicText else scheme.basicTextRecessive
         )
     }
 }
 
 /**
- * High-aesthetic Picture-in-Picture layout for floating window using 100% ODS components.
+ * Picture-in-Picture layout for floating window using ODS components.
  */
 @Composable
 private fun VoiceCallPipLayout(
@@ -801,6 +637,7 @@ private fun VoiceCallPipLayout(
     formattedTime: String,
     callState: CallUiState,
     avatarUrl: String,
+    scheme: ODSTheme,
     onEndCall: () -> Unit,
     onToggleMute: () -> Unit
 ) {
@@ -808,7 +645,7 @@ private fun VoiceCallPipLayout(
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp),
-        background = listOf(ODSColorModel(hexColor = ZonaColors.Background)),
+        background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
         contentAlignment = Alignment.Center
     ) {
         ODSColumn(
@@ -826,22 +663,22 @@ private fun VoiceCallPipLayout(
                 ODSText(
                     text = if (callState.status == CallStatus.ACTIVE) formattedTime else statusText,
                     style = ODSTextStyles.microcopyBold,
-                    color = ZonaColors.ActiveLime
+                    color = scheme.basicAccent
                 )
                 ODSText(
                     text = modelName.ifBlank { "User" },
                     style = ODSTextStyles.bodyMBold,
-                    color = ZonaColors.TextPrimary
+                    color = scheme.basicText
                 )
             }
 
-            // Compact Avatar with neon lime ring
+            // Compact Avatar with accent ring
             ODSBox(
                 modifier = Modifier.size(64.dp),
                 cornerRadius = ODSCorners(all = 32.dp),
                 border = ODSBorder(
                     width = 2.dp,
-                    colorList = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime))
+                    colorList = listOf(ODSColorModel(hexColor = scheme.basicAccent))
                 ),
                 clipContent = true,
                 contentAlignment = Alignment.Center
@@ -858,7 +695,7 @@ private fun VoiceCallPipLayout(
                 } else {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_user),
-                        tint = ZonaColors.LavenderAlt.getColor(),
+                        tint = scheme.basicTextRecessive.getColor(),
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -877,7 +714,7 @@ private fun VoiceCallPipLayout(
                     cornerRadius = ODSCorners(all = 18.dp),
                     background = listOf(
                         ODSColorModel(
-                            hexColor = if (callState.isMuted) ZonaColors.ActiveLime else ZonaColors.SurfaceRaised
+                            hexColor = if (callState.isMuted) scheme.basicAccent else scheme.basicBackgroundSubtle
                         )
                     ),
                     contentAlignment = Alignment.Center
@@ -886,7 +723,7 @@ private fun VoiceCallPipLayout(
                         iconModel = ODSIconModel(
                             drawableRes = if (callState.isMuted) ODSR.drawable.ic_mic_off else ODSR.drawable.ic_mic
                         ),
-                        tint = if (callState.isMuted) ZonaColors.TextPrimary.getColor() else ZonaColors.TextPrimary.getColor(),
+                        tint = if (callState.isMuted) scheme.basicTextOnAccent.getColor() else scheme.basicText.getColor(),
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -897,12 +734,12 @@ private fun VoiceCallPipLayout(
                         .size(40.dp)
                         .clickable(onClick = onEndCall),
                     cornerRadius = ODSCorners(all = 20.dp),
-                    background = listOf(ODSColorModel(hexColor = ZonaColors.ActionPrimary)),
+                    background = listOf(ODSColorModel(hexColor = HexColor("#FF4D4F", 1.0f))),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
-                        tint = ZonaColors.TextPrimary.getColor(),
+                        tint = HexColor("#FFFFFF", 1.0f).getColor(),
                         modifier = Modifier.size(20.dp)
                     )
                 }
