@@ -12,6 +12,7 @@ import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.app.Person
 import com.app.screentime.feature.call.R
 import com.app.screentime.feature.call.receiver.CallActionReceiver
 
@@ -104,6 +105,17 @@ object CallNotificationHelper {
 
         val appIcon = getAppIconBitmap(context)
 
+        val callerPerson = Person.Builder()
+            .setName(callerName)
+            .setImportant(true)
+            .build()
+
+        val callStyle = NotificationCompat.CallStyle.forIncomingCall(
+            callerPerson,
+            rejectPendingIntent,
+            acceptPendingIntent
+        )
+
         val notification = NotificationCompat.Builder(context, INCOMING_CALL_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_call_notification)
             .apply {
@@ -111,6 +123,7 @@ object CallNotificationHelper {
                     setLargeIcon(appIcon)
                 }
             }
+            .setStyle(callStyle)
             .setContentTitle(title)
             .setContentText("$callerName is calling you...")
             .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -122,11 +135,15 @@ object CallNotificationHelper {
             .setFullScreenIntent(acceptPendingIntent, true)
             .setContentIntent(acceptPendingIntent)
             .addAction(
-                R.drawable.ic_call_notification,
-                "Decline",
+                R.drawable.ic_call_decline_dynamic,
+                "Reject",
                 rejectPendingIntent
             )
-            .addAction(R.drawable.ic_call_notification, "Answer", acceptPendingIntent)
+            .addAction(
+                R.drawable.ic_call_answer_dynamic,
+                "Accept",
+                acceptPendingIntent
+            )
             .build()
 
         val notificationManager =
