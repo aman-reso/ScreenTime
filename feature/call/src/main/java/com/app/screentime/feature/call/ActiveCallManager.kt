@@ -242,12 +242,14 @@ class ActiveCallManager @Inject constructor(
                     isLowBalanceWarning = rem <= 60
                 )
 
-                CallForegroundService.update(
-                    context = context,
-                    callerName = _callState.value.remoteUserName.ifBlank { "Ongoing Call" },
-                    duration = formatDuration(dur),
-                    isMuted = _callState.value.isMuted
-                )
+                if (_callState.value.status == CallStatus.ACTIVE) {
+                    CallForegroundService.update(
+                        context = context,
+                        callerName = _callState.value.remoteUserName.ifBlank { "Ongoing Call" },
+                        duration = formatDuration(dur),
+                        isMuted = _callState.value.isMuted
+                    )
+                }
             }
 
             WSEventTypes.CALL_REJECTED -> {

@@ -17,7 +17,6 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.app.Person
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.app.screentime.feature.call.ActiveCallManager
@@ -33,9 +32,11 @@ class CallForegroundService : Service() {
     @Inject
     lateinit var activeCallManager: ActiveCallManager
 
+    private var isForegroundStarted = false
+
     companion object {
         const val CHANNEL_ID = "active_voice_call_channel"
-        const val NOTIFICATION_ID = 4001
+        const val NOTIFICATION_ID = 4005 // Distinct from incoming call notification (4001)
 
         const val ACTION_START = "com.app.screentime.action.START_CALL_SERVICE"
         const val ACTION_UPDATE = "com.app.screentime.action.UPDATE_CALL_SERVICE"
@@ -97,45 +98,61 @@ class CallForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent == null) {
-            // Service was recreated by system
-            val state = activeCallManager.callState.value
-            if (state.status == CallStatus.ACTIVE) {
-                val durSec = state.durationSec
-                val durStr = "%02d:%02d".format(durSec / 60, durSec % 60)
-                val notification = buildNotification(
-                    callerName = state.remoteUserName.ifBlank { "Ongoing Call" },
-                    duration = durStr,
-                    isMuted = state.isMuted
-                )
-                startForegroundWithNotification(notification)
-                return START_STICKY
-            } else {
-                stopSelf()
-                return START_NOT_STICKY
+        try {
+            if (intent == null) {
+                // Service was recreated by system
+                val state = activeCallManager.callState.value
+                if (state.status == CallStatus.ACTIVE) {
+                    val durSec = state.durationSec
+                    val durStr = "%02d:%02d".format(durSec / 60, durSec % 60)
+                    val notification = buildNotification(
+                        callerName = state.remoteUserName.ifBlank { "Ongoing Call" },
+                        duration = durStr,
+                        isMuted = state.isMuted
+                    )
+                    startForegroundWithNotification(notification)
+                    isForegroundStarted = true
+                    return START_STICKY
+                } else {
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
             }
-        }
 
-        when (intent.action) {
-            ACTION_START -> {
-                val name = intent.getStringExtra(EXTRA_CALLER_NAME) ?: "Ongoing Call"
-                val duration = intent.getStringExtra(EXTRA_DURATION) ?: "00:00"
-                val isMuted = intent.getBooleanExtra(EXTRA_IS_MUTED, false)
-                val notification = buildNotification(name, duration, isMuted)
-                startForegroundWithNotification(notification)
+            when (intent.action) {
+                ACTION_START -> {
+                    val name = intent.getStringExtra(EXTRA_CALLER_NAME) ?: "Ongoing Call"
+                    val duration = intent.getStringExtra(EXTRA_DURATION) ?: "00:00"
+                    val isMuted = intent.getBooleanExtra(EXTRA_IS_MUTED, false)
+                    val notification = buildNotification(name, duration, isMuted)
+                    startForegroundWithNotification(notification)
+                    isForegroundStarted = true
+                }
+                ACTION_UPDATE -> {
+                    val name = intent.getStringExtra(EXTRA_CALLER_NAME) ?: "Ongoing Call"
+                    val duration = intent.getStringExtra(EXTRA_DURATION) ?: "00:00"
+                    val isMuted = intent.getBooleanExtra(EXTRA_IS_MUTED, false)
+                    val notification = buildNotification(name, duration, isMuted)
+                    if (!isForegroundStarted) {
+                        startForegroundWithNotification(notification)
+                        isForegroundStarted = true
+                    } else {
+                        try {
+                            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                            notificationManager.notify(NOTIFICATION_ID, notification)
+                        } catch (e: Exception) {
+                            Log.e("CallForegroundService", "Failed to update notification: ${e.message}")
+                        }
+                    }
+                }
+                ACTION_STOP -> {
+                    isForegroundStarted = false
+                    ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
             }
-            ACTION_UPDATE -> {
-                val name = intent.getStringExtra(EXTRA_CALLER_NAME) ?: "Ongoing Call"
-                val duration = intent.getStringExtra(EXTRA_DURATION) ?: "00:00"
-                val isMuted = intent.getBooleanExtra(EXTRA_IS_MUTED, false)
-                val notification = buildNotification(name, duration, isMuted)
-                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.notify(NOTIFICATION_ID, notification)
-            }
-            ACTION_STOP -> {
-                ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-                stopSelf()
-            }
+        } catch (e: Exception) {
+            Log.e("CallForegroundService", "Error in onStartCommand: ${e.message}", e)
         }
         return START_STICKY
     }
@@ -228,16 +245,6 @@ class CallForegroundService : Service() {
         val muteActionTitle = if (isMuted) "Unmute" else "Mute"
         val appIcon = getAppIconBitmap(this)
 
-        val callerPerson = Person.Builder()
-            .setName(callerName)
-            .setImportant(true)
-            .build()
-
-        val callStyle = NotificationCompat.CallStyle.forOngoingCall(
-            callerPerson,
-            endCallPendingIntent
-        )
-
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_call_notification)
             .apply {
@@ -245,7 +252,6 @@ class CallForegroundService : Service() {
                     setLargeIcon(appIcon)
                 }
             }
-            .setStyle(callStyle)
             .setContentTitle(callerName)
             .setContentText("Call in progress · $duration")
             .setOngoing(true)
