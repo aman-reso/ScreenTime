@@ -16,6 +16,11 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- Foreground Service for Calls -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+
     <uses-feature
         android:name="android.hardware.camera.any"
         android:required="false" />
@@ -147,6 +152,13 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <!-- Foreground Service for Active Voice & Video Calls -->
+        <service
+            android:name="com.app.screentime.feature.call.service.CallForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="phoneCall|microphone" />
 
         <!-- Call Notification Action Receiver -->
         <receiver

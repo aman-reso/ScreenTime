@@ -10,13 +10,20 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.Person
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.app.screentime.feature.call.ActiveCallManager
+import com.app.screentime.feature.call.CallStatus
+import com.app.screentime.feature.call.R
+import com.app.screentime.feature.call.receiver.CallActionReceiver
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -90,35 +97,32 @@ class CallForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+        if (intent == null) {
+            // Service was recreated by system
+            val state = activeCallManager.callState.value
+            if (state.status == CallStatus.ACTIVE) {
+                val durSec = state.durationSec
+                val durStr = "%02d:%02d".format(durSec / 60, durSec % 60)
+                val notification = buildNotification(
+                    callerName = state.remoteUserName.ifBlank { "Ongoing Call" },
+                    duration = durStr,
+                    isMuted = state.isMuted
+                )
+                startForegroundWithNotification(notification)
+                return START_STICKY
+            } else {
+                stopSelf()
+                return START_NOT_STICKY
+            }
+        }
+
+        when (intent.action) {
             ACTION_START -> {
                 val name = intent.getStringExtra(EXTRA_CALLER_NAME) ?: "Ongoing Call"
                 val duration = intent.getStringExtra(EXTRA_DURATION) ?: "00:00"
                 val isMuted = intent.getBooleanExtra(EXTRA_IS_MUTED, false)
                 val notification = buildNotification(name, duration, isMuted)
-
-                val hasRecordAudio = ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED
-
-                var serviceType = 0
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    if (hasRecordAudio) {
-                        serviceType = serviceType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-                    }
-                }
-
-                try {
-                    ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, serviceType)
-                } catch (e: SecurityException) {
-                    Log.w("CallForegroundService", "SecurityException starting FGS: ${e.message}, falling back to 0")
-                    try {
-                        ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, 0)
-                    } catch (e2: Exception) {
-                        Log.e("CallForegroundService", "Fallback startForeground failed: ${e2.message}")
-                    }
-                }
+                startForegroundWithNotification(notification)
             }
             ACTION_UPDATE -> {
                 val name = intent.getStringExtra(EXTRA_CALLER_NAME) ?: "Ongoing Call"
@@ -133,12 +137,64 @@ class CallForegroundService : Service() {
                 stopSelf()
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY
+    }
+
+    private fun startForegroundWithNotification(notification: Notification) {
+        val hasRecordAudio = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            if (hasRecordAudio) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            } else {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (hasRecordAudio) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            } else {
+                0
+            }
+        } else {
+            0
+        }
+
+        try {
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, serviceType)
+        } catch (e: Exception) {
+            Log.e("CallForegroundService", "startForeground failed with type $serviceType: ${e.message}", e)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && serviceType != ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL) {
+                try {
+                    ServiceCompat.startForeground(
+                        this,
+                        NOTIFICATION_ID,
+                        notification,
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+                    )
+                } catch (e2: Exception) {
+                    Log.e("CallForegroundService", "Fallback phoneCall startForeground failed: ${e2.message}", e2)
+                    try {
+                        ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, 0)
+                    } catch (e3: Exception) {
+                        Log.e("CallForegroundService", "Fallback 0 startForeground failed: ${e3.message}", e3)
+                    }
+                }
+            } else {
+                try {
+                    ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, 0)
+                } catch (e3: Exception) {
+                    Log.e("CallForegroundService", "Fallback 0 startForeground failed: ${e3.message}", e3)
+                }
+            }
+        }
     }
 
     private fun buildNotification(callerName: String, duration: String, isMuted: Boolean): Notification {
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         }
         val contentPendingIntent = PendingIntent.getActivity(
             this,
@@ -148,7 +204,7 @@ class CallForegroundService : Service() {
         )
 
         // End Call action
-        val endCallIntent = Intent("com.app.screentime.ACTION_CALL_HANGUP").apply {
+        val endCallIntent = Intent(CallActionReceiver.ACTION_HANGUP).apply {
             setPackage(packageName)
         }
         val endCallPendingIntent = PendingIntent.getBroadcast(
@@ -159,7 +215,7 @@ class CallForegroundService : Service() {
         )
 
         // Toggle Mute action
-        val muteIntent = Intent("com.app.screentime.ACTION_CALL_MUTE_TOGGLE").apply {
+        val muteIntent = Intent(CallActionReceiver.ACTION_TOGGLE_MUTE).apply {
             setPackage(packageName)
         }
         val mutePendingIntent = PendingIntent.getBroadcast(
@@ -170,18 +226,55 @@ class CallForegroundService : Service() {
         )
 
         val muteActionTitle = if (isMuted) "Unmute" else "Mute"
+        val appIcon = getAppIconBitmap(this)
+
+        val callerPerson = Person.Builder()
+            .setName(callerName)
+            .setImportant(true)
+            .build()
+
+        val callStyle = NotificationCompat.CallStyle.forOngoingCall(
+            callerPerson,
+            endCallPendingIntent
+        )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_phone_call)
+            .setSmallIcon(R.drawable.ic_call_notification)
+            .apply {
+                if (appIcon != null) {
+                    setLargeIcon(appIcon)
+                }
+            }
+            .setStyle(callStyle)
             .setContentTitle(callerName)
             .setContentText("Call in progress · $duration")
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(contentPendingIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "End Call", endCallPendingIntent)
+            .addAction(R.drawable.ic_call_decline_dynamic, "End Call", endCallPendingIntent)
             .addAction(android.R.drawable.stat_notify_chat, muteActionTitle, mutePendingIntent)
             .build()
+    }
+
+    private fun getAppIconBitmap(context: Context): Bitmap? {
+        return try {
+            val pm = context.packageManager
+            val drawable = pm.getApplicationIcon(context.packageName)
+            if (drawable is BitmapDrawable && drawable.bitmap != null) {
+                drawable.bitmap
+            } else {
+                val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 128
+                val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 128
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+                drawable.setBounds(0, 0, canvas.width, canvas.height)
+                drawable.draw(canvas)
+                bitmap
+            }
+        } catch (e: Exception) {
+            null
+        }
     }
 
     private fun createNotificationChannel() {
@@ -201,9 +294,7 @@ class CallForegroundService : Service() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        // If app was killed/swiped from recents, terminate call cleanly
-        activeCallManager.endCall("App closed")
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-        stopSelf()
+        // User swiped the app away from recent tasks: keep foreground call service alive in background
+        Log.d("CallForegroundService", "onTaskRemoved: App swiped from recents. Keeping call running in background.")
     }
 }

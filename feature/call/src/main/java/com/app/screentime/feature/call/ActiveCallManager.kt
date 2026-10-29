@@ -196,15 +196,12 @@ class ActiveCallManager @Inject constructor(
                     roomName = roomName
                 )
 
-                // Foreground service disabled for now per user configuration
-                /*
                 CallForegroundService.start(
                     context = context,
                     callerName = _callState.value.remoteUserName.ifBlank { "Ongoing Call" },
                     duration = formatDuration(0),
                     isMuted = _callState.value.isMuted
                 )
-                */
 
                 startLocalBillingTimer()
                 val target = when {
@@ -245,14 +242,12 @@ class ActiveCallManager @Inject constructor(
                     isLowBalanceWarning = rem <= 60
                 )
 
-                /*
                 CallForegroundService.update(
                     context = context,
                     callerName = _callState.value.remoteUserName.ifBlank { "Ongoing Call" },
                     duration = formatDuration(dur),
                     isMuted = _callState.value.isMuted
                 )
-                */
             }
 
             WSEventTypes.CALL_REJECTED -> {
@@ -580,14 +575,12 @@ class ActiveCallManager @Inject constructor(
             }
             try {
                 acceptCallUseCase(callId, callerId)
-                /*
                 CallForegroundService.start(
                     context = context,
                     callerName = state.remoteUserName.ifBlank { "Incoming Call" },
                     duration = formatDuration(0),
                     isMuted = state.isMuted
                 )
-                */
                 startLocalBillingTimer()
             } catch (e: Exception) {
                 Log.e("ActiveCallManager", "Failed to accept call: ${e.message}", e)
@@ -724,14 +717,12 @@ class ActiveCallManager @Inject constructor(
                     isLowBalanceWarning = lowBal
                 )
 
-                /*
                 CallForegroundService.update(
                     context = context,
                     callerName = cur.remoteUserName.ifBlank { "Ongoing Call" },
                     duration = formatDuration(newDur),
                     isMuted = cur.isMuted
                 )
-                */
 
                 if (newRem <= 0 && !isCurrentUserModel()) {
                     endCall("Balance exhausted")
@@ -752,7 +743,7 @@ class ActiveCallManager @Inject constructor(
         localTimerJob?.cancel()
         localTimerJob = null
         audioHelper.stopCallAudio()
-        // CallForegroundService.stop(context)
+        CallForegroundService.stop(context)
 
         val roomToRelease = liveKitRoom
         liveKitRoom = null
