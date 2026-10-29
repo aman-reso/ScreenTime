@@ -146,13 +146,12 @@ class ActiveCallManager @Inject constructor(
                     callType = if (callType == CallType.VIDEO) "video" else "voice"
                 )
 
-                // 30s Ringing Timeout: Auto-dismiss and register missed call
+                // 30s Ringing Timeout: Auto-dismiss on timeout
                 incomingCallTimeoutJob?.cancel()
                 incomingCallTimeoutJob = scope.launch {
                     delay(30000)
                     if (_callState.value.status == CallStatus.INCOMING) {
                         CallNotificationHelper.cancelIncomingCallNotification(context)
-                        CallNotificationHelper.showMissedCallNotification(context, callerName)
                         rejectIncomingCall()
                     }
                 }
@@ -228,14 +227,7 @@ class ActiveCallManager @Inject constructor(
 
             WSEventTypes.CALL_CANCEL, WSEventTypes.CALL_CANCELLED -> {
                 incomingCallTimeoutJob?.cancel()
-                val isIncoming = _callState.value.status == CallStatus.INCOMING
                 CallNotificationHelper.cancelIncomingCallNotification(context)
-                if (isIncoming) {
-                    CallNotificationHelper.showMissedCallNotification(
-                        context,
-                        _callState.value.remoteUserName.ifBlank { "Caller" }
-                    )
-                }
                 cleanupAndEnd(reason = "Caller cancelled the call")
             }
 

@@ -19,7 +19,8 @@ object CallNotificationHelper {
 
     fun createChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -28,7 +29,6 @@ object CallNotificationHelper {
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                 .build()
 
-            // High priority ringing incoming call channel
             val incomingChannel = NotificationChannel(
                 INCOMING_CALL_CHANNEL_ID,
                 "Incoming Calls",
@@ -64,14 +64,16 @@ object CallNotificationHelper {
     ) {
         createChannels(context)
 
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
-            action = CallActionReceiver.ACTION_ACCEPT_CALL
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("call_id", callId)
-            putExtra("caller_id", callerId)
-            putExtra("caller_name", callerName)
-            putExtra("call_type", callType)
-        }
+        val launchIntent =
+            context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                action = CallActionReceiver.ACTION_ACCEPT_CALL
+                flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("call_id", callId)
+                putExtra("caller_id", callerId)
+                putExtra("caller_name", callerName)
+                putExtra("call_type", callType)
+            }
 
         val acceptPendingIntent = PendingIntent.getActivity(
             context,
@@ -103,21 +105,27 @@ object CallNotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setOngoing(true)
-            .setAutoCancel(true)
+            .setAutoCancel(false)
             .setSound(ringtoneUri)
             .setVibrate(longArrayOf(0, 1000, 600, 1000, 600, 1000))
             .setFullScreenIntent(acceptPendingIntent, true)
             .setContentIntent(acceptPendingIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Decline", rejectPendingIntent)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "Decline",
+                rejectPendingIntent
+            )
             .addAction(android.R.drawable.stat_sys_phone_call, "Answer", acceptPendingIntent)
             .build()
 
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(INCOMING_CALL_NOTIFICATION_ID, notification)
     }
 
     fun cancelIncomingCallNotification(context: Context) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(INCOMING_CALL_NOTIFICATION_ID)
     }
 
@@ -141,7 +149,8 @@ object CallNotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
 
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(MISSED_CALL_NOTIFICATION_ID, notification)
     }
 }
