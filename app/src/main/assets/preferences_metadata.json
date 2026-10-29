@@ -1,0 +1,357 @@
+{
+  "interests": [
+    {
+      "id": "food_and_drink",
+      "category": "Food & Drink",
+      "emoji": "🍕",
+      "items": [
+        { "id": "coffee", "label": "Coffee", "emoji": "☕" },
+        { "id": "chai_tea", "label": "Chai / Tea", "emoji": "🫖" },
+        { "id": "street_food", "label": "Street Food", "emoji": "🥘" },
+        { "id": "cooking", "label": "Cooking", "emoji": "🍳" },
+        { "id": "baking", "label": "Baking", "emoji": "🧁" },
+        { "id": "fine_dining", "label": "Fine Dining", "emoji": "🍷" },
+        { "id": "pizza", "label": "Pizza", "emoji": "🍕" },
+        { "id": "sushi", "label": "Sushi", "emoji": "🍣" },
+        { "id": "vegan_vegetarian", "label": "Vegan / Vegetarian", "emoji": "🌱" },
+        { "id": "craft_beer", "label": "Craft Beer", "emoji": "🍺" },
+        { "id": "boba_bubble_tea", "label": "Boba / Bubble Tea", "emoji": "🧋" }
+      ]
+    },
+    {
+      "id": "travel_and_adventure",
+      "category": "Travel & Adventure",
+      "emoji": "✈️",
+      "items": [
+        { "id": "road_trips", "label": "Road Trips", "emoji": "🚗" },
+        { "id": "solo_travel", "label": "Solo Travel", "emoji": "🧳" },
+        { "id": "mountains_trekking", "label": "Mountains / Trekking", "emoji": "🏔️" },
+        { "id": "beach_vacations", "label": "Beach Vacations", "emoji": "🏖️" },
+        { "id": "camping", "label": "Camping", "emoji": "⛺" },
+        { "id": "backpacking", "label": "Backpacking", "emoji": "🎒" },
+        { "id": "city_breaks", "label": "City Breaks", "emoji": "🏙️" },
+        { "id": "historical_places", "label": "Historical Places", "emoji": "🏛️" },
+        { "id": "exploring_cafes", "label": "Exploring Cafes", "emoji": "☕" }
+      ]
+    },
+    {
+      "id": "sports_and_fitness",
+      "category": "Sports & Fitness",
+      "emoji": "🏋️",
+      "items": [
+        { "id": "gym_weightlifting", "label": "Gym / Weightlifting", "emoji": "🏋️" },
+        { "id": "running_marathon", "label": "Running / Marathon", "emoji": "🏃" },
+        { "id": "yoga", "label": "Yoga", "emoji": "🧘" },
+        { "id": "cricket", "label": "Cricket", "emoji": "🏏" },
+        { "id": "football_soccer", "label": "Football / Soccer", "emoji": "⚽" },
+        { "id": "badminton", "label": "Badminton", "emoji": "🏸" },
+        { "id": "cycling", "label": "Cycling", "emoji": "🚴" },
+        { "id": "swimming", "label": "Swimming", "emoji": "🏊" },
+        { "id": "pilates", "label": "Pilates", "emoji": "🤸" },
+        { "id": "boxing_martial_arts", "label": "Boxing / Martial Arts", "emoji": "🥊" },
+        { "id": "tennis", "label": "Tennis", "emoji": "🎾" }
+      ]
+    },
+    {
+      "id": "entertainment_pop_culture",
+      "category": "Entertainment & Pop Culture",
+      "emoji": "🎬",
+      "items": [
+        { "id": "binge_watching_series", "label": "Binge-Watching Series", "emoji": "📺" },
+        { "id": "bollywood", "label": "Bollywood", "emoji": "💃" },
+        { "id": "hollywood_movies", "label": "Hollywood Movies", "emoji": "🍿" },
+        { "id": "anime_manga", "label": "Anime & Manga", "emoji": "🎌" },
+        { "id": "standup_comedy", "label": "Stand-up Comedy", "emoji": "😂" },
+        { "id": "true_crime_podcasts", "label": "True Crime Podcasts", "emoji": "🎙️" },
+        { "id": "theatre_plays", "label": "Theatre & Plays", "emoji": "🎭" },
+        { "id": "kdramas", "label": "K-Dramas", "emoji": "🥢" },
+        { "id": "documentaries", "label": "Documentaries", "emoji": "📽️" }
+      ]
+    },
+    {
+      "id": "music",
+      "category": "Music",
+      "emoji": "🎧",
+      "items": [
+        { "id": "indie_acoustic", "label": "Indie & Acoustic", "emoji": "🎸" },
+        { "id": "edm_house", "label": "EDM & House", "emoji": "🎛️" },
+        { "id": "hiphop_rap", "label": "Hip-Hop / Rap", "emoji": "🎤" },
+        { "id": "punjabi_music", "label": "Punjabi Music", "emoji": "🪕" },
+        { "id": "live_concerts_gigs", "label": "Live Concerts & Gigs", "emoji": "🎟️" },
+        { "id": "rock_metal", "label": "Rock & Metal", "emoji": "⚡" },
+        { "id": "pop_hits", "label": "Pop Hits", "emoji": "📻" },
+        { "id": "lofi_beats", "label": "Lo-Fi Beats", "emoji": "🎧" },
+        { "id": "classical_sufi", "label": "Classical / Sufi", "emoji": "🎻" }
+      ]
+    },
+    {
+      "id": "creativity_arts",
+      "category": "Creativity & Arts",
+      "emoji": "🎨",
+      "items": [
+        { "id": "photography", "label": "Photography", "emoji": "📸" },
+        { "id": "painting_sketching", "label": "Painting / Sketching", "emoji": "🎨" },
+        { "id": "writing_poetry", "label": "Writing / Poetry", "emoji": "✍️" },
+        { "id": "dancing", "label": "Dancing", "emoji": "🕺" },
+        { "id": "fashion_styling", "label": "Fashion & Styling", "emoji": "👗" },
+        { "id": "interior_design", "label": "Interior Design", "emoji": "🛋️" },
+        { "id": "diy_crafting", "label": "DIY & Crafting", "emoji": "✂️" },
+        { "id": "content_creation_vlogging", "label": "Content Creation / Vlogging", "emoji": "📹" }
+      ]
+    },
+    {
+      "id": "gaming_tech",
+      "category": "Gaming & Tech",
+      "emoji": "🎮",
+      "items": [
+        { "id": "pc_console_gaming", "label": "PC / Console Gaming", "emoji": "🎮" },
+        { "id": "mobile_gaming", "label": "Mobile Gaming (BGMI / Free Fire)", "emoji": "📱" },
+        { "id": "board_games", "label": "Board Games", "emoji": "🎲" },
+        { "id": "coding_startups", "label": "Coding & Startups", "emoji": "💻" },
+        { "id": "scifi_ai", "label": "Sci-Fi & AI", "emoji": "🤖" },
+        { "id": "chess", "label": "Chess", "emoji": "♟️" },
+        { "id": "gadgets_electronics", "label": "Gadgets & Electronics", "emoji": "🔌" }
+      ]
+    },
+    {
+      "id": "pets_nature",
+      "category": "Pets & Nature",
+      "emoji": "🐾",
+      "items": [
+        { "id": "dog_lover", "label": "Dog Lover", "emoji": "🐶" },
+        { "id": "cat_lover", "label": "Cat Lover", "emoji": "🐱" },
+        { "id": "plant_parent", "label": "Plant Parent", "emoji": "🪴" },
+        { "id": "wildlife_birds", "label": "Wildlife & Birds", "emoji": "🦅" },
+        { "id": "stargazing", "label": "Stargazing", "emoji": "✨" },
+        { "id": "sunset_watching", "label": "Sunset Watching", "emoji": "🌅" }
+      ]
+    },
+    {
+      "id": "lifestyle_values",
+      "category": "Lifestyle & Values",
+      "emoji": "🧘",
+      "items": [
+        { "id": "early_bird", "label": "Early Bird", "emoji": "🌅" },
+        { "id": "night_owl", "label": "Night Owl", "emoji": "🦉" },
+        { "id": "spirituality", "label": "Spirituality", "emoji": "🕉️" },
+        { "id": "meditation_mindfulness", "label": "Meditation & Mindfulness", "emoji": "🕊️" },
+        { "id": "volunteering_social_causes", "label": "Volunteering & Social Causes", "emoji": "🤝" },
+        { "id": "minimalist_living", "label": "Minimalist Living", "emoji": "🌿" },
+        { "id": "astrology_horoscopes", "label": "Astrology & Horoscopes", "emoji": "🔮" }
+      ]
+    }
+  ],
+  "occupations": [
+    {
+      "id": "tech_it_engineering",
+      "category": "Technology, IT & Engineering",
+      "emoji": "💻",
+      "items": [
+        { "id": "software_engineer", "label": "Software Engineer / Developer", "emoji": "💻" },
+        { "id": "product_manager", "label": "Product Manager", "emoji": "📱" },
+        { "id": "data_scientist_ai", "label": "Data Scientist / AI Engineer", "emoji": "🤖" },
+        { "id": "ui_ux_designer", "label": "UI/UX Designer", "emoji": "🎨" },
+        { "id": "devops_cloud", "label": "DevOps / Cloud Engineer", "emoji": "☁️" },
+        { "id": "cybersecurity_analyst", "label": "Cybersecurity Analyst", "emoji": "🛡️" },
+        { "id": "qa_test_engineer", "label": "QA / Test Engineer", "emoji": "🔍" },
+        { "id": "it_consultant", "label": "IT Consultant", "emoji": "💼" },
+        { "id": "system_administrator", "label": "System Administrator", "emoji": "🖥️" },
+        { "id": "hardware_electronics_engineer", "label": "Hardware / Electronics Engineer", "emoji": "🔌" },
+        { "id": "mechanical_engineer", "label": "Mechanical Engineer", "emoji": "⚙️" },
+        { "id": "civil_engineer", "label": "Civil Engineer", "emoji": "🏗️" },
+        { "id": "chemical_engineer", "label": "Chemical Engineer", "emoji": "🧪" }
+      ]
+    },
+    {
+      "id": "business_finance_consulting",
+      "category": "Business, Finance & Consulting",
+      "emoji": "💼",
+      "items": [
+        { "id": "chartered_accountant", "label": "Chartered Accountant (CA)", "emoji": "📊" },
+        { "id": "investment_banker", "label": "Investment Banker", "emoji": "🏦" },
+        { "id": "financial_analyst", "label": "Financial Analyst", "emoji": "📈" },
+        { "id": "management_consultant", "label": "Management Consultant", "emoji": "💼" },
+        { "id": "business_analyst", "label": "Business Analyst", "emoji": "📑" },
+        { "id": "vc_angel_investor", "label": "Venture Capitalist / Angel Investor", "emoji": "💰" },
+        { "id": "stock_trader_wealth_manager", "label": "Stock Trader / Wealth Manager", "emoji": "💵" },
+        { "id": "auditor_tax_consultant", "label": "Auditor / Tax Consultant", "emoji": "📜" },
+        { "id": "operations_manager", "label": "Operations Manager", "emoji": "⚙️" },
+        { "id": "risk_compliance_analyst", "label": "Risk & Compliance Analyst", "emoji": "⚖️" }
+      ]
+    },
+    {
+      "id": "startups_entrepreneurship_freelance",
+      "category": "Startups, Entrepreneurship & Freelance",
+      "emoji": "🚀",
+      "items": [
+        { "id": "founder_cofounder", "label": "Founder / Co-Founder", "emoji": "🚀" },
+        { "id": "entrepreneur", "label": "Entrepreneur", "emoji": "💡" },
+        { "id": "freelancer", "label": "Freelancer", "emoji": "💻" },
+        { "id": "startup_operator", "label": "Startup Operator", "emoji": "⚡" },
+        { "id": "ecommerce_owner", "label": "E-Commerce Business Owner", "emoji": "🛒" },
+        { "id": "family_business_owner", "label": "Family Business Owner", "emoji": "🏬" },
+        { "id": "consultant", "label": "Consultant", "emoji": "🤝" }
+      ]
+    },
+    {
+      "id": "marketing_sales_hr",
+      "category": "Marketing, Sales & HR",
+      "emoji": "🏢",
+      "items": [
+        { "id": "digital_marketer", "label": "Digital Marketer / Growth Hacker", "emoji": "🚀" },
+        { "id": "brand_manager", "label": "Brand Manager", "emoji": "🏷️" },
+        { "id": "social_media_manager", "label": "Social Media Manager", "emoji": "📱" },
+        { "id": "content_strategist_copywriter", "label": "Content Strategist / Copywriter", "emoji": "✍️" },
+        { "id": "pr_communications", "label": "PR & Communications Specialist", "emoji": "📢" },
+        { "id": "sales_manager", "label": "Sales Manager / Account Executive", "emoji": "💼" },
+        { "id": "bd_manager", "label": "Business Development (BD) Manager", "emoji": "🤝" },
+        { "id": "hr_specialist", "label": "Human Resources (HR) Specialist", "emoji": "👥" },
+        { "id": "recruiter_talent", "label": "Recruiter / Talent Acquisition", "emoji": "🎯" }
+      ]
+    },
+    {
+      "id": "healthcare_medicine",
+      "category": "Healthcare & Medicine",
+      "emoji": "🏥",
+      "items": [
+        { "id": "doctor_physician", "label": "Doctor / Physician", "emoji": "🩺" },
+        { "id": "surgeon", "label": "Surgeon", "emoji": "😷" },
+        { "id": "dentist", "label": "Dentist", "emoji": "🦷" },
+        { "id": "nurse_healthcare", "label": "Nurse / Healthcare Specialist", "emoji": "👩‍⚕️" },
+        { "id": "pharmacist", "label": "Pharmacist", "emoji": "💊" },
+        { "id": "psychologist_counselor", "label": "Psychologist / Counselor", "emoji": "🧠" },
+        { "id": "physiotherapist", "label": "Physiotherapist", "emoji": "🦴" },
+        { "id": "nutritionist_dietitian", "label": "Nutritionist / Dietitian", "emoji": "🥗" },
+        { "id": "veterinarian", "label": "Veterinarian (Vet)", "emoji": "🐾" },
+        { "id": "medical_researcher", "label": "Medical Researcher", "emoji": "🔬" }
+      ]
+    },
+    {
+      "id": "creative_media_arts",
+      "category": "Creative, Media, Arts & Entertainment",
+      "emoji": "🎨",
+      "items": [
+        { "id": "graphic_designer", "label": "Graphic Designer", "emoji": "🎨" },
+        { "id": "animator_3d_artist", "label": "Animator / 3D Artist", "emoji": "🎬" },
+        { "id": "photographer_videographer", "label": "Photographer / Videographer", "emoji": "📸" },
+        { "id": "film_director", "label": "Film Director / Cinematographer", "emoji": "🎥" },
+        { "id": "content_creator", "label": "Content Creator / Influencer", "emoji": "📹" },
+        { "id": "actor_model", "label": "Actor / Model", "emoji": "🎭" },
+        { "id": "musician_singer", "label": "Musician / Singer / Producer", "emoji": "🎵" },
+        { "id": "writer_author", "label": "Writer / Author / Journalist", "emoji": "📰" },
+        { "id": "fashion_designer", "label": "Fashion Designer / Stylist", "emoji": "👗" },
+        { "id": "interior_designer", "label": "Interior Designer", "emoji": "🛋️" },
+        { "id": "event_planner", "label": "Event Planner / Producer", "emoji": "🎉" }
+      ]
+    },
+    {
+      "id": "law_governance_civil_services",
+      "category": "Law, Governance & Civil Services",
+      "emoji": "⚖️",
+      "items": [
+        { "id": "lawyer_advocate", "label": "Lawyer / Advocate", "emoji": "⚖️" },
+        { "id": "corporate_legal_counsel", "label": "Corporate Legal Counsel", "emoji": "📜" },
+        { "id": "judge_magistrate", "label": "Judge / Magistrate", "emoji": "👨‍⚖️" },
+        { "id": "civil_servant", "label": "Civil Servant (IAS / IPS / IFS / IRS)", "emoji": "🏛️" },
+        { "id": "government_officer", "label": "Government Officer", "emoji": "🇮🇳" },
+        { "id": "public_policy_specialist", "label": "Public Policy Specialist", "emoji": "📋" }
+      ]
+    },
+    {
+      "id": "defense_uniformed_services",
+      "category": "Defense & Uniformed Services",
+      "emoji": "🎖️",
+      "items": [
+        { "id": "army_officer", "label": "Army Officer", "emoji": "🎖️" },
+        { "id": "navy_officer", "label": "Navy Officer", "emoji": "⚓" },
+        { "id": "air_force_officer", "label": "Air Force Officer", "emoji": "✈️" },
+        { "id": "police_officer", "label": "Police Officer", "emoji": "👮" },
+        { "id": "merchant_navy_captain", "label": "Merchant Navy Officer / Captain", "emoji": "🚢" }
+      ]
+    },
+    {
+      "id": "aviation_travel_hospitality",
+      "category": "Aviation, Travel & Hospitality",
+      "emoji": "✈️",
+      "items": [
+        { "id": "commercial_pilot", "label": "Commercial Pilot", "emoji": "🧑‍✈️" },
+        { "id": "cabin_crew", "label": "Cabin Crew / Flight Attendant", "emoji": "✈️" },
+        { "id": "air_traffic_controller", "label": "Air Traffic Controller", "emoji": "📡" },
+        { "id": "hotel_manager", "label": "Hotel Manager / General Manager", "emoji": "🏨" },
+        { "id": "chef_culinary", "label": "Chef / Culinary Specialist", "emoji": "👨‍🍳" },
+        { "id": "travel_consultant", "label": "Travel Consultant / Tour Guide", "emoji": "🧭" }
+      ]
+    },
+    {
+      "id": "education_science_research",
+      "category": "Education, Science & Research",
+      "emoji": "🎓",
+      "items": [
+        { "id": "professor_lecturer", "label": "Professor / Lecturer", "emoji": "🎓" },
+        { "id": "teacher_educator", "label": "Teacher / Educator", "emoji": "📚" },
+        { "id": "research_scientist", "label": "Research Scientist", "emoji": "🔬" },
+        { "id": "phd_scholar", "label": "Ph.D. Scholar / Academician", "emoji": "📑" },
+        { "id": "school_principal", "label": "School Principal / Administrator", "emoji": "🏫" },
+        { "id": "career_coach", "label": "Career Coach / Trainer", "emoji": "🎯" }
+      ]
+    },
+    {
+      "id": "architecture_real_estate",
+      "category": "Architecture, Real Estate & Construction",
+      "emoji": "🏗️",
+      "items": [
+        { "id": "architect", "label": "Architect", "emoji": "📐" },
+        { "id": "urban_planner", "label": "Urban Planner", "emoji": "🏙️" },
+        { "id": "real_estate_developer", "label": "Real Estate Developer / Agent", "emoji": "🏢" },
+        { "id": "construction_manager", "label": "Construction Manager", "emoji": "👷" },
+        { "id": "landscape_designer", "label": "Landscape Designer", "emoji": "🏡" }
+      ]
+    },
+    {
+      "id": "student_non_corporate",
+      "category": "Student & Non-Corporate",
+      "emoji": "🎓",
+      "items": [
+        { "id": "student", "label": "Student / College Student", "emoji": "🎒" },
+        { "id": "graduate_student", "label": "Graduate Student (Master's / Ph.D.)", "emoji": "🎓" },
+        { "id": "fitness_personal_trainer", "label": "Working in Fitness / Personal Trainer", "emoji": "🏋️" },
+        { "id": "yoga_instructor", "label": "Yoga Instructor", "emoji": "🧘" },
+        { "id": "professional_athlete", "label": "Professional Athlete / Sports Coach", "emoji": "⚽" },
+        { "id": "homemaker", "label": "Homemaker", "emoji": "🏡" },
+        { "id": "in_between_jobs", "label": "In Between Jobs / Taking a Break", "emoji": "☕" }
+      ]
+    }
+  ],
+  "genders": [
+    { "id": "woman", "label": "Woman", "emoji": "👩" },
+    { "id": "man", "label": "Man", "emoji": "👨" },
+    { "id": "non_binary", "label": "Non-binary", "emoji": "🌈" },
+    { "id": "genderqueer", "label": "Genderqueer", "emoji": "🦄" },
+    { "id": "agender", "label": "Agender", "emoji": "⚪" },
+    { "id": "transgender_woman", "label": "Transgender Woman", "emoji": "⚧️" },
+    { "id": "transgender_man", "label": "Transgender Man", "emoji": "⚧️" },
+    { "id": "other", "label": "Other", "emoji": "✨" }
+  ],
+  "religions": [
+    { "id": "hindu", "label": "Hinduism", "emoji": "🕉️" },
+    { "id": "muslim", "label": "Islam", "emoji": "☪️" },
+    { "id": "christian", "label": "Christianity", "emoji": "✝️" },
+    { "id": "sikh", "label": "Sikhism", "emoji": "ੴ" },
+    { "id": "jain", "label": "Jainism", "emoji": "🛕" },
+    { "id": "buddhist", "label": "Buddhism", "emoji": "☸️" },
+    { "id": "parsi", "label": "Parsi / Zoroastrian", "emoji": "🕯️" },
+    { "id": "jewish", "label": "Judaism", "emoji": "✡️" },
+    { "id": "spiritual", "label": "Spiritual", "emoji": "🕊️" },
+    { "id": "agnostic", "label": "Agnostic", "emoji": "❓" },
+    { "id": "atheist", "label": "Atheist", "emoji": "⚛️" },
+    { "id": "other", "label": "Other", "emoji": "🌟" },
+    { "id": "prefer_not_to_say", "label": "Prefer not to say", "emoji": "🔒" }
+  ],
+  "drinkingOptions": [
+    { "id": "socially", "label": "Socially / Occasionally", "emoji": "🍷" },
+    { "id": "frequently", "label": "Frequently", "emoji": "🍻" },
+    { "id": "never", "label": "Never / Teetotaler", "emoji": "🚫" },
+    { "id": "trying_to_quit", "label": "Trying to quit", "emoji": "🛑" },
+    { "id": "prefer_not_to_say", "label": "Prefer not to say", "emoji": "🔒" }
+  ]
+}

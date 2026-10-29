@@ -122,6 +122,7 @@ class ActiveCallManager @Inject constructor(
                     ?: "Incoming Call"
                 val isVideo = msg.call_type?.contains("video", ignoreCase = true) == true ||
                         msg.payloadAsString().contains("video", ignoreCase = true) ||
+                        msg.dataAsString().contains("video", ignoreCase = true) ||
                         msg.type.contains("video", ignoreCase = true) ||
                         msg.event?.contains("video", ignoreCase = true) == true
                 val callType = if (isVideo) CallType.VIDEO else CallType.VOICE
@@ -167,7 +168,10 @@ class ActiveCallManager @Inject constructor(
                 CallNotificationHelper.cancelIncomingCallNotification(context)
                 audioHelper.stopDialingTone()
                 audioHelper.playCallConnectedTone()
-                val isVideo = _callState.value.callType == CallType.VIDEO
+                val isVideo = _callState.value.callType == CallType.VIDEO ||
+                        msg.call_type?.contains("video", ignoreCase = true) == true ||
+                        msg.payloadAsString().contains("video", ignoreCase = true) ||
+                        msg.dataAsString().contains("video", ignoreCase = true)
                 audioHelper.startCallAudio(isSpeaker = isVideo)
 
                 val callId = msg.call_id ?: msg.session_id ?: _callState.value.callId
@@ -186,6 +190,7 @@ class ActiveCallManager @Inject constructor(
 
                 _callState.value = _callState.value.copy(
                     status = CallStatus.ACTIVE,
+                    callType = if (isVideo) CallType.VIDEO else _callState.value.callType,
                     callId = callId,
                     remoteUserId = remoteId ?: "",
                     ratePerMin = msg.credits_per_minute ?: msg.rate_per_min

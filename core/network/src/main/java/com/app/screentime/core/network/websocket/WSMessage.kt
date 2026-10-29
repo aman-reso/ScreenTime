@@ -39,6 +39,9 @@ data class WSMessage(
     val online: Boolean? = null,
     val is_typing: Boolean? = null,
     val token: String? = null,
+    val livekit_url: String? = null,
+    val livekit_token: String? = null,
+    val room_name: String? = null,
     val timestamp: Long? = null,
 
     // Aliases / Compatibility fields
@@ -63,7 +66,13 @@ data class WSMessage(
     val sdp: String? = null,
     val candidate: String? = null,
     val sdp_mid: String? = null,
-    val sdp_m_line_index: Int? = null
+    val sdp_m_line_index: Int? = null,
+    val client_message_id: String? = null,
+    val clientMessageId: String? = null,
+    val reward_messages: Int? = null,
+    val free_quota: Int? = null,
+    val gate_type: String? = null,
+    val gateType: String? = null
 ) {
     val effectiveTargetId: String?
         get() = target_id ?: receiver_id ?: target_user_id ?: targetUserId
@@ -82,6 +91,14 @@ data class WSMessage(
             is JsonPrimitive -> p.content
             null -> ""
             else -> p.toString()
+        }
+    }
+
+    fun dataAsString(): String {
+        return when (val d = data) {
+            is JsonPrimitive -> d.content
+            null -> ""
+            else -> d.toString()
         }
     }
 }

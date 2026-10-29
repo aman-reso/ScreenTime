@@ -259,6 +259,12 @@ fun VideoCallScreen(
         else -> ""
     }
 
+    val isIncomingOrActive =
+        (callState.status == CallStatus.INCOMING ||
+                callState.status == CallStatus.ACTIVE ||
+                callState.status == CallStatus.DIALING) &&
+                (callState.remoteUserId.isEmpty() || callState.remoteUserId == targetId || targetId.isBlank())
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
@@ -274,10 +280,9 @@ fun VideoCallScreen(
             hasNotificationPermission = result[Manifest.permission.POST_NOTIFICATIONS] == true ||
                     ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
         }
-        val isAnsweringCall = callState.status == CallStatus.ACTIVE || callState.status == CallStatus.INCOMING
         if (cameraGranted && callState.status == CallStatus.INCOMING) {
             viewModel.acceptIncomingCall()
-        } else if (cameraGranted && !hasInitiatedCall && targetId.isNotBlank() && !isAnsweringCall) {
+        } else if (cameraGranted && !hasInitiatedCall && targetId.isNotBlank() && !isIncomingOrActive) {
             hasInitiatedCall = true
             viewModel.startOutgoingCall(targetId, modelName, ratePerMin, CallType.VIDEO)
         }
@@ -291,13 +296,13 @@ fun VideoCallScreen(
             } else {
                 permissionLauncher.launch(permissionsToRequest)
             }
-        } else if (callState.status == CallStatus.ACTIVE) {
+        } else if (callState.status == CallStatus.ACTIVE || callState.status == CallStatus.DIALING) {
             if (hasCameraPermission) {
                 viewModel.setCameraEnabled(true)
             } else {
                 permissionLauncher.launch(permissionsToRequest)
             }
-        } else if (!hasInitiatedCall && targetId.isNotBlank()) {
+        } else if (!hasInitiatedCall && !isIncomingOrActive && targetId.isNotBlank()) {
             if (hasCameraPermission && hasNotificationPermission) {
                 hasInitiatedCall = true
                 viewModel.startOutgoingCall(targetId, modelName, ratePerMin, CallType.VIDEO)

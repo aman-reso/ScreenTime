@@ -48,7 +48,6 @@ import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.app.screentime.core.ui.util.ODSSnackbarHost
 import com.app.screentime.feature.chat.ChatListScreen
 import com.app.screentime.feature.chat.ChatScreen
-import com.app.screentime.feature.discover.DiscoverMapScreen
 import com.app.screentime.feature.discover.HomeFeedScreen
 import com.app.screentime.feature.discover.TermsOfServiceScreen
 import com.app.screentime.feature.preferences.EditPreferencesScreen
@@ -75,7 +74,7 @@ import com.telekom.odsystem.molecules.dialog.ODSDialog
 import com.telekom.odsystem.molecules.dialog.ODSDialogProps
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
-// ── 5 Main Bottom Navigation Tabs: Home, Discover, Likes, Chats, Profile ────────────
+// ── 4 Main Bottom Navigation Tabs: Home, Likes, Chats, Profile ────────────
 data class BottomNavTab(
     val screen: Screen,
     val label: String,
@@ -85,14 +84,13 @@ data class BottomNavTab(
 
 val bottomNavTabs = listOf(
     BottomNavTab(Screen.Home, "Home", iconRes = R.drawable.ic_home),
-    BottomNavTab(Screen.DiscoverMap, "Discover", iconRes = R.drawable.ic_map_pin),
     BottomNavTab(Screen.Likes, "Likes", iconRes = R.drawable.ic_heart),
     BottomNavTab(Screen.ChatList, "Chats", iconRes = R.drawable.ic_message_circle),
     BottomNavTab(Screen.Account, "Profile", iconRes = R.drawable.ic_user)
 )
 
 private val bottomNavRoutes: Set<Screen> = setOf(
-    Screen.Home, Screen.DiscoverMap, Screen.Likes, Screen.ChatList, Screen.Account
+    Screen.Home, Screen.Likes, Screen.ChatList, Screen.Account
 )
 
 /**
@@ -315,14 +313,23 @@ fun ScreenTimeNavigation(
                     )
                 }
 
-                // ── Tab 2: Location-Based Discovery Map ─────────────────────
+                // ── Legacy DiscoverMap alias (redirected to HomeFeedScreen) ──
                 entry<Screen.DiscoverMap> {
-                    DiscoverMapScreen(
+                    HomeFeedScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        scheme = scheme,
                         onNavigateToChat = { modelId, modelName ->
                             backStack.add(Screen.Chat(modelId, modelName))
-                        }, onNavigateToProfile = { userId, userName ->
+                        },
+                        onNavigateToProfile = { userId, userName ->
                             backStack.add(Screen.ProfileDetail(userId, userName))
-                        }, modifier = Modifier.fillMaxSize(), scheme = scheme
+                        },
+                        onNavigateToPreferences = {
+                            backStack.add(Screen.EditPreferences)
+                        },
+                        onNavigateToNotifications = {
+                            backStack.add(Screen.Notifications)
+                        }
                     )
                 }
 
@@ -375,6 +382,18 @@ fun ScreenTimeNavigation(
 
                 // ── Screen: Voice Call (LiveKit SFU) ─────────────────────────
                 entry<Screen.VoiceCall> { key ->
+                    val activeCallState by callViewModel.callState.collectAsState()
+                    LaunchedEffect(activeCallState.callType) {
+                        if (activeCallState.callType == com.app.screentime.feature.call.CallType.VIDEO &&
+                            backStack.isNotEmpty() && backStack.lastOrNull() is Screen.VoiceCall
+                        ) {
+                            backStack[backStack.lastIndex] = Screen.VideoCall(
+                                modelId = key.modelId,
+                                modelName = key.modelName,
+                                avatarUrl = key.avatarUrl
+                            )
+                        }
+                    }
                     VoiceCallScreen(
                         modelId = key.modelId,
                         modelName = key.modelName,

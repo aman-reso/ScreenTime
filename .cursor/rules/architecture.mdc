@@ -1,0 +1,25 @@
+---
+description: Always use Clean Architecture: ViewModel, UseCase, and Repository pattern
+alwaysApply: true
+---
+
+# Architecture (mandatory)
+
+Every feature in the app must strictly follow Clean MVVM Architecture:
+**UI (ODS Composable) -> ViewModel -> UseCase -> Repository -> Data Source / Network / DB**
+
+1. **ViewModel**:
+   - Manages UI state using `StateFlow<UiState>`.
+   - Handles UI intents and coordinates operations exclusively via domain UseCases.
+   - Never call network clients, APIs, or database DAOs directly in ViewModels.
+
+2. **UseCase**:
+   - Encapsulates single business logic operations (e.g. `FetchUserProfileUseCase`, `UpdatePreferencesUseCase`, `DeleteAccountUseCase`).
+   - Delegates data fetching and persistence exclusively to domain Repository interfaces.
+   - Never call network APIs directly in UseCases.
+
+3. **Repository**:
+   - Domain layer defines the interface (e.g. `ProfileRepository`).
+   - Data layer provides implementation (e.g. `ProfileRepositoryImpl`).
+   - Interacts with remote APIs (`WinterApi`, Ktor client) and local session/preferences/databases.
+   - Wired via Hilt modules using `@Binds`.

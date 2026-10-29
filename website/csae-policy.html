@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Child Safety & CSAE Standards | Winter</title>
+  <meta name="description" content="Winter's published standards, zero-tolerance policy, enforcement protocols, and reporting mechanisms against Child Sexual Abuse Material (CSAM) and Child Sexual Abuse and Exploitation (CSAE).">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #3C444F;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Minimal Top Navigation Header */
+    .top-header {
+      background: #FFFFFF;
+      border-bottom: 1px solid #E9EBEE;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-header-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Pacifico', cursive;
+      font-size: 28px;
+      color: #6B1D2A;
+      text-decoration: none;
+      line-height: 1;
+    }
+    .nav-links {
+      display: flex;
+      gap: 16px;
+      font-size: 14px;
+    }
+    .nav-links a {
+      color: #555E68;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .nav-links a:hover {
+      color: #6B1D2A;
+    }
+    /* Main Content */
+    .content-container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    .badge {
+      display: inline-block;
+      background: #FFF0F0;
+      color: #6B1D2A;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      border: 1px solid rgba(107, 29, 42, 0.15);
+    }
+    h1.doc-title {
+      font-size: 34px;
+      font-weight: 700;
+      color: #111418;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .doc-meta {
+      font-size: 14px;
+      color: #7C8591;
+      margin-bottom: 28px;
+    }
+    .intro-text {
+      font-size: 16px;
+      line-height: 1.7;
+      color: #21262E;
+      margin-bottom: 24px;
+    }
+    /* Summary Callout Box */
+    .callout-box {
+      background: #FFF5F5;
+      border-left: 4px solid #6B1D2A;
+      border-radius: 4px;
+      padding: 20px 22px;
+      margin: 24px 0 32px;
+      font-size: 14.5px;
+      color: #3C444F;
+      line-height: 1.65;
+    }
+    .callout-box strong {
+      color: #6B1D2A;
+    }
+    .emergency-banner {
+      background: #6B1D2A;
+      color: #FFFFFF;
+      padding: 16px 20px;
+      border-radius: 6px;
+      margin: 28px 0;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .emergency-banner a {
+      color: #FFD2D8;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+    /* Quick Jump / TOC */
+    .toc-container {
+      background: #F8F9FA;
+      border: 1px solid #E9EBEE;
+      border-radius: 8px;
+      padding: 24px 28px;
+      margin: 32px 0 40px;
+    }
+    .toc-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111418;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+    .toc-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .toc-list a {
+      color: #6B1D2A;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+    .toc-list a:hover {
+      text-decoration: underline;
+    }
+    /* Typography & Sections */
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111418;
+      margin: 40px 0 16px;
+      padding-top: 16px;
+      border-top: 1px solid #F0F2F4;
+    }
+    h2:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #21262E;
+      margin: 24px 0 10px;
+    }
+    p {
+      margin-bottom: 16px;
+    }
+    ul, ol {
+      margin: 0 0 20px 24px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    a {
+      color: #6B1D2A;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    /* Warning Card */
+    .warning-box {
+      background: #FFF9E6;
+      border: 1px solid #FFE29A;
+      border-left: 4px solid #D97706;
+      border-radius: 6px;
+      padding: 18px 20px;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #78350F;
+    }
+    /* Contact and Resource Cards */
+    .resource-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+    @media (max-width: 600px) {
+      .resource-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .resource-card {
+      background: #F8F9FA;
+      border: 1px solid #E9EBEE;
+      border-radius: 8px;
+      padding: 18px;
+      font-size: 13.5px;
+    }
+    .resource-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111418;
+      margin-bottom: 8px;
+    }
+    .contact-card {
+      background: #F8F9FA;
+      border: 1px solid #E9EBEE;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin: 20px 0;
+    }
+    .contact-card p {
+      margin-bottom: 6px;
+    }
+    .contact-card p:last-child {
+      margin-bottom: 0;
+    }
+    /* Page Footer */
+    .page-footer {
+      border-top: 1px solid #E9EBEE;
+      background: #FFFFFF;
+      padding: 32px 24px;
+      font-size: 13px;
+      color: #7C8591;
+    }
+    .footer-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      text-align: center;
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .footer-links a {
+      color: #555E68;
+      text-decoration: none;
+    }
+    .footer-links a:hover {
+      color: #6B1D2A;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Minimal Header -->
+  <header class="top-header">
+    <div class="top-header-inner">
+      <a href="/" class="logo">winter</a>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy-policy.html">Privacy</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Document Main Container -->
+  <main class="content-container">
+    <span class="badge">Google Play Safety Standards</span>
+    <h1 class="doc-title">Child Safety &amp; CSAE Policy</h1>
+    <div class="doc-meta">
+      Published: October 6, 2026 &bull; Effective Date: October 6, 2026 &bull; Package: com.app.screentime
+    </div>
+
+    <p class="intro-text">
+      Winter (operated by Winter App Inc., package name <code>com.app.screentime</code>) maintains an absolute <strong>Zero-Tolerance Policy</strong> against <strong>Child Sexual Abuse Material (CSAM)</strong> and <strong>Child Sexual Abuse and Exploitation (CSAE)</strong>.
+    </p>
+
+    <!-- Prominent Zero Tolerance Callout -->
+    <div class="callout-box">
+      <strong>ZERO-TOLERANCE MANDATE:</strong> Any depiction, facilitation, solicitation, sharing, or promotion of Child Sexual Abuse Material (CSAM) or Child Sexual Abuse and Exploitation (CSAE) is strictly prohibited on Winter. We actively prevent, detect, investigate, and report all instances of CSAE to law enforcement and the National Center for Missing &amp; Exploited Children (NCMEC).
+    </div>
+
+    <!-- Emergency Notification Banner -->
+    <div class="emergency-banner">
+      <strong>Imminent Danger:</strong> If you believe a child is in immediate danger or being harmed right now, immediately call your local emergency services (<strong>911</strong> in the US/Canada, <strong>112</strong> in the EU/UK, <strong>100/112</strong> in India) or contact the NCMEC CyberTipline at <a href="https://report.cybertip.org" target="_blank" rel="noopener">report.cybertip.org</a>.
+    </div>
+
+    <!-- Table of Contents -->
+    <nav class="toc-container" aria-label="Table of contents">
+      <div class="toc-title">Table of Contents</div>
+      <ul class="toc-list">
+        <li><a href="#strict-age-restriction">1. Strict 18+ Age Restriction &amp; Age Verification</a></li>
+        <li><a href="#prohibited-content-and-conduct">2. Prohibited Content &amp; Conduct (CSAE/CSAM)</a></li>
+        <li><a href="#preventative-safeguards">3. Preventative Safeguards &amp; Proactive Detection</a></li>
+        <li><a href="#reporting-mechanisms">4. User Reporting Mechanisms (In-App &amp; Web)</a></li>
+        <li><a href="#enforcement-actions">5. Immediate Enforcement &amp; Account Termination</a></li>
+        <li><a href="#mandatory-cooperation">6. Mandatory Law Enforcement &amp; NCMEC Reporting</a></li>
+        <li><a href="#victim-support">7. Emergency Helplines &amp; Support Resources</a></li>
+        <li><a href="#contact-child-safety">8. Designated Child Safety Contact</a></li>
+      </ul>
+    </nav>
+
+    <!-- 1. Strict Age Restriction -->
+    <h2 id="strict-age-restriction">1. Strict 18+ Age Restriction &amp; Age Verification</h2>
+    <p>
+      Winter is an adult-only dating and connection platform designed exclusively for individuals who are <strong>18 years of age or older</strong> (or the age of legal majority in their jurisdiction).
+    </p>
+    <ul>
+      <li><strong>No Minors Permitted:</strong> Individuals under the age of 18 are legally prohibited from creating an account, browsing profiles, exchanging messages, or participating in WebRTC voice and video calls.</li>
+      <li><strong>Mandatory Date of Birth Verification:</strong> During user registration, all applicants must declare their accurate date of birth. Accounts indicating an age under 18 are rejected immediately at onboarding.</li>
+      <li><strong>Biometric &amp; Live Selfie Verification:</strong> We deploy liveness detection and automated facial age estimation technologies during onboarding. Any profile suspected of being operated by a minor or misrepresenting adult age is blocked and flagged for human safety review.</li>
+    </ul>
+
+    <!-- 2. Prohibited Content and Conduct -->
+    <h2 id="prohibited-content-and-conduct">2. Prohibited Content &amp; Conduct (CSAE/CSAM)</h2>
+    <p>
+      In accordance with Google Play Developer Policy and international child protection laws, Winter strictly bans:
+    </p>
+    <ul>
+      <li><strong>Child Sexual Abuse Material (CSAM):</strong> Any visual, photographic, digital, video, audio, or computer-generated depiction of a minor engaged in sexually explicit or suggestive conduct.</li>
+      <li><strong>Child Sexual Exploitation and Abuse (CSAE):</strong> Any act of grooming, sexual extortion (sextortion), sexual coercion, propositioning, or soliciting sexual activity with or involving a minor.</li>
+      <li><strong>Sexualization of Minors:</strong> Sharing, uploading, transmitting, or requesting images, texts, voice notes, or videos that sexualize minors or suggest underage sexual behavior.</li>
+      <li><strong>Child Grooming:</strong> Attempting to build an emotional connection with a minor to facilitate sexual contact, exploitation, or abuse.</li>
+      <li><strong>Trafficking:</strong> Any commercial sexual exploitation, trafficking, or prostitution involving children or youths.</li>
+    </ul>
+
+    <div class="warning-box">
+      <strong>No Intent Defense:</strong> We treat any sharing, posting, transmitting, or requesting of CSAE/CSAM as an intentional, critical violation. Claims of joke, parody, fictional AI generation, or research will not be tolerated.
+    </div>
+
+    <!-- 3. Preventative Safeguards -->
+    <h2 id="preventative-safeguards">3. Preventative Safeguards &amp; Proactive Detection</h2>
+    <p>
+      To prevent the proliferation of CSAE and protect minors, Winter implements layered technical, algorithmic, and human safeguards:
+    </p>
+    <ul>
+      <li><strong>Automated Media Screening:</strong> All photos uploaded to profiles or shared across chats are screened against known digital hash databases (such as PhotoDNA / PDQ hashing) and real-time computer vision classifiers for explicit material.</li>
+      <li><strong>Real-Time Text Safety Filters:</strong> Natural language processing (NLP) models monitor message patterns, flagged keywords, and solicitation attempts related to underage interactions.</li>
+      <li><strong>Restricted Peer-to-Peer Calling:</strong> WebRTC voice and video calls can only occur between mutually matched, verified adult users. Unsolicited calling or streaming to unverified accounts is technically restricted.</li>
+      <li><strong>24/7 Safety Review Team:</strong> Dedicated human safety specialists review flagged interactions, user reports, and automated safety triggers around the clock.</li>
+    </ul>
+
+    <!-- 4. User Reporting Mechanisms -->
+    <h2 id="reporting-mechanisms">4. User Reporting Mechanisms (In-App &amp; Web)</h2>
+    <p>
+      Every user on Winter has access to clear, immediate reporting tools built directly into the interface:
+    </p>
+    <h3>A. In-App Reporting</h3>
+    <ol>
+      <li><strong>Profile Reporting:</strong> Tap the three-dot menu (<strong>&vellip;</strong>) on any user profile &rarr; Select <strong>Report User</strong> &rarr; Choose the category <strong>"Underage User"</strong> or <strong>"Child Safety / Inappropriate Content"</strong> &rarr; Submit.</li>
+      <li><strong>Chat Reporting:</strong> Inside any direct conversation, long-press the offending message or tap the header menu &rarr; Select <strong>Report Message / User</strong> &rarr; Choose <strong>"Child Exploitation / Underage"</strong>.</li>
+      <li><strong>Live Call Reporting:</strong> During or immediately following a WebRTC voice/video call, tap the <strong>Report</strong> button to immediately alert our emergency trust and safety queue.</li>
+    </ol>
+    <h3>B. Web &amp; Direct Emergency Reporting</h3>
+    <p>
+      Reports can also be filed directly via our safety response email:
+    </p>
+    <div class="contact-card">
+      <p><strong>Emergency Safety Email:</strong> <a href="mailto:safety@winterdating.app">safety@winterdating.app</a></p>
+      <p><strong>General Support Email:</strong> <a href="mailto:support@winterdating.app">support@winterdating.app</a></p>
+      <p><strong>Subject Line:</strong> <code>[URGENT CSAE REPORT] - User ID / Phone Number</code></p>
+      <p><strong>Triage Priority:</strong> Handled within 1 to 4 hours by our high-priority Trust &amp; Safety team.</p>
+    </div>
+
+    <!-- 5. Immediate Enforcement -->
+    <h2 id="enforcement-actions">5. Immediate Enforcement &amp; Account Termination</h2>
+    <p>
+      Upon receiving any report or automated alert involving CSAE or CSAM:
+    </p>
+    <ul>
+      <li><strong>Immediate Account Suspension:</strong> The reported account is locked instantly to prevent further communication or activity.</li>
+      <li><strong>Permanent Ban:</strong> Upon confirmation, the account is permanently terminated. Associated device IDs, phone numbers, email addresses, and payment instruments are permanently blocklisted.</li>
+      <li><strong>Content Eradication:</strong> All offending content is permanently purged from our public feeds and communications servers after evidentiary retention.</li>
+      <li><strong>Evidence Preservation:</strong> Server logs, timestamps, IP addresses, transaction records, and communication metadata are securely archived under cryptographic tamper-proof protections for law enforcement submittal.</li>
+    </ul>
+
+    <!-- 6. Mandatory Law Enforcement -->
+    <h2 id="mandatory-cooperation">6. Mandatory Law Enforcement &amp; NCMEC Reporting</h2>
+    <p>
+      Winter fulfills all legal obligations under <strong>18 U.S.C. &sect; 2258A</strong> and applicable international statutes regarding child safety:
+    </p>
+    <ul>
+      <li><strong>NCMEC CyberTipline Reports:</strong> We file formal, expedited reports with the <strong>National Center for Missing &amp; Exploited Children (NCMEC)</strong> detailing the offender's profile details, IP addresses, timestamps, and preserved digital material.</li>
+      <li><strong>Full Law Enforcement Cooperation:</strong> We proactively cooperate with state, federal, and international law enforcement agencies (including the FBI, Homeland Security Investigations, and INTERPOL) to facilitate apprehension and prosecution of offenders.</li>
+    </ul>
+
+    <!-- 7. Victim Support -->
+    <h2 id="victim-support">7. Emergency Helplines &amp; Support Resources</h2>
+    <p>
+      If you or someone you know has been affected by child exploitation, abuse, or online extortion, the following free, confidential resources are available 24/7:
+    </p>
+    <div class="resource-grid">
+      <div class="resource-card">
+        <h4>NCMEC (United States)</h4>
+        <p>National Center for Missing &amp; Exploited Children</p>
+        <p>Phone: <strong>1-800-843-5678</strong> (1-800-THE-LOST)</p>
+        <p>Report: <a href="https://report.cybertip.org" target="_blank" rel="noopener">report.cybertip.org</a></p>
+      </div>
+      <div class="resource-card">
+        <h4>Childhelp National Hotline</h4>
+        <p>Crisis intervention &amp; referral service</p>
+        <p>Phone / Text: <strong>1-800-422-4453</strong></p>
+        <p>Web: <a href="https://www.childhelphotline.org" target="_blank" rel="noopener">childhelphotline.org</a></p>
+      </div>
+      <div class="resource-card">
+        <h4>Internet Watch Foundation (IWF)</h4>
+        <p>Confidential reporting of online CSAM (UK / Global)</p>
+        <p>Web: <a href="https://report.iwf.org.uk" target="_blank" rel="noopener">report.iwf.org.uk</a></p>
+      </div>
+      <div class="resource-card">
+        <h4>INHOPE International</h4>
+        <p>Global network of hotlines against CSAM</p>
+        <p>Web: <a href="https://www.inhope.org" target="_blank" rel="noopener">inhope.org</a></p>
+      </div>
+    </div>
+
+    <!-- 8. Designated Contact -->
+    <h2 id="contact-child-safety">8. Designated Child Safety Contact</h2>
+    <p>
+      For legal inquiries, regulatory questions, or partner communications regarding child safety and our CSAE policies:
+    </p>
+    <div class="contact-card">
+      <p><strong>Winter Trust &amp; Safety Officer</strong></p>
+      <p>Winter App Inc.</p>
+      <p>Email: <a href="mailto:safety@winterdating.app">safety@winterdating.app</a> (cc: <a href="mailto:support@winterdating.app">support@winterdating.app</a>)</p>
+      <p>App Package Name: <code>com.app.screentime</code></p>
+      <p>Physical Correspondence: Attn: Child Safety &amp; Compliance Team, Winter App Inc.</p>
+    </div>
+  </main>
+
+  <!-- Page Footer -->
+  <footer class="page-footer">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="/terms.html">Terms of Use</a>
+        <a href="/privacy-policy.html">Privacy Policy</a>
+        <a href="/csae-policy.html">Child Safety (CSAE)</a>
+        <a href="/cookie-policy.html">Cookie Policy</a>
+        <a href="/delete-account.html">Delete Account</a>
+      </div>
+      <div>&copy; 2026 Winter App Inc. All rights reserved. Package: com.app.screentime</div>
+    </div>
+  </footer>
+
+</body>
+</html>

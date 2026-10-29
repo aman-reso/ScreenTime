@@ -1,6 +1,8 @@
 package com.app.screentime.core.network.websocket
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.app.screentime.core.network.NetworkAuthBridge
 import com.app.screentime.core.network.api.WinterApi
 import com.app.screentime.core.network.session.SessionManager
@@ -14,33 +16,34 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import okhttp3.*
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 class WinterWebSocketClient @Inject constructor(
     private val api: WinterApi,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val firebaseConfigManager: com.app.screentime.core.network.config.FirebaseConfigManager
 ) : WebSocketListener() {
 
     private val tag = "WinterWebSocket"
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var webSocket: WebSocket? = null
 
-    private val resilientDns = object : Dns {
-        override fun lookup(hostname: String): List<java.net.InetAddress> {
-            return try {
-                val addresses = Dns.SYSTEM.lookup(hostname)
-                if (addresses.isNotEmpty()) addresses else throw java.net.UnknownHostException("No address found for $hostname")
-            } catch (e: Exception) {
-                try {
-                    val all = java.net.InetAddress.getAllByName(hostname).toList()
-                    if (all.isNotEmpty()) all else throw e
-                } catch (e2: Exception) {
-                    Log.w(tag, "⚠️ DNS resolution failed for $hostname: ${e2.message}")
-                    throw java.net.UnknownHostException("Unable to resolve host \"$hostname\": ${e2.message}")
-                }
+    private val resilientDns = Dns { hostname ->
+        try {
+            val addresses = Dns.SYSTEM.lookup(hostname)
+            if (addresses.isNotEmpty()) addresses else throw java.net.UnknownHostException("No address found for $hostname")
+        } catch (e: Exception) {
+            try {
+                val all = java.net.InetAddress.getAllByName(hostname).toList()
+                if (all.isNotEmpty()) all else throw e
+            } catch (e2: Exception) {
+                Log.w(tag, "⚠️ DNS resolution failed for $hostname: ${e2.message}")
+                throw java.net.UnknownHostException("Unable to resolve host \"$hostname\": ${e2.message}")
             }
         }
     }
@@ -76,23 +79,19 @@ class WinterWebSocketClient @Inject constructor(
     private var reconnectAttempts = 0
 
     fun connect() {
-        if (sessionManager.isTokenExpired()) {
-            Log.w(tag, "⚠️ Token expired, clearing session.")
-            sessionManager.clearSession()
-            NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
-            return
-        }
         val token = sessionManager.getToken()
         if (token.isNullOrBlank()) {
             Log.w(tag, "⚠️ Connect aborted: token is null or blank.")
             return
         }
         val wsUrl = api.getWsUrl(token)
-        Log.i(tag, "🌐 Connecting to WebSocket: $wsUrl")
+        val apiKey = firebaseConfigManager.getApiKey()
+        Log.i(tag, "🌐 Connecting to WebSocket: $wsUrl (apikey: $apiKey)")
 
         try {
             val request = Request.Builder()
                 .url(wsUrl)
+                .header("apikey", apiKey)
                 .build()
 
             // Close existing socket cleanly before reconnecting
@@ -297,13 +296,17 @@ class WinterWebSocketClient @Inject constructor(
     fun initiateCall(targetId: String, sessionId: String, callType: String = "voice") {
         val payloadObj = buildJsonObject {
             put("call_type", callType)
+            put("session_id", sessionId)
+            put("target_id", targetId)
         }
         sendWSMessage(
             WSMessage(
                 type = WSEventTypes.CALL_INITIATE,
                 target_id = targetId,
                 session_id = sessionId,
-                payload = payloadObj
+                call_type = callType,
+                payload = payloadObj,
+                data = payloadObj
             )
         )
     }
@@ -314,7 +317,7 @@ class WinterWebSocketClient @Inject constructor(
     }
 
     /**
-     * Accept Call (Receiver → Server: call_answered / call_accept)
+     * Accept Call (Receiver → Server: call_accept & call_answered)
      */
     fun acceptCall(targetId: String, sessionId: String) {
         val dataObj = buildJsonObject {
@@ -322,6 +325,18 @@ class WinterWebSocketClient @Inject constructor(
             put("call_id", sessionId)
             if (targetId.isNotBlank()) put("target_id", targetId)
         }
+        // Send call_accept (primary)
+        sendWSMessage(
+            WSMessage(
+                type = "call_accept",
+                event = "call_accept",
+                target_id = targetId,
+                session_id = sessionId,
+                call_id = sessionId,
+                data = dataObj
+            )
+        )
+        // Also send call_answered (for backwards compatibility)
         sendWSMessage(
             WSMessage(
                 type = SocketEventType.CALL_ANSWERED.event,
@@ -379,7 +394,12 @@ class WinterWebSocketClient @Inject constructor(
     /**
      * WebRTC Peer-to-Peer Signaling (SDP & ICE: call_signal / signal)
      */
-    fun sendWebRTCSignaling(signalType: String, sessionId: String, targetId: String?, payloadJsonString: String) {
+    fun sendWebRTCSignaling(
+        signalType: String,
+        sessionId: String,
+        targetId: String?,
+        payloadJsonString: String
+    ) {
         val normSignalType = when (signalType.lowercase()) {
             "offer", WSEventTypes.WEBRTC_OFFER -> "offer"
             "answer", WSEventTypes.WEBRTC_ANSWER -> "answer"
@@ -421,7 +441,7 @@ class WinterWebSocketClient @Inject constructor(
     private fun scheduleReconnect() {
         if (reconnectJob?.isActive == true) return
         val token = sessionManager.getToken()
-        if (token.isNullOrBlank() || sessionManager.isTokenExpired()) return
+        if (token.isNullOrBlank()) return
 
         reconnectJob = scope.launch {
             reconnectAttempts++
@@ -431,15 +451,21 @@ class WinterWebSocketClient @Inject constructor(
                 reconnectAttempts <= 5 -> 8000L
                 else -> 15000L
             }
-            Log.i(tag, "🔄 Scheduling WebSocket reconnect attempt #$reconnectAttempts in ${delayMs}ms...")
-            delay(delayMs)
+            Log.i(
+                tag,
+                "🔄 Scheduling WebSocket reconnect attempt #$reconnectAttempts in ${delayMs}ms..."
+            )
+            delay(delayMs.milliseconds)
             connect()
         }
     }
 
     // ── OkHttp WebSocketListener Callbacks ──────────────────────────────────
     override fun onOpen(webSocket: WebSocket, response: Response) {
-        Log.i(tag, "🟢 [CONNECTED] WebSocket connection established successfully! HTTP ${response.code}")
+        Log.i(
+            tag,
+            "🟢 [CONNECTED] WebSocket connection established successfully! HTTP ${response.code}"
+        )
         _isConnected.value = true
         reconnectAttempts = 0
         reconnectJob?.cancel()
@@ -455,6 +481,66 @@ class WinterWebSocketClient @Inject constructor(
 //        }
     }
 
+    /**
+     * Splits incoming WebSocket raw text into individual JSON objects.
+     * Handles:
+     * - Single JSON object: {"a": 1}
+     * - Newline-delimited JSON (NDJSON): {"a": 1}\n{"b": 2}
+     * - Directly concatenated JSON: {"a": 1}{"b": 2}
+     * - Preserves escaped quotes and braces inside JSON strings
+     */
+    private fun splitJsonMessages(input: String): List<String> {
+        val trimmed = input.trim()
+        if (trimmed.isEmpty()) return emptyList()
+
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            return listOf(trimmed)
+        }
+
+        val firstBrace = trimmed.indexOf('{')
+        if (firstBrace == -1) return listOf(trimmed)
+
+        val result = mutableListOf<String>()
+        var depth = 0
+        var inString = false
+        var isEscaped = false
+        var startIndex = -1
+
+        for (i in trimmed.indices) {
+            val c = trimmed[i]
+            if (isEscaped) {
+                isEscaped = false
+                continue
+            }
+            if (c == '\\') {
+                if (inString) {
+                    isEscaped = true
+                }
+                continue
+            }
+            if (c == '"') {
+                inString = !inString
+                continue
+            }
+            if (!inString) {
+                if (c == '{') {
+                    if (depth == 0) {
+                        startIndex = i
+                    }
+                    depth++
+                } else if (c == '}') {
+                    depth--
+                    if (depth == 0 && startIndex != -1) {
+                        result.add(trimmed.substring(startIndex, i + 1))
+                        startIndex = -1
+                    }
+                }
+            }
+        }
+
+        return if (result.isNotEmpty()) result else listOf(trimmed)
+    }
+
     override fun onMessage(webSocket: WebSocket, text: String) {
         Log.i(tag, "📥 [RECEIVED] $text")
         scope.launch {
@@ -464,483 +550,621 @@ class WinterWebSocketClient @Inject constructor(
             if (text.contains("\"type\":\"ping\"") || text.contains("\"type\": \"ping\"")) {
                 webSocket.send("""{"type":"pong","timestamp":${System.currentTimeMillis()}}""")
                 Log.d(tag, "💚 [PONG] Answered server ping")
-                return@launch
             }
             if (text.contains("\"type\":\"pong\"") || text.contains("\"type\": \"pong\"")) {
                 Log.d(tag, "💚 [PONG] Server heartbeat acknowledged")
-                return@launch
             }
 
-            try {
-                val jsonTree = json.parseToJsonElement(text) as? JsonObject ?: return@launch
-                val typeStr = jsonTree["type"]?.jsonPrimitive?.contentOrNull.orEmpty()
-                val eventStr = jsonTree["event"]?.jsonPrimitive?.contentOrNull.orEmpty()
-                val sessionId = jsonTree["session_id"]?.jsonPrimitive?.contentOrNull.orEmpty()
-                val senderId = jsonTree["sender_id"]?.jsonPrimitive?.contentOrNull.orEmpty()
-                val targetId = jsonTree["target_id"]?.jsonPrimitive?.contentOrNull.orEmpty()
-                val content = jsonTree["content"]?.jsonPrimitive?.contentOrNull.orEmpty()
-                val convId = jsonTree["conversation_id"]?.jsonPrimitive?.contentOrNull.orEmpty()
-                val timestamp = jsonTree["timestamp"]?.jsonPrimitive?.longOrNull ?: System.currentTimeMillis()
-                val errorStr = jsonTree["error"]?.jsonPrimitive?.contentOrNull
-                val onlineVal = jsonTree["online"]?.jsonPrimitive?.booleanOrNull
-                val isTypingVal = jsonTree["is_typing"]?.jsonPrimitive?.booleanOrNull
-                val signalType = jsonTree["signal_type"]?.jsonPrimitive?.contentOrNull.orEmpty()
-                val payloadElement = jsonTree["payload"]
-                val dataObj = jsonTree["data"] as? JsonObject
-
-                // 1A. Server Initial Connection ACK
-                if (typeStr == WSEventTypes.CONNECTED || eventStr == WSEventTypes.CONNECTED) {
-                    val userId = dataObj?.get("user_id")?.jsonPrimitive?.contentOrNull ?: senderId
-                    Log.i(tag, "🎉 Authenticated on real-time socket for user: $userId")
-                    _eventsFlow.emit(
-                        WSMessage(
-                            type = WSEventTypes.CONNECTED,
-                            event = WSEventTypes.CONNECTED,
-                            user_id = userId,
-                            sender_id = userId,
-                            data = dataObj,
-                            timestamp = timestamp
-                        )
-                    )
-                    return@launch
-                }
-
-                // 1C & 6. Authentication or Protocol Error
-                if (typeStr == WSEventTypes.ERROR || eventStr == WSEventTypes.ERROR) {
-                    Log.e(tag, "⚠️ Server returned error: $errorStr")
-                    if (errorStr?.contains("Unauthorized", ignoreCase = true) == true) {
-                        sessionManager.clearSession()
-                        NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
-                    }
-                    _eventsFlow.emit(
-                        WSMessage(
-                            type = WSEventTypes.ERROR,
-                            event = WSEventTypes.ERROR,
-                            error = errorStr,
-                            reason = errorStr,
-                            timestamp = timestamp
-                        )
-                    )
-                    return@launch
-                }
-
-                // 2A & 2B. User Presence Broadcast
-                if (typeStr == WSEventTypes.USER_ONLINE || typeStr == WSEventTypes.USER_OFFLINE || eventStr == WSEventTypes.PRESENCE) {
-                    val isOnline = onlineVal ?: (typeStr == WSEventTypes.USER_ONLINE)
-                    val presenceMsg = WSMessage(
-                        type = if (isOnline) WSEventTypes.USER_ONLINE else WSEventTypes.USER_OFFLINE,
-                        event = WSEventTypes.PRESENCE,
-                        sender_id = senderId,
-                        user_id = senderId,
-                        online = isOnline,
-                        timestamp = timestamp
-                    )
-                    _eventsFlow.emit(presenceMsg)
-                    _eventsFlow.emit(presenceMsg.copy(type = WSEventTypes.PRESENCE_UPDATE))
-                    return@launch
-                }
-
-                // 3B. Message Delivery Ack (Server → Sender)
-                if (typeStr == WSEventTypes.MESSAGE_SENT || eventStr == WSEventTypes.MESSAGE_SENT) {
-                    _eventsFlow.emit(
-                        WSMessage(
-                            type = WSEventTypes.MESSAGE_SENT,
-                            event = WSEventTypes.MESSAGE_SENT,
-                            target_id = targetId,
-                            conversation_id = convId,
-                            content = content,
-                            timestamp = timestamp
-                        )
-                    )
-                    return@launch
-                }
-
-                // 3C. Incoming Chat Message (Server → Receiver)
-                val isChatEvent = typeStr.equals(WSEventTypes.NEW_MESSAGE, ignoreCase = true) ||
-                        eventStr.equals(WSEventTypes.NEW_MESSAGE, ignoreCase = true) ||
-                        typeStr.equals(WSEventTypes.CHAT_MESSAGE_RECEIVED, ignoreCase = true) ||
-                        eventStr.equals(WSEventTypes.CHAT_MESSAGE_RECEIVED, ignoreCase = true) ||
-                        typeStr.equals(WSEventTypes.CHAT_MESSAGE, ignoreCase = true) ||
-                        eventStr.equals(WSEventTypes.CHAT_MESSAGE, ignoreCase = true) ||
-                        typeStr.equals("message", ignoreCase = true) ||
-                        eventStr.equals("message", ignoreCase = true) ||
-                        typeStr.equals("send_message", ignoreCase = true) ||
-                        eventStr.equals("send_message", ignoreCase = true) ||
-                        typeStr.equals("direct_message", ignoreCase = true) ||
-                        eventStr.equals("direct_message", ignoreCase = true) ||
-                        typeStr.equals("dm", ignoreCase = true) ||
-                        eventStr.equals("dm", ignoreCase = true)
-
-                if (isChatEvent) {
-                    val payloadObj = payloadElement as? JsonObject
-                    val resolvedContent = content.ifBlank {
-                        jsonTree["text"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["message"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["msg"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["body"]?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("content")?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("text")?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("message")?.jsonPrimitive?.contentOrNull
-                            ?: payloadObj?.get("content")?.jsonPrimitive?.contentOrNull
-                            ?: payloadObj?.get("text")?.jsonPrimitive?.contentOrNull
-                            ?: payloadObj?.get("message")?.jsonPrimitive?.contentOrNull
-                            ?: (payloadElement as? JsonPrimitive)?.contentOrNull
-                            ?: ""
-                    }
-                    val resolvedConvId = convId.ifBlank {
-                        jsonTree["room_id"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["conv_id"]?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("conversation_id")?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("room_id")?.jsonPrimitive?.contentOrNull
-                            ?: payloadObj?.get("conversation_id")?.jsonPrimitive?.contentOrNull
-                            ?: ""
-                    }
-                    val resolvedSender = senderId.ifBlank {
-                        jsonTree["from"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["user_id"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["caller_id"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["senderId"]?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("sender_id")?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("from")?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("user_id")?.jsonPrimitive?.contentOrNull
-                            ?: payloadObj?.get("sender_id")?.jsonPrimitive?.contentOrNull
-                            ?: payloadObj?.get("from")?.jsonPrimitive?.contentOrNull
-                            ?: ""
-                    }
-                    val resolvedTarget = targetId.ifBlank {
-                        jsonTree["to"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["receiver_id"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["target_user_id"]?.jsonPrimitive?.contentOrNull
-                            ?: jsonTree["targetUserId"]?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("receiver_id")?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("target_id")?.jsonPrimitive?.contentOrNull
-                            ?: dataObj?.get("to")?.jsonPrimitive?.contentOrNull
-                            ?: payloadObj?.get("receiver_id")?.jsonPrimitive?.contentOrNull
-                            ?: payloadObj?.get("target_id")?.jsonPrimitive?.contentOrNull
-                            ?: ""
-                    }
-                    val resolvedMsgId = jsonTree["id"]?.jsonPrimitive?.contentOrNull
-                        ?: jsonTree["message_id"]?.jsonPrimitive?.contentOrNull
-                        ?: dataObj?.get("id")?.jsonPrimitive?.contentOrNull
-                        ?: dataObj?.get("message_id")?.jsonPrimitive?.contentOrNull
-                        ?: payloadObj?.get("id")?.jsonPrimitive?.contentOrNull
-                        ?: "msg_${timestamp}_${java.util.UUID.randomUUID().toString().take(8)}"
-
-                    val createdAtStr = dataObj?.get("created_at")?.jsonPrimitive?.contentOrNull
-                        ?: jsonTree["created_at"]?.jsonPrimitive?.contentOrNull
-                    val resolvedTimestamp = try {
-                        if (!createdAtStr.isNullOrBlank()) {
-                            java.time.Instant.parse(createdAtStr).toEpochMilli()
-                        } else {
-                            timestamp
+            val messages = splitJsonMessages(text)
+            for (msgStr in messages) {
+                try {
+                    val parsedElement = json.parseToJsonElement(msgStr)
+                    if (parsedElement is JsonArray) {
+                        for (item in parsedElement) {
+                            if (item is JsonObject) {
+                                processJsonObject(item, msgStr)
+                            }
                         }
-                    } catch (_: Exception) {
-                        timestamp
+                    } else if (parsedElement is JsonObject) {
+                        processJsonObject(parsedElement, msgStr)
                     }
+                } catch (e: Exception) {
+                    Log.e(tag, "❌ Failed to parse WS message: ${e.message} | Raw: $msgStr", e)
+                }
+            }
+        }
+    }
 
-                    val resolvedEvent = if (eventStr.isNotBlank()) eventStr else WSEventTypes.NEW_MESSAGE
+    @RequiresApi(Build.VERSION_CODES.O)
+    private suspend fun processJsonObject(jsonTree: JsonObject, rawText: String) {
+        val typeStr = jsonTree["type"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val eventStr = jsonTree["event"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val sessionId = jsonTree["session_id"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val senderId = jsonTree["sender_id"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val targetId = jsonTree["target_id"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val content = jsonTree["content"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val convId = jsonTree["conversation_id"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val timestamp =
+            jsonTree["timestamp"]?.jsonPrimitive?.longOrNull ?: System.currentTimeMillis()
+        val errorStr = jsonTree["error"]?.jsonPrimitive?.contentOrNull
+        val onlineVal = jsonTree["online"]?.jsonPrimitive?.booleanOrNull
+        val isTypingVal = jsonTree["is_typing"]?.jsonPrimitive?.booleanOrNull
+        val signalType = jsonTree["signal_type"]?.jsonPrimitive?.contentOrNull.orEmpty()
+        val payloadElement = jsonTree["payload"]
+        val dataObj = jsonTree["data"] as? JsonObject
 
-                    val chatMsg = WSMessage(
-                        type = WSEventTypes.CHAT_MESSAGE,
-                        event = resolvedEvent,
-                        call_id = resolvedMsgId,
-                        room_id = resolvedConvId,
-                        conversation_id = resolvedConvId,
-                        caller_id = resolvedSender,
-                        sender_id = resolvedSender,
-                        receiver_id = resolvedTarget,
-                        target_id = resolvedTarget,
-                        content = resolvedContent,
-                        message = resolvedContent,
-                        data = dataObj,
-                        timestamp = resolvedTimestamp
-                    )
-                    Log.i(tag, "💬 [INCOMING CHAT] event=$resolvedEvent, id=$resolvedMsgId, from=$resolvedSender, to=$resolvedTarget, in=$resolvedConvId: \"$resolvedContent\"")
-                    _eventsFlow.emit(chatMsg)
-                    return@launch
+        // 1A. Server Initial Connection ACK
+        if (typeStr == WSEventTypes.CONNECTED || eventStr == WSEventTypes.CONNECTED) {
+            val userId = dataObj?.get("user_id")?.jsonPrimitive?.contentOrNull ?: senderId
+            Log.i(tag, "🎉 Authenticated on real-time socket for user: $userId")
+            _eventsFlow.emit(
+                WSMessage(
+                    type = WSEventTypes.CONNECTED,
+                    event = WSEventTypes.CONNECTED,
+                    user_id = userId,
+                    sender_id = userId,
+                    data = dataObj,
+                    timestamp = timestamp
+                )
+            )
+            return
+        }
+
+        // 1C & 6. Authentication or Protocol Error
+        if (typeStr == WSEventTypes.ERROR || eventStr == WSEventTypes.ERROR) {
+            Log.e(tag, "⚠️ Server returned error: $errorStr")
+            if (errorStr?.contains("Unauthorized", ignoreCase = true) == true) {
+                sessionManager.clearSession()
+                NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
+            }
+            _eventsFlow.emit(
+                WSMessage(
+                    type = WSEventTypes.ERROR,
+                    event = WSEventTypes.ERROR,
+                    error = errorStr,
+                    reason = errorStr,
+                    timestamp = timestamp
+                )
+            )
+            return
+        }
+
+        // 2A & 2B. User Presence Broadcast
+        if (typeStr == WSEventTypes.USER_ONLINE || typeStr == WSEventTypes.USER_OFFLINE || eventStr == WSEventTypes.PRESENCE) {
+            val isOnline = onlineVal ?: (typeStr == WSEventTypes.USER_ONLINE)
+            val presenceMsg = WSMessage(
+                type = if (isOnline) WSEventTypes.USER_ONLINE else WSEventTypes.USER_OFFLINE,
+                event = WSEventTypes.PRESENCE,
+                sender_id = senderId,
+                user_id = senderId,
+                online = isOnline,
+                timestamp = timestamp
+            )
+            _eventsFlow.emit(presenceMsg)
+            _eventsFlow.emit(presenceMsg.copy(type = WSEventTypes.PRESENCE_UPDATE))
+            return
+        }
+
+        // 3B. Message Delivery Ack (Server → Sender)
+        if (typeStr == WSEventTypes.MESSAGE_SENT || eventStr == WSEventTypes.MESSAGE_SENT) {
+            _eventsFlow.emit(
+                WSMessage(
+                    type = WSEventTypes.MESSAGE_SENT,
+                    event = WSEventTypes.MESSAGE_SENT,
+                    target_id = targetId,
+                    conversation_id = convId,
+                    content = content,
+                    timestamp = timestamp
+                )
+            )
+            return
+        }
+
+        // 3C. Incoming Chat Message (Server → Receiver)
+        val isChatEvent = typeStr.equals(WSEventTypes.NEW_MESSAGE, ignoreCase = true) ||
+                eventStr.equals(WSEventTypes.NEW_MESSAGE, ignoreCase = true) ||
+                typeStr.equals(WSEventTypes.CHAT_MESSAGE_RECEIVED, ignoreCase = true) ||
+                eventStr.equals(WSEventTypes.CHAT_MESSAGE_RECEIVED, ignoreCase = true) ||
+                typeStr.equals(WSEventTypes.CHAT_MESSAGE, ignoreCase = true) ||
+                eventStr.equals(WSEventTypes.CHAT_MESSAGE, ignoreCase = true) ||
+                typeStr.equals("message", ignoreCase = true) ||
+                eventStr.equals("message", ignoreCase = true) ||
+                typeStr.equals("send_message", ignoreCase = true) ||
+                eventStr.equals("send_message", ignoreCase = true) ||
+                typeStr.equals("direct_message", ignoreCase = true) ||
+                eventStr.equals("direct_message", ignoreCase = true) ||
+                typeStr.equals("dm", ignoreCase = true) ||
+                eventStr.equals("dm", ignoreCase = true)
+
+        if (isChatEvent) {
+            val payloadObj = payloadElement as? JsonObject
+            val resolvedContent = content.ifBlank {
+                jsonTree["text"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["message"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["msg"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["body"]?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("content")?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("text")?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("message")?.jsonPrimitive?.contentOrNull
+                    ?: payloadObj?.get("content")?.jsonPrimitive?.contentOrNull
+                    ?: payloadObj?.get("text")?.jsonPrimitive?.contentOrNull
+                    ?: payloadObj?.get("message")?.jsonPrimitive?.contentOrNull
+                    ?: (payloadElement as? JsonPrimitive)?.contentOrNull
+                    ?: ""
+            }
+            val resolvedConvId = convId.ifBlank {
+                jsonTree["room_id"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["conv_id"]?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("conversation_id")?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("room_id")?.jsonPrimitive?.contentOrNull
+                    ?: payloadObj?.get("conversation_id")?.jsonPrimitive?.contentOrNull
+                    ?: ""
+            }
+            val resolvedSender = senderId.ifBlank {
+                jsonTree["from"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["user_id"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["caller_id"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["senderId"]?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("sender_id")?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("from")?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("user_id")?.jsonPrimitive?.contentOrNull
+                    ?: payloadObj?.get("sender_id")?.jsonPrimitive?.contentOrNull
+                    ?: payloadObj?.get("from")?.jsonPrimitive?.contentOrNull
+                    ?: ""
+            }
+            val resolvedTarget = targetId.ifBlank {
+                jsonTree["to"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["receiver_id"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["target_user_id"]?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["targetUserId"]?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("receiver_id")?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("target_id")?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("to")?.jsonPrimitive?.contentOrNull
+                    ?: payloadObj?.get("receiver_id")?.jsonPrimitive?.contentOrNull
+                    ?: payloadObj?.get("target_id")?.jsonPrimitive?.contentOrNull
+                    ?: ""
+            }
+            val resolvedMsgId = jsonTree["id"]?.jsonPrimitive?.contentOrNull
+                ?: jsonTree["message_id"]?.jsonPrimitive?.contentOrNull
+                ?: dataObj?.get("id")?.jsonPrimitive?.contentOrNull
+                ?: dataObj?.get("message_id")?.jsonPrimitive?.contentOrNull
+                ?: payloadObj?.get("id")?.jsonPrimitive?.contentOrNull
+                ?: "msg_${timestamp}_${java.util.UUID.randomUUID().toString().take(8)}"
+
+            val createdAtStr = dataObj?.get("created_at")?.jsonPrimitive?.contentOrNull
+                ?: jsonTree["created_at"]?.jsonPrimitive?.contentOrNull
+            val resolvedTimestamp = try {
+                if (!createdAtStr.isNullOrBlank()) {
+                    Instant.parse(createdAtStr).toEpochMilli()
+                } else {
+                    timestamp
+                }
+            } catch (_: Exception) {
+                timestamp
+            }
+
+            val resolvedEvent = if (eventStr.isNotBlank()) eventStr else WSEventTypes.NEW_MESSAGE
+
+            val chatMsg = WSMessage(
+                type = WSEventTypes.CHAT_MESSAGE,
+                event = resolvedEvent,
+                call_id = resolvedMsgId,
+                room_id = resolvedConvId,
+                conversation_id = resolvedConvId,
+                caller_id = resolvedSender,
+                sender_id = resolvedSender,
+                receiver_id = resolvedTarget,
+                target_id = resolvedTarget,
+                content = resolvedContent,
+                message = resolvedContent,
+                data = dataObj,
+                timestamp = resolvedTimestamp
+            )
+            Log.i(
+                tag,
+                "💬 [INCOMING CHAT] event=$resolvedEvent, id=$resolvedMsgId, from=$resolvedSender, to=$resolvedTarget, in=$resolvedConvId: \"$resolvedContent\""
+            )
+            _eventsFlow.emit(chatMsg)
+            return
+        }
+
+        // 3E. Typing Indicator Relayed
+        if (typeStr == WSEventTypes.USER_TYPING || eventStr == WSEventTypes.USER_TYPING || typeStr == WSEventTypes.TYPING) {
+            _eventsFlow.emit(
+                WSMessage(
+                    type = WSEventTypes.USER_TYPING,
+                    event = WSEventTypes.USER_TYPING,
+                    sender_id = senderId,
+                    target_id = targetId,
+                    is_typing = isTypingVal ?: true,
+                    timestamp = timestamp
+                )
+            )
+            return
+        }
+
+        // 3F. Read Receipt Relayed
+        if (typeStr == WSEventTypes.MESSAGE_READ || eventStr == WSEventTypes.MESSAGE_READ) {
+            _eventsFlow.emit(
+                WSMessage(
+                    type = WSEventTypes.MESSAGE_READ,
+                    event = WSEventTypes.MESSAGE_READ,
+                    sender_id = senderId,
+                    target_id = targetId,
+                    conversation_id = convId,
+                    timestamp = timestamp
+                )
+            )
+            return
+        }
+
+        // 4B. Incoming Call (Server → Receiver)
+        if (typeStr == WSEventTypes.INCOMING_CALL || eventStr == WSEventTypes.INCOMING_CALL ||
+            typeStr == WSEventTypes.CALL_INVITE || eventStr == WSEventTypes.CALL_INVITE
+        ) {
+            val resolvedSession =
+                sessionId.ifBlank { dataObj?.get("session_id")?.jsonPrimitive?.contentOrNull.orEmpty() }
+            val resolvedCaller =
+                senderId.ifBlank { dataObj?.get("caller_id")?.jsonPrimitive?.contentOrNull.orEmpty() }
+
+            val rawCallType = run {
+                var ct =
+                    (payloadElement as? JsonObject)?.get("call_type")?.jsonPrimitive?.contentOrNull
+                        ?: (payloadElement as? JsonObject)?.get("media_type")?.jsonPrimitive?.contentOrNull
+                        ?: (payloadElement as? JsonObject)?.get("type")?.jsonPrimitive?.contentOrNull
+
+                if (ct == null && payloadElement is JsonPrimitive) {
+                    val str = payloadElement.contentOrNull?.trim() ?: ""
+                    if (str.contains("video", ignoreCase = true)) {
+                        ct = "video"
+                    }
                 }
 
-                // 3E. Typing Indicator Relayed
-                if (typeStr == WSEventTypes.USER_TYPING || eventStr == WSEventTypes.USER_TYPING || typeStr == WSEventTypes.TYPING) {
-                    _eventsFlow.emit(
-                        WSMessage(
-                            type = WSEventTypes.USER_TYPING,
-                            event = WSEventTypes.USER_TYPING,
-                            sender_id = senderId,
-                            target_id = targetId,
-                            is_typing = isTypingVal ?: true,
-                            timestamp = timestamp
-                        )
-                    )
-                    return@launch
+                if (ct == null && dataObj != null) {
+                    ct = dataObj["call_type"]?.jsonPrimitive?.contentOrNull
+                        ?: dataObj["media_type"]?.jsonPrimitive?.contentOrNull
+                                ?: dataObj["type"]?.jsonPrimitive?.contentOrNull
                 }
 
-                // 3F. Read Receipt Relayed
-                if (typeStr == WSEventTypes.MESSAGE_READ || eventStr == WSEventTypes.MESSAGE_READ) {
-                    _eventsFlow.emit(
-                        WSMessage(
-                            type = WSEventTypes.MESSAGE_READ,
-                            event = WSEventTypes.MESSAGE_READ,
-                            sender_id = senderId,
-                            target_id = targetId,
-                            conversation_id = convId,
-                            timestamp = timestamp
-                        )
-                    )
-                    return@launch
+                if (ct == null) {
+                    ct = jsonTree["call_type"]?.jsonPrimitive?.contentOrNull
+                        ?: jsonTree["media_type"]?.jsonPrimitive?.contentOrNull
+                                ?: jsonTree["type"]?.jsonPrimitive?.contentOrNull
                 }
 
-                // 4B. Incoming Call (Server → Receiver)
-                if (typeStr == WSEventTypes.INCOMING_CALL || eventStr == WSEventTypes.INCOMING_CALL ||
-                    typeStr == WSEventTypes.CALL_INVITE || eventStr == WSEventTypes.CALL_INVITE) {
-                    val resolvedSession = sessionId.ifBlank { dataObj?.get("session_id")?.jsonPrimitive?.contentOrNull.orEmpty() }
-                    val resolvedCaller = senderId.ifBlank { dataObj?.get("caller_id")?.jsonPrimitive?.contentOrNull.orEmpty() }
+                if (ct == null && (typeStr.contains(
+                        "video",
+                        ignoreCase = true
+                    ) || eventStr.contains("video", ignoreCase = true))
+                ) {
+                    ct = "video"
+                }
+                ct ?: "voice"
+            }
+            val callType =
+                if (rawCallType.contains("video", ignoreCase = true)) "video" else "voice"
 
-                    val callType = (payloadElement as? JsonObject)?.get("call_type")?.jsonPrimitive?.contentOrNull
-                        ?: dataObj?.get("call_type")?.jsonPrimitive?.contentOrNull
-                        ?: jsonTree["call_type"]?.jsonPrimitive?.contentOrNull
-                        ?: "voice"
+            val credits =
+                (payloadElement as? JsonObject)?.get("credits_per_minute")?.jsonPrimitive?.doubleOrNull
+                    ?: dataObj?.get("credits_per_minute")?.jsonPrimitive?.doubleOrNull
+                    ?: (payloadElement as? JsonObject)?.get("rate_per_min")?.jsonPrimitive?.doubleOrNull
+                    ?: dataObj?.get("rate_per_min")?.jsonPrimitive?.doubleOrNull
+                    ?: 15.0
 
-                    val credits = (payloadElement as? JsonObject)?.get("credits_per_minute")?.jsonPrimitive?.doubleOrNull
-                        ?: dataObj?.get("credits_per_minute")?.jsonPrimitive?.doubleOrNull
-                        ?: 10.0
+            val callMsg = WSMessage(
+                type = WSEventTypes.INCOMING_CALL,
+                event = WSEventTypes.INCOMING_CALL,
+                call_id = resolvedSession,
+                session_id = resolvedSession,
+                caller_id = resolvedCaller,
+                sender_id = resolvedCaller,
+                target_id = targetId,
+                call_type = callType,
+                rate_per_min = credits,
+                credits_per_minute = credits,
+                payload = payloadElement,
+                data = dataObj,
+                timestamp = timestamp
+            )
+            Log.i(
+                tag,
+                "📞 [INCOMING CALL] from $resolvedCaller, session=$resolvedSession, type=$callType"
+            )
+            _eventsFlow.emit(callMsg)
+            return
+        }
 
-                    val callMsg = WSMessage(
-                        type = WSEventTypes.INCOMING_CALL,
-                        event = WSEventTypes.INCOMING_CALL,
-                        call_id = resolvedSession,
-                        session_id = resolvedSession,
-                        caller_id = resolvedCaller,
-                        sender_id = resolvedCaller,
-                        target_id = targetId,
-                        call_type = callType,
-                        rate_per_min = credits,
-                        credits_per_minute = credits,
-                        payload = payloadElement,
-                        data = dataObj,
-                        timestamp = timestamp
-                    )
-                    Log.i(tag, "📞 [INCOMING CALL] from $resolvedCaller, session=$resolvedSession, type=$callType")
-                    _eventsFlow.emit(callMsg)
-                    return@launch
+        // 4C. Target Busy Error (Server → Caller)
+        if (typeStr == WSEventTypes.CALL_BUSY || eventStr == WSEventTypes.CALL_BUSY) {
+            _eventsFlow.emit(
+                WSMessage(
+                    type = WSEventTypes.CALL_BUSY,
+                    event = WSEventTypes.CALL_BUSY,
+                    target_id = targetId,
+                    error = errorStr ?: "Target user is on another call",
+                    reason = errorStr ?: "Target user is on another call",
+                    timestamp = timestamp
+                )
+            )
+            return
+        }
+
+        // 4D. Call Accepted / Call Active (Caller and Receiver Receive)
+        if (typeStr == WSEventTypes.CALL_ACCEPTED || eventStr == WSEventTypes.CALL_ACCEPTED ||
+            typeStr == WSEventTypes.CALL_ACTIVE || eventStr == WSEventTypes.CALL_ACTIVE
+        ) {
+            val payloadObj = payloadElement as? JsonObject
+
+            val resolvedLiveKitUrl = jsonTree["livekit_url"]?.jsonPrimitive?.contentOrNull
+                ?: dataObj?.get("livekit_url")?.jsonPrimitive?.contentOrNull
+                ?: payloadObj?.get("livekit_url")?.jsonPrimitive?.contentOrNull
+                ?: jsonTree["voice_relay_url"]?.jsonPrimitive?.contentOrNull
+                ?: dataObj?.get("voice_relay_url")?.jsonPrimitive?.contentOrNull
+                ?: payloadObj?.get("voice_relay_url")?.jsonPrimitive?.contentOrNull
+
+            val resolvedLiveKitToken = jsonTree["livekit_token"]?.jsonPrimitive?.contentOrNull
+                ?: jsonTree["voice_relay_token"]?.jsonPrimitive?.contentOrNull
+                ?: jsonTree["token"]?.jsonPrimitive?.contentOrNull
+                ?: dataObj?.get("livekit_token")?.jsonPrimitive?.contentOrNull
+                ?: dataObj?.get("voice_relay_token")?.jsonPrimitive?.contentOrNull
+                ?: dataObj?.get("token")?.jsonPrimitive?.contentOrNull
+                ?: payloadObj?.get("livekit_token")?.jsonPrimitive?.contentOrNull
+                ?: payloadObj?.get("voice_relay_token")?.jsonPrimitive?.contentOrNull
+                ?: payloadObj?.get("token")?.jsonPrimitive?.contentOrNull
+
+            val resolvedRoomName = jsonTree["room_name"]?.jsonPrimitive?.contentOrNull
+                ?: dataObj?.get("room_name")?.jsonPrimitive?.contentOrNull
+                ?: payloadObj?.get("room_name")?.jsonPrimitive?.contentOrNull
+                ?: sessionId.ifBlank { dataObj?.get("session_id")?.jsonPrimitive?.contentOrNull.orEmpty() }
+
+            val resolvedSession = sessionId.ifBlank {
+                dataObj?.get("session_id")?.jsonPrimitive?.contentOrNull
+                    ?: jsonTree["call_id"]?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("call_id")?.jsonPrimitive?.contentOrNull
+                    ?: ""
+            }
+
+            val resolvedCaller = senderId.ifBlank {
+                jsonTree["caller_id"]?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("caller_id")?.jsonPrimitive?.contentOrNull
+                    ?: ""
+            }
+
+            val resolvedReceiver = targetId.ifBlank {
+                jsonTree["receiver_id"]?.jsonPrimitive?.contentOrNull
+                    ?: dataObj?.get("receiver_id")?.jsonPrimitive?.contentOrNull
+                    ?: ""
+            }
+
+            val credits = jsonTree["credits_per_minute"]?.jsonPrimitive?.doubleOrNull
+                ?: dataObj?.get("credits_per_minute")?.jsonPrimitive?.doubleOrNull
+                ?: jsonTree["rate_per_min"]?.jsonPrimitive?.doubleOrNull
+                ?: dataObj?.get("rate_per_min")?.jsonPrimitive?.doubleOrNull
+
+            val callActiveMsg = WSMessage(
+                type = WSEventTypes.CALL_ACTIVE,
+                event = WSEventTypes.CALL_ACCEPTED,
+                call_id = resolvedSession,
+                session_id = resolvedSession,
+                caller_id = resolvedCaller,
+                receiver_id = resolvedReceiver,
+                sender_id = resolvedCaller,
+                target_id = resolvedReceiver,
+                livekit_url = resolvedLiveKitUrl,
+                livekit_token = resolvedLiveKitToken,
+                token = resolvedLiveKitToken,
+                room_name = resolvedRoomName,
+                credits_per_minute = credits,
+                rate_per_min = credits,
+                data = dataObj,
+                payload = payloadElement,
+                timestamp = timestamp
+            )
+            Log.i(
+                tag,
+                "✅ [CALL ACCEPTED] session=$resolvedSession, room=$resolvedRoomName, url=$resolvedLiveKitUrl, hasToken=${!resolvedLiveKitToken.isNullOrBlank()}"
+            )
+            _eventsFlow.emit(callActiveMsg)
+            _eventsFlow.emit(callActiveMsg.copy(type = WSEventTypes.CALL_ACCEPTED))
+            return
+        }
+
+        // 4E. Call Rejected (Caller Receives)
+        if (typeStr == WSEventTypes.CALL_REJECTED || eventStr == WSEventTypes.CALL_REJECTED) {
+            _eventsFlow.emit(
+                WSMessage(
+                    type = WSEventTypes.CALL_REJECTED,
+                    event = WSEventTypes.CALL_REJECTED,
+                    call_id = sessionId,
+                    session_id = sessionId,
+                    caller_id = senderId,
+                    sender_id = senderId,
+                    target_id = targetId,
+                    reason = "Call declined",
+                    timestamp = timestamp
+                )
+            )
+            return
+        }
+
+        // 4F. Call Ended (Both Parties Receive)
+        if (typeStr == WSEventTypes.CALL_ENDED || eventStr == WSEventTypes.CALL_ENDED) {
+            _eventsFlow.emit(
+                WSMessage(
+                    type = WSEventTypes.CALL_ENDED,
+                    event = WSEventTypes.CALL_ENDED,
+                    call_id = sessionId,
+                    session_id = sessionId,
+                    caller_id = senderId,
+                    sender_id = senderId,
+                    reason = "Call ended by remote party",
+                    timestamp = timestamp
+                )
+            )
+            return
+        }
+
+        // 5B, 5D. Relayed WebRTC Signal (SDP Offer / Answer / ICE Candidate)
+        if (typeStr == WSEventTypes.WEBRTC_SIGNAL || eventStr == WSEventTypes.WEBRTC_SIGNAL ||
+            typeStr == WSEventTypes.SIGNAL || typeStr == WSEventTypes.CALL_SIGNAL || eventStr == WSEventTypes.CALL_SIGNAL
+        ) {
+            val resolvedSignalType = signalType.ifBlank {
+                dataObj?.get("signal_type")?.jsonPrimitive?.contentOrNull.orEmpty()
+            }
+
+            // Parse inner payload if stringified JSON
+            val innerPayloadObj: JsonObject? = when (payloadElement) {
+                is JsonObject -> payloadElement
+                is JsonPrimitive -> {
+                    try {
+                        json.parseToJsonElement(payloadElement.content) as? JsonObject
+                    } catch (_: Exception) {
+                        null
+                    }
                 }
 
-                // 4C. Target Busy Error (Server → Caller)
-                if (typeStr == WSEventTypes.CALL_BUSY || eventStr == WSEventTypes.CALL_BUSY) {
-                    _eventsFlow.emit(
-                        WSMessage(
-                            type = WSEventTypes.CALL_BUSY,
-                            event = WSEventTypes.CALL_BUSY,
-                            target_id = targetId,
-                            error = errorStr ?: "Target user is on another call",
-                            reason = errorStr ?: "Target user is on another call",
-                            timestamp = timestamp
-                        )
-                    )
-                    return@launch
-                }
+                else -> null
+            }
 
-                // 4D. Call Accepted (Caller Receives)
-                if (typeStr == WSEventTypes.CALL_ACCEPTED || eventStr == WSEventTypes.CALL_ACCEPTED) {
-                    val callActiveMsg = WSMessage(
-                        type = WSEventTypes.CALL_ACTIVE,
-                        event = WSEventTypes.CALL_ACCEPTED,
+            when (resolvedSignalType.lowercase()) {
+                "offer" -> {
+                    val sdp = innerPayloadObj?.get("sdp")?.jsonPrimitive?.contentOrNull
+                        ?: (payloadElement as? JsonPrimitive)?.content.orEmpty()
+                    val offerMsg = WSMessage(
+                        type = WSEventTypes.WEBRTC_OFFER,
+                        event = WSEventTypes.WEBRTC_SIGNAL,
                         call_id = sessionId,
                         session_id = sessionId,
                         caller_id = senderId,
                         sender_id = senderId,
                         target_id = targetId,
+                        signal_type = "offer",
+                        sdp = sdp,
+                        payload = payloadElement,
                         timestamp = timestamp
                     )
-                    _eventsFlow.emit(callActiveMsg)
-                    _eventsFlow.emit(callActiveMsg.copy(type = WSEventTypes.CALL_ACCEPTED))
-                    return@launch
+                    Log.i(tag, "📶 [WEBRTC OFFER] for session=$sessionId from $senderId")
+                    _eventsFlow.emit(offerMsg)
+                    return
                 }
 
-                // 4E. Call Rejected (Caller Receives)
-                if (typeStr == WSEventTypes.CALL_REJECTED || eventStr == WSEventTypes.CALL_REJECTED) {
-                    _eventsFlow.emit(
-                        WSMessage(
-                            type = WSEventTypes.CALL_REJECTED,
-                            event = WSEventTypes.CALL_REJECTED,
-                            call_id = sessionId,
-                            session_id = sessionId,
-                            caller_id = senderId,
-                            sender_id = senderId,
-                            target_id = targetId,
-                            reason = "Call declined",
-                            timestamp = timestamp
-                        )
+                "answer" -> {
+                    val sdp = innerPayloadObj?.get("sdp")?.jsonPrimitive?.contentOrNull
+                        ?: (payloadElement as? JsonPrimitive)?.content.orEmpty()
+                    val answerMsg = WSMessage(
+                        type = WSEventTypes.WEBRTC_ANSWER,
+                        event = WSEventTypes.WEBRTC_SIGNAL,
+                        call_id = sessionId,
+                        session_id = sessionId,
+                        caller_id = senderId,
+                        sender_id = senderId,
+                        target_id = targetId,
+                        signal_type = "answer",
+                        sdp = sdp,
+                        payload = payloadElement,
+                        timestamp = timestamp
                     )
-                    return@launch
+                    Log.i(tag, "📶 [WEBRTC ANSWER] for session=$sessionId from $senderId")
+                    _eventsFlow.emit(answerMsg)
+                    return
                 }
 
-                // 4F. Call Ended (Both Parties Receive)
-                if (typeStr == WSEventTypes.CALL_ENDED || eventStr == WSEventTypes.CALL_ENDED) {
-                    _eventsFlow.emit(
-                        WSMessage(
-                            type = WSEventTypes.CALL_ENDED,
-                            event = WSEventTypes.CALL_ENDED,
-                            call_id = sessionId,
-                            session_id = sessionId,
-                            caller_id = senderId,
-                            sender_id = senderId,
-                            reason = "Call ended by remote party",
-                            timestamp = timestamp
-                        )
+                "candidate", "ice-candidate", "ice_candidate" -> {
+                    val cand = innerPayloadObj?.get("candidate")?.jsonPrimitive?.contentOrNull
+                        ?: (payloadElement as? JsonPrimitive)?.content.orEmpty()
+                    val mid = innerPayloadObj?.get("sdpMid")?.jsonPrimitive?.contentOrNull
+                        ?: innerPayloadObj?.get("sdp_mid")?.jsonPrimitive?.contentOrNull
+                        ?: "0"
+                    val mLine = innerPayloadObj?.get("sdpMLineIndex")?.jsonPrimitive?.intOrNull
+                        ?: innerPayloadObj?.get("sdp_m_line_index")?.jsonPrimitive?.intOrNull
+                        ?: 0
+
+                    val iceMsg = WSMessage(
+                        type = WSEventTypes.WEBRTC_ICE_CANDIDATE,
+                        event = WSEventTypes.WEBRTC_SIGNAL,
+                        call_id = sessionId,
+                        session_id = sessionId,
+                        caller_id = senderId,
+                        sender_id = senderId,
+                        target_id = targetId,
+                        signal_type = "ice-candidate",
+                        candidate = cand,
+                        sdp_mid = mid,
+                        sdp_m_line_index = mLine,
+                        payload = payloadElement,
+                        timestamp = timestamp
                     )
-                    return@launch
+                    Log.i(tag, "📶 [WEBRTC ICE] for session=$sessionId from $senderId")
+                    _eventsFlow.emit(iceMsg)
+                    return
                 }
 
-                // 5B, 5D. Relayed WebRTC Signal (SDP Offer / Answer / ICE Candidate)
-                if (typeStr == WSEventTypes.WEBRTC_SIGNAL || eventStr == WSEventTypes.WEBRTC_SIGNAL ||
-                    typeStr == WSEventTypes.SIGNAL || typeStr == WSEventTypes.CALL_SIGNAL || eventStr == WSEventTypes.CALL_SIGNAL) {
-                    val resolvedSignalType = signalType.ifBlank {
-                        dataObj?.get("signal_type")?.jsonPrimitive?.contentOrNull.orEmpty()
-                    }
-
-                    // Parse inner payload if stringified JSON
-                    val innerPayloadObj: JsonObject? = when (payloadElement) {
-                        is JsonObject -> payloadElement
-                        is JsonPrimitive -> {
-                            try {
-                                json.parseToJsonElement(payloadElement.content) as? JsonObject
-                            } catch (_: Exception) {
-                                null
-                            }
-                        }
-                        else -> null
-                    }
-
-                    when (resolvedSignalType.lowercase()) {
-                        "offer" -> {
-                            val sdp = innerPayloadObj?.get("sdp")?.jsonPrimitive?.contentOrNull
-                                ?: (payloadElement as? JsonPrimitive)?.content.orEmpty()
-                            val offerMsg = WSMessage(
-                                type = WSEventTypes.WEBRTC_OFFER,
-                                event = WSEventTypes.WEBRTC_SIGNAL,
-                                call_id = sessionId,
-                                session_id = sessionId,
-                                caller_id = senderId,
-                                sender_id = senderId,
-                                target_id = targetId,
-                                signal_type = "offer",
-                                sdp = sdp,
-                                payload = payloadElement,
-                                timestamp = timestamp
-                            )
-                            Log.i(tag, "📶 [WEBRTC OFFER] for session=$sessionId from $senderId")
-                            _eventsFlow.emit(offerMsg)
-                            return@launch
-                        }
-                        "answer" -> {
-                            val sdp = innerPayloadObj?.get("sdp")?.jsonPrimitive?.contentOrNull
-                                ?: (payloadElement as? JsonPrimitive)?.content.orEmpty()
-                            val answerMsg = WSMessage(
-                                type = WSEventTypes.WEBRTC_ANSWER,
-                                event = WSEventTypes.WEBRTC_SIGNAL,
-                                call_id = sessionId,
-                                session_id = sessionId,
-                                caller_id = senderId,
-                                sender_id = senderId,
-                                target_id = targetId,
-                                signal_type = "answer",
-                                sdp = sdp,
-                                payload = payloadElement,
-                                timestamp = timestamp
-                            )
-                            Log.i(tag, "📶 [WEBRTC ANSWER] for session=$sessionId from $senderId")
-                            _eventsFlow.emit(answerMsg)
-                            return@launch
-                        }
-                        "candidate", "ice-candidate", "ice_candidate" -> {
-                            val cand = innerPayloadObj?.get("candidate")?.jsonPrimitive?.contentOrNull
-                                ?: (payloadElement as? JsonPrimitive)?.content.orEmpty()
-                            val mid = innerPayloadObj?.get("sdpMid")?.jsonPrimitive?.contentOrNull
-                                ?: innerPayloadObj?.get("sdp_mid")?.jsonPrimitive?.contentOrNull
-                                ?: "0"
-                            val mLine = innerPayloadObj?.get("sdpMLineIndex")?.jsonPrimitive?.intOrNull
-                                ?: innerPayloadObj?.get("sdp_m_line_index")?.jsonPrimitive?.intOrNull
-                                ?: 0
-
-                            val iceMsg = WSMessage(
-                                type = WSEventTypes.WEBRTC_ICE_CANDIDATE,
-                                event = WSEventTypes.WEBRTC_SIGNAL,
-                                call_id = sessionId,
-                                session_id = sessionId,
-                                caller_id = senderId,
-                                sender_id = senderId,
-                                target_id = targetId,
-                                signal_type = "ice-candidate",
-                                candidate = cand,
-                                sdp_mid = mid,
-                                sdp_m_line_index = mLine,
-                                payload = payloadElement,
-                                timestamp = timestamp
-                            )
-                            Log.i(tag, "📶 [WEBRTC ICE] for session=$sessionId from $senderId")
-                            _eventsFlow.emit(iceMsg)
-                            return@launch
-                        }
-                        else -> {
-                            val signalMsg = WSMessage(
-                                type = WSEventTypes.CALL_SIGNAL,
-                                event = WSEventTypes.WEBRTC_SIGNAL,
-                                call_id = sessionId,
-                                session_id = sessionId,
-                                caller_id = senderId,
-                                sender_id = senderId,
-                                target_id = targetId,
-                                signal_type = resolvedSignalType,
-                                payload = payloadElement,
-                                timestamp = timestamp
-                            )
-                            Log.i(tag, "📶 [WEBRTC SIGNAL: $resolvedSignalType] for session=$sessionId from $senderId")
-                            _eventsFlow.emit(signalMsg)
-                            return@launch
-                        }
-                    }
-                }
-
-                // Balance Update (Server → Client: balance_update)
-                if (typeStr.equals(SocketEventType.BALANCE_UPDATE.event, ignoreCase = true) ||
-                    eventStr.equals(SocketEventType.BALANCE_UPDATE.event, ignoreCase = true)) {
-                    val newBalance = dataObj?.get("balance")?.jsonPrimitive?.doubleOrNull
-                        ?: (payloadElement as? JsonObject)?.get("balance")?.jsonPrimitive?.doubleOrNull
-                        ?: jsonTree["balance"]?.jsonPrimitive?.doubleOrNull
-                    if (newBalance != null) {
-                        sessionManager.walletBalance = newBalance
-                        Log.i(tag, "💰 [BALANCE UPDATE] New wallet balance: $newBalance")
-                    }
-                    _eventsFlow.emit(
-                        WSMessage(
-                            type = SocketEventType.BALANCE_UPDATE.event,
-                            event = SocketEventType.BALANCE_UPDATE.event,
-                            cost = newBalance,
-                            data = dataObj,
-                            timestamp = timestamp
-                        )
+                else -> {
+                    val signalMsg = WSMessage(
+                        type = WSEventTypes.CALL_SIGNAL,
+                        event = WSEventTypes.WEBRTC_SIGNAL,
+                        call_id = sessionId,
+                        session_id = sessionId,
+                        caller_id = senderId,
+                        sender_id = senderId,
+                        target_id = targetId,
+                        signal_type = resolvedSignalType,
+                        payload = payloadElement,
+                        timestamp = timestamp
                     )
-                    return@launch
+                    Log.i(
+                        tag,
+                        "📶 [WEBRTC SIGNAL: $resolvedSignalType] for session=$sessionId from $senderId"
+                    )
+                    _eventsFlow.emit(signalMsg)
+                    return
                 }
-
-                // Keepalive Pong (Server → Client: pong)
-                if (typeStr.equals(SocketEventType.PONG.event, ignoreCase = true) ||
-                    eventStr.equals(SocketEventType.PONG.event, ignoreCase = true)) {
-                    Log.d(tag, "🏓 [PONG] Server heartbeat acknowledged")
-                    return@launch
-                }
-
-                // General fallback decoding
-                val parsed = json.decodeFromString<WSMessage>(text)
-                if (parsed.type == WSEventTypes.SESSION_TERMINATED) {
-                    sessionManager.clearSession()
-                    NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
-                }
-                _eventsFlow.emit(parsed)
-            } catch (e: Exception) {
-                Log.e(tag, "❌ Failed to parse WS message: ${e.message} | Raw: $text", e)
             }
+        }
+
+        // Balance Update (Server → Client: balance_update)
+        if (typeStr.equals(SocketEventType.BALANCE_UPDATE.event, ignoreCase = true) ||
+            eventStr.equals(SocketEventType.BALANCE_UPDATE.event, ignoreCase = true)
+        ) {
+            val newBalance = dataObj?.get("balance")?.jsonPrimitive?.doubleOrNull
+                ?: (payloadElement as? JsonObject)?.get("balance")?.jsonPrimitive?.doubleOrNull
+                ?: jsonTree["balance"]?.jsonPrimitive?.doubleOrNull
+            if (newBalance != null) {
+                sessionManager.walletBalance = newBalance
+                Log.i(tag, "💰 [BALANCE UPDATE] New wallet balance: $newBalance")
+            }
+            _eventsFlow.emit(
+                WSMessage(
+                    type = SocketEventType.BALANCE_UPDATE.event,
+                    event = SocketEventType.BALANCE_UPDATE.event,
+                    cost = newBalance,
+                    data = dataObj,
+                    timestamp = timestamp
+                )
+            )
+            return
+        }
+
+        // Keepalive Pong (Server → Client: pong)
+        if (typeStr.equals(SocketEventType.PONG.event, ignoreCase = true) ||
+            eventStr.equals(SocketEventType.PONG.event, ignoreCase = true)
+        ) {
+            Log.d(tag, "🏓 [PONG] Server heartbeat acknowledged")
+            return
+        }
+
+        // General fallback decoding
+        val parsed = try {
+            json.decodeFromJsonElement<WSMessage>(jsonTree)
+        } catch (_: Exception) {
+            null
+        }
+        if (parsed != null) {
+            if (parsed.type == WSEventTypes.SESSION_TERMINATED) {
+                sessionManager.clearSession()
+                NetworkAuthBridge.unauthorizedHandler?.onUnauthorized()
+            }
+            _eventsFlow.emit(parsed)
         }
     }
 
