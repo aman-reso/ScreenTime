@@ -10,27 +10,28 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 
-    <!-- Voice calls & WebRTC -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-
-    <!-- Camera (video calls & live streaming) -->
+    <!-- Camera & Face Verification -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front"
+        android:required="false" />
 
     <!-- Biometric Authentication -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
-    <!-- Ads -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
-
-    <!-- Remove unused LiveKit ScreenCaptureService & MediaProjection permission to satisfy Google Play Console -->
-    <uses-permission
-        android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"
-        tools:node="remove" />
+    <!-- Screenshot Detection (Android 14+) -->
+    <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE" />
+    <uses-permission android:name="android.permission.DETECT_SCREEN_RECORDING" />
 
     <application
         android:name=".ScreenTimeApplication"
@@ -39,7 +40,8 @@
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/app_icon"
-        android:label="${appLabel}"
+        android:label="Winter"
+        android:largeHeap="true"
         android:localeConfig="@xml/locales_config"
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@drawable/app_icon"
@@ -63,9 +65,17 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
+        <!-- Instruct Google Play Services to download Face Detection model on-demand / install -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="face" />
+
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:label="Winter"
             android:launchMode="singleTask"
             android:supportsPictureInPicture="true"
             android:theme="@style/Theme.ScreenTime.Splash"
@@ -83,7 +93,7 @@
 
                 <data
                     android:host="screen"
-                    android:scheme="apptime" />
+                    android:scheme="winter" />
             </intent-filter>
 
             <!-- App Links (HTTPS) -->
@@ -94,7 +104,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="apptime.in"
+                    android:host="winterdating.com"
                     android:scheme="https" />
             </intent-filter>
 
@@ -106,7 +116,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="www.apptime.in"
+                    android:host="www.winterdating.com"
                     android:scheme="https" />
             </intent-filter>
         </activity>
@@ -124,32 +134,6 @@
         </provider>
 
 
-        <!-- Call Foreground Service -->
-        <service
-            android:name="com.app.screentime.feature.call.service.CallForegroundService"
-            android:exported="false"
-            android:foregroundServiceType="microphone" />
-
-        <!-- Remove unused LiveKit ScreenCaptureService to satisfy Google Play Console -->
-        <service
-            android:name="io.livekit.android.room.track.screencapture.ScreenCaptureService"
-            tools:node="remove" />
-
-        <!-- Call Action Broadcast Receiver -->
-        <receiver
-            android:name="com.app.screentime.feature.call.receiver.CallActionReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.app.screentime.ACTION_CALL_HANGUP" />
-                <action android:name="com.app.screentime.ACTION_CALL_MUTE_TOGGLE" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Reject Call Broadcast Receiver -->
-        <receiver
-            android:name=".messaging.RejectCallReceiver"
-            android:exported="false" />
-
         <!-- Firebase Cloud Messaging Service -->
         <service
             android:name=".messaging.ScreenTimeFirebaseMessagingService"
@@ -158,6 +142,17 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <!-- Active Call Foreground Service -->
+        <service
+            android:name="com.app.screentime.feature.call.service.CallForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="phoneCall|microphone" />
+
+        <!-- Call Notification Action Receiver -->
+        <receiver
+            android:name="com.app.screentime.feature.call.receiver.CallActionReceiver"
+            android:exported="false" />
 
     </application>
 
