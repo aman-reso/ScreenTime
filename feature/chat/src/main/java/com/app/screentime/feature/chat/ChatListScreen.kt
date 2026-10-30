@@ -16,12 +16,16 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.app.screentime.ads.RewardedAdManager
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,11 +41,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.app.screentime.core.model.Conversation
+import com.app.screentime.core.ui.components.GenericHeader
+import com.app.screentime.core.ui.components.GenericHeaderProps
+import com.app.screentime.core.ui.components.HeaderTitleAlignment
 import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.app.screentime.feature.chat.component.ConversationItem
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSLazyColumn
 import com.telekom.odsystem.atoms.ODSRow
@@ -110,44 +123,25 @@ fun ChatListScreen(
     onNavigateToChat: (String, String, String?) -> Unit = { _, _, _ -> },
     onNavigateToProfile: (String, String) -> Unit = { _, _ -> },
     onNavigateToDiscover: () -> Unit = {},
-    forceEmptyState: Boolean = false
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var searchQuery by remember { mutableStateOf("") }
-    var previewEmptyState by remember { mutableStateOf(forceEmptyState) }
+    val context = LocalContext.current
+    val activity = context as? Activity
 
-    val funnelSansFontFamily = FunnelSansFontFamily
-
-    // Determine conversations to show
-    val displayConversations = remember(uiState.conversations, searchQuery) {
-        if (searchQuery.isBlank()) {
-            uiState.conversations
-        } else {
-            uiState.conversations.filter {
-                it.modelName.contains(searchQuery, ignoreCase = true) ||
-                        it.lastMessage.contains(searchQuery, ignoreCase = true)
-            }
-        }
+    LaunchedEffect(Unit) {
+        activity?.let { RewardedAdManager.preloadAd(it) }
     }
 
-    val isActuallyEmpty = uiState.conversations.isEmpty() || previewEmptyState
+    val isActuallyEmpty = uiState.conversations.isEmpty()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.loadConversations()
     }
 
-    if (uiState.isLoading && uiState.conversations.isEmpty() && !previewEmptyState) {
-        ChatListLoadingScreen(
-            modifier = modifier,
-            scheme = scheme
-        )
-        return
-    }
 
     ODSBox(
         modifier = modifier
             .fillMaxSize()
-            .navigationBarsPadding()
     ) {
         PullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
@@ -157,43 +151,37 @@ fun ChatListScreen(
             ODSColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
             ) {
-                // ── Top Header Bar ──────────────────────────────────────────
-                ODSRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = ODSVariables.spacingLayout1,
-                            vertical = ODSVariables.spacingComponent4
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    ODSText(
-                        text = "Chats",
-                        style = ODSTextStyles.bodyMBold,
-                        color = scheme.basicTextDominant
-                    )
-                }
+                GenericHeader(
+                    props = GenericHeaderProps(
+                        title = "Chats",
+                        showBackArrow = false,
+                        titleAlignment = HeaderTitleAlignment.START
+                    ),
+                    scheme = scheme
+                )
 
                 ODSColumn(
                     modifier = Modifier.fillMaxSize(),
                     background = listOf(
                         ODSColorModel(
-                            gradient = ODSLinearGradientModel(
-                                colorStops = arrayOf(
-                                    0.00f to scheme.basicBackground,
-                                    0.52f to scheme.basicBackgroundSubtle,
-                                    1.00f to scheme.basicBackgroundCard
-                                ),
-                                opacity = 1.00f,
-                                angleInDegrees = 180f
-                            )
+                            hexColor = scheme.basicBackground
                         )
                     )
                 ) {
-                    if (isActuallyEmpty) {
+                    if (uiState.isLoading) {
+                        ODSBox(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSLoadingSpinner(
+                                scheme = scheme,
+                                props = ODSLoadingSpinnerProps(size = ODSLoadingSpinnerSize.LARGE)
+                            )
+                        }
+                    } else if (isActuallyEmpty) {
                         InboxEmptyState(
                             onNavigateToDiscover = onNavigateToDiscover,
                             scheme = scheme,
@@ -202,71 +190,15 @@ fun ChatListScreen(
                                 .weight(1f)
                         )
                     } else {
-                        // ── Scrollable Body Content using ODSLazyColumn (Rule #1) ─────
                         ODSLazyColumn(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
                             gap = ODSVariables.spacingComponent4
                         ) {
-                            // ── Item 4: Search Bar ────────────────────────────────────
                             item {
-                                ODSRow(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = ODSVariables.spacingLayout1),
-                                    horizontalAlignment = Alignment.Start,
-                                    verticalAlignment = Alignment.Top,
-                                    horizontalArrangement = Arrangement.Start
-                                ) {
-                                    ODSRow(
-                                        modifier = Modifier.weight(1f),
-                                        gap = 10.dp,
-                                        padding = ODSPadding(all = 14.dp),
-                                        cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-                                        border = ODSBorder(
-                                            width = 2.dp,
-                                            colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-                                        ),
-                                        horizontalAlignment = Alignment.Start,
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Start,
-                                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
-                                    ) {
-                                        ODSIcon(
-                                            iconModel = ODSIconModel(
-                                                drawableRes = R.drawable.ic_search,
-                                                contentDescription = "Search"
-                                            ),
-                                            tint = scheme.basicTextRecessive.getColor(),
-                                            modifier = Modifier.size(18.dp)
-                                        )
-
-                                        BasicTextField(
-                                            value = searchQuery,
-                                            onValueChange = { searchQuery = it },
-                                            textStyle = TextStyle(
-                                                fontFamily = funnelSansFontFamily,
-                                                fontSize = 14.sp,
-                                                color = scheme.basicTextDominant.getColor()
-                                            ),
-                                            cursorBrush = SolidColor(scheme.basicAccent.getColor()),
-                                            modifier = Modifier.weight(1f),
-                                            singleLine = true,
-                                            decorationBox = { innerTextField ->
-                                                if (searchQuery.isEmpty()) {
-                                                    ODSText(
-                                                        text = "Search conversations...",
-                                                        style = ODSTextStyles.bodySRegular,
-                                                        color = scheme.basicTextRecessive
-                                                    )
-                                                }
-                                                innerTextField()
-                                            }
-                                        )
-                                    }
-                                }
+                                Spacer(modifier = Modifier.height(ODSVariables.spacingComponent3))
                             }
-
-                            // ── Item 5: Conversations Section Header ──────────────────
                             item {
                                 ODSColumn(
                                     modifier = Modifier
@@ -277,11 +209,11 @@ fun ChatListScreen(
                                     horizontalAlignment = Alignment.Start,
                                     verticalArrangement = Arrangement.Top
                                 ) {
-                                    displayConversations.forEachIndexed { index, conv ->
+                                    uiState.conversations.forEachIndexed { index, conv ->
                                         ConversationItem(
                                             index = index,
                                             conv = conv,
-                                            showDivider = index < displayConversations.lastIndex,
+                                            showDivider = index < uiState.conversations.lastIndex,
                                             scheme = scheme,
                                             onClick = {
                                                 onNavigateToChat(
@@ -293,11 +225,6 @@ fun ChatListScreen(
                                         )
                                     }
                                 }
-                            }
-
-                            // Bottom navigation dock clearance spacer
-                            item {
-                                Spacer(modifier = Modifier.height(96.dp))
                             }
                         }
                     }
@@ -404,7 +331,7 @@ private fun InboxEmptyState(
                         drawableRes = R.drawable.ic_heart_filled,
                         contentDescription = "Match"
                     ),
-                    tint = scheme.basicAccent.getColor(),
+                    tint = scheme.basicTextOnAccentSecondary.getColor(),
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -444,38 +371,19 @@ private fun InboxEmptyState(
         Spacer(Modifier.height(ODSVariables.spacingComponent6))
 
         // ── Full-Width Primary Action CTA ─────────────────────────────────────
-        ODSBox(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onNavigateToDiscover
+        ODSButton(
+            modifier = Modifier.fillMaxWidth(),
+            scheme = scheme,
+            props = ODSButtonProps(
+                label = "Discover People",
+                variant = ODSButtonVariant.SECONDARY,
+                buttonIcon = ODSIconModel(
+                    drawableRes = R.drawable.ic_search,
+                    contentDescription = "Discover People"
                 ),
-            background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-            cornerRadius = ODSCorners(all = 27.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            ODSRow(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                gap = 10.dp
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.ic_search,
-                        contentDescription = "Discover People"
-                    ),
-                    tint = scheme.basicTextOnAccent.getColor(),
-                    modifier = Modifier.size(20.dp)
-                )
-                ODSText(
-                    text = "Discover People",
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicTextOnAccent
-                )
-            }
-        }
+                leftIcon = true
+            ),
+            onClick = onNavigateToDiscover
+        )
     }
 }
