@@ -165,6 +165,7 @@ dependencies {
     implementation(project(":feature:wallet"))
     implementation(project(":feature:profile"))
     implementation(project(":feature:preferences"))
+    implementation(project(":feature:models"))
     implementation(project(":core:faceverification"))
 
     // Config module (translations)

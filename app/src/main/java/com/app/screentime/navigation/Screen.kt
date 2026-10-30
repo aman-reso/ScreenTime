@@ -11,6 +11,9 @@ sealed class Screen : NavKey {
     object Home : Screen() // Tab 1: Home Feed (HomeFeedScreen)
 
     @Serializable
+    object Models : Screen() // Tab: Live Models Call Directory (2-Span Staggered Grid)
+
+    @Serializable
     object DiscoverMap : Screen() // Legacy alias (redirects to Home)
 
     @Serializable

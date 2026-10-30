@@ -167,6 +167,10 @@ data class UserDto(
     val likes: Int = 0,
     val matches: Int = 0,
     val voice_rate_per_min: Double = 10.0,
+    val video_rate_per_min: Double = 20.0,
+    val audio_rate: Int = 10,
+    val video_rate: Int = 20,
+    val status: String? = null,
     val group_rate_per_min: Double = 5.0,
     val chat_rate_per_msg: Double = 1.0,
     val is_online: Boolean = false,
@@ -421,6 +425,20 @@ data class WalletResponse(
 data class ModelListResponse(
     val count: Int = 0,
     val models: List<UserDto> = emptyList()
+)
+
+@Serializable
+data class UpdateRatesRequestDto(
+    val audio_rate: Int,
+    val video_rate: Int
+)
+
+@Serializable
+data class UpdateRatesResponseDto(
+    val success: Boolean = true,
+    val audio_rate: Int = 10,
+    val video_rate: Int = 20,
+    val message: String = ""
 )
 
 @Serializable

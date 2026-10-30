@@ -53,6 +53,7 @@ import com.app.screentime.feature.chat.ChatListScreen
 import com.app.screentime.feature.chat.ChatScreen
 import com.app.screentime.feature.discover.HomeFeedScreen
 import com.app.screentime.feature.discover.TermsOfServiceScreen
+import com.app.screentime.feature.models.ui.ModelsTabScreen
 import com.app.screentime.feature.preferences.EditPreferencesScreen
 import com.app.screentime.feature.preferences.PreferencesScreen
 import com.app.screentime.feature.profile.ControlAccountScreen
@@ -88,12 +89,13 @@ data class BottomNavTab(
 val bottomNavTabs = listOf(
     BottomNavTab(Screen.Home, "Home", iconRes = R.drawable.ic_home),
     BottomNavTab(Screen.Likes, "Likes", iconRes = R.drawable.ic_heart),
+    BottomNavTab(Screen.Models, "Call", iconRes = R.drawable.ic_phone),
     BottomNavTab(Screen.ChatList, "Chats", iconRes = R.drawable.ic_message_circle),
     BottomNavTab(Screen.Account, "Profile", iconRes = R.drawable.ic_user)
 )
 
 private val bottomNavRoutes: Set<Screen> = setOf(
-    Screen.Home, Screen.Likes, Screen.ChatList, Screen.Account
+    Screen.Home, Screen.Likes, Screen.Models, Screen.ChatList, Screen.Account
 )
 
 /**
@@ -388,6 +390,49 @@ fun ScreenTimeNavigation(
                     )
                 }
 
+                // ── Tab: Live Models Directory (2-Span Staggered Grid) ─────────
+                entry<Screen.Models> {
+                    ModelsTabScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        scheme = scheme,
+                        onStartVoiceCall = { modelId, modelName, rate, avatarUrl ->
+                            callViewModel.resetState()
+                            callViewModel.startOutgoingCall(
+                                modelId = modelId,
+                                modelName = modelName,
+                                ratePerMin = rate,
+                                callType = CallType.VOICE
+                            )
+                            backStack.add(
+                                Screen.VoiceCall(
+                                    modelId = modelId,
+                                    modelName = modelName,
+                                    avatarUrl = avatarUrl
+                                )
+                            )
+                        },
+                        onStartVideoCall = { modelId, modelName, rate, avatarUrl ->
+                            callViewModel.resetState()
+                            callViewModel.startOutgoingCall(
+                                modelId = modelId,
+                                modelName = modelName,
+                                ratePerMin = rate,
+                                callType = CallType.VIDEO
+                            )
+                            backStack.add(
+                                Screen.VideoCall(
+                                    modelId = modelId,
+                                    modelName = modelName,
+                                    ratePerMin = rate,
+                                    avatarUrl = avatarUrl
+                                )
+                            )
+                        },
+                        onNavigateToProfile = { userId, userName ->
+                            navigateToProfile(userId, userName)
+                        }
+                    )
+                }
 
                 // ── Tab 3: Conversations List ───────────────────────────────
                 entry<Screen.ChatList> {

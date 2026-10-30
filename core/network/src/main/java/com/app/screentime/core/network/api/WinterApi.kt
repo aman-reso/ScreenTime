@@ -122,13 +122,26 @@ class WinterApi @Inject constructor(
     }
 
     // ── 2. Models ─────────────────────────────────────────────────────────────
-    suspend fun getModels(token: String, page: Int = 1, limit: Int = 10): ModelListResponse {
+    suspend fun getModels(token: String, page: Int = 1, limit: Int = 20): ModelListResponse {
         val res: ApiResponse<ModelListResponse> = httpClient.get("$baseUrl/api/models") {
             bearerAuth(token)
             parameter("page", page)
             parameter("limit", limit)
         }.body()
         return res.data ?: ModelListResponse(count = 0, models = emptyList())
+    }
+
+    suspend fun updateModelRates(
+        token: String,
+        audioRate: Int,
+        videoRate: Int
+    ): UpdateRatesResponseDto {
+        val res: ApiResponse<UpdateRatesResponseDto> = httpClient.put("$baseUrl/api/models/rates") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(UpdateRatesRequestDto(audio_rate = audioRate, video_rate = videoRate))
+        }.body()
+        return res.data ?: UpdateRatesResponseDto(success = true, audio_rate = audioRate, video_rate = videoRate)
     }
 
     suspend fun updateProfile(token: String, request: ProfileUpdateRequest): ProfileUpdateResponse {
