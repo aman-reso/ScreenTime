@@ -74,16 +74,17 @@ class ODSNavigationItemStyle {
         style.iconContainerHorizontalArrangement =
             DSNavigationItemTokens.iconContainerHorizontalArrangement
         style.iconContainerContentAlignment = DSNavigationItemTokens.iconContainerContentAlignment
-        style.iconActiveColor = scheme.basicTextDominant
+        style.iconActiveColor = scheme.basicAccent
         style.iconActiveWidth = DSNavigationItemTokens.iconActiveWidth
         style.iconActiveHeight = DSNavigationItemTokens.iconActiveHeight
         style.iconWidth = DSNavigationItemTokens.iconWidth
         style.iconHeight = DSNavigationItemTokens.iconHeight
         if (!props.active && !props.disabled) {
-            style.iconColor = scheme.basicText
+            style.iconColor = scheme.basicTextRecessive
         }
         if (props.active && !props.disabled) {
-            style.iconColor = scheme.interactionStatesDisabledTextDisabled
+            style.iconColor = scheme.basicAccent
+            style.iconActiveColor = scheme.basicAccent
         }
         if (!props.active && props.disabled) {
             style.iconColor = scheme.interactionStatesDisabledTextDisabled
@@ -97,16 +98,20 @@ class ODSNavigationItemStyle {
         style.odsBadgeNumberAbsoluteContentAlignment =
             DSNavigationItemTokens.odsBadgeNumberAbsoluteContentAlignment
         style.odsBadgeNumberAbsoluteOffset = DSNavigationItemTokens.odsBadgeNumberAbsoluteOffset
-        style.labelStyle = DSNavigationItemTokens.labelStyle
+        style.labelStyle = if (props.active && !props.disabled) {
+            com.telekom.odsystem.DSTextStyles.microcopyBold
+        } else {
+            DSNavigationItemTokens.labelStyle
+        }
         style.labelTextAlign = DSNavigationItemTokens.labelTextAlign
         if (!props.active && !props.disabled) {
-            style.labelColor = scheme.basicText
+            style.labelColor = scheme.basicTextRecessive
         }
         if (!props.active && props.disabled) {
             style.labelColor = scheme.interactionStatesDisabledTextDisabled
         }
         if (props.active && !props.disabled) {
-            style.labelColor = scheme.basicTextDominant
+            style.labelColor = scheme.basicAccent
         }
         if (state == ODSActions.HOVERED && !props.active && !props.disabled) {
             style.labelColor = scheme.interactionStatesHoverTextRecessiveHover

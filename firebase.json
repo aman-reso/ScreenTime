@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "winterdatingapp",
     "public": "website",
     "cleanUrls": true,
     "ignore": [
@@ -8,6 +9,14 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      {
+        "source": "/download",
+        "destination": "/download.html"
+      },
+      {
+        "source": "/app",
+        "destination": "/download.html"
+      },
       {
         "source": "/privacy-policy",
         "destination": "/privacy-policy.html"
@@ -23,6 +32,10 @@
       {
         "source": "/delete-account",
         "destination": "/delete-account.html"
+      },
+      {
+        "source": "/csae-policy",
+        "destination": "/csae-policy.html"
       },
       {
         "source": "**",

@@ -48,7 +48,13 @@ data class TenantDto(
 @Serializable
 data class ConnectUserProfileDto(
     val user_id: String = "",
+    val id: String = "",
+    val name: String? = null,
     val display_name: String? = null,
+    val email: String? = null,
+    val masked_email: String? = null,
+    val phone: String? = null,
+    val masked_phone: String? = null,
     val age: Int? = null,
     val gender: String? = null,
     val gender_preference: String? = null,
@@ -61,11 +67,14 @@ data class ConnectUserProfileDto(
     val relationship_type: String? = null,
     val relationship_intention: String? = null,
     val city: String? = null,
+    val country: String? = null,
     val area: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val job: String? = null,
     val occupation: String? = null,
     val profession: String? = null,
-    val height: String? = null,
+    val height: JsonElement? = null,
     val height_cm: Int? = null,
     val education: String? = null,
     val interests: List<String> = emptyList(),
@@ -73,13 +82,19 @@ data class ConnectUserProfileDto(
     val language: String? = null,
     val date_of_birth: String? = null,
     val dob: String? = null,
+    val birth_date: String? = null,
     val birthday: String? = null,
     val quality_score: Double = 0.0,
     val min_age_preference: Int = 18,
     val max_age_preference: Int = 60,
     val max_distance_km: Int = 50,
     val discovery_enabled: Boolean = true,
+    val visibility: String? = null,
     val profile_complete: Boolean = false,
+    val likes_count: Int = 0,
+    val matches_count: Int = 0,
+    val likes: Int = 0,
+    val matches: Int = 0,
     val created_at: String = "",
     val updated_at: String = ""
 )
@@ -107,29 +122,60 @@ data class ConnectProfileDataDto(
     val profile: ConnectUserProfileDto? = null,
     val photos: List<ConnectProfilePhotoDto> = emptyList(),
     val prompts: List<ConnectProfilePromptDto> = emptyList(),
+    val likes_count: Int = 0,
+    val matches_count: Int = 0,
+    val likes: Int = 0,
+    val matches: Int = 0,
     val id: String = "",
     val phone: String = "",
+    val masked_phone: String? = null,
     val email: String? = null,
+    val masked_email: String? = null,
     val name: String = "",
     val display_name: String? = null,
     val avatar_url: String? = null,
     val bio: String? = null,
+    val about_me: String? = null,
     val job: String? = null,
     val occupation: String? = null,
-    val height: String? = null,
+    val profession: String? = null,
+    val height: JsonElement? = null,
     val height_cm: Int? = null,
     val education: String? = null,
+    val interests: List<String> = emptyList(),
     val languages: List<String> = emptyList(),
+    val city: String? = null,
+    val country: String? = null,
+    val area: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val age: Int? = null,
+    val gender: String? = null,
     val relation_type: String? = null,
     val date_of_birth: String? = null,
     val dob: String? = null,
+    val birth_date: String? = null,
     val role: String = "user"
 ) {
     fun toUserDto(): UserDto {
         val prof = profile
-        val resolvedId = prof?.user_id?.ifBlank { null } ?: id
-        val resolvedName = prof?.display_name?.ifBlank { null } ?: display_name ?: name.ifBlank { "User" }
-        val resolvedBio = prof?.about_me ?: prof?.bio ?: bio ?: ""
+        val resolvedId = prof?.user_id?.ifBlank { null } ?: prof?.id?.ifBlank { null } ?: id
+        val resolvedName = prof?.display_name?.ifBlank { null }
+            ?: prof?.name?.ifBlank { null }
+            ?: display_name?.ifBlank { null }
+            ?: name.ifBlank { "User" }
+
+        val resolvedEmail = prof?.email?.ifBlank { null }
+            ?: prof?.masked_email?.ifBlank { null }
+            ?: email?.ifBlank { null }
+            ?: masked_email
+
+        val resolvedPhone = prof?.phone?.ifBlank { null }
+            ?: prof?.masked_phone?.ifBlank { null }
+            ?: phone.ifBlank { null }
+            ?: masked_phone.orEmpty()
+
+        val resolvedBio = prof?.about_me ?: prof?.bio ?: about_me ?: bio ?: ""
         val photoList = when {
             prof?.photos?.isNotEmpty() == true -> prof.photos
             photos.isNotEmpty() -> photos.map { it.photo_url.ifBlank { it.url } }
@@ -141,22 +187,58 @@ data class ConnectProfileDataDto(
             ?: prof?.photos?.firstOrNull()
             ?: avatar_url
 
-        val resolvedJob = prof?.job ?: prof?.occupation ?: prof?.profession ?: job ?: occupation
-        val resolvedHeight = prof?.height ?: height ?: prof?.height_cm?.let { "$it cm" }
+        val resolvedJob = prof?.profession ?: prof?.job ?: prof?.occupation ?: profession ?: job ?: occupation
+
+        fun parseHeightString(elem: JsonElement?, fallbackCm: Int?): String? {
+            if (elem != null) {
+                val str = try {
+                    elem.toString().replace("\"", "").trim()
+                } catch (_: Exception) {
+                    null
+                }
+                if (!str.isNullOrBlank() && str != "null") {
+                    return if (str.contains("cm", ignoreCase = true)) str else "$str cm"
+                }
+            }
+            return fallbackCm?.let { "$it cm" }
+        }
+
+        val resolvedHeight = parseHeightString(prof?.height, prof?.height_cm)
+            ?: parseHeightString(height, height_cm)
+
         val resolvedEducation = prof?.education ?: education
+        val resolvedInterests = when {
+            prof?.interests?.isNotEmpty() == true -> prof.interests
+            interests.isNotEmpty() -> interests
+            else -> emptyList()
+        }
         val resolvedLanguages = when {
             prof?.languages?.isNotEmpty() == true -> prof.languages
             languages.isNotEmpty() -> languages
             !prof?.language.isNullOrBlank() -> listOf(prof!!.language!!)
             else -> emptyList()
         }
-        val resolvedRelationType = prof?.relation_type ?: prof?.relationship_type ?: prof?.relationship_intention ?: prof?.dating_intent ?: relation_type
-        val resolvedDob = prof?.date_of_birth ?: prof?.dob ?: prof?.birthday ?: date_of_birth ?: dob
+        val resolvedRelationType = prof?.dating_intent ?: prof?.relation_type ?: prof?.relationship_type ?: prof?.relationship_intention ?: relation_type
+        val resolvedDob = prof?.date_of_birth ?: prof?.dob ?: prof?.birth_date ?: prof?.birthday ?: date_of_birth ?: dob ?: birth_date
+        val resolvedLikesCount = when {
+            likes_count > 0 -> likes_count
+            likes > 0 -> likes
+            (prof?.likes_count ?: 0) > 0 -> prof!!.likes_count
+            (prof?.likes ?: 0) > 0 -> prof!!.likes
+            else -> 0
+        }
+        val resolvedMatchesCount = when {
+            matches_count > 0 -> matches_count
+            matches > 0 -> matches
+            (prof?.matches_count ?: 0) > 0 -> prof!!.matches_count
+            (prof?.matches ?: 0) > 0 -> prof!!.matches
+            else -> 0
+        }
 
         return UserDto(
             id = resolvedId,
-            phone = phone,
-            email = email,
+            phone = resolvedPhone,
+            email = resolvedEmail,
             name = resolvedName,
             display_name = prof?.display_name ?: display_name ?: name,
             role = role,
@@ -164,11 +246,12 @@ data class ConnectProfileDataDto(
             photos = photoList,
             bio = resolvedBio,
             about_me = prof?.about_me ?: resolvedBio,
-            age = prof?.age,
-            gender = prof?.gender,
-            interests = prof?.interests ?: emptyList(),
+            age = prof?.age ?: age,
+            gender = prof?.gender ?: gender,
+            interests = resolvedInterests,
             dating_intent = prof?.dating_intent ?: resolvedRelationType,
             relation_type = resolvedRelationType,
+            profession = prof?.profession ?: resolvedJob,
             job = resolvedJob,
             occupation = resolvedJob,
             height = resolvedHeight,
@@ -178,9 +261,19 @@ data class ConnectProfileDataDto(
             date_of_birth = resolvedDob,
             dob = resolvedDob,
             prompts = prompts,
-            city = prof?.city,
-            area = prof?.area,
+            city = prof?.city ?: city,
+            country = prof?.country ?: country,
+            area = prof?.area ?: area,
+            latitude = prof?.latitude ?: latitude,
+            longitude = prof?.longitude ?: longitude,
             quality_score = prof?.quality_score ?: 0.0,
+            profile_complete = prof?.profile_complete ?: false,
+            discovery_enabled = prof?.discovery_enabled ?: true,
+            visibility = prof?.visibility ?: "public",
+            likes_count = resolvedLikesCount,
+            matches_count = resolvedMatchesCount,
+            likes = resolvedLikesCount,
+            matches = resolvedMatchesCount,
             created_at = prof?.created_at ?: ""
         )
     }

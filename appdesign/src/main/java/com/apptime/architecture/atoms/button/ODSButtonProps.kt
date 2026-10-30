@@ -1,6 +1,8 @@
 package com.telekom.odsystem.atoms.button
 
+import androidx.compose.ui.unit.Dp
 import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.foundations.ODSCorners
 
 /**
  * Defines the type of the ODS button.
@@ -78,4 +80,6 @@ data class ODSButtonProps(
     var variant: ODSButtonVariant = ODSButtonVariant.PRIMARY,
     var size: ODSButtonSize = ODSButtonSize.SMALL,
     var disabled: Boolean = false,
+    var height: Dp? = null,
+    var cornerRadius: ODSCorners? = null,
 )

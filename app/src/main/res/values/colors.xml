@@ -4,5 +4,5 @@
     <!-- Dark mode background - pure black -->
     <color name="background_dark">#FF000000</color>
     <!-- AuthGate matching splash background -->
-    <color name="splash_auth_background">#FFBCBCF0</color>
+    <color name="splash_auth_background">#FFA7344D</color>
 </resources>

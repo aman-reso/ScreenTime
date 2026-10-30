@@ -1,49 +1,40 @@
 package com.app.screentime.feature.preferences
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.telekom.odsystem.atoms.ODSBorder
-import com.telekom.odsystem.atoms.ODSBox
+import com.app.screentime.config.R
 import com.telekom.odsystem.atoms.ODSColumn
-import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
-import com.telekom.odsystem.foundations.ODSColorModel
-import com.telekom.odsystem.foundations.ODSCorners
-import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.atoms.textfield.ODSTextField
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldMode
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldProps
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldSize
+import com.telekom.odsystem.atoms.textfield.ODSTextFieldSupportMessageProps
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
- * Step 9: Bio / About Me Preference.
- * Matches unified Figma design system layout:
- * - "Write a short bio"
- * - "Introduce yourself in a few words to stand out to potential matches."
- * - Multiline text box with character counter.
+ * Step: Bio Preference.
  */
 @Composable
 fun PreferencesStepBio(
     bio: String,
     onBioChange: (String) -> Unit,
+    onSubmit: () -> Unit = {},
     scheme: ODSTheme,
     modifier: Modifier = Modifier,
     error: String? = null
 ) {
     val primaryTextColor = scheme.basicTextDominant
     val secondaryTextColor = scheme.basicTextRecessive
-    val accentColor = scheme.basicAccent
-    val borderColor = if (error != null) scheme.functionalDestructiveStandard else accentColor
 
     ODSColumn(
         modifier = modifier.fillMaxWidth(),
@@ -52,7 +43,6 @@ fun PreferencesStepBio(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top
     ) {
-        // ── 1. Heading & Subtitle ──────────────────────────────────────────
         ODSColumn(
             modifier = Modifier.fillMaxWidth(),
             gap = 8.dp,
@@ -62,82 +52,34 @@ fun PreferencesStepBio(
         ) {
             ODSText(
                 modifier = Modifier.fillMaxWidth(),
-                text = "Write a short bio",
-                style = ODSTextStyles.titleL,
-                color = primaryTextColor
+                text = stringResource(R.string.pref_write_bio_title),
+                style = ODSTextStyles.bodyL,
+                color = scheme.basicText
             )
             ODSText(
                 modifier = Modifier.fillMaxWidth(),
-                text = "Introduce yourself in a few words to stand out to potential matches.",
+                text = stringResource(R.string.pref_write_bio_subtitle),
                 style = ODSTextStyles.bodyMRegular,
                 color = secondaryTextColor
             )
         }
 
-        // ── 2. Bio Input Box ───────────────────────────────────────────────
-        ODSColumn(
+        ODSTextField(
             modifier = Modifier.fillMaxWidth(),
-            gap = 8.dp
-        ) {
-            ODSBox(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp),
-                padding = ODSPadding(all = 16.dp),
-                cornerRadius = ODSCorners(all = 16.dp),
-                border = ODSBorder(
-                    width = 2.dp,
-                    colorList = listOf(ODSColorModel(hexColor = borderColor))
-                ),
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (bio.isEmpty()) {
-                        ODSText(
-                            text = "Love coffee, weekend hikes & discovering indie music...",
-                            style = ODSTextStyles.bodyMRegular,
-                            color = secondaryTextColor
-                        )
-                    }
-
-                    BasicTextField(
-                        value = bio,
-                        onValueChange = { if (it.length <= 250) onBioChange(it) },
-                        textStyle = ODSTextStyles.bodyMRegular.toTextStyle().copy(
-                            color = primaryTextColor.getColor()
-                        ),
-                        cursorBrush = SolidColor(accentColor.getColor()),
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-
-            ODSRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (error != null) {
-                    ODSText(
-                        text = error,
-                        style = ODSTextStyles.microcopyRegular,
-                        color = scheme.functionalDestructiveStandard
-                    )
-                } else {
-                    ODSText(
-                        text = "Be authentic & kind",
-                        style = ODSTextStyles.microcopyRegular,
-                        color = secondaryTextColor
-                    )
-                }
-
-                ODSText(
-                    text = "${bio.length}/250",
-                    style = ODSTextStyles.microcopyRegular,
-                    color = secondaryTextColor
-                )
-            }
-        }
+            scheme = scheme,
+            props = ODSTextFieldProps(
+                label = stringResource(R.string.pref_step_bio_label),
+                placeholderText = stringResource(R.string.pref_add_a_bio),
+                inputText = bio,
+                mode = if (!error.isNullOrBlank()) ODSTextFieldMode.ERROR else ODSTextFieldMode.STANDARD,
+                supportMessageProps = if (!error.isNullOrBlank()) ODSTextFieldSupportMessageProps(
+                    message = error
+                ) else null,
+                size = ODSTextFieldSize.LARGE
+            ),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onSubmit() }),
+            onValueChange = onBioChange
+        )
     }
 }

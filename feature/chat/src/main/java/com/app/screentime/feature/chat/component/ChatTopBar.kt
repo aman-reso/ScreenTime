@@ -49,9 +49,9 @@ fun ChatTopBar(
     statusText: String = "Active now",
     isOnline: Boolean = true,
     onBackClick: () -> Unit = {},
-    onAudioCallClick: () -> Unit = {},
-    onVideoCallClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
+    onVoiceCallClick: (() -> Unit)? = null,
+    onVideoCallClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     ConstraintLayout(
@@ -63,7 +63,7 @@ fun ChatTopBar(
                 end = ODSVariables.spacingLayout1
             )
     ) {
-        val (backIcon, profileGroup, audioCallBtn, videoCallBtn) = createRefs()
+        val (backIcon, profileGroup, callActions) = createRefs()
 
         // 1. Back Arrow Icon
         ODSIcon(
@@ -86,7 +86,62 @@ fun ChatTopBar(
                 }
         )
 
-        // 2. User Profile Group (Avatar + Name)
+        // 2. Call Actions (Voice Call & Video Call)
+        ODSRow(
+            gap = ODSVariables.spacingComponent3,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.constrainAs(callActions) {
+                top.linkTo(parent.top)
+                bottom.linkTo(parent.bottom)
+                end.linkTo(parent.end)
+            }
+        ) {
+            if (onVoiceCallClick != null) {
+                ODSBox(
+                    modifier = Modifier
+                        .size(ODSVariables.sizingComponent10)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onVoiceCallClick
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            drawableRes = R.drawable.call,
+                            contentDescription = "Voice Call"
+                        ),
+                        tint = scheme.basicText.getColor(),
+                        modifier = Modifier.size(ODSVariables.sizingComponent8)
+                    )
+                }
+            }
+
+            if (onVideoCallClick != null) {
+                ODSBox(
+                    modifier = Modifier
+                        .size(ODSVariables.sizingComponent10)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onVideoCallClick
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSIcon(
+                        iconModel = ODSIconModel(
+                            drawableRes = R.drawable.video,
+                            contentDescription = "Video Call"
+                        ),
+                        tint = scheme.basicText.getColor(),
+                        modifier = Modifier.size(ODSVariables.sizingComponent8)
+                    )
+                }
+            }
+        }
+
+        // 3. User Profile Group (Avatar + Name)
         val displayName = modelName.ifBlank { "User" }
 
         ODSRow(
@@ -102,7 +157,7 @@ fun ChatTopBar(
                     top.linkTo(parent.top)
                     bottom.linkTo(parent.bottom)
                     start.linkTo(backIcon.end, margin = ODSVariables.spacingComponent4)
-                    end.linkTo(audioCallBtn.start, margin = ODSVariables.spacingComponent2)
+                    end.linkTo(callActions.start, margin = ODSVariables.spacingComponent2)
                     width = Dimension.fillToConstraints
                 }
         ) {
@@ -156,56 +211,6 @@ fun ChatTopBar(
         }
 
 
-        // 4. Audio Call Button
-        ODSBox(
-            modifier = Modifier
-                .size(ODSVariables.sizingComponent8) // 24.dp
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onAudioCallClick
-                )
-                .constrainAs(audioCallBtn) {
-                    top.linkTo(parent.top)
-                    bottom.linkTo(parent.bottom)
-                    end.linkTo(videoCallBtn.start, margin = ODSVariables.spacingComponent3)
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            ODSIcon(
-                iconModel = ODSIconModel(
-                    drawableRes = R.drawable.ic_phone,
-                    contentDescription = "Voice Call"
-                ),
-                tint = scheme.basicText.getColor(),
-                modifier = Modifier.size(ODSVariables.sizingComponent10) // 24.dp
-            )
-        }
 
-        // 3. Video Call Button
-        ODSBox(
-            modifier = Modifier
-                .size(ODSVariables.sizingComponent8) // 24.dp
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onVideoCallClick
-                )
-                .constrainAs(videoCallBtn) {
-                    top.linkTo(parent.top)
-                    bottom.linkTo(parent.bottom)
-                    end.linkTo(parent.end)
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            ODSIcon(
-                iconModel = ODSIconModel(
-                    drawableRes = R.drawable.video,
-                    contentDescription = "Video Call"
-                ),
-                tint = scheme.basicText.getColor(),
-                modifier = Modifier.size(ODSVariables.sizingComponent10) // 24.dp
-            )
-        }
     }
 }

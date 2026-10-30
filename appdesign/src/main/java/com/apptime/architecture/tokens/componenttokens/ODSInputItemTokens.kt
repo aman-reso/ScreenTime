@@ -29,18 +29,18 @@ data class ODSInputItemTokens(
 )
 
 val defaultODSInputItemTokens = ODSInputItemTokens(
-    borderRadius = ODSCorners(all = DSVariables.radiusSmall),
+    borderRadius = ODSCorners(all = 12.dp),
     borderModeStandard = DSVariables.strokes1,
     borderModeError = DSVariables.strokes3,
     width = 44.dp,
-    height = DSVariables.sizingComponent16,
+    height = 54.dp,
     verticalAlignment = Alignment.CenterVertically,
     horizontalAlignment = Alignment.CenterHorizontally,
     horizontalArrangement = Arrangement.Center,
     placeholderTextStyle = DSTextStyles.paragraph,
-    placeholderTextAlign = TextAlign.Left,
+    placeholderTextAlign = TextAlign.Center,
     inputValueTextStyleFilled = DSTextStyles.paragraph,
-    inputValueTextAlignFilled = TextAlign.Left,
+    inputValueTextAlignFilled = TextAlign.Center,
     dotWidth = 8.dp,
     dotHeight = 8.dp,
     borderStateFocused = DSVariables.strokes2,

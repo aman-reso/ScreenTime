@@ -34,6 +34,10 @@ fun UserDto.toUser(): User {
             answer = it.answer
         )
     }
+    val resolvedJob = this.profession ?: this.job ?: this.occupation
+    val resolvedLikes = if (this.likes_count > 0) this.likes_count else this.likes
+    val resolvedMatches = if (this.matches_count > 0) this.matches_count else this.matches
+
     return User(
         id = this.id,
         phone = this.phone,
@@ -49,10 +53,14 @@ fun UserDto.toUser(): User {
         interests = this.interests,
         datingIntent = this.dating_intent,
         city = this.city,
+        country = this.country,
         area = this.area,
+        latitude = this.latitude,
+        longitude = this.longitude,
         qualityScore = this.quality_score,
-        job = this.job ?: this.occupation,
-        occupation = this.occupation ?: this.job,
+        profession = resolvedJob,
+        job = resolvedJob,
+        occupation = resolvedJob,
         height = this.height ?: this.height_cm?.let { "$it cm" },
         heightCm = this.height_cm,
         education = this.education,
@@ -61,12 +69,21 @@ fun UserDto.toUser(): User {
         dateOfBirth = this.date_of_birth ?: this.dob,
         dob = this.dob ?: this.date_of_birth,
         prompts = mappedPrompts,
+        likesCount = resolvedLikes,
+        matchesCount = resolvedMatches,
         voiceRatePerMin = this.voice_rate_per_min,
         chatRatePerMsg = this.chat_rate_per_msg,
         isOnline = this.is_online,
         isBusy = this.is_busy,
         walletBalance = if (roleEnum == UserRole.USER) 1000.0 else 0.0,
-        createdAt = this.created_at
+        visibility = this.visibility ?: if (this.is_private) "private" else "public",
+        isPrivate = this.is_private || this.visibility.equals("private", ignoreCase = true),
+        discoveryEnabled = this.discovery_enabled && !this.is_private && !this.visibility.equals("private", ignoreCase = true),
+        createdAt = this.created_at,
+        videoUrl = this.video_url,
+        videos = this.videos,
+        company = this.company,
+        isPhoneVerified = this.is_phone_verified == true || this.phone_verified == true
     )
 }
 
@@ -178,6 +195,27 @@ fun DiscoveryMatchItemDto.toDiscoveryMatch(): com.app.screentime.core.model.Disc
         datingIntent = this.dating_intent,
         bio = this.bio,
         matchedAt = this.matched_at
+    )
+}
+
+fun LikedProfileItemDto.toModelProfile(): ModelProfile {
+    val photo = this.primary_photo_url.orEmpty()
+    val locStr = when {
+        this.area.isNotBlank() && this.city.isNotBlank() -> "${this.area}, ${this.city}"
+        this.city.isNotBlank() -> this.city
+        this.area.isNotBlank() -> this.area
+        else -> ""
+    }
+    return ModelProfile(
+        id = this.user_id,
+        name = this.display_name.ifBlank { "Member" },
+        age = this.age,
+        location = locStr,
+        bio = this.bio,
+        avatarUrl = photo,
+        coverUrl = photo,
+        galleryUrls = if (photo.isNotBlank()) listOf(photo) else emptyList(),
+        tags = if (this.dating_intent.isNotBlank()) listOf(this.dating_intent) else emptyList()
     )
 }
 

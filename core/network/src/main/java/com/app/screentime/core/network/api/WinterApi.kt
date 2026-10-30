@@ -36,27 +36,59 @@ class WinterApi @Inject constructor(
     private val httpClient: HttpClient
         get() = networkClient.httpClient
 
+    private fun formatFullPhoneNumber(phone: String): String {
+        val trimmed = phone.trim()
+        if (trimmed.startsWith("+")) {
+            val digits = trimmed.drop(1).filter { it.isDigit() }
+            return "+$digits"
+        }
+        val cleanDigits = trimmed.filter { it.isDigit() }
+        return when {
+            cleanDigits.length == 10 -> "+91$cleanDigits"
+            cleanDigits.length > 10 && cleanDigits.startsWith("91") -> "+$cleanDigits"
+            else -> "+$cleanDigits"
+        }
+    }
+
+    suspend fun sendOtp(phone: String): SendOtpResponse {
+        val fullPhone = formatFullPhoneNumber(phone)
+        val res: SendOtpResponse = httpClient.post("$baseUrl${ApiEndpoints.Auth.OTP_SEND}") {
+            contentType(ContentType.Application.Json)
+            setBody(SendOtpRequest(phone = fullPhone))
+        }.body()
+        return res
+    }
+
+    suspend fun verifyOtp(phone: String, code: String): AuthResponse {
+        val fullPhone = formatFullPhoneNumber(phone)
+        val res: VerifyOtpResponse = httpClient.post("$baseUrl${ApiEndpoints.Auth.OTP_VERIFY}") {
+            contentType(ContentType.Application.Json)
+            setBody(VerifyOtpRequest(phone = fullPhone, code = code))
+        }.body()
+
+        val data = res.data ?: throw Exception(res.message.ifBlank { "OTP verification failed" })
+        if (data.token.isBlank()) {
+            throw Exception(data.message.ifBlank { res.message.ifBlank { "OTP verification failed" } })
+        }
+        val userDto = data.user
+            ?: throw Exception(res.message.ifBlank { "User profile unavailable in OTP verification response" })
+        return AuthResponse(
+            user = userDto,
+            token = data.token,
+            is_new_user = data.is_new_user,
+            has_profile = data.has_profile,
+            profile_complete = data.profile_complete,
+            message = res.message.ifBlank { data.message }
+        )
+    }
+
     // ── 1. Auth ───────────────────────────────────────────────────────────────
     suspend fun registerOrLogin(phone: String, name: String, role: String): AuthResponse {
-        return try {
-            val res: ApiResponse<AuthResponse> = httpClient.post("$baseUrl/api/auth") {
-                setBody(RegisterRequest(phone = phone, name = name, role = role))
-            }.body()
-            res.data ?: createFakeAuthResponse(
-                id = "usr_${Math.abs(phone.hashCode())}",
-                email = phone,
-                name = name,
-                role = role
-            )
-        } catch (t: Throwable) {
-            Log.w(tag, "registerOrLogin using simulated fallback: ${t.message}")
-            createFakeAuthResponse(
-                id = "usr_${Math.abs(phone.hashCode())}",
-                email = phone,
-                name = name,
-                role = role
-            )
-        }
+        val res: ApiResponse<AuthResponse> = httpClient.post("$baseUrl/api/auth") {
+            setBody(RegisterRequest(phone = phone, name = name, role = role))
+        }.body()
+        return res.data ?: throw Exception(
+            res.error ?: res.message.ifBlank { "Registration or login failed" })
     }
 
     suspend fun loginWithGoogle(
@@ -81,182 +113,247 @@ class WinterApi @Inject constructor(
             avatarUrl = photoUrl,
             role = role
         )
-        return try {
-            val res: ApiResponse<AuthResponse> =
-                httpClient.post("$baseUrl${ApiEndpoints.Auth.GOOGLE}") {
-                    setBody(request)
-                }.body()
-            res.data ?: createFakeAuthResponse(
-                id = "usr_${abs((email ?: resolvedGoogleId).hashCode())}",
-                email = email ?: "user@winter.app",
-                name = name ?: "User",
-                avatarUrl = photoUrl,
-                role = role
-            )
-        } catch (t: Throwable) {
-            Log.w(tag, "loginWithGoogle using simulated fallback: ${t.message}")
-            createFakeAuthResponse(
-                id = "usr_${Math.abs((email ?: resolvedGoogleId).hashCode())}",
-                email = email ?: "user@winter.app",
-                name = name ?: "User",
-                avatarUrl = photoUrl,
-                role = role
-            )
-        }
-    }
-
-    private fun createFakeAuthResponse(
-        id: String,
-        email: String?,
-        name: String?,
-        avatarUrl: String? = null,
-        role: String = "user"
-    ): AuthResponse {
-        val resolvedName = name?.ifBlank { null } ?: "User"
-        val resolvedEmail = email?.ifBlank { null } ?: "user@winter.app"
-        val user = UserDto(
-            id = id,
-            name = resolvedName,
-            email = resolvedEmail,
-            phone = resolvedEmail,
-            role = role,
-            avatar_url = avatarUrl ?: "",
-            bio = "Member · Winter",
-            is_online = true
-        )
-        return AuthResponse(
-            user = user,
-            token = "token_${user.id}",
-            is_new_user = false,
-            wallet = WalletDto(
-                user_id = user.id,
-                balance = 1000.0,
-                bonus_given = 100.0,
-                total_spent = 0.0,
-                total_earned = 0.0
-            ),
-            message = "Success"
-        )
+        val res: ApiResponse<AuthResponse> =
+            httpClient.post("$baseUrl${ApiEndpoints.Auth.GOOGLE}") {
+                setBody(request)
+            }.body()
+        return res.data ?: throw Exception(
+            res.error ?: res.message.ifBlank { "Google authentication failed" })
     }
 
     // ── 2. Models ─────────────────────────────────────────────────────────────
     suspend fun getModels(token: String, page: Int = 1, limit: Int = 10): ModelListResponse {
-        return try {
-            val res: ApiResponse<ModelListResponse> = httpClient.get("$baseUrl/api/models") {
-                bearerAuth(token)
-                parameter("page", page)
-                parameter("limit", limit)
-            }.body()
-            res.data ?: ModelListResponse(count = 0, models = emptyList())
-        } catch (t: Throwable) {
-            Log.e(tag, "getModels failed: ${t.message}", t)
-            ModelListResponse(count = 0, models = emptyList())
-        }
+        val res: ApiResponse<ModelListResponse> = httpClient.get("$baseUrl/api/models") {
+            bearerAuth(token)
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body()
+        return res.data ?: ModelListResponse(count = 0, models = emptyList())
     }
 
     suspend fun updateProfile(token: String, request: ProfileUpdateRequest): ProfileUpdateResponse {
-        return try {
-            val res: ProfileUpdateResponse = httpClient.put("$baseUrl/api/profile") {
+        return httpClient.put("$baseUrl/api/profile") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+    }
+
+    suspend fun updatePreferences(
+        token: String,
+        request: UpdatePreferencesRequest
+    ): PreferencesResponse {
+        val response = httpClient.put("$baseUrl${ApiEndpoints.Preferences.PREFERENCES}") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        return if (response.status.isSuccess()) {
+            try {
+                response.body<PreferencesResponse>()
+            } catch (_: Exception) {
+                PreferencesResponse(success = true, message = "Preferences updated")
+            }
+        } else {
+            throw Exception("Failed to update preferences: HTTP ${response.status.value}")
+        }
+    }
+
+    suspend fun updateProfileVisibility(
+        token: String,
+        visibility: String
+    ): Result<ProfileVisibilityResponseData> {
+        val normalized = visibility.trim().lowercase()
+        val request = ProfileVisibilityRequest(
+            visibility = normalized,
+            is_private = normalized == "private",
+            discovery_enabled = normalized != "private"
+        )
+        val res: ApiResponse<ProfileVisibilityResponseData> =
+            httpClient.put("$baseUrl${ApiEndpoints.Auth.VISIBILITY}") {
                 bearerAuth(token)
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }.body()
-            res
-        } catch (t: Throwable) {
-            Log.e(tag, "updateProfile failed: ${t.message}", t)
-            ProfileUpdateResponse(success = false, message = t.message ?: "Unknown error")
-        }
+
+        val data = res.data ?: ProfileVisibilityResponseData(
+            visibility = normalized,
+            is_private = normalized == "private",
+            discovery_enabled = normalized != "private"
+        )
+        return Result.success(data)
     }
 
     suspend fun getModelProfile(token: String, modelId: String): UserDto {
-        return try {
-            val res: ApiResponse<UserDto> = httpClient.get("$baseUrl/api/models/$modelId") {
-                bearerAuth(token)
-            }.body()
-            res.data ?: throw Exception(res.error ?: res.message.ifBlank { "Model not found" })
-        } catch (t: Throwable) {
-            Log.e(tag, "getModelProfile failed: ${t.message}", t)
-            throw t
-        }
+        val res: ApiResponse<UserDto> = httpClient.get("$baseUrl/api/models/$modelId") {
+            bearerAuth(token)
+        }.body()
+        return res.data ?: throw Exception(res.error ?: res.message.ifBlank { "Model not found" })
     }
 
     // ── 3. Wallet & Packs ─────────────────────────────────────────────────────
     suspend fun getWallet(token: String): WalletResponse {
-        return try {
-            val res: ApiResponse<WalletResponse> = httpClient.get("$baseUrl/api/wallet") {
-                bearerAuth(token)
-            }.body()
-            res.data ?: WalletResponse(
-                wallet = WalletDto(
-                    balance = 0.0,
-                    bonus_given = 0.0,
-                    total_spent = 0.0,
-                    total_earned = 0.0
-                )
-            )
-        } catch (t: Throwable) {
-            Log.e(tag, "getWallet failed: ${t.message}", t)
-            WalletResponse(
-                wallet = WalletDto(
-                    balance = 0.0,
-                    bonus_given = 0.0,
-                    total_spent = 0.0,
-                    total_earned = 0.0
-                )
-            )
-        }
+        val res: ApiResponse<WalletResponse> = httpClient.get("$baseUrl/api/wallet") {
+            bearerAuth(token)
+        }.body()
+        return res.data ?: throw Exception(
+            res.error ?: res.message.ifBlank { "Failed to fetch wallet" })
     }
 
     suspend fun getWalletInfo(token: String): WalletInfoDto {
-        return try {
-            val res: ApiResponse<WalletInfoDto> =
-                httpClient.get("$baseUrl${ApiEndpoints.Wallet.INFO}") {
+        val res: ApiResponse<WalletInfoDto> =
+            httpClient.get("$baseUrl${ApiEndpoints.Wallet.INFO}") {
+                bearerAuth(token)
+            }.body()
+        return res.data ?: throw Exception(
+            res.error ?: res.message.ifBlank { "Failed to fetch wallet info" })
+    }
+
+    suspend fun getWalletPackages(token: String? = null): List<WalletPackDto> {
+        val res: ApiResponse<List<WalletPackDto>> =
+            httpClient.get("$baseUrl${ApiEndpoints.Wallet.PACKAGES}") {
+                if (!token.isNullOrBlank()) {
                     bearerAuth(token)
-                }.body()
-            res.data ?: WalletInfoDto()
-        } catch (t: Throwable) {
-            Log.e(tag, "getWalletInfo failed: ${t.message}", t)
-            WalletInfoDto()
-        }
+                }
+            }.body()
+        return res.data ?: emptyList()
     }
 
     suspend fun getWalletPacks(): WalletPacksResponse {
-        return try {
-            val res: ApiResponse<WalletPacksResponse> =
-                httpClient.get("$baseUrl/api/wallet/packs").body()
-            res.data ?: WalletPacksResponse(packs = emptyList())
-        } catch (t: Throwable) {
-            Log.e(tag, "getWalletPacks failed: ${t.message}", t)
-            WalletPacksResponse(packs = emptyList())
-        }
+        val list = getWalletPackages()
+        return WalletPacksResponse(count = list.size, packs = list)
     }
 
     suspend fun recharge(token: String, amount: Double): WalletDto {
+        val res: ApiResponse<WalletDto> = httpClient.post("$baseUrl/api/wallet/recharge") {
+            bearerAuth(token)
+            setBody(RechargeRequest(amount = amount))
+        }.body()
+        return res.data ?: throw Exception(res.error ?: res.message.ifBlank { "Recharge failed" })
+    }
+
+    suspend fun verifyGooglePlayPurchase(
+        token: String,
+        purchaseToken: String,
+        productId: String,
+        orderId: String? = null,
+        packId: String? = null,
+        credits: Int = 0,
+        amount: Double = 0.0
+    ): Result<GooglePlayPurchaseVerifyResponse> {
         return try {
-            val res: ApiResponse<WalletDto> = httpClient.post("$baseUrl/api/wallet/recharge") {
-                bearerAuth(token)
-                setBody(RechargeRequest(amount = amount))
-            }.body()
-            res.data ?: throw Exception(res.error ?: res.message.ifBlank { "Recharge failed" })
-        } catch (t: Throwable) {
-            Log.e(tag, "recharge failed: ${t.message}", t)
-            throw t
+            val res: ApiResponse<GooglePlayPurchaseVerifyResponse> =
+                httpClient.post("$baseUrl${ApiEndpoints.Wallet.GOOGLE_PLAY_VERIFY}") {
+                    if (token.isNotBlank()) bearerAuth(token)
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        GooglePlayPurchaseVerifyRequest(
+                            purchase_token = purchaseToken,
+                            product_id = productId,
+                            order_id = orderId,
+                            package_id = packId,
+                            credits = credits,
+                            amount = amount
+                        )
+                    )
+                }.body()
+
+            val data = res.data
+            if (data != null && res.success) {
+                Result.success(data)
+            } else {
+                Result.failure(
+                    Exception(
+                        res.error ?: res.message.ifBlank { "Verification failed" })
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    suspend fun getWalletTransactions(token: String, page: Int = 1, limit: Int = 20): PaginatedTransactionsData {
+    suspend fun getBillingProducts(token: String): Result<BillingCatalogDataDto> {
         return try {
-            val res: ApiResponse<PaginatedTransactionsData> = httpClient.get("$baseUrl${ApiEndpoints.Wallet.TRANSACTIONS}") {
+            val url = ApiEndpoints.Billing.getProductsUrl()
+            val response: BillingProductsResponse = httpClient.get(url) {
+                if (token.isNotBlank()) bearerAuth(token)
+                contentType(ContentType.Application.Json)
+            }.body()
+
+            val data = response.data
+            if (data != null && (response.success || response.status.equals(
+                    "success",
+                    ignoreCase = true
+                ) || response.status == "200")
+            ) {
+                Result.success(data)
+            } else {
+                Result.failure(Exception(response.message.ifBlank { "Failed to retrieve billing products" }))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun verifyGooglePurchase(
+        token: String,
+        request: VerifyGooglePurchaseRequest
+    ): Result<VerifyGooglePurchaseDataDto> {
+        return try {
+            val url = ApiEndpoints.Billing.getVerifyUrl()
+            val response: VerifyGooglePurchaseResponse = httpClient.post(url) {
+                if (token.isNotBlank()) bearerAuth(token)
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body()
+
+            val data = response.data
+            if (data != null && (response.success || response.status.equals(
+                    "success",
+                    ignoreCase = true
+                ) || response.status == "200" || data.success)
+            ) {
+                Result.success(data)
+            } else {
+                Result.failure(Exception(response.message.ifBlank { "Verification failed" }))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getOrderStatus(token: String, orderId: String): Result<WalletOrderStatusDto> {
+        val res: ApiResponse<WalletOrderStatusDto> =
+            httpClient.get("$baseUrl${ApiEndpoints.Wallet.ORDER_STATUS}") {
+                if (token.isNotBlank()) bearerAuth(token)
+                parameter("order_id", orderId)
+            }.body()
+
+        val statusData = res.data
+        if (statusData != null) {
+            return Result.success(statusData)
+        } else {
+            return Result.failure(
+                Exception(
+                    res.error ?: res.message.ifBlank { "Failed to retrieve order status" })
+            )
+        }
+    }
+
+    suspend fun getWalletTransactions(
+        token: String,
+        page: Int = 1,
+        limit: Int = 20
+    ): PaginatedTransactionsData {
+        val res: ApiResponse<PaginatedTransactionsData> =
+            httpClient.get("$baseUrl${ApiEndpoints.Wallet.TRANSACTIONS}") {
                 bearerAuth(token)
                 accept(ContentType.Application.Json)
                 parameter("page", page)
                 parameter("limit", limit)
             }.body()
-            res.data ?: PaginatedTransactionsData()
-        } catch (t: Throwable) {
-            Log.e(tag, "getWalletTransactions failed: ${t.message}", t)
-            PaginatedTransactionsData()
-        }
+        return res.data ?: throw Exception(
+            res.error ?: res.message.ifBlank { "Failed to fetch transactions" })
     }
 
     // ── 4. Calls & Balance Check ──────────────────────────────────────────────
@@ -265,57 +362,89 @@ class WinterApi @Inject constructor(
         modelId: String,
         callType: String = "voice"
     ): CheckCallBalanceResponse {
-        return try {
-            val res: ApiResponse<CheckCallBalanceResponse> =
-                httpClient.post("$baseUrl/api/calls/check-balance") {
-                    bearerAuth(token)
-                    setBody(CheckCallBalanceRequest(model_id = modelId, call_type = callType))
-                }.body()
-            res.data ?: throw Exception(res.error ?: res.message.ifBlank { "Balance check failed" })
-        } catch (t: Throwable) {
-            Log.e(tag, "checkCallBalance failed: ${t.message}", t)
-            throw t
-        }
+        val res: ApiResponse<CheckCallBalanceResponse> =
+            httpClient.post("$baseUrl/api/calls/check-balance") {
+                bearerAuth(token)
+                setBody(CheckCallBalanceRequest(model_id = modelId, call_type = callType))
+            }.body()
+        return res.data ?: throw Exception(
+            res.error ?: res.message.ifBlank { "Balance check failed" })
     }
 
     suspend fun getCallHistory(token: String): CallHistoryResponse {
+        val res: ApiResponse<CallHistoryResponse> =
+            httpClient.get("$baseUrl/api/history/calls") {
+                bearerAuth(token)
+            }.body()
+        return res.data ?: CallHistoryResponse()
+    }
+
+    suspend fun acceptCall(
+        token: String,
+        callId: String
+    ): Boolean {
         return try {
-            val res: ApiResponse<CallHistoryResponse> =
-                httpClient.get("$baseUrl/api/history/calls") {
+            val res: ApiResponse<CallSessionResponse> =
+                httpClient.post("$baseUrl/api/calls/accept") {
                     bearerAuth(token)
+                    setBody(AcceptCallRequest(session_id = callId, call_id = callId))
                 }.body()
-            res.data ?: CallHistoryResponse()
-        } catch (t: Throwable) {
-            Log.e(tag, "getCallHistory failed: ${t.message}", t)
-            CallHistoryResponse()
+            res.success || res.data != null
+        } catch (e: Exception) {
+            Log.e("WinterApi", "acceptCall HTTP failed: ${e.message}")
+            false
         }
     }
 
-    // ── 5. Ephemeral 24-Hour Chat ─────────────────────────────────────────────
-    suspend fun getConversations(token: String): ConversationListResponse {
+    suspend fun endCall(
+        token: String,
+        callId: String,
+        durationSeconds: Int = 0
+    ): Boolean {
         return try {
-            val res: ApiResponse<ConversationListResponse> =
-                httpClient.get("$baseUrl/api/chat/conversations") {
+            val res: ApiResponse<CallSessionResponse> =
+                httpClient.post("$baseUrl/api/calls/end") {
                     bearerAuth(token)
+                    setBody(EndCallRequest(session_id = callId, call_id = callId, duration_seconds = durationSeconds))
                 }.body()
-            res.data ?: ConversationListResponse(conversations = emptyList())
-        } catch (t: Throwable) {
-            Log.e(tag, "getConversations failed: ${t.message}", t)
-            ConversationListResponse(conversations = emptyList())
+            res.success || res.data != null
+        } catch (e: Exception) {
+            Log.e("WinterApi", "endCall HTTP failed: ${e.message}")
+            false
         }
+    }
+
+    suspend fun rejectCall(
+        token: String,
+        callId: String
+    ): Boolean {
+        return try {
+            val res: ApiResponse<CallSessionResponse> =
+                httpClient.post("$baseUrl/api/calls/reject") {
+                    bearerAuth(token)
+                    setBody(RejectCallRequest(session_id = callId, call_id = callId))
+                }.body()
+            res.success || res.data != null
+        } catch (e: Exception) {
+            Log.e("WinterApi", "rejectCall HTTP failed: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun getConversations(token: String): ConversationListResponse {
+        val res: ApiResponse<ConversationListResponse> =
+            httpClient.get("$baseUrl/api/chat/conversations") {
+                bearerAuth(token)
+            }.body()
+        return res.data ?: ConversationListResponse(conversations = emptyList())
     }
 
     suspend fun getChatMessages(token: String, partnerId: String): EphemeralChatResponse {
-        return try {
-            val res: ApiResponse<EphemeralChatResponse> =
-                httpClient.get("$baseUrl/api/chat/messages?partner_id=$partnerId") {
-                    bearerAuth(token)
-                }.body()
-            res.data ?: EphemeralChatResponse(partner_id = partnerId, messages = emptyList())
-        } catch (t: Throwable) {
-            Log.e(tag, "getChatMessages failed: ${t.message}", t)
-            EphemeralChatResponse(partner_id = partnerId, messages = emptyList())
-        }
+        val res: ApiResponse<EphemeralChatResponse> =
+            httpClient.get("$baseUrl/api/chat/messages?partner_id=$partnerId") {
+                bearerAuth(token)
+            }.body()
+        return res.data ?: EphemeralChatResponse(partner_id = partnerId, messages = emptyList())
     }
 
     suspend fun sendChatMessage(
@@ -323,127 +452,63 @@ class WinterApi @Inject constructor(
         receiverId: String,
         content: String
     ): ChatMessageDto {
-        return try {
-            val res: ApiResponse<ChatMessageDto> = httpClient.post("$baseUrl/api/chat/send") {
-                bearerAuth(token)
-                setBody(SendChatMessageRequest(receiver_id = receiverId, content = content))
-            }.body()
-            res.data ?: throw Exception(
-                res.error ?: res.message.ifBlank { "Failed to send message" })
-        } catch (t: Throwable) {
-            Log.e(tag, "sendChatMessage failed: ${t.message}", t)
-            throw t
-        }
+        val res: ApiResponse<ChatMessageDto> = httpClient.post("$baseUrl/api/chat/send") {
+            bearerAuth(token)
+            setBody(SendChatMessageRequest(receiver_id = receiverId, content = content))
+        }.body()
+        return res.data ?: throw Exception(
+            res.error ?: res.message.ifBlank { "Failed to send message" })
     }
 
-    // ── 6. Rooms ──────────────────────────────────────────────────────────────
-    suspend fun getRooms(token: String): RoomListResponse {
-        return try {
-            val res: ApiResponse<RoomListResponse> = httpClient.get("$baseUrl/api/rooms") {
-                bearerAuth(token)
-            }.body()
-            res.data ?: RoomListResponse()
-        } catch (t: Throwable) {
-            Log.e(tag, "getRooms failed: ${t.message}", t)
-            RoomListResponse()
-        }
-    }
-
-    suspend fun createRoom(token: String, title: String, ratePerMin: Double): GroupRoomDto {
-        return try {
-            val res: ApiResponse<GroupRoomDto> = httpClient.post("$baseUrl/api/rooms") {
-                bearerAuth(token)
-                setBody(CreateRoomRequest(title = title, rate_per_min = ratePerMin))
-            }.body()
-            res.data ?: throw Exception(
-                res.error ?: res.message.ifBlank { "Failed to create room" })
-        } catch (t: Throwable) {
-            Log.e(tag, "createRoom failed: ${t.message}", t)
-            throw t
-        }
-    }
 
     // ── 7. Favorites ──────────────────────────────────────────────────────────
     suspend fun getFavorites(token: String): ModelListResponse {
-        return try {
-            val res: ApiResponse<ModelListResponse> =
-                httpClient.get("$baseUrl/api/models/favorites") {
-                    bearerAuth(token)
-                }.body()
-            res.data ?: ModelListResponse(count = 0, models = emptyList())
-        } catch (t: Throwable) {
-            Log.e(tag, "getFavorites failed: ${t.message}", t)
-            ModelListResponse(count = 0, models = emptyList())
-        }
+        val res: ApiResponse<ModelListResponse> =
+            httpClient.get("$baseUrl/api/discovery/following") {
+                bearerAuth(token)
+            }.body()
+        return res.data ?: ModelListResponse(count = 0, models = emptyList())
     }
 
     suspend fun addFavorite(token: String, modelId: String): Boolean {
-        return try {
-            val res = httpClient.post("$baseUrl/api/models/favorite") {
-                bearerAuth(token)
-                setBody(mapOf("model_id" to modelId))
-            }
-            res.status.isSuccess()
-        } catch (t: Throwable) {
-            Log.e(tag, "addFavorite failed: ${t.message}", t)
-            false
+        val res = httpClient.post("$baseUrl/api/models/favorite") {
+            bearerAuth(token)
+            setBody(mapOf("model_id" to modelId))
         }
+        return res.status.isSuccess()
     }
 
-    suspend fun removeFavorite(token: String, modelId: String): Boolean {
-        return try {
-            val res = httpClient.post("$baseUrl/api/models/favorite") {
-                bearerAuth(token)
-                setBody(mapOf("model_id" to modelId))
-            }
-            res.status.isSuccess()
-        } catch (t: Throwable) {
-            Log.e(tag, "removeFavorite failed: ${t.message}", t)
-            false
-        }
-    }
 
-    // ── 8. Report & User Profile ──────────────────────────────────────────────
     suspend fun reportUser(token: String, reportedId: String, reason: String): Boolean {
-        return try {
-            val res = httpClient.post("$baseUrl/api/reports") {
-                bearerAuth(token)
-                setBody(ReportRequest(reported_id = reportedId, reason = reason))
-            }
-            res.status.isSuccess()
-        } catch (t: Throwable) {
-            Log.e(tag, "reportUser failed: ${t.message}", t)
-            false
+        val res = httpClient.post("$baseUrl/api/reports") {
+            bearerAuth(token)
+            setBody(ReportRequest(reported_id = reportedId, reason = reason))
         }
+        return res.status.isSuccess()
     }
 
     suspend fun getUserProfile(token: String, userId: String? = null): UserDto {
-        return try {
-            try {
-                val connectRes: ApiResponse<ConnectProfileDataDto> =
-                    httpClient.get("$baseUrl${ApiEndpoints.Auth.PROFILE}") {
-                        if (token.isNotBlank()) bearerAuth(token)
-                        if (!userId.isNullOrBlank() && userId != "me") {
-                            parameter("user_id", userId)
-                        }
-                    }.body()
-                if (connectRes.data != null) {
-                    return connectRes.data!!.toUserDto()
-                }
-            } catch (ignored: Exception) {
+        try {
+            val connectRes: ApiResponse<ConnectProfileDataDto> =
+                httpClient.get("$baseUrl${ApiEndpoints.Auth.PROFILE}") {
+                    if (token.isNotBlank()) bearerAuth(token)
+                    if (!userId.isNullOrBlank() && userId != "me") {
+                        parameter("user_id", userId)
+                    }
+                }.body()
+            if (connectRes.data != null) {
+                return connectRes.data.toUserDto()
             }
-            val res: ApiResponse<UserDto> = httpClient.get("$baseUrl${ApiEndpoints.Auth.PROFILE}") {
-                if (token.isNotBlank()) bearerAuth(token)
-                if (!userId.isNullOrBlank() && userId != "me") {
-                    parameter("user_id", userId)
-                }
-            }.body()
-            res.data ?: throw Exception(
-                res.error ?: res.message.ifBlank { "User profile not found" })
-        } catch (t: Throwable) {
-            Log.e(tag, "getUserProfile failed: ${t.message}", t)
-            throw t
+        } catch (_: Exception) {
         }
+        val res: ApiResponse<UserDto> = httpClient.get("$baseUrl${ApiEndpoints.Auth.PROFILE}") {
+            if (token.isNotBlank()) bearerAuth(token)
+            if (!userId.isNullOrBlank() && userId != "me") {
+                parameter("user_id", userId)
+            }
+        }.body()
+        return res.data ?: throw Exception(
+            res.error ?: res.message.ifBlank { "User profile not found" })
     }
 
     suspend fun submitOnboarding(
@@ -452,23 +517,18 @@ class WinterApi @Inject constructor(
         voiceRate: Double,
         chatRate: Double
     ): Boolean {
-        return try {
-            val res = httpClient.post("$baseUrl/api/models/onboarding") {
-                bearerAuth(token)
-                setBody(
-                    ModelOnboardRequest(
-                        bio = bio,
-                        voice_rate_per_min = voiceRate,
-                        group_rate_per_min = voiceRate / 2,
-                        chat_rate_per_msg = chatRate
-                    )
+        val res = httpClient.post("$baseUrl/api/models/onboarding") {
+            bearerAuth(token)
+            setBody(
+                ModelOnboardRequest(
+                    bio = bio,
+                    voice_rate_per_min = voiceRate,
+                    group_rate_per_min = voiceRate / 2,
+                    chat_rate_per_msg = chatRate
                 )
-            }
-            res.status.isSuccess()
-        } catch (t: Throwable) {
-            Log.e(tag, "submitOnboarding failed: ${t.message}", t)
-            false
+            )
         }
+        return res.status.isSuccess()
     }
 
     suspend fun registerFcmToken(
@@ -477,8 +537,8 @@ class WinterApi @Inject constructor(
         deviceId: String? = null,
         appVersion: String? = null
     ): ApiResponse<FcmTokenData>? {
-        return try {
-            val res: ApiResponse<FcmTokenData> = httpClient.post("$baseUrl${ApiEndpoints.Auth.FCM_TOKEN}") {
+        val res: ApiResponse<FcmTokenData> =
+            httpClient.post("$baseUrl${ApiEndpoints.Auth.FCM_TOKEN}") {
                 bearerAuth(token)
                 contentType(ContentType.Application.Json)
                 setBody(
@@ -490,12 +550,8 @@ class WinterApi @Inject constructor(
                     )
                 )
             }.body()
-            Log.d(tag, "registerFcmToken success: ${res.message}")
-            res
-        } catch (t: Throwable) {
-            Log.e(tag, "registerFcmToken failed: ${t.message}", t)
-            null
-        }
+        Log.d(tag, "registerFcmToken success: ${res.message}")
+        return res
     }
 
     suspend fun uploadImageParts(
@@ -507,12 +563,25 @@ class WinterApi @Inject constructor(
                 url = "$baseUrl${ApiEndpoints.Upload.IMAGES}",
                 formData = formData {
                     parts.forEachIndexed { index, part ->
+                        val defaultKey =
+                            if (part.mimeType.startsWith("video/")) "video" else "images"
+                        val key = part.formKey ?: defaultKey
                         append(
-                            key = "photos",
+                            key = key,
                             value = part.bytes,
                             headers = Headers.build {
                                 append(HttpHeaders.ContentType, part.mimeType)
-                                append(HttpHeaders.ContentDisposition, "filename=\"${part.filename.ifBlank { "photo_$index.jpg" }}\"")
+                                append(
+                                    HttpHeaders.ContentDisposition,
+                                    "filename=\"${
+                                        part.filename.ifBlank {
+                                            if (part.mimeType.startsWith(
+                                                    "video/"
+                                                )
+                                            ) "video_$index.mp4" else "photo_$index.jpg"
+                                        }
+                                    }\""
+                                )
                             }
                         )
                     }
@@ -522,15 +591,26 @@ class WinterApi @Inject constructor(
                     bearerAuth(token)
                 }
             }.body()
-            Log.d(tag, "uploadImages success: ${response.getUploadedUrls()}")
+            Log.d(
+                tag,
+                "uploadImageParts success: ${response.getUploadedUrls().size} files uploaded: ${response.getUploadedUrls()}"
+            )
             response
         } catch (t: Throwable) {
-            Log.e(tag, "uploadImages failed: ${t.message}", t)
+            Log.e(tag, "uploadImageParts failed: ${t.message}", t)
             UploadImagesResponse(
                 success = false,
-                message = t.message ?: "Image upload failed"
+                code = 500,
+                message = t.message ?: "Upload failed"
             )
         }
+    }
+
+    suspend fun uploadVideo(
+        token: String,
+        videoPart: UploadImagePart
+    ): UploadImagesResponse {
+        return uploadImageParts(token, listOf(videoPart.copy(formKey = "video")))
     }
 
     suspend fun uploadImages(
@@ -555,4 +635,3 @@ class WinterApi @Inject constructor(
         return "$wsBase/ws?token=$token"
     }
 }
-

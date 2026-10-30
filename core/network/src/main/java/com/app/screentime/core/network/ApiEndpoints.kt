@@ -1,6 +1,7 @@
 package com.app.screentime.core.network
 
 import com.app.screentime.core.network.config.AppSecrets
+import com.app.screentime.core.network.security.NativeSecurityVault
 
 /**
  * Connect API endpoints configuration
@@ -11,14 +12,18 @@ object ApiEndpoints {
     private var overrideBaseUrl: String? = null
 
     fun setBaseUrl(url: String) {
-        overrideBaseUrl = url.trimEnd('/')
+        overrideBaseUrl = url.trimEnd('/').removeSuffix("/api")
     }
 
     /**
-     * Get base URL from custom override, AppSecrets, or fallback to production vercel url
+     * Get base URL from custom override, or natively resolved AppSecrets
      */
     fun getBaseUrl(): String {
-        return overrideBaseUrl ?: AppSecrets.Api.DEFAULT_BASE_URL.ifBlank { "https://connect-api-324708289864.us-central1.run.app" }
+        return overrideBaseUrl ?: AppSecrets.Api.DEFAULT_BASE_URL
+    }
+
+    object Config {
+        const val CONFIG = "/api/config"
     }
 
 
@@ -27,8 +32,15 @@ object ApiEndpoints {
         const val LOGIN = "/api/auth/login"
         const val AUTH = "/api/auth"
         const val GOOGLE = "/api/auth/google"
+        const val OTP_SEND = "/api/auth/otp/send"
+        const val OTP_VERIFY = "/api/auth/otp/verify"
         const val PROFILE = "/api/profile"
+        const val VISIBILITY = "/api/profile/visibility"
         const val FCM_TOKEN = "/api/auth/fcm-token"
+    }
+
+    object Preferences {
+        const val PREFERENCES = "/api/preferences"
     }
 
     object Discovery {
@@ -39,8 +51,16 @@ object ApiEndpoints {
     }
 
     object Messages {
+        // v2 Endpoints (Strict Header-based Bearer JWT authentication)
+        const val CONVERSATIONS_V2 = "/api/v2/messages/conversations"
+        fun conversationMessagesV2(conversationId: String) = "/api/v2/messages/conversations/$conversationId"
+        const val SEND_V2 = "/api/v2/messages/send"
+
+        // Legacy v1 Endpoints (Fallback)
         const val CONVERSATIONS = "/api/messages/conversations"
         fun conversationDetail(conversationId: String) = "/api/messages/conversations/$conversationId"
+        fun conversationMessages(conversationId: String) = "/api/messages/conversations/$conversationId"
+        fun legacyConversationMessages(conversationId: String) = "/api/messages/conversations/$conversationId"
         const val SEND = "/api/messages/send"
     }
 
@@ -63,6 +83,19 @@ object ApiEndpoints {
         const val RECHARGE_ALT = "/api/wallet/recharge"
         const val INFO = "/api/wallet/info"
         const val TRANSACTIONS = "/api/wallet/transactions"
+        const val PACKAGES = "/api/wallet/packages"
+        const val PACKS = "/api/wallet/packs"
+        const val ORDER_STATUS = "/api/wallet/order/status"
+        const val GOOGLE_PLAY_VERIFY = "/api/wallet/google-play/verify"
+    }
+
+    object Billing {
+        val BASE_URL: String get() = NativeSecurityVault.getBillingBaseUrl()
+        const val PRODUCTS = "/api/billing/products"
+        const val GOOGLE_VERIFY = "/api/billing/google/verify"
+
+        fun getProductsUrl(): String = "$BASE_URL$PRODUCTS"
+        fun getVerifyUrl(): String = "$BASE_URL$GOOGLE_VERIFY"
     }
 
     object History {
@@ -72,6 +105,7 @@ object ApiEndpoints {
     object Payments {
         const val ORDER = "/api/payments/order"
         const val CALLBACK = "/api/payments/callback"
+        const val WEBHOOK = "/api/payments/webhook"
         const val RETRY = "/api/payments/retry"
         const val REFUND = "/api/payments/refund"
         const val TIMELINE = "/api/payments/timeline"

@@ -48,7 +48,7 @@ class ODSTabsStyle {
         style.verticalArrangement = DSTabsTokens.verticalArrangement
         style.contentAlignment = DSTabsTokens.contentAlignment
         style.dividerFrameBackgroundColor =
-            listOf(ODSColorModel(hexColor = scheme.interactionStatesDisabledBackgroundDisabled))
+            listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
         style.dividerFrameBorderRadius = DSTabsTokens.dividerFrameBorderRadius
         style.dividerFrameHeight = DSTabsTokens.dividerFrameHeight
         style.dividerFrameOffset = DSTabsTokens.dividerFrameOffset

@@ -24,7 +24,6 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Centralized App Configuration Manager backed by the custom Backend Config API.
@@ -305,13 +304,14 @@ class AppConfigManager @Inject constructor(
         if (initialFetchDeferred.isCompleted) {
             return cachedApiKey
         }
-        return try {
-            withTimeoutOrNull(2000L.milliseconds) {
+        val fetched = try {
+            withTimeoutOrNull(2000L) {
                 initialFetchDeferred.await()
-            } ?: cachedApiKey
+            }
         } catch (_: Throwable) {
-            cachedApiKey
+            null
         }
+        return fetched ?: cachedApiKey
     }
 
     fun areAdsEnabled(): Boolean = cachedAdsEnabled

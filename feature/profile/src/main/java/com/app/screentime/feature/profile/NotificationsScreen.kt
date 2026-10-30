@@ -6,22 +6,22 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.core.ui.components.GenericHeader
+import com.app.screentime.core.ui.components.GenericHeaderProps
+import com.app.screentime.core.ui.components.HeaderTitleAlignment
 import com.app.screentime.core.ui.theme.zonaODSTheme
-import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
@@ -48,12 +48,15 @@ data class NotificationItem(
     val isUnread: Boolean,
     val actionText: String? = null,
     val avatarUrl: String? = null,
-    val iconRes: Int? = null,
+    val iconResName: String? = null,
+    val targetScreen: String? = null,
+    val targetId: String? = null,
     val isSectionHeader: Boolean = false
 )
 
 /**
  * Notifications Screen (Figma node-id 83-4).
+ * Dynamically displays FCM notifications stored in Room database via NotificationsViewModel.
  * Strictly adheres to Telekom ODS components, ZONA design standards, and GEMINI.md rules:
  * - 100% ODS components & ODSLazyColumn.
  * - Colors picked from `scheme: ODSTheme`.
@@ -64,108 +67,55 @@ data class NotificationItem(
 fun NotificationsScreen(
     modifier: Modifier = Modifier,
     scheme: ODSTheme = zonaODSTheme,
+    viewModel: NotificationsViewModel = hiltViewModel(),
     onBack: () -> Unit = {},
     onNavigateToChat: (String, String) -> Unit = { _, _ -> },
     onNavigateToProfile: (String, String) -> Unit = { _, _ -> }
 ) {
-    var selectedTab by remember { mutableStateOf("All") }
-    val tabs = listOf("All", "Matches", "Messages", "Activity")
-
-    val notifications = remember {
-        listOf(
-            NotificationItem(id = "sec_today", title = "ACTIVITY", timeAgo = "", message = "", category = "", isUnread = false, isSectionHeader = true),
-            NotificationItem(
-                id = "n1",
-                title = "Security Alert",
-                timeAgo = "Just now",
-                message = "Account Secured: Logged in successfully.",
-                category = "Activity",
-                isUnread = false,
-                iconRes = R.drawable.ic_info
-            ),
-            NotificationItem(
-                id = "n2",
-                title = "Connect Wallet Active",
-                timeAgo = "Today",
-                message = "Your wallet is active and ready for calls and messaging.",
-                category = "Activity",
-                isUnread = false,
-                iconRes = R.drawable.coin_icon
-            )
-        )
-    }
-
-    val filteredNotifications = remember(selectedTab, notifications) {
-        if (selectedTab == "All") {
-            notifications
-        } else {
-            notifications.filter { it.isSectionHeader || it.category.equals(selectedTab, ignoreCase = true) }
-        }
-    }
+    val state by viewModel.uiState.collectAsState()
 
     ODSBox(
         modifier = modifier.fillMaxSize(),
         background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
     ) {
         ODSColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding(),
-            verticalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Top,
+            gap = ODSVariables.spacingComponent2
         ) {
-            // ── Top Bar ───────────────────────────────────────────────────────
-            ODSRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = ODSVariables.spacingLayout1,
-                        vertical = ODSVariables.spacingComponent4
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start,
-                gap = ODSVariables.spacingComponent3
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.ic_arrow_left,
-                        contentDescription = "Back"
-                    ),
-                    tint = scheme.basicTextDominant.getColor(),
-                    modifier = Modifier
-                        .size(ODSVariables.sizingComponent8)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onBack
-                        )
-                )
-
-                ODSText(
-                    text = "Notifications",
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicTextDominant
-                )
-            }
+            GenericHeader(
+                props = GenericHeaderProps(
+                    title = "Notifications",
+                    showBackArrow = true,
+                    onBackClick = onBack,
+                    titleAlignment = HeaderTitleAlignment.CENTER
+                ),
+                scheme = scheme
+            )
 
             // ── Filter Tabs Row (Horizontally Scrollable) ─────────────────────
             ODSRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = ODSVariables.spacingLayout1),
+                    .padding(horizontal = ODSVariables.spacingLayout1, vertical = ODSVariables.spacingComponent2),
                 gap = ODSVariables.spacingComponent3,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                tabs.forEach { tab ->
-                    val isSelected = selectedTab == tab
+                state.tabs.forEach { tab ->
+                    val isSelected = state.selectedTab == tab
                     ODSRow(
                         modifier = Modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = { selectedTab = tab }
+                            onClick = { viewModel.selectTab(tab) }
                         ),
-                        padding = ODSPadding(top = 8.dp, bottom = 8.dp, left = 16.dp, right = 16.dp),
+                        padding = ODSPadding(
+                            top = 8.dp,
+                            bottom = 8.dp,
+                            left = 16.dp,
+                            right = 16.dp
+                        ),
                         cornerRadius = ODSCorners(all = ODSVariables.radiusFull),
                         border = if (!isSelected) ODSBorder(
                             width = 1.dp,
@@ -187,150 +137,194 @@ fun NotificationsScreen(
                 }
             }
 
-            // ── Notifications List using ODSLazyColumn (Rule #1) ────────────
-            ODSLazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                padding = ODSPadding(
-                    horizontal = ODSVariables.spacingLayout1,
-                    top = ODSVariables.spacingComponent3,
-                    bottom = ODSVariables.spacingComponent5
-                ),
-                gap = ODSVariables.spacingComponent3
-            ) {
-                items(filteredNotifications.size) { index ->
-                    val item = filteredNotifications[index]
-                    if (item.isSectionHeader) {
-                        ODSRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = ODSVariables.spacingComponent2),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ODSText(
-                                text = item.title,
-                                style = ODSTextStyles.microcopyBold,
-                                color = scheme.basicTextRecessive
-                            )
-                        }
-                    } else {
-                        ODSRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                    onClick = {
-                                        if (item.category == "Messages") {
-                                            onNavigateToChat(item.id, item.title)
-                                        } else if (item.category == "Matches") {
-                                            onNavigateToProfile(item.id, item.title)
-                                        }
-                                    }
-                                ),
-                            gap = 12.dp,
-                            padding = ODSPadding(all = 16.dp),
-                            cornerRadius = ODSCorners(all = ODSVariables.radiusLarge),
-                            verticalAlignment = Alignment.CenterVertically,
-                            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle))
-                        ) {
-                            if (item.avatarUrl != null) {
-                                ODSBox(
-                                    modifier = Modifier.size(56.dp),
-                                    cornerRadius = ODSCorners(all = 28.dp),
-                                    clipContent = true
-                                ) {
-                                    ODSImage(
-                                        imageModel = ODSImageModel(
-                                            url = item.avatarUrl,
-                                            contentDescription = item.title
-                                        ),
-                                        modifier = Modifier.size(56.dp),
-                                        cornerRadius = ODSCorners(all = 28.dp),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                            } else if (item.iconRes != null) {
-                                ODSBox(
-                                    modifier = Modifier.size(56.dp),
-                                    background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
-                                    cornerRadius = ODSCorners(all = 28.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    ODSIcon(
-                                        iconModel = ODSIconModel(
-                                            drawableRes = item.iconRes,
-                                            contentDescription = item.title
-                                        ),
-                                        tint = scheme.basicAccent.getColor(),
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            }
-
-                            ODSColumn(
-                                modifier = Modifier.weight(1f),
-                                gap = ODSVariables.spacingComponent1,
-                                verticalAlignment = Alignment.Top,
-                                horizontalAlignment = Alignment.Start
+            // ── Notifications List using ODSLazyColumn ────────────────────
+            if (state.notifications.isEmpty()) {
+                ODSBox(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ODSText(
+                        text = "No notifications yet",
+                        style = ODSTextStyles.bodyMBold,
+                        color = scheme.basicTextRecessive
+                    )
+                }
+            } else {
+                ODSLazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    padding = ODSPadding(
+                        horizontal = ODSVariables.spacingLayout1,
+                        top = ODSVariables.spacingComponent3,
+                        bottom = ODSVariables.spacingComponent5
+                    ),
+                    gap = ODSVariables.spacingComponent3
+                ) {
+                    items(state.notifications.size) { index ->
+                        val item = state.notifications[index]
+                        if (item.isSectionHeader) {
+                            ODSRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = ODSVariables.spacingComponent2),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                ODSRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    ODSText(
-                                        text = item.title,
-                                        style = ODSTextStyles.bodySBold,
-                                        color = scheme.basicTextDominant
-                                    )
-                                    ODSText(
-                                        text = item.timeAgo,
-                                        style = ODSTextStyles.microcopyRegular,
-                                        color = scheme.basicTextRecessive
-                                    )
-                                }
-
                                 ODSText(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = item.message,
-                                    style = ODSTextStyles.bodySRegular,
+                                    text = item.title,
+                                    style = ODSTextStyles.microcopyBold,
                                     color = scheme.basicTextRecessive
                                 )
-
-                                if (item.actionText != null) {
-                                    ODSRow(
-                                        modifier = Modifier.padding(top = 4.dp),
-                                        padding = ODSPadding(
-                                            top = 6.dp,
-                                            bottom = 6.dp,
-                                            left = 12.dp,
-                                            right = 12.dp
-                                        ),
-                                        cornerRadius = ODSCorners(all = ODSVariables.radiusSmall),
-                                        background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
-                                    ) {
-                                        ODSText(
-                                            text = item.actionText,
-                                            style = ODSTextStyles.microcopyBold,
-                                            color = scheme.basicBackgroundCard
-                                        )
+                            }
+                        } else {
+                            NotificationListItem(
+                                item = item,
+                                scheme = scheme,
+                                onClick = {
+                                    viewModel.markAsRead(item.id)
+                                    when (item.targetScreen) {
+                                        "chat" -> onNavigateToChat(item.targetId ?: item.id, item.title)
+                                        "profile" -> onNavigateToProfile(item.targetId ?: item.id, item.title)
+                                        else -> {
+                                            if (item.category == "Messages") {
+                                                onNavigateToChat(item.targetId ?: item.id, item.title)
+                                            } else if (item.category == "Matches") {
+                                                onNavigateToProfile(item.targetId ?: item.id, item.title)
+                                            }
+                                        }
                                     }
                                 }
-                            }
-
-                            if (item.isUnread) {
-                                ODSBox(
-                                    modifier = Modifier.size(8.dp),
-                                    background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-                                    cornerRadius = ODSCorners(all = 4.dp)
-                                )
-                            }
+                            )
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun NotificationListItem(
+    item: NotificationItem,
+    scheme: ODSTheme,
+    onClick: () -> Unit
+) {
+    val iconDrawableRes = when (item.iconResName) {
+        "coin_icon" -> com.telekom.odsystem.R.drawable.coin_icon
+        else -> com.telekom.odsystem.R.drawable.ic_info
+    }
+
+    ODSRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
+        gap = 12.dp,
+        padding = ODSPadding(all = 16.dp),
+        cornerRadius = ODSCorners(all = ODSVariables.radiusLarge),
+        verticalAlignment = Alignment.CenterVertically,
+        background = listOf(
+            ODSColorModel(
+                hexColor = if (item.isUnread) scheme.basicBackgroundSubtle else scheme.basicBackgroundCard
+            )
+        )
+    ) {
+        if (!item.avatarUrl.isNullOrBlank()) {
+            ODSBox(
+                modifier = Modifier.size(56.dp),
+                cornerRadius = ODSCorners(all = 28.dp),
+                clipContent = true
+            ) {
+                ODSImage(
+                    imageModel = ODSImageModel(
+                        url = item.avatarUrl,
+                        contentDescription = item.title
+                    ),
+                    modifier = Modifier.size(56.dp),
+                    cornerRadius = ODSCorners(all = 28.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        } else {
+            ODSBox(
+                modifier = Modifier.size(56.dp),
+                background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
+                cornerRadius = ODSCorners(all = 28.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                ODSIcon(
+                    iconModel = ODSIconModel(
+                        drawableRes = iconDrawableRes,
+                        contentDescription = item.title
+                    ),
+                    tint = scheme.basicAccent.getColor(),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+
+        ODSColumn(
+            modifier = Modifier.weight(1f),
+            gap = ODSVariables.spacingComponent1,
+            verticalAlignment = Alignment.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                ODSText(
+                    text = item.title,
+                    style = ODSTextStyles.bodySBold,
+                    color = scheme.basicTextDominant
+                )
+                ODSText(
+                    text = item.timeAgo,
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.basicTextRecessive
+                )
+            }
+
+            ODSText(
+                modifier = Modifier.fillMaxWidth(),
+                text = item.message,
+                style = ODSTextStyles.bodySRegular,
+                color = scheme.basicTextRecessive
+            )
+
+            if (!item.actionText.isNullOrBlank()) {
+                ODSRow(
+                    modifier = Modifier.padding(top = 4.dp),
+                    padding = ODSPadding(
+                        top = 6.dp,
+                        bottom = 6.dp,
+                        left = 12.dp,
+                        right = 12.dp
+                    ),
+                    cornerRadius = ODSCorners(all = ODSVariables.radiusSmall),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                ) {
+                    ODSText(
+                        text = item.actionText,
+                        style = ODSTextStyles.microcopyBold,
+                        color = scheme.basicBackgroundCard
+                    )
+                }
+            }
+        }
+
+        if (item.isUnread) {
+            ODSBox(
+                modifier = Modifier.size(8.dp),
+                background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
+                cornerRadius = ODSCorners(all = 4.dp)
+            )
         }
     }
 }

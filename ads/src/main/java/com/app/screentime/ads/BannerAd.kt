@@ -1,9 +1,9 @@
 package com.app.screentime.ads
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -19,11 +19,28 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
+import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.skeleton.ODSSkeleton
 import com.telekom.odsystem.atoms.skeleton.ODSSkeletonProps
 import com.telekom.odsystem.atoms.skeleton.ODSSkeletonVariant
 import com.telekom.odsystem.neutralScheme
 import kotlinx.coroutines.delay
+
+/**
+ * Ready-to-use Composable for embedding standard AdMob banner ads at the bottom of screens.
+ */
+@Composable
+fun AppBannerAd(
+    modifier: Modifier = Modifier,
+    adUnitId: String = AdConfig.getBannerAdUnitId()
+) {
+    val bannerPair = rememberBannerAd(adUnitId) ?: return
+    BannerAd(
+        adView = bannerPair.first,
+        adState = bannerPair.second,
+        modifier = modifier
+    )
+}
 
 /**
  * Banner Ad composable for displaying Google Mobile Ads banner.
@@ -37,7 +54,7 @@ fun BannerAd(
 ) {
     if (adState.isFailed) return
     val bannerHeight = 50.dp
-    Box(modifier = modifier.fillMaxWidth()) {
+    ODSBox(modifier = modifier.fillMaxWidth()) {
         AndroidView(
             factory = { adView },
             modifier = Modifier
@@ -109,6 +126,12 @@ fun rememberBannerAd(
             } else {
                 delay(5_000)
             }
+        }
+    }
+
+    DisposableEffect(adView) {
+        onDispose {
+            adView.destroy()
         }
     }
 

@@ -1,25 +1,130 @@
 package com.app.screentime.core.network.dto
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonPrimitive
+
+object StringOrIntStatusSerializer : KSerializer<String?> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("StringOrIntStatus", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): String? {
+        val jsonDecoder = decoder as? JsonDecoder ?: return try {
+            decoder.decodeString()
+        } catch (_: Exception) {
+            null
+        }
+        val element = jsonDecoder.decodeJsonElement()
+        return when (element) {
+            is JsonPrimitive -> element.content
+            else -> null
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: String?) {
+        if (value != null) encoder.encodeString(value) else encoder.encodeNull()
+    }
+}
 
 @Serializable
 data class ApiResponse<T>(
     val success: Boolean = true,
     val status_code: Int = 200,
-    val status: Int? = null,
+    @Serializable(with = StringOrIntStatusSerializer::class)
+    val status: String? = null,
     val message: String = "",
     val data: T? = null,
     val error: String? = null,
-    val timestamp: Long = 0L
-)
+    val timestamp: Long = 0L,
+    // Generic limit fields
+    val isLimitReached: Boolean = false,
+    val limitMessage: String? = null,
+    val quotaRemaining: Int? = null,
+    val quotaLimit: Int? = null,
+    // Backend compatibility aliases (snake_case)
+    val is_limit_reached: Boolean? = null,
+    val limit_message: String? = null,
+    val quota_remaining: Int? = null,
+    val quota_limit: Int? = null
+) {
+    val effectiveIsLimitReached: Boolean
+        get() = isLimitReached || is_limit_reached == true
+
+    val effectiveLimitMessage: String?
+        get() = limitMessage ?: limit_message
+
+    val effectiveQuotaRemaining: Int?
+        get() = quotaRemaining ?: quota_remaining
+
+    val effectiveQuotaLimit: Int?
+        get() = quotaLimit ?: quota_limit
+
+    fun toQuotaLimitInfo(): com.app.screentime.core.model.QuotaLimitInfo =
+        com.app.screentime.core.model.QuotaLimitInfo(
+            isLimitReached = effectiveIsLimitReached,
+            limitMessage = effectiveLimitMessage,
+            quotaRemaining = effectiveQuotaRemaining,
+            quotaLimit = effectiveQuotaLimit
+        )
+}
+
 
 @Serializable
 data class AuthResponse(
     val user: UserDto,
     val token: String,
     val is_new_user: Boolean = false,
+    val has_profile: Boolean = false,
+    val profile_complete: Boolean = false,
     val wallet: WalletDto? = null,
     val message: String = ""
+)
+
+@Serializable
+data class SendOtpRequest(
+    val phone: String
+)
+
+@Serializable
+data class SendOtpDataDto(
+    val mock_otp: String? = null,
+    val hint: String? = null
+)
+
+@Serializable
+data class SendOtpResponse(
+    val status: Int = 200,
+    val message: String = "",
+    val data: SendOtpDataDto? = null
+)
+
+@Serializable
+data class VerifyOtpRequest(
+    val phone: String,
+    val code: String
+)
+
+@Serializable
+data class VerifyOtpDataDto(
+    val user: UserDto? = null,
+    val token: String = "",
+    val is_new_user: Boolean = false,
+    val has_profile: Boolean = false,
+    val profile_complete: Boolean = false,
+    val message: String = ""
+)
+
+@Serializable
+data class VerifyOtpResponse(
+    val status: Int = 200,
+    val message: String = "",
+    val data: VerifyOtpDataDto? = null
 )
 
 @Serializable
@@ -31,6 +136,8 @@ data class UserDto(
     val display_name: String? = null,
     val google_id: String? = null,
     val role: String = "user",
+    val has_profile: Boolean = false,
+    val profile_complete: Boolean = false,
     val avatar_url: String? = null,
     val photos: List<String> = emptyList(),
     val bio: String? = null,
@@ -38,8 +145,12 @@ data class UserDto(
     val interests: List<String> = emptyList(),
     val dating_intent: String? = null,
     val city: String? = null,
+    val country: String? = null,
     val area: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val quality_score: Double = 0.0,
+    val profession: String? = null,
     val job: String? = null,
     val occupation: String? = null,
     val height: String? = null,
@@ -51,18 +162,44 @@ data class UserDto(
     val age: Int? = null,
     val about_me: String? = null,
     val prompts: List<ConnectProfilePromptDto> = emptyList(),
+    val likes_count: Int = 0,
+    val matches_count: Int = 0,
+    val likes: Int = 0,
+    val matches: Int = 0,
     val voice_rate_per_min: Double = 10.0,
     val group_rate_per_min: Double = 5.0,
     val chat_rate_per_msg: Double = 1.0,
     val is_online: Boolean = false,
     val is_busy: Boolean = false,
+    val visibility: String? = null,
+    val is_private: Boolean = false,
+    val discovery_enabled: Boolean = true,
     val created_at: String = "",
-    val relation_type: String? = null
+    val relation_type: String? = null,
+    val video_url: String? = null,
+    val videos: List<String> = emptyList(),
+    val company: String? = null,
+    val is_phone_verified: Boolean? = null,
+    val phone_verified: Boolean? = null
 ) {
     fun getResolvedName(): String {
         return name.ifBlank { display_name ?: "User" }
     }
 }
+
+@Serializable
+data class ProfileVisibilityRequest(
+    val visibility: String? = null,
+    val discovery_enabled: Boolean? = null,
+    val is_private: Boolean? = null
+)
+
+@Serializable
+data class ProfileVisibilityResponseData(
+    val visibility: String = "public",
+    val discovery_enabled: Boolean = true,
+    val is_private: Boolean = false
+)
 
 @Serializable
 data class WalletDto(
@@ -85,19 +222,112 @@ data class WalletInfoDto(
 @Serializable
 data class WalletPackDto(
     val id: String = "",
+    val name: String = "",
+    val amount: Double = 0.0,
+    val amount_in_paise: Long = 0L,
+    val currency: String = "INR",
+    val credits: Int = 0,
+    val voice_minutes: Int = 0,
+    val video_minutes: Int = 0,
+    val benefits: List<String> = emptyList(),
+    val description: String = "",
+    val popular_badge: Boolean = false,
+    // Legacy / fallback fields
     val coins: Int = 0,
     val bonus_coins: Int = 0,
     val total_coins: Int = 0,
     val price_inr: Double = 0.0,
     val badge: String? = null,
     val is_popular: Boolean = false,
-    val description: String = ""
-)
+    val type: String = "inapp",
+    val category: String = "",
+    val google_product_id: String = ""
+) {
+    val effectiveCredits: Int
+        get() = if (credits > 0) credits else if (total_coins > 0) total_coins else coins
+
+    val effectivePrice: Double
+        get() = if (amount > 0.0) amount else price_inr
+
+    val effectivePriceInPaise: Long
+        get() = if (amount_in_paise > 0L) amount_in_paise else (effectivePrice * 100).toLong()
+
+    val effectiveName: String
+        get() = if (name.isNotBlank()) name else "$effectiveCredits Credits Pack"
+
+    val isPopularPack: Boolean
+        get() = popular_badge || is_popular
+}
 
 @Serializable
 data class WalletPacksResponse(
     val count: Int = 0,
     val packs: List<WalletPackDto> = emptyList()
+)
+
+@Serializable
+data class GooglePlayPurchaseVerifyRequest(
+    val purchase_token: String,
+    val product_id: String,
+    val order_id: String? = null,
+    val package_id: String? = null,
+    val credits: Int = 0,
+    val amount: Double = 0.0
+)
+
+@Serializable
+data class GooglePlayPurchaseVerifyResponse(
+    val success: Boolean = true,
+    val message: String = "",
+    val credits_awarded: Int = 0,
+    val balance: Double = 0.0
+)
+
+
+@Serializable
+data class WalletOrderStatusDto(
+    val order_id: String = "",
+    val purchase_id: String? = null,
+    val package_id: String? = null,
+    val package_name: String? = null,
+    val amount_in_rupees: Double = 0.0,
+    val amount_in_paise: Long = 0L,
+    val currency: String = "INR",
+    val credits_awarded: Int = 0,
+    val status: String = "",
+    val gateway_transaction_id: String? = null,
+    val created_at: String? = null,
+    val verified_at: String? = null
+)
+
+@Serializable
+data class EndCallRequest(
+    val session_id: String = "",
+    val call_id: String = "",
+    val duration_seconds: Int = 0
+)
+
+@Serializable
+data class RejectCallRequest(
+    val session_id: String = "",
+    val call_id: String = ""
+)
+
+@Serializable
+data class AcceptCallRequest(
+    val session_id: String = "",
+    val call_id: String = ""
+)
+
+@Serializable
+data class CallSessionResponse(
+    val session_id: String? = null,
+    val call_id: String? = null,
+    val caller_id: String? = null,
+    val receiver_id: String? = null,
+    val status: String? = null,
+    val duration_seconds: Int = 0,
+    val credits_consumed: Int = 0
 )
 
 @Serializable
@@ -183,7 +413,7 @@ data class PaginationDto(
 
 @Serializable
 data class WalletResponse(
-    val wallet: WalletDto,
+    val wallet: WalletDto?,
     val transactions: List<TransactionDto>? = null
 )
 
@@ -399,13 +629,18 @@ data class UploadImagesData(
     val urls: List<String> = emptyList(),
     val photos: List<String> = emptyList(),
     val images: List<String> = emptyList(),
-    val url: String? = null
+    val url: String? = null,
+    val thumbnail_url: String? = null,
+    val media_type: String? = null,
+    val original_bytes: Long? = null,
+    val compressed_bytes: Long? = null,
+    val count: Int? = null
 ) {
     fun getAllUrls(): List<String> {
+        if (!url.isNullOrBlank()) return listOf(url)
         if (urls.isNotEmpty()) return urls
         if (photos.isNotEmpty()) return photos
         if (images.isNotEmpty()) return images
-        if (!url.isNullOrBlank()) return listOf(url)
         return emptyList()
     }
 }
@@ -413,11 +648,15 @@ data class UploadImagesData(
 @Serializable
 data class UploadImagesResponse(
     val success: Boolean = true,
+    val code: Int? = null,
     val message: String = "",
     val data: UploadImagesData? = null,
     val urls: List<String> = emptyList(),
     val photos: List<String> = emptyList()
 ) {
+    val isSuccess: Boolean
+        get() = (code == null || code in 200..299) && success
+
     fun getUploadedUrls(): List<String> {
         val fromData = data?.getAllUrls() ?: emptyList()
         if (fromData.isNotEmpty()) return fromData
@@ -430,7 +669,8 @@ data class UploadImagesResponse(
 data class UploadImagePart(
     val filename: String,
     val bytes: ByteArray,
-    val mimeType: String = "image/jpeg"
+    val mimeType: String = "image/jpeg",
+    val formKey: String? = null
 )
 
 

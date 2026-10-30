@@ -47,9 +47,9 @@ data class ODSNavigationItemTokens(
 )
 
 val defaultODSNavigationItemTokens = ODSNavigationItemTokens(
-    gap = DSVariables.spacingComponent2,
+    gap = DSVariables.spacingComponent0,
     padding = ODSPadding(
-        top = DSVariables.spacingComponent4,
+        top = DSVariables.spacingComponent2,
         left = DSVariables.spacingComponent2,
         right = DSVariables.spacingComponent2
     ),

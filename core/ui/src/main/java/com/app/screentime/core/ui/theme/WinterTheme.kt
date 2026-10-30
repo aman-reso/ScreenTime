@@ -27,45 +27,39 @@ val FunnelSansFontFamily = FontFamily(
 )
 
 private val WinterLightColorScheme = lightColorScheme(
-    primary          = Color(0xFFD81B60),
-    onPrimary        = Color(0xFFFFFFFF),
-    secondary        = Color(0xFFFCE4EC),
-    tertiary         = Color(0xFFF06292),
-    background       = Color(0xFFFFF1F6),
-    surface          = Color(0xFFFFFFFF),
-    onBackground     = Color(0xFF1A1A2E),
-    onSurface        = Color(0xFF1A1A2E),
-    error            = Color(0xFFC62828),
-    surfaceVariant   = Color(0xFFFFF9FB),
-    outline          = Color(0xFFDED4D8)
+    primary = Color(0xFFD81B60),
+    onPrimary = Color(0xFFFFFFFF),
+    secondary = Color(0xFFFCE4EC),
+    tertiary = Color(0xFFF06292),
+    background = Color(0xFFFFF1F6),
+    surface = Color(0xFFFFFFFF),
+    onBackground = Color(0xFF1A1A2E),
+    onSurface = Color(0xFF1A1A2E),
+    error = Color(0xFFC62828),
+    surfaceVariant = Color(0xFFFFF9FB),
+    outline = Color(0xFFDED4D8)
 )
 
 private val WinterDarkColorScheme = darkColorScheme(
-    primary          = Color(0xFFD81B60),
-    onPrimary        = Color(0xFFFFF7FA),
-    secondary        = Color(0xFF4A1830),
-    tertiary         = Color(0xFF261B24),
-    background       = Color(0xFF160E14),
-    surface          = Color(0xFF1C151B),
-    onBackground     = Color(0xFFFFF7FA),
-    onSurface        = Color(0xFFFFF7FA),
-    error            = Color(0xFFEF5350),
-    surfaceVariant   = Color(0xFF261B24),
-    outline          = Color(0xFF4A3943)
+    primary = Color(0xFFD81B60),
+    onPrimary = Color(0xFFFFF7FA),
+    secondary = Color(0xFF4A1830),
+    tertiary = Color(0xFF261B24),
+    background = Color(0xFF160E14),
+    surface = Color(0xFF1C151B),
+    onBackground = Color(0xFFFFF7FA),
+    onSurface = Color(0xFFFFF7FA),
+    error = Color(0xFFEF5350),
+    surfaceVariant = Color(0xFF261B24),
+    outline = Color(0xFF4A3943)
 )
 
 @Composable
 fun WinterTheme(
-    darkTheme: Boolean = AppThemeManager.isDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val themeName by AppThemeManager.currentThemeName.collectAsState()
-    val isDark = when (themeName) {
-        "Light", "Light Mode" -> false
-        "Dark", "Dark Mode" -> true
-        else -> if (themeName.contains("Dark")) true else isSystemInDarkTheme()
-    }
 
+    val isDark = false
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -90,9 +84,3 @@ fun WinterTheme(
         )
     }
 }
-
-@Composable
-fun ChattyTheme(
-    darkTheme: Boolean = AppThemeManager.isDarkTheme(),
-    content: @Composable () -> Unit
-) = WinterTheme(darkTheme = darkTheme, content = content)

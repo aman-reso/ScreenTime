@@ -3,6 +3,7 @@ package com.app.screentime.feature.profile
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -109,7 +110,6 @@ fun WhoLikedMeScreen(
                     )
                 }
             } else if (uiState.profiles.isEmpty()) {
-                // Empty state
                 ODSColumn(
                     modifier = Modifier
                         .weight(1f)
@@ -131,7 +131,7 @@ fun WhoLikedMeScreen(
                                 drawableRes = R.drawable.ic_heart,
                                 contentDescription = "Who Liked Me"
                             ),
-                            tint = scheme.basicAccent.getColor(),
+                            tint = scheme.basicText.getColor(),
                             modifier = Modifier.size(40.dp)
                         )
                     }
@@ -144,7 +144,7 @@ fun WhoLikedMeScreen(
                         ODSText(
                             text = "No Likes Yet",
                             style = ODSTextStyles.bodyMBold,
-                            color = scheme.basicTextDominant,
+                            color = scheme.basicText,
                             textAlign = TextAlign.Center
                         )
 
@@ -156,6 +156,7 @@ fun WhoLikedMeScreen(
                         )
                     }
 
+                    Spacer(modifier = Modifier.size(ODSVariables.spacingComponent4))
                     ODSButton(
                         scheme = scheme,
                         props = ODSButtonProps(

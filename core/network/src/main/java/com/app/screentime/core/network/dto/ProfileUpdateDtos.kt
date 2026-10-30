@@ -8,6 +8,7 @@ data class ProfileUpdateRequest(
     val display_name: String? = null,
     val dob: String? = null,
     val date_of_birth: String? = null,
+    val age: Int? = null,
     val height: Int? = null,
     val height_cm: Int? = null,
     val gender: String? = null,
@@ -21,12 +22,15 @@ data class ProfileUpdateRequest(
     val job: String? = null,
     val occupation: String? = null,
     val education: String? = null,
+    val company: String? = null,
     val languages: List<String>? = null,
     val income: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
     val avatar_url: String? = null,
-    val photos: List<String>? = null
+    val photos: List<String>? = null,
+    val video_url: String? = null,
+    val videos: List<String>? = null
 )
 
 @Serializable

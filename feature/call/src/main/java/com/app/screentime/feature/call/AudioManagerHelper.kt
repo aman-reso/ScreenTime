@@ -21,7 +21,7 @@ class AudioManagerHelper(private val context: Context) {
     private fun getToneGenerator(): ToneGenerator? {
         if (toneGenerator == null) {
             try {
-                toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 85)
+                toneGenerator = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 75)
             } catch (e: Exception) {
                 Log.w("AudioHelper", "Failed to initialize tone generator: ${e.message}")
             }
@@ -29,15 +29,15 @@ class AudioManagerHelper(private val context: Context) {
         return toneGenerator
     }
 
-    fun startCallAudio() {
+    fun startCallAudio(isSpeaker: Boolean = false) {
         try {
             audioManager?.let { am ->
                 previousAudioMode = am.mode
                 am.mode = AudioManager.MODE_IN_COMMUNICATION
                 am.isMicrophoneMute = false
-                am.isSpeakerphoneOn = true
+                am.isSpeakerphoneOn = isSpeaker
             }
-            Log.i("AudioHelper", "🔊 Call audio started with MODE_IN_COMMUNICATION, speaker=ON")
+            Log.i("AudioHelper", "🔊 Call audio started with MODE_IN_COMMUNICATION, speaker=$isSpeaker")
         } catch (e: Exception) {
             Log.e("AudioHelper", "Failed to start call audio: ${e.message}")
         }
@@ -89,7 +89,9 @@ class AudioManagerHelper(private val context: Context) {
         ringbackJob?.cancel()
         ringbackJob = null
         try {
-            getToneGenerator()?.stopTone()
+            toneGenerator?.stopTone()
+            toneGenerator?.release()
+            toneGenerator = null
         } catch (e: Exception) {
             Log.w("AudioHelper", "Failed to stop tone: ${e.message}")
         }
@@ -99,8 +101,10 @@ class AudioManagerHelper(private val context: Context) {
      * Plays a pleasant chime when the call connects.
      */
     fun playCallConnectedTone() {
+        stopDialingTone()
         try {
-            getToneGenerator()?.startTone(ToneGenerator.TONE_PROP_ACK, 400)
+            val gen = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 75)
+            gen.startTone(ToneGenerator.TONE_PROP_ACK, 250)
         } catch (e: Exception) {
             Log.w("AudioHelper", "Failed to play connect tone: ${e.message}")
         }
@@ -110,8 +114,10 @@ class AudioManagerHelper(private val context: Context) {
      * Plays a standard busy/disconnect tone when the call ends.
      */
     fun playCallEndedTone() {
+        stopDialingTone()
         try {
-            getToneGenerator()?.startTone(ToneGenerator.TONE_SUP_BUSY, 800)
+            val gen = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 75)
+            gen.startTone(ToneGenerator.TONE_SUP_BUSY, 600)
         } catch (e: Exception) {
             Log.w("AudioHelper", "Failed to play end tone: ${e.message}")
         }

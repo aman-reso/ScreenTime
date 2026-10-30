@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.screentime.core.faceverification.FaceVerificationManager
+import com.app.screentime.core.faceverification.model.FaceVerificationResult
 import com.app.screentime.core.network.api.WinterApi
 import com.app.screentime.core.network.dto.ProfileUpdateRequest
 import com.app.screentime.core.network.dto.UploadImagePart
@@ -19,32 +21,49 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.Period
+import com.app.screentime.feature.preferences.domain.model.OnboardingCategory
+import com.app.screentime.feature.preferences.domain.model.OnboardingSubStep
 import javax.inject.Inject
 
 data class PreferencesUiState(
+    val category: OnboardingCategory = OnboardingCategory.ESSENTIAL_DETAILS,
     val currentStep: Int = 1,
     val totalSteps: Int = 3,
     val preferenceSubStep: Int = 1,
     val name: String = "",
     val nameError: String? = null,
-    val gender: String = "Male",
+    val gender: String = "",
     val genderError: String? = null,
-    val birthDay: String = "15",
-    val birthMonth: String = "Jan",
-    val birthYear: String = "1998",
+    val birthDay: String = "",
+    val birthMonth: String = "",
+    val birthYear: String = "",
+    val ageYears: String = "",
     val dobError: String? = null,
-    val heightCm: String = "175",
+    val heightCm: String = "",
     val heightError: String? = null,
-    val interestedIn: String = "Women",
-    val relationshipIntent: String = "Long-term partner",
-    val languages: List<String> = listOf("English", "Hindi"),
-    val income: String = "$50,000 – $100,000",
+    val interestedIn: String = "",
+    val relationshipIntent: String = "",
+    val languages: List<String> = emptyList(),
+    val profession: String = "",
+    val education: String = "",
+    val interests: List<String> = emptyList(),
+    val visibility: String = "public",
+    val income: String = "",
     val bio: String = "",
     val bioError: String? = null,
     val uploadedPhotos: List<String> = emptyList(),
     val isUploadingPhoto: Boolean = false,
-    val currentCity: String = "Detecting location...",
+    val photoError: String? = null,
+    val livePhotoUri: String? = null,
+    val isVerifyingFace: Boolean = false,
+    val isFaceVerified: Boolean = false,
+    val faceSimilarityScore: Float? = null,
+    val faceVerificationError: String? = null,
+    val currentCity: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val isLocationEnabled: Boolean = false,
+    val locationError: String? = null,
     val isSubmitting: Boolean = false,
     val isSuccess: Boolean = false,
     val error: String? = null
@@ -55,7 +74,8 @@ class PreferencesViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val sessionManager: SessionManager,
     private val preferencesManager: PreferencesManager,
-    private val api: WinterApi
+    private val api: WinterApi,
+    private val faceVerificationManager: FaceVerificationManager
 ) : ViewModel() {
 
     companion object {
@@ -75,6 +95,10 @@ class PreferencesViewModel @Inject constructor(
         private const val KEY_DRAFT_CURRENT_STEP = "draft_current_step"
         private const val KEY_DRAFT_SUB_STEP = "draft_sub_step"
         private const val KEY_DRAFT_PHOTOS = "draft_photos"
+        private const val KEY_DRAFT_LIVE_PHOTO = "draft_live_photo"
+        private const val KEY_DRAFT_CITY = "draft_city"
+        private const val KEY_DRAFT_LATITUDE = "draft_latitude"
+        private const val KEY_DRAFT_LONGITUDE = "draft_longitude"
     }
 
     private val draftPrefs by lazy {
@@ -92,6 +116,10 @@ class PreferencesViewModel @Inject constructor(
             _uiState.value = updated
             saveDraft(updated)
         }
+        val savedLivePhoto = _uiState.value.livePhotoUri
+        if (!savedLivePhoto.isNullOrBlank()) {
+            verifyLivePhoto(savedLivePhoto)
+        }
     }
 
     private fun loadInitialState(): PreferencesUiState {
@@ -100,22 +128,22 @@ class PreferencesViewModel @Inject constructor(
             .takeUnless { it.matches(Regex("(?i)^User(\\s*\\d+)?$")) } ?: ""
 
         val savedName = draft.getString(KEY_DRAFT_NAME, null) ?: sessionName
-        val savedGender = draft.getString(KEY_DRAFT_GENDER, null) ?: "Male"
-        val savedBirthDay = draft.getString(KEY_DRAFT_BIRTH_DAY, null) ?: "15"
-        val savedBirthMonth = draft.getString(KEY_DRAFT_BIRTH_MONTH, null) ?: "Jan"
-        val savedBirthYear = draft.getString(KEY_DRAFT_BIRTH_YEAR, null) ?: "1998"
-        val savedHeight = draft.getString(KEY_DRAFT_HEIGHT, null) ?: "175"
-        val savedInterestedIn = draft.getString(KEY_DRAFT_INTERESTED_IN, null) ?: "Women"
-        val savedIntent = draft.getString(KEY_DRAFT_INTENT, null) ?: "Long-term partner"
+        val savedGender = draft.getString(KEY_DRAFT_GENDER, null) ?: ""
+        val savedBirthDay = draft.getString(KEY_DRAFT_BIRTH_DAY, null) ?: ""
+        val savedBirthMonth = draft.getString(KEY_DRAFT_BIRTH_MONTH, null) ?: ""
+        val savedBirthYear = draft.getString(KEY_DRAFT_BIRTH_YEAR, null) ?: ""
+        val savedHeight = draft.getString(KEY_DRAFT_HEIGHT, null) ?: ""
+        val savedInterestedIn = draft.getString(KEY_DRAFT_INTERESTED_IN, null) ?: ""
+        val savedIntent = draft.getString(KEY_DRAFT_INTENT, null) ?: ""
         val savedLanguagesStr = draft.getString(KEY_DRAFT_LANGUAGES, null)
         val savedLanguages = if (!savedLanguagesStr.isNullOrBlank()) {
             savedLanguagesStr.split(LIST_DELIMITER).map { it.trim() }.filter { it.isNotEmpty() }
         } else {
-            listOf("English", "Hindi")
+            emptyList()
         }
-        val savedIncome = draft.getString(KEY_DRAFT_INCOME, null) ?: "$50,000 – $100,000"
+        val savedIncome = draft.getString(KEY_DRAFT_INCOME, null) ?: ""
         val savedBio = draft.getString(KEY_DRAFT_BIO, null) ?: ""
-        val savedSubStep = draft.getInt(KEY_DRAFT_SUB_STEP, 1).coerceIn(1, 9)
+        val savedSubStep = draft.getInt(KEY_DRAFT_SUB_STEP, 1).coerceIn(1, 6)
         val savedCurrentStep = draft.getInt(KEY_DRAFT_CURRENT_STEP, 1).coerceIn(1, 3)
         val savedPhotosStr = draft.getString(KEY_DRAFT_PHOTOS, null)
         val savedPhotos = if (!savedPhotosStr.isNullOrBlank()) {
@@ -123,9 +151,31 @@ class PreferencesViewModel @Inject constructor(
         } else {
             emptyList()
         }
+        val savedLivePhoto = draft.getString(KEY_DRAFT_LIVE_PHOTO, null)
+        val isLivePhotoFileValid = savedLivePhoto?.let { uriStr ->
+            try {
+                val path = if (uriStr.startsWith("file://")) uriStr.removePrefix("file://") else android.net.Uri.parse(uriStr).path
+                if (path != null) {
+                    val file = java.io.File(path)
+                    file.exists() && file.length() > 0
+                } else false
+            } catch (_: Exception) {
+                false
+            }
+        } ?: false
+
+        val savedLat = draft.getString(KEY_DRAFT_LATITUDE, null)?.toDoubleOrNull() ?: preferencesManager.getUserLatitude()
+        val savedLng = draft.getString(KEY_DRAFT_LONGITUDE, null)?.toDoubleOrNull() ?: preferencesManager.getUserLongitude()
+        val savedCity = draft.getString(KEY_DRAFT_CITY, null) ?: preferencesManager.getUserCity() ?: ""
+        val hasValidCoords = savedLat != null && savedLng != null && savedLat != 0.0 && savedLng != 0.0
+        val isLocationTrulyEnabled = hasValidCoords && savedCity.isNotBlank() &&
+                !savedCity.equals("Detecting location...", ignoreCase = true) &&
+                !savedCity.equals("Location Off", ignoreCase = true) &&
+                !savedCity.equals("Location detection failed", ignoreCase = true)
 
         return PreferencesUiState(
             currentStep = savedCurrentStep,
+            totalSteps = 3,
             preferenceSubStep = savedSubStep,
             name = savedName,
             gender = savedGender,
@@ -138,7 +188,13 @@ class PreferencesViewModel @Inject constructor(
             languages = savedLanguages,
             income = savedIncome,
             bio = savedBio,
-            uploadedPhotos = savedPhotos
+            uploadedPhotos = savedPhotos,
+            livePhotoUri = if (isLivePhotoFileValid) savedLivePhoto else null,
+            isFaceVerified = false,
+            currentCity = if (isLocationTrulyEnabled) savedCity else "",
+            latitude = if (isLocationTrulyEnabled) savedLat else null,
+            longitude = if (isLocationTrulyEnabled) savedLng else null,
+            isLocationEnabled = isLocationTrulyEnabled
         )
     }
 
@@ -158,11 +214,20 @@ class PreferencesViewModel @Inject constructor(
             .putInt(KEY_DRAFT_SUB_STEP, state.preferenceSubStep)
             .putInt(KEY_DRAFT_CURRENT_STEP, state.currentStep)
             .putString(KEY_DRAFT_PHOTOS, state.uploadedPhotos.joinToString(LIST_DELIMITER))
+            .putString(KEY_DRAFT_LIVE_PHOTO, state.livePhotoUri)
+            .putString(KEY_DRAFT_CITY, state.currentCity)
+            .putString(KEY_DRAFT_LATITUDE, state.latitude?.toString())
+            .putString(KEY_DRAFT_LONGITUDE, state.longitude?.toString())
             .apply()
     }
 
     fun clearDraft() {
         draftPrefs.edit().clear().apply()
+    }
+
+    fun resetState() {
+        draftPrefs.edit().clear().apply()
+        _uiState.value = PreferencesUiState()
     }
 
     fun updateName(name: String) {
@@ -179,6 +244,24 @@ class PreferencesViewModel @Inject constructor(
 
     fun updateGender(gender: String) {
         val newState = _uiState.value.copy(gender = gender, genderError = null)
+        _uiState.value = newState
+        saveDraft(newState)
+    }
+
+    fun updateAgeYears(age: String) {
+        val ageNum = age.toIntOrNull()
+        val error = when {
+            age.isBlank() -> "Please select your age"
+            ageNum == null -> "Please enter a valid number"
+            ageNum < 18 || ageNum > 40 -> "Age must be between 18 and 40 years"
+            else -> null
+        }
+        val calculatedYear = (2026 - (ageNum ?: 24)).toString()
+        val newState = _uiState.value.copy(
+            ageYears = age,
+            birthYear = calculatedYear,
+            dobError = error
+        )
         _uiState.value = newState
         saveDraft(newState)
     }
@@ -213,7 +296,7 @@ class PreferencesViewModel @Inject constructor(
 
     fun addPhoto(url: String) {
         val current = _uiState.value.uploadedPhotos
-        if (current.size < 5) {
+        if (current.size < 2) {
             val newState = _uiState.value.copy(uploadedPhotos = current + url)
             _uiState.value = newState
             saveDraft(newState)
@@ -224,39 +307,23 @@ class PreferencesViewModel @Inject constructor(
         if (uris.isEmpty()) return
         val token = sessionManager.getToken() ?: ""
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.value = _uiState.value.copy(isUploadingPhoto = true, error = null)
+            _uiState.value = _uiState.value.copy(isUploadingPhoto = true, error = null, photoError = null)
             try {
-                val parts = uris.mapIndexedNotNull { index, uri ->
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        val bytes = stream.readBytes()
-                        val detectedMime = context.contentResolver.getType(uri)?.lowercase()
-                        val mimeType = when {
-                            detectedMime?.contains("webp") == true -> "image/webp"
-                            detectedMime?.contains("png") == true -> "image/png"
-                            detectedMime?.contains("gif") == true -> "image/gif"
-                            detectedMime?.contains("heic") == true || detectedMime?.contains("heif") == true -> "image/heic"
-                            bytes.size >= 12 && bytes[0] == 0x52.toByte() && bytes[1] == 0x49.toByte() &&
-                                    bytes[2] == 0x46.toByte() && bytes[3] == 0x46.toByte() &&
-                                    bytes[8] == 0x57.toByte() && bytes[9] == 0x45.toByte() &&
-                                    bytes[10] == 0x42.toByte() && bytes[11] == 0x50.toByte() -> "image/webp"
-                            bytes.size >= 8 && bytes[0] == 0x89.toByte() && bytes[1] == 0x50.toByte() &&
-                                    bytes[2] == 0x4E.toByte() && bytes[3] == 0x47.toByte() -> "image/png"
-                            else -> "image/jpeg"
-                        }
-                        val extension = when (mimeType) {
-                            "image/webp" -> "webp"
-                            "image/png" -> "png"
-                            "image/gif" -> "gif"
-                            "image/heic" -> "heic"
-                            else -> "jpg"
-                        }
-                        val fileName = "photo_${System.currentTimeMillis()}_$index.$extension"
-                        UploadImagePart(
-                            filename = fileName,
-                            bytes = bytes,
-                            mimeType = mimeType
+                // Detect face using Google ML Kit first before uploading
+                for (uri in uris) {
+                    val faceDetected = faceVerificationManager.hasFace(uri)
+                    if (!faceDetected) {
+                        _uiState.value = _uiState.value.copy(
+                            isUploadingPhoto = false,
+                            photoError = "No face detected in photo. Please choose a photo where your face is clearly visible.",
+                            error = "No face detected in photo. Please choose a photo where your face is clearly visible."
                         )
+                        return@launch
                     }
+                }
+
+                val parts = uris.mapIndexedNotNull { index, uri ->
+                    com.app.screentime.core.network.util.ImageCompressor.compressUriToPart(context, uri, index)
                 }
 
                 if (parts.isEmpty()) {
@@ -267,10 +334,11 @@ class PreferencesViewModel @Inject constructor(
                 val response = api.uploadImageParts(token, parts)
                 val urls = response.getUploadedUrls()
                 if (urls.isNotEmpty()) {
-                    val updated = (_uiState.value.uploadedPhotos + urls).take(5)
+                    val updated = (_uiState.value.uploadedPhotos + urls).take(2)
                     val newState = _uiState.value.copy(
                         uploadedPhotos = updated,
                         isUploadingPhoto = false,
+                        photoError = null,
                         error = null
                     )
                     _uiState.value = newState
@@ -301,8 +369,32 @@ class PreferencesViewModel @Inject constructor(
         }
     }
 
-    fun updateLocation(city: String, isEnabled: Boolean) {
-        _uiState.value = _uiState.value.copy(currentCity = city, isLocationEnabled = isEnabled)
+
+
+    fun updateLocation(city: String?, lat: Double? = null, lng: Double? = null, isEnabled: Boolean) {
+        val cleanCity = city?.trim()?.takeIf { it.isNotBlank() } ?: ""
+        val newLat = lat ?: _uiState.value.latitude
+        val newLng = lng ?: _uiState.value.longitude
+        val hasValidCoords = newLat != null && newLng != null && (newLat != 0.0 || newLng != 0.0)
+        val isCityValid = cleanCity.isNotBlank() &&
+                !cleanCity.equals("Detecting location...", ignoreCase = true) &&
+                !cleanCity.equals("Location Off", ignoreCase = true) &&
+                !cleanCity.equals("Location detection failed", ignoreCase = true)
+        val validEnabled = isEnabled && hasValidCoords && isCityValid
+
+        val newState = _uiState.value.copy(
+            currentCity = cleanCity,
+            latitude = if (validEnabled) newLat else null,
+            longitude = if (validEnabled) newLng else null,
+            isLocationEnabled = validEnabled,
+            locationError = null
+        )
+        if (validEnabled && newLat != null && newLng != null) {
+            preferencesManager.setUserLocation(newLat, newLng)
+            preferencesManager.setUserCity(cleanCity)
+        }
+        _uiState.value = newState
+        saveDraft(newState)
     }
 
     fun updateInterestedIn(option: String) {
@@ -337,6 +429,36 @@ class PreferencesViewModel @Inject constructor(
         saveDraft(newState)
     }
 
+    fun updateProfession(profession: String) {
+        val newState = _uiState.value.copy(profession = profession)
+        _uiState.value = newState
+        saveDraft(newState)
+    }
+
+    fun updateEducation(education: String) {
+        val newState = _uiState.value.copy(education = education)
+        _uiState.value = newState
+        saveDraft(newState)
+    }
+
+    fun toggleInterest(interest: String) {
+        val current = _uiState.value.interests.toMutableList()
+        if (current.contains(interest)) {
+            current.remove(interest)
+        } else {
+            current.add(interest)
+        }
+        val newState = _uiState.value.copy(interests = current)
+        _uiState.value = newState
+        saveDraft(newState)
+    }
+
+    fun updateVisibility(visibility: String) {
+        val newState = _uiState.value.copy(visibility = visibility)
+        _uiState.value = newState
+        saveDraft(newState)
+    }
+
     fun updateBio(bio: String) {
         val error = if (bio.length > 250) "Bio cannot exceed 250 characters" else null
         val newState = _uiState.value.copy(bio = bio, bioError = error)
@@ -345,7 +467,8 @@ class PreferencesViewModel @Inject constructor(
     }
 
     fun setPreferenceSubStep(step: Int) {
-        val newState = _uiState.value.copy(preferenceSubStep = step.coerceIn(1, 9))
+        val maxStep = if (_uiState.value.currentStep == 1) 6 else 6
+        val newState = _uiState.value.copy(preferenceSubStep = step.coerceIn(1, maxStep))
         _uiState.value = newState
         saveDraft(newState)
     }
@@ -358,39 +481,50 @@ class PreferencesViewModel @Inject constructor(
 
     fun validateSubStep(step: Int): Boolean {
         val state = _uiState.value
-        when (step) {
-            1 -> {
-                if (state.name.isBlank() || state.name.trim().length < 2) {
-                    _uiState.value = state.copy(nameError = "Please enter your name (min 2 characters)")
-                    return false
+        if (state.currentStep == 1) {
+            when (step) {
+                1 -> {
+                    if (state.name.isBlank() || state.name.trim().length < 2) {
+                        _uiState.value = state.copy(nameError = "Please enter your name (min 2 characters)")
+                        return false
+                    }
                 }
-            }
-            2 -> {
-                if (state.gender.isBlank()) {
-                    _uiState.value = state.copy(genderError = "Please select your gender")
-                    return false
+                2 -> {
+                    if (state.gender.isBlank()) {
+                        _uiState.value = state.copy(genderError = "Please select your gender")
+                        return false
+                    }
                 }
-            }
-            3 -> {
-                val day = state.birthDay.toIntOrNull() ?: 1
-                val month = monthToInt(state.birthMonth)
-                val year = state.birthYear.toIntOrNull() ?: 1998
-                val age = try {
-                    val birthDate = LocalDate.of(year, month, day)
-                    Period.between(birthDate, LocalDate.now()).years
-                } catch (_: Exception) {
-                    -1
+                3 -> {
+                    val ageNum = state.ageYears.toIntOrNull()
+                    if (state.ageYears.isBlank() || ageNum == null || ageNum < 18 || ageNum > 40) {
+                        _uiState.value = state.copy(dobError = "Please select your age (must be between 18 and 40)")
+                        return false
+                    }
                 }
-                if (age < 18) {
-                    _uiState.value = state.copy(dobError = "You must be at least 18 years old to join")
-                    return false
+                4 -> {
+                    val heightNum = state.heightCm.toIntOrNull()
+                    if (state.heightCm.isBlank() || heightNum == null || heightNum < 80 || heightNum > 250) {
+                        _uiState.value = state.copy(heightError = "Please select your height")
+                        return false
+                    }
                 }
-            }
-            4 -> {
-                val heightNum = state.heightCm.toIntOrNull()
-                if (heightNum == null || heightNum < 80 || heightNum > 250) {
-                    _uiState.value = state.copy(heightError = "Please enter a valid height (80-250 cm)")
-                    return false
+                5 -> {
+                    if (state.languages.isEmpty()) {
+                        _uiState.value = state.copy(error = "Please select at least one language")
+                        return false
+                    }
+                }
+                6 -> {
+                    val hasValidCoords = state.latitude != null && state.longitude != null && (state.latitude != 0.0 || state.longitude != 0.0)
+                    val isCityValid = state.currentCity.isNotBlank() &&
+                            !state.currentCity.equals("Detecting location...", ignoreCase = true) &&
+                            !state.currentCity.equals("Location Off", ignoreCase = true) &&
+                            !state.currentCity.equals("Location detection failed", ignoreCase = true)
+                    if (!state.isLocationEnabled || !hasValidCoords || !isCityValid) {
+                        _uiState.value = state.copy(locationError = "Location access is required to find matches nearby. Please enable location.")
+                        return false
+                    }
                 }
             }
         }
@@ -402,29 +536,53 @@ class PreferencesViewModel @Inject constructor(
         if (!validateSubStep(state.preferenceSubStep)) {
             return false
         }
-        val newState = if (state.preferenceSubStep < 9) {
-            state.copy(preferenceSubStep = state.preferenceSubStep + 1)
-        } else {
-            state.copy(currentStep = 2)
+        if (state.currentStep == 1) {
+            if (state.preferenceSubStep < 6) {
+                val newState = state.copy(preferenceSubStep = state.preferenceSubStep + 1, error = null)
+                _uiState.value = newState
+                saveDraft(newState)
+            } else {
+                // Category 2 is skipped: directly navigate to Step 2 (Photos Upload)
+                val newState = state.copy(
+                    currentStep = 2,
+                    photoError = null,
+                    error = null
+                )
+                _uiState.value = newState
+                saveDraft(newState)
+            }
         }
-        _uiState.value = newState
-        saveDraft(newState)
-        return newState.currentStep == 2
+        return true
     }
 
     fun previousPreferenceSubStep(onBack: () -> Unit) {
         val state = _uiState.value
-        if (state.preferenceSubStep > 1) {
-            val newState = state.copy(preferenceSubStep = state.preferenceSubStep - 1)
+        if (state.currentStep == 1) {
+            if (state.preferenceSubStep > 1) {
+                val newState = state.copy(preferenceSubStep = state.preferenceSubStep - 1)
+                _uiState.value = newState
+                saveDraft(newState)
+            } else {
+                onBack()
+            }
+        } else if (state.currentStep == 2) {
+            // From Step 2 (Photos) back to Step 1 (Essential Details - Location)
+            val newState = state.copy(
+                currentStep = 1,
+                preferenceSubStep = 6
+            )
+            _uiState.value = newState
+            saveDraft(newState)
+        } else if (state.currentStep == 3) {
+            // From Step 3 (Face Verification) back to Step 2 (Photos)
+            val newState = state.copy(
+                currentStep = 2
+            )
             _uiState.value = newState
             saveDraft(newState)
         } else {
             onBack()
         }
-    }
-
-    fun validateStepOne(): Boolean {
-        return validateSubStep(1) && validateSubStep(2) && validateSubStep(3) && validateSubStep(4)
     }
 
     fun nextStep(onComplete: () -> Unit = {}) {
@@ -435,48 +593,138 @@ class PreferencesViewModel @Inject constructor(
             }
             2 -> {
                 if (state.uploadedPhotos.isEmpty()) {
-                    _uiState.value = state.copy(error = "Please upload at least one photo")
-                } else {
-                    val newState = state.copy(currentStep = 3, error = null)
-                    _uiState.value = newState
-                    saveDraft(newState)
+                    _uiState.value = state.copy(
+                        photoError = "Please upload at least one photo to continue"
+                    )
+                    return
                 }
+                val newState = state.copy(
+                    currentStep = 3,
+                    photoError = null,
+                    error = null
+                )
+                _uiState.value = newState
+                saveDraft(newState)
             }
             3 -> {
+                if (state.isVerifyingFace) {
+                    return
+                }
+                if (!state.isFaceVerified || state.livePhotoUri.isNullOrBlank()) {
+                    _uiState.value = state.copy(
+                        faceVerificationError = "Please take a selfie to verify your face before continuing"
+                    )
+                    return
+                }
                 submitPreferences(onSuccess = onComplete)
+            }
+            else -> submitPreferences(onSuccess = onComplete)
+        }
+    }
+
+    fun verifyLivePhoto(uriString: String) {
+        val uri = Uri.parse(uriString)
+        val intermediateState = _uiState.value.copy(
+            livePhotoUri = uriString,
+            isVerifyingFace = true,
+            faceVerificationError = null,
+            error = null
+        )
+        _uiState.value = intermediateState
+        saveDraft(intermediateState)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val hasFace = faceVerificationManager.hasFace(uri)
+                withContext(Dispatchers.Main) {
+                    if (hasFace) {
+                        val verifiedState = _uiState.value.copy(
+                            isVerifyingFace = false,
+                            isFaceVerified = true,
+                            faceVerificationError = null,
+                            faceSimilarityScore = null
+                        )
+                        _uiState.value = verifiedState
+                        saveDraft(verifiedState)
+                    } else {
+                        val errorState = _uiState.value.copy(
+                            isVerifyingFace = false,
+                            isFaceVerified = false,
+                            livePhotoUri = null,
+                            faceVerificationError = "No face detected in selfie. Please make sure your face is clearly visible."
+                        )
+                        _uiState.value = errorState
+                        saveDraft(errorState)
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    val errorState = _uiState.value.copy(
+                        isVerifyingFace = false,
+                        isFaceVerified = false,
+                        livePhotoUri = null,
+                        faceVerificationError = e.localizedMessage ?: "Selfie verification failed. Please try again."
+                    )
+                    _uiState.value = errorState
+                    saveDraft(errorState)
+                }
             }
         }
     }
 
     fun previousStep(onBack: () -> Unit) {
-        val state = _uiState.value
-        when (state.currentStep) {
-            1 -> previousPreferenceSubStep(onBack)
-            2 -> {
-                val newState = state.copy(currentStep = 1, preferenceSubStep = 9)
-                _uiState.value = newState
-                saveDraft(newState)
-            }
-            3 -> {
-                val newState = state.copy(currentStep = 2)
-                _uiState.value = newState
-                saveDraft(newState)
-            }
-            else -> onBack()
-        }
+        previousPreferenceSubStep(onBack)
     }
 
     fun submitPreferences(onSuccess: () -> Unit) {
         val state = _uiState.value
+
+        // Strict guard: location must be enabled with valid coordinates
+        val hasValidCoords = state.latitude != null && state.longitude != null && (state.latitude != 0.0 || state.longitude != 0.0)
+        val isCityValid = state.currentCity.isNotBlank() &&
+                !state.currentCity.equals("Detecting location...", ignoreCase = true) &&
+                !state.currentCity.equals("Location Off", ignoreCase = true) &&
+                !state.currentCity.equals("Location detection failed", ignoreCase = true)
+        if (!state.isLocationEnabled || !hasValidCoords || !isCityValid) {
+            _uiState.value = state.copy(
+                currentStep = 1,
+                preferenceSubStep = 6,
+                locationError = "Location access is required to find matches nearby. Please enable location."
+            )
+            return
+        }
+
+        // Strict guard: uploaded photos must not be empty
+        if (state.uploadedPhotos.isEmpty()) {
+            _uiState.value = state.copy(
+                currentStep = 2,
+                photoError = "Please upload at least one photo to continue"
+            )
+            return
+        }
+
+        // Strict guard: selfie face verification must be completed
+        if (!state.isFaceVerified || state.livePhotoUri.isNullOrBlank()) {
+            _uiState.value = state.copy(
+                currentStep = 3,
+                faceVerificationError = "Please take a selfie to verify your face before continuing"
+            )
+            return
+        }
+
         val token = sessionManager.getToken() ?: ""
         val mInt = monthToInt(state.birthMonth)
         val formattedDob = "${state.birthYear}-${mInt.toString().padStart(2, '0')}-${state.birthDay.padStart(2, '0')}"
         val heightInt = state.heightCm.toIntOrNull()
 
+        if (state.latitude != null && state.longitude != null) {
+            preferencesManager.setUserLocation(state.latitude, state.longitude)
+        }
+
         val request = ProfileUpdateRequest(
             name = state.name.trim(),
             display_name = state.name.trim(),
-            gender = state.gender,
+            gender = state.gender.lowercase(),
             dob = formattedDob,
             date_of_birth = formattedDob,
             height = heightInt,
@@ -484,12 +732,18 @@ class PreferencesViewModel @Inject constructor(
             interested_in = state.interestedIn,
             relationship_intention = state.relationshipIntent,
             dating_intent = state.relationshipIntent,
+            job = state.profession.ifBlank { null },
+            occupation = state.profession.ifBlank { null },
+            education = state.education.ifBlank { null },
             languages = state.languages,
-            income = state.income,
+            income = null,
             bio = state.bio.takeIf { it.isNotBlank() },
             photos = state.uploadedPhotos,
             avatar_url = state.uploadedPhotos.firstOrNull(),
-            city = state.currentCity.takeIf { it != "Location Off" && it != "Detecting location..." }
+            video_url = null,
+            city = state.currentCity,
+            latitude = state.latitude,
+            longitude = state.longitude
         )
 
         viewModelScope.launch {

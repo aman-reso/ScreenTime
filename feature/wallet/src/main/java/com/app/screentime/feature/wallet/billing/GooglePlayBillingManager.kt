@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 
 sealed interface BillingPurchaseResult {
     data class Success(
@@ -131,7 +130,7 @@ class GooglePlayBillingManager @Inject constructor(
             reconnectAttempts++
             val backoffMillis = (1000L * (1 shl reconnectAttempts)).coerceAtMost(10_000L)
             scope.launch {
-                delay(backoffMillis.milliseconds)
+                delay(backoffMillis)
                 startConnection()
             }
         }

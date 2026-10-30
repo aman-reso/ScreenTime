@@ -20,7 +20,6 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 class WinterWebSocketClient @Inject constructor(
@@ -455,7 +454,7 @@ class WinterWebSocketClient @Inject constructor(
                 tag,
                 "🔄 Scheduling WebSocket reconnect attempt #$reconnectAttempts in ${delayMs}ms..."
             )
-            delay(delayMs.milliseconds)
+            delay(delayMs)
             connect()
         }
     }

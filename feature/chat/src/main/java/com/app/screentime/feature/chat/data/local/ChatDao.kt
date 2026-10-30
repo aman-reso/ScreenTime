@@ -29,6 +29,23 @@ interface ChatDao {
     @Query("DELETE FROM chat_messages WHERE id = :id")
     suspend fun deleteMessage(id: String)
 
+    @Query("DELETE FROM chat_messages WHERE clientMessageId = :clientMessageId")
+    suspend fun deleteByClientMessageId(clientMessageId: String)
+
+    @androidx.room.Transaction
+    suspend fun replaceTempMessage(tempId: String, serverMessage: ChatMessageEntity) {
+        if (tempId != serverMessage.id) {
+            deleteMessage(tempId)
+        }
+        if (!serverMessage.clientMessageId.isNullOrBlank()) {
+            deleteByClientMessageId(serverMessage.clientMessageId)
+        }
+        insertMessage(serverMessage)
+    }
+
     @Query("DELETE FROM chat_messages WHERE partnerId = :partnerId")
     suspend fun clearMessagesForPartner(partnerId: String)
+
+    @Query("DELETE FROM chat_messages")
+    suspend fun clearAllMessages()
 }

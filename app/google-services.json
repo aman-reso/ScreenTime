@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "203569877791-if1fdsktiq62e8ai2j22jraei4qlrfcr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.app.screentime",
+            "certificate_hash": "0dfea8185aad7283b901fd766897fb065b0be229"
+          }
+        },
+        {
           "client_id": "203569877791-c1ke6b8kg28gg7og5ish10oo26b9ffsb.apps.googleusercontent.com",
           "client_type": 3
         }

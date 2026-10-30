@@ -71,7 +71,7 @@ data class ODSDropdownSelectProps(
     var mode: ODSDropdownSelectMode = ODSDropdownSelectMode.STANDARD,
     var readOnly: Boolean = false,
     var required: Boolean = false,
-    var size: ODSDropdownSelectSize = ODSDropdownSelectSize.LARGE,
+    var size: ODSDropdownSelectSize = ODSDropdownSelectSize.SMALL,
     var supportMessageProps: ODSDropdownSelectSupportMessageProps? = null,
     var selectedValue: ODSDropdownSelectOptions? = null, // Not exported by plugin
     var options: List<ODSDropdownSelectOptions>? = null, // Not exported by plugin

@@ -1,5 +1,7 @@
 package com.app.screentime.feature.preferences
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,14 +14,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import com.app.screentime.core.ui.util.showODSToast
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonSize
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSImage
 import com.telekom.odsystem.atoms.ODSImageModel
@@ -36,6 +49,8 @@ import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
+import java.io.File
+import java.io.FileOutputStream
 
 /**
  * Step 2: Photos Gallery Setup.
@@ -53,13 +68,13 @@ fun PhotosHeader(
     ) {
         ODSText(
             modifier = Modifier.fillMaxWidth(),
-            text = "Add your best photos",
+            text = "Add your photos (2 photos)",
             style = ODSTextStyles.bodyMBold,
-            color = scheme.basicTextDominant
+            color = scheme.basicText
         )
         ODSText(
             modifier = Modifier.fillMaxWidth(),
-            text = "Upload at least 2 photos so potential matches can see your genuine vibe.",
+            text = "Upload 2 photos so potential matches can see your genuine vibe.",
             style = ODSTextStyles.bodySRegular,
             color = scheme.basicTextRecessive
         )
@@ -77,7 +92,7 @@ fun PhotoSlotItem(
     scheme: ODSTheme,
     modifier: Modifier = Modifier
 ) {
-    val slotHeight = if (isLarge) 175.dp else 105.dp
+    val slotHeight = if (isLarge) 210.dp else 105.dp
     val slotRadius = if (isLarge) ODSVariables.radiusLarge else ODSVariables.radiusMedium
 
     if (photoUrl != null) {
@@ -178,7 +193,6 @@ fun PhotoSlotItem(
         ) {
             ODSBox(
                 modifier = Modifier.size(if (isLarge) 40.dp else 32.dp),
-                background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
                 cornerRadius = ODSCorners(all = ODSVariables.radiusFull),
                 contentAlignment = Alignment.Center
             ) {
@@ -187,7 +201,7 @@ fun PhotoSlotItem(
                         drawableRes = R.drawable.ic_plus,
                         contentDescription = "Add Photo"
                     ),
-                    tint = scheme.basicAccent.getColor(),
+                    tint = scheme.basicText.getColor(),
                     modifier = Modifier.size(if (isLarge) 20.dp else 16.dp)
                 )
             }
@@ -199,17 +213,66 @@ fun PhotoSlotItem(
 fun PreferencesStepPhotos(
     uploadedPhotos: List<String>,
     isUploading: Boolean = false,
+    error: String? = null,
     scheme: ODSTheme,
     onAddPhotos: (List<Uri>) -> Unit,
     onRemovePhoto: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris ->
         if (uris.isNotEmpty()) {
-            onAddPhotos(uris)
+            val remainingSlots = (2 - uploadedPhotos.size).coerceAtLeast(0)
+            if (remainingSlots > 0) {
+                onAddPhotos(uris.take(remainingSlots))
+            } else {
+                context.showODSToast("You can upload up to 2 photos")
+            }
         }
+    }
+
+    var showCustomCamera by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            showCustomCamera = true
+        } else {
+            context.showODSToast("Camera permission is required to capture photos")
+        }
+    }
+
+    val onLaunchCamera = {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            showCustomCamera = true
+        } else {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    if (showCustomCamera) {
+        FrontCameraCaptureDialog(
+            onDismiss = { showCustomCamera = false },
+            onPhotoCaptured = { uriStr ->
+                showCustomCamera = false
+                if (uploadedPhotos.size < 2) {
+                    onAddPhotos(listOf(Uri.parse(uriStr)))
+                } else {
+                    context.showODSToast("You can upload up to 2 photos")
+                }
+            },
+            scheme = scheme,
+            title = "Capture Front Photo"
+        )
     }
 
     ODSColumn(
@@ -218,7 +281,6 @@ fun PreferencesStepPhotos(
     ) {
         PhotosHeader(scheme = scheme)
 
-        // Top Row: 2 Primary Photo Slots
         ODSRow(
             modifier = Modifier.fillMaxWidth(),
             gap = ODSVariables.spacingComponent4,
@@ -230,7 +292,13 @@ fun PreferencesStepPhotos(
                 isMain = true,
                 isLarge = true,
                 isLoading = isUploading && uploadedPhotos.isEmpty(),
-                onAddClick = { photoPickerLauncher.launch("image/*") },
+                onAddClick = {
+                    if (uploadedPhotos.size < 2) {
+                        photoPickerLauncher.launch("image/*")
+                    } else {
+                        context.showODSToast("You can upload up to 2 photos")
+                    }
+                },
                 onRemoveClick = { onRemovePhoto(0) },
                 scheme = scheme,
                 modifier = Modifier.weight(1f)
@@ -241,114 +309,98 @@ fun PreferencesStepPhotos(
                 isMain = false,
                 isLarge = true,
                 isLoading = isUploading && uploadedPhotos.size == 1,
-                onAddClick = { photoPickerLauncher.launch("image/*") },
+                onAddClick = {
+                    if (uploadedPhotos.size < 2) {
+                        photoPickerLauncher.launch("image/*")
+                    } else {
+                        context.showODSToast("You can upload up to 2 photos")
+                    }
+                },
                 onRemoveClick = { onRemovePhoto(1) },
                 scheme = scheme,
                 modifier = Modifier.weight(1f)
             )
         }
 
-        // Bottom Row: 3 Smaller Photo Slots
         ODSRow(
             modifier = Modifier.fillMaxWidth(),
             gap = ODSVariables.spacingComponent3,
-            horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            for (i in 2..4) {
-                PhotoSlotItem(
-                    photoUrl = uploadedPhotos.getOrNull(i),
-                    isMain = false,
-                    isLarge = false,
-                    isLoading = isUploading && uploadedPhotos.size == i,
-                    onAddClick = { photoPickerLauncher.launch("image/*") },
-                    onRemoveClick = { onRemovePhoto(i) },
-                    scheme = scheme,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            ODSButton(
+                modifier = Modifier.weight(1f),
+                scheme = scheme,
+                props = ODSButtonProps(
+                    label = if (isUploading) "Uploading..." else "Choose Gallery",
+                    buttonIcon = ODSIconModel(
+                        drawableRes = R.drawable.ic_image,
+                        contentDescription = "Gallery"
+                    ),
+                    leftIcon = true,
+                    variant = ODSButtonVariant.SECONDARY,
+                    size = ODSButtonSize.SMALL,
+                    disabled = isUploading
+                ),
+                onClick = {
+                    if (uploadedPhotos.size < 2) {
+                        photoPickerLauncher.launch("image/*")
+                    } else {
+                        context.showODSToast("You can upload up to 2 photos")
+                    }
+                }
+            )
+
+            ODSButton(
+                modifier = Modifier.weight(1f),
+                scheme = scheme,
+                props = ODSButtonProps(
+                    label = "Take Photo",
+                    buttonIcon = ODSIconModel(
+                        drawableRes = R.drawable.ic_camera,
+                        contentDescription = "Camera"
+                    ),
+                    leftIcon = true,
+                    variant = ODSButtonVariant.SECONDARY,
+                    size = ODSButtonSize.SMALL,
+                    disabled = isUploading
+                ),
+                onClick = {
+                    if (uploadedPhotos.size < 2) {
+                        onLaunchCamera()
+                    } else {
+                        context.showODSToast("You can upload up to 2 photos")
+                    }
+                }
+            )
         }
 
-        // Action Buttons Row: Gallery & Camera
-        ODSRow(
-            modifier = Modifier.fillMaxWidth(),
-            gap = ODSVariables.spacingComponent4,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ODSBox(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { photoPickerLauncher.launch("image/*") }
-                    ),
-                height = 48.dp,
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+        if (!error.isNullOrBlank()) {
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                gap = ODSVariables.spacingComponent2,
+                padding = ODSPadding(all = ODSVariables.spacingComponent3),
                 cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
+                background = listOf(ODSColorModel(hexColor = scheme.functionalDestructiveSubtle)),
                 border = ODSBorder(
-                    width = ODSVariables.strokes2,
-                    colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                    width = ODSVariables.strokes1,
+                    colorList = listOf(ODSColorModel(hexColor = scheme.functionalDestructiveStandard))
                 ),
-                contentAlignment = Alignment.Center
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                ODSRow(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    gap = ODSVariables.spacingComponent2
-                ) {
-                    ODSIcon(
-                        iconModel = ODSIconModel(
-                            drawableRes = R.drawable.ic_image,
-                            contentDescription = "Gallery"
-                        ),
-                        tint = scheme.basicTextDominant.getColor(),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    ODSText(
-                        text = if (isUploading) "Uploading..." else "Choose Gallery",
-                        style = ODSTextStyles.bodySBold,
-                        color = scheme.basicTextDominant
-                    )
-                }
-            }
-
-            ODSBox(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { photoPickerLauncher.launch("image/*") }
+                ODSIcon(
+                    iconModel = ODSIconModel(
+                        drawableRes = R.drawable.ic_close,
+                        contentDescription = "Error"
                     ),
-                height = 48.dp,
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-                cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
-                border = ODSBorder(
-                    width = ODSVariables.strokes2,
-                    colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-                ),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSRow(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    gap = ODSVariables.spacingComponent2
-                ) {
-                    ODSIcon(
-                        iconModel = ODSIconModel(
-                            drawableRes = R.drawable.ic_camera,
-                            contentDescription = "Camera"
-                        ),
-                        tint = scheme.basicTextDominant.getColor(),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    ODSText(
-                        text = "Take Photo",
-                        style = ODSTextStyles.bodySBold,
-                        color = scheme.basicTextDominant
-                    )
-                }
+                    tint = scheme.functionalDestructiveStandard.getColor(),
+                    modifier = Modifier.size(16.dp)
+                )
+                ODSText(
+                    text = error,
+                    style = ODSTextStyles.microcopyRegular,
+                    color = scheme.functionalDestructiveStandard,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }

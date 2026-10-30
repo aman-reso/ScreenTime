@@ -17,7 +17,7 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace = "com.app.screentime.core.network"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -28,31 +28,60 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            "\"${localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:8080")}\""
+            "\"${localProperties.getProperty("API_BASE_URL", "https://api.winterdating.com")}\""
         )
         buildConfigField(
             "String",
             "API_DEV_BASE_URL",
-            "\"${localProperties.getProperty("API_DEV_BASE_URL", "http://10.0.2.2:8080")}\""
+            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://connect-api-test-324708289864.us-central1.run.app")}\""
         )
-        buildConfigField(
-            "String",
-            "TOTP_FALLBACK_SECRET",
-            "\"${
-                localProperties.getProperty(
-                    "TOTP_FALLBACK_SECRET",
-                    "O5YRY4I2737IGHVYOHXM6T7RWWNAW3X7"
-                )
-            }\""
-        )
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+                arguments += listOf("-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+            }
+        }
+        ndk {
+            abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a", "x86_64"))
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     buildTypes {
         release {
+            buildConfigField(
+                "String",
+                "API_BASE_URL",
+                "\"${localProperties.getProperty("PROD_API_BASE_URL", localProperties.getProperty("API_BASE_URL", "https://api.winterdating.com"))}\""
+            )
+            buildConfigField(
+                "long",
+                "PLAY_INTEGRITY_PROJECT_NUMBER",
+                "${localProperties.getProperty("PLAY_INTEGRITY_PROD_PROJECT_NUMBER", "377649712053")}L"
+            )
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
+            )
+        }
+        debug {
+            buildConfigField(
+                "String",
+                "API_BASE_URL",
+                "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://connect-api-test-324708289864.us-central1.run.app")}\""
+            )
+            buildConfigField(
+                "long",
+                "PLAY_INTEGRITY_PROJECT_NUMBER",
+                "${localProperties.getProperty("PLAY_INTEGRITY_TEST_PROJECT_NUMBER", "324708289864")}L"
             )
         }
     }
@@ -74,6 +103,7 @@ android {
 dependencies {
     implementation(project(":core:model"))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.exifinterface)
 
     // Hilt
     implementation(libs.hilt.android)
@@ -92,8 +122,9 @@ dependencies {
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.kotlinx.serialization.json)
 
-    // Security for EncryptedSharedPreferences
+    // Security for EncryptedSharedPreferences & Google Play Integrity
     implementation(libs.androidx.security.crypto)
+    implementation(libs.play.integrity)
 
     // Firebase
     implementation(platform(libs.firebase.bom))
@@ -101,4 +132,9 @@ dependencies {
 
     // AppCompat for language management
     implementation(libs.androidx.appcompat)
+
+    // Media3 Transformer for fast hardware-accelerated video trimming & compression
+    implementation(libs.androidx.media3.transformer)
+    implementation(libs.androidx.media3.effect)
+    implementation(libs.androidx.media3.common)
 }

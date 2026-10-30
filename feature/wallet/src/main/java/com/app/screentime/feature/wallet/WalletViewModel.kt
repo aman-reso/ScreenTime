@@ -1,5 +1,6 @@
 package com.app.screentime.feature.wallet
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.core.model.UserRole
@@ -7,6 +8,8 @@ import com.app.screentime.core.model.WalletTransaction
 import com.app.screentime.core.network.dto.WalletPackDto
 import com.app.screentime.core.network.dto.toWalletTransaction
 import com.app.screentime.core.network.session.SessionManager
+import com.app.screentime.feature.wallet.billing.BillingPurchaseResult
+import com.app.screentime.feature.wallet.billing.GooglePlayBillingManager
 import com.app.screentime.feature.wallet.domain.usecase.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +35,7 @@ data class WalletUiState(
     val isModel: Boolean = false,
     val isLoading: Boolean = false,
     val isRecharging: Boolean = false,
+    val isVerifyingPayment: Boolean = false,
     val rechargeSuccess: Boolean = false,
     val error: String? = null
 )
@@ -42,8 +46,9 @@ class WalletViewModel @Inject constructor(
     private val getWalletTransactionsUseCase: GetWalletTransactionsUseCase,
     private val getWalletInfoUseCase: GetWalletInfoUseCase,
     private val getWalletPacksUseCase: GetWalletPacksUseCase,
-    private val rechargeWalletUseCase: RechargeWalletUseCase,
-    private val sessionManager: SessionManager
+    private val verifyGooglePlayPurchaseUseCase: VerifyGooglePlayPurchaseUseCase,
+    val googlePlayBillingManager: GooglePlayBillingManager,
+    sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -55,8 +60,82 @@ class WalletViewModel @Inject constructor(
 
     init {
         loadWallet()
-        loadPacks()
         loadTransactions(page = 1, refresh = true)
+        observeBillingEvents()
+    }
+
+    private fun observeBillingEvents() {
+        viewModelScope.launch {
+            googlePlayBillingManager.purchaseEvents.collect { result ->
+                when (result) {
+                    is BillingPurchaseResult.Success -> {
+                        handleBillingSuccess(result)
+                    }
+
+                    is BillingPurchaseResult.Cancelled -> {
+                        _uiState.value = _uiState.value.copy(
+                            isRecharging = false,
+                            error = "Payment cancelled"
+                        )
+                    }
+
+                    is BillingPurchaseResult.Failed -> {
+                        _uiState.value = _uiState.value.copy(
+                            isRecharging = false,
+                            error = result.message
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleBillingSuccess(result: BillingPurchaseResult.Success) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isVerifyingPayment = true, error = null)
+            val pack = _uiState.value.packs.firstOrNull { it.id == result.productId }
+                ?: _uiState.value.selectedPack
+
+            val credits = pack?.effectiveCredits ?: 0
+            val amount = pack?.effectivePrice ?: 0.0
+            val packId = pack?.id ?: result.productId
+            val type = if (result.productId.contains("sub", ignoreCase = true) || packId.contains(
+                    "sub",
+                    ignoreCase = true
+                )
+            ) "subs" else "inapp"
+
+            val verifyRes = verifyGooglePlayPurchaseUseCase(
+                purchaseToken = result.purchaseToken,
+                productId = result.productId,
+                type = type,
+                orderId = result.orderId,
+                packId = packId,
+                credits = credits,
+                amount = amount
+            )
+
+            val data = verifyRes.getOrNull()
+            if (verifyRes.isSuccess && data != null && data.success) {
+                val updatedCreditBalance =
+                    if (data.credit_balance > 0) data.credit_balance else (_uiState.value.creditBalance + (if (data.credits_added > 0) data.credits_added else credits))
+                _uiState.value = _uiState.value.copy(
+                    isVerifyingPayment = false,
+                    isRecharging = false,
+                    rechargeSuccess = true,
+                    creditBalance = updatedCreditBalance
+                )
+                loadWallet()
+                loadTransactions(page = 1, refresh = true)
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isVerifyingPayment = false,
+                    isRecharging = false,
+                    error = verifyRes.exceptionOrNull()?.localizedMessage ?: data?.message
+                    ?: "Failed to verify purchase"
+                )
+            }
+        }
     }
 
     fun loadWallet() {
@@ -70,13 +149,14 @@ class WalletViewModel @Inject constructor(
                 )
             }
             getWalletUseCase().onSuccess { response ->
-                val serverBalance = response.wallet.balance
-                val displayBalance = if (serverBalance > 0.0) serverBalance else (_uiState.value.creditBalance.toDouble())
+                val serverBalance = response.wallet?.balance ?: 0.0
+                val displayBalance =
+                    if (serverBalance > 0.0) serverBalance else (_uiState.value.creditBalance.toDouble())
                 _uiState.value = _uiState.value.copy(
                     balance = displayBalance,
-                    totalSpent = response.wallet.total_spent,
-                    totalEarned = response.wallet.total_earned,
-                    welcomeBonus = response.wallet.bonus_given,
+                    totalSpent = response.wallet?.total_spent ?: 0.0,
+                    totalEarned = response.wallet?.total_earned ?: 0.0,
+                    welcomeBonus = response.wallet?.bonus_given ?: 0.0,
                     isLoading = false
                 )
             }.onFailure { error ->
@@ -93,9 +173,9 @@ class WalletViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoadingTransactions = true)
             getWalletTransactionsUseCase(page = page, limit = 20).onSuccess { data ->
                 val txs = data.items.map { it.toWalletTransaction() }
-                val merged = if (refresh) txs else (_uiState.value.transactions + txs).distinctBy { it.id }
-                
-                // If the latest transaction has running balance_after, sync hero balance
+                val merged =
+                    if (refresh) txs else (_uiState.value.transactions + txs).distinctBy { it.id }
+
                 val latestBalance = txs.firstOrNull()?.balanceAfter?.takeIf { it > 0.0 }
                 val currentBal = latestBalance ?: _uiState.value.balance
 
@@ -122,11 +202,18 @@ class WalletViewModel @Inject constructor(
     fun loadPacks() {
         viewModelScope.launch {
             getWalletPacksUseCase().onSuccess { packList ->
-                val popular = packList.firstOrNull { it.is_popular } ?: packList.getOrNull(1)
+                val popular = packList.firstOrNull { it.isPopularPack } ?: packList.getOrNull(1)
+                ?: packList.firstOrNull()
                 _uiState.value = _uiState.value.copy(
                     packs = packList,
                     selectedPack = _uiState.value.selectedPack ?: popular
                 )
+
+                // Query Google Play Product Details in background
+                if (packList.isNotEmpty()) {
+                    val productIds = packList.map { it.id }.filter { it.isNotBlank() }
+                    googlePlayBillingManager.queryProducts(productIds)
+                }
             }
         }
     }
@@ -135,32 +222,20 @@ class WalletViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(selectedPack = pack)
     }
 
-    fun recharge(amount: Double, coinsToAdd: Double = amount, onSuccess: () -> Unit = {}) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isRecharging = true, error = null)
-            val rechargeCoins = if (coinsToAdd > 0) coinsToAdd else amount
-            rechargeWalletUseCase(rechargeCoins).onSuccess { newBalance ->
-                _uiState.value = _uiState.value.copy(
-                    balance = newBalance,
-                    isRecharging = false,
-                    rechargeSuccess = true
-                )
-                loadWallet()
-                loadTransactions(page = 1, refresh = true)
-                onSuccess()
-            }.onFailure { error ->
-                _uiState.value = _uiState.value.copy(
-                    isRecharging = false,
-                    error = error.localizedMessage
-                )
+    fun buyWithGooglePlay(
+        activity: Activity,
+        pack: WalletPackDto,
+        onError: (String) -> Unit = {}
+    ) {
+        _uiState.value = _uiState.value.copy(isRecharging = true, selectedPack = pack, error = null)
+        googlePlayBillingManager.launchBillingFlow(
+            activity = activity,
+            productId = pack.id,
+            onLaunchFailed = { err ->
+                _uiState.value = _uiState.value.copy(isRecharging = false, error = err)
+                onError(err)
             }
-        }
-    }
-
-    fun rechargeSelectedPack(onSuccess: () -> Unit = {}) {
-        val pack = _uiState.value.selectedPack ?: return
-        val coinsToAdd = if (pack.total_coins > 0) pack.total_coins.toDouble() else (if (pack.coins > 0) pack.coins.toDouble() else pack.price_inr)
-        recharge(pack.price_inr, coinsToAdd = coinsToAdd, onSuccess = onSuccess)
+        )
     }
 
     fun resetRechargeStatus() {

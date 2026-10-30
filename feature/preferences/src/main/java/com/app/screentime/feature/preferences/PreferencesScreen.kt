@@ -1,6 +1,7 @@
 package com.app.screentime.feature.preferences
 
 import android.Manifest
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -9,9 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,13 +39,11 @@ import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
 /**
- * Preferences / Onboarding Flow after Sign-in.
- * 1. 9-Step Personal & Match Basics (Name, Gender, Birthday, Height, Interested In, Intent, Languages, Income, Bio)
- * 2. Photos Selection & Upload
- * 3. Location Settings -> Followed by Notification Permission Sheet
+ * Onboarding Flow with 2 major enum categories + Photos:
+ * Category 1 (Essential details) & Category 2 (Other details) both feature
+ * active sub-step question flow collapsing into summary cards with edit pencil icons.
  *
- * 100% constructed with Telekom ODS components.
- * Strictly adheres to project design tokens and Figma mockups.
+ * 100% constructed using Telekom ODS UI components & token values.
  */
 @Composable
 fun PreferencesScreen(
@@ -62,13 +59,25 @@ fun PreferencesScreen(
     val context = LocalContext.current
     var showNotificationSheet by remember { mutableStateOf(false) }
 
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let { err ->
+            if (err.isNotBlank()) {
+                context.showODSToast(err)
+            }
+        }
+    }
+
+    BackHandler(enabled = true) {
+        viewModel.previousStep(onBack = onBack)
+    }
+
     val locationSettingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
-            viewModel.updateLocation(city = "Detecting location...", isEnabled = true)
-            LocationHelper.fetchCurrentLocation(context) { _, _, cityName ->
-                viewModel.updateLocation(city = cityName, isEnabled = true)
+            viewModel.updateLocation(city = "Detecting location...", isEnabled = false)
+            LocationHelper.fetchCurrentLocation(context) { lat, lng, cityName ->
+                viewModel.updateLocation(city = cityName, lat = lat, lng = lng, isEnabled = true)
             }
         } else {
             viewModel.updateLocation(city = "Location Off", isEnabled = false)
@@ -85,9 +94,9 @@ fun PreferencesScreen(
                 context = context,
                 settingsLauncher = locationSettingsLauncher,
                 onAlreadyEnabled = {
-                    viewModel.updateLocation(city = "Detecting location...", isEnabled = true)
-                    LocationHelper.fetchCurrentLocation(context) { _, _, cityName ->
-                        viewModel.updateLocation(city = cityName, isEnabled = true)
+                    viewModel.updateLocation(city = "Detecting location...", isEnabled = false)
+                    LocationHelper.fetchCurrentLocation(context) { lat, lng, cityName ->
+                        viewModel.updateLocation(city = cityName, lat = lat, lng = lng, isEnabled = true)
                     }
                 },
                 onFailed = {
@@ -111,98 +120,76 @@ fun PreferencesScreen(
         }
     }
 
-    LaunchedEffect(uiState.currentStep) {
-        if (uiState.currentStep == 3) {
-            if (LocationHelper.hasLocationPermission(context)) {
-                LocationHelper.requestEnableLocationService(
-                    context = context,
-                    settingsLauncher = locationSettingsLauncher,
-                    onAlreadyEnabled = {
-                        viewModel.updateLocation(city = "Detecting location...", isEnabled = true)
-                        LocationHelper.fetchCurrentLocation(context) { _, _, cityName ->
-                            viewModel.updateLocation(city = cityName, isEnabled = true)
-                        }
-                    },
-                    onFailed = {
-                        viewModel.updateLocation(city = "Location Off", isEnabled = false)
+    when (uiState.currentStep.coerceIn(1, 3)) {
+        1 -> {
+            // Category 1: Essential Details (One-by-one sub-step flow)
+            PreferencesCategoryOneFlow(
+                uiState = uiState,
+                scheme = scheme,
+                onNameChange = { viewModel.updateName(it) },
+                onGenderSelect = { viewModel.updateGender(it) },
+                onAgeYearsChange = { viewModel.updateAgeYears(it) },
+                onHeightChange = { viewModel.updateHeight(it) },
+                onToggleLanguage = { viewModel.toggleLanguage(it) },
+                onEnableLocation = {
+                    viewModel.updateLocation(city = "Detecting location...", isEnabled = false)
+                    LocationHelper.performLocationAction(
+                        context = context,
+                        permissionLauncher = locationPermissionLauncher,
+                        settingsLauncher = locationSettingsLauncher
+                    ) { lat, lng, cityName ->
+                        viewModel.updateLocation(city = cityName, lat = lat, lng = lng, isEnabled = true)
                     }
-                )
-            }
-        }
-    }
-
-    // When on Step 1: Render the 9-step single-screen flow
-    if (uiState.currentStep == 1) {
-        PreferencesNineStepsFlow(
-            uiState = uiState,
-            scheme = scheme,
-            onNameChange = { viewModel.updateName(it) },
-            onGenderSelect = { viewModel.updateGender(it) },
-            onBirthDayChange = { viewModel.updateBirthDay(it) },
-            onBirthMonthChange = { viewModel.updateBirthMonth(it) },
-            onBirthYearChange = { viewModel.updateBirthYear(it) },
-            onHeightChange = { viewModel.updateHeight(it) },
-            onInterestedInChange = { viewModel.updateInterestedIn(it) },
-            onRelationshipIntentChange = { viewModel.updateRelationshipIntent(it) },
-            onToggleLanguage = { viewModel.toggleLanguage(it) },
-            onIncomeSelect = { viewModel.updateIncome(it) },
-            onBioChange = { viewModel.updateBio(it) },
-            onStepSelect = { viewModel.setPreferenceSubStep(it) },
-            onContinue = { viewModel.nextPreferenceSubStep() },
-            onBack = { viewModel.previousPreferenceSubStep(onBack) },
-            modifier = modifier
-        )
-    } else {
-        // Steps 2 & 3: Photos and Location setup
-        val ctaText = when (uiState.currentStep) {
-            2 -> "Save Photos →"
-            3 -> if (uiState.isSubmitting) "Saving Preferences..." else "Finish & Find Matches →"
-            else -> "Continue →"
+                },
+                onStepSelect = { subStep -> viewModel.setPreferenceSubStep(subStep) },
+                onContinue = { viewModel.nextStep() },
+                onBack = { viewModel.previousStep(onBack) },
+                modifier = modifier
+            )
         }
 
-        ODSBox(
-            modifier = modifier
-                .fillMaxSize()
-                .imePadding(),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
-        ) {
-            ODSColumn(
-                modifier = Modifier
+        2 -> {
+            // Step 2: Upload Photos (ML Kit face check)
+            ODSBox(
+                modifier = modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
-                    .navigationBarsPadding(),
-                verticalArrangement = Arrangement.SpaceBetween
+                    .imePadding(),
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
             ) {
-                PreferencesTopBar(
-                    currentStep = uiState.currentStep,
-                    totalSteps = uiState.totalSteps,
-                    scheme = scheme,
-                    onBack = { viewModel.previousStep(onBack) },
-                    onHelp = onHelp,
-                    modifier = Modifier.padding(
-                        start = ODSVariables.spacingLayout1,
-                        end = ODSVariables.spacingLayout1,
-                        top = ODSVariables.spacingComponent4,
-                        bottom = ODSVariables.spacingComponent2
-                    )
-                )
-
-                ODSLazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    padding = ODSPadding(
-                        horizontal = ODSVariables.spacingLayout1,
-                        top = ODSVariables.spacingComponent3,
-                        bottom = ODSVariables.spacingComponent5
-                    ),
-                    gap = ODSVariables.spacingComponent5
+                ODSColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    item {
-                        when (uiState.currentStep) {
-                            2 -> PreferencesStepPhotos(
+                    PreferencesTopBar(
+                        currentStep = 2,
+                        totalSteps = 3,
+                        scheme = scheme,
+                        onBack = { viewModel.previousStep(onBack) },
+                        onHelp = onHelp,
+                        modifier = Modifier.padding(
+                            start = ODSVariables.spacingLayout1,
+                            end = ODSVariables.spacingLayout1,
+                            top = ODSVariables.spacingComponent4,
+                            bottom = ODSVariables.spacingComponent2
+                        )
+                    )
+
+                    ODSLazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        padding = ODSPadding(
+                            horizontal = ODSVariables.spacingLayout1,
+                            top = ODSVariables.spacingComponent3,
+                            bottom = ODSVariables.spacingComponent5
+                        ),
+                        gap = ODSVariables.spacingComponent5
+                    ) {
+                        item {
+                            PreferencesStepPhotos(
                                 uploadedPhotos = uiState.uploadedPhotos,
                                 isUploading = uiState.isUploadingPhoto,
+                                error = uiState.photoError ?: uiState.error,
                                 scheme = scheme,
                                 onAddPhotos = { uris ->
                                     viewModel.uploadPhotos(uris)
@@ -211,85 +198,164 @@ fun PreferencesScreen(
                                     viewModel.removePhoto(index)
                                 }
                             )
+                        }
+                    }
 
-                            3 -> PreferencesStepLocation(
-                                currentCity = uiState.currentCity,
-                                isLocationEnabled = uiState.isLocationEnabled,
-                                onEnableLocation = {
-                                    LocationHelper.performLocationAction(
-                                        context = context,
-                                        permissionLauncher = locationPermissionLauncher,
-                                        settingsLauncher = locationSettingsLauncher
-                                    ) { _, _, cityName ->
-                                        viewModel.updateLocation(city = cityName, isEnabled = true)
+                    // Bottom Pill Button for Photos step -> Next to Face Verification
+                    val hasPhotos = uiState.uploadedPhotos.isNotEmpty()
+                    ODSBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = ODSVariables.spacingLayout1,
+                                vertical = ODSVariables.spacingComponent4
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {
+                                    if (!uiState.isUploadingPhoto) {
+                                        viewModel.nextStep()
                                     }
-                                },
-                                onSkip = {
-                                    viewModel.nextStep(onComplete = {
-                                        showNotificationSheet = true
-                                    })
+                                }
+                            ),
+                        height = 54.dp,
+                        background = listOf(
+                            ODSColorModel(
+                                hexColor = if (hasPhotos && !uiState.isUploadingPhoto) scheme.basicAccent else scheme.basicBackgroundSubtle
+                            )
+                        ),
+                        cornerRadius = ODSCorners(all = 27.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ODSRow(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            gap = ODSVariables.spacingComponent2
+                        ) {
+                            ODSText(
+                                text = if (uiState.isUploadingPhoto) "Uploading Photos..." else "Continue to Face Verification →",
+                                style = ODSTextStyles.bodyMBold,
+                                color = if (hasPhotos && !uiState.isUploadingPhoto) scheme.basicTextOnAccent else scheme.basicTextRecessive
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        3 -> {
+            // Step 3: Live Selfie Face Verification using ML Kit
+            ODSBox(
+                modifier = modifier
+                    .fillMaxSize()
+                    .imePadding(),
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
+            ) {
+                ODSColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    PreferencesTopBar(
+                        currentStep = 3,
+                        totalSteps = 3,
+                        scheme = scheme,
+                        onBack = { viewModel.previousStep(onBack) },
+                        onHelp = onHelp,
+                        modifier = Modifier.padding(
+                            start = ODSVariables.spacingLayout1,
+                            end = ODSVariables.spacingLayout1,
+                            top = ODSVariables.spacingComponent4,
+                            bottom = ODSVariables.spacingComponent2
+                        )
+                    )
+
+                    ODSLazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        padding = ODSPadding(
+                            horizontal = ODSVariables.spacingLayout1,
+                            top = ODSVariables.spacingComponent3,
+                            bottom = ODSVariables.spacingComponent5
+                        ),
+                        gap = ODSVariables.spacingComponent5
+                    ) {
+                        item {
+                            PreferencesStepLivePhoto(
+                                livePhotoUri = uiState.livePhotoUri,
+                                isVerifyingFace = uiState.isVerifyingFace,
+                                isFaceVerified = uiState.isFaceVerified,
+                                verificationError = uiState.faceVerificationError,
+                                onCaptureLivePhoto = { uriStr ->
+                                    viewModel.verifyLivePhoto(uriStr)
                                 },
                                 scheme = scheme
                             )
                         }
                     }
-                }
 
-                // ── Bottom Action Dock (Pill CTA) ──────────────────────────
-                ODSBox(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = ODSVariables.spacingLayout1,
-                            vertical = ODSVariables.spacingComponent4
-                        )
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {
-                                if (!uiState.isSubmitting) {
+                    // Bottom Pill Button for Finalizing Profile
+                    val canFinish = !uiState.isSubmitting && !uiState.isVerifyingFace && uiState.isFaceVerified && !uiState.livePhotoUri.isNullOrBlank()
+                    val buttonBackground = if (canFinish) scheme.basicAccent else scheme.basicBackgroundSubtle
+                    val buttonTextColor = if (canFinish) scheme.basicTextOnAccent else scheme.basicTextRecessive
+                    val buttonText = when {
+                        uiState.isSubmitting -> "Saving Preferences..."
+                        uiState.isVerifyingFace -> "Verifying Selfie..."
+                        !uiState.isFaceVerified || uiState.livePhotoUri.isNullOrBlank() -> "Take selfie to continue"
+                        else -> "Finish & Find Matches →"
+                    }
+
+                    ODSBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = ODSVariables.spacingLayout1,
+                                vertical = ODSVariables.spacingComponent4
+                            )
+                            .clickable(
+                                enabled = canFinish,
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {
                                     viewModel.nextStep(onComplete = {
                                         showNotificationSheet = true
                                     })
                                 }
-                            }
-                        ),
-                    height = 54.dp,
-                    background = listOf(
-                        ODSColorModel(
-                            hexColor = if (uiState.isSubmitting) scheme.basicBackgroundSubtle else scheme.basicAccent
-                        )
-                    ),
-                    cornerRadius = ODSCorners(all = 27.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSRow(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        gap = ODSVariables.spacingComponent2
+                            ),
+                        height = 54.dp,
+                        background = listOf(ODSColorModel(hexColor = buttonBackground)),
+                        cornerRadius = ODSCorners(all = 27.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        ODSText(
-                            text = ctaText,
-                            style = ODSTextStyles.bodyMBold,
-                            color = if (uiState.isSubmitting) scheme.basicTextRecessive else scheme.basicTextOnAccent
-                        )
+                        ODSRow(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            gap = ODSVariables.spacingComponent2
+                        ) {
+                            ODSText(
+                                text = buttonText,
+                                style = ODSTextStyles.bodyMBold,
+                                color = buttonTextColor
+                            )
+                        }
                     }
                 }
-            }
 
-            // ── Notification Permission Sheet (after Location) ─────────────
-            if (showNotificationSheet) {
-                NotificationPermissionBottomSheet(
-                    onDismiss = {
-                        showNotificationSheet = false
-                        onComplete()
-                    },
-                    onPermissionGranted = {
-                        showNotificationSheet = false
-                        onComplete()
-                    },
-                    scheme = scheme
-                )
+                // Notification Permission Sheet
+                if (showNotificationSheet) {
+                    NotificationPermissionBottomSheet(
+                        onDismiss = {
+                            showNotificationSheet = false
+                            onComplete()
+                        },
+                        onPermissionGranted = {
+                            showNotificationSheet = false
+                            onComplete()
+                        },
+                        scheme = scheme
+                    )
+                }
             }
         }
     }

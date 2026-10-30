@@ -55,22 +55,20 @@ fun VideoCallInsufficientBalanceScreen(
 ) {
     ODSBox(
         modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding(),
+            .fillMaxSize(),
         background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
         contentAlignment = Alignment.Center
     ) {
         ODSColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            gap = 20.dp
+            gap = 16.dp
         ) {
             ODSBox(
                 modifier = Modifier.size(88.dp),
                 cornerRadius = ODSCorners(all = 44.dp),
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
                 contentAlignment = Alignment.Center
             ) {
                 ODSIcon(

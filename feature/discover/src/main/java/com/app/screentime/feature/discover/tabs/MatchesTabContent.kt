@@ -34,6 +34,9 @@ import com.app.screentime.feature.discover.components.QuickViewProfileDialog
 import com.app.screentime.feature.discover.components.StoriesRow
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBox
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSLazyColumn
 import com.telekom.odsystem.atoms.ODSRow
@@ -146,30 +149,15 @@ fun MatchesTabContent(
                                         color = scheme.basicTextRecessive,
                                         textAlign = TextAlign.Center
                                     )
-                                    ODSRow(
-                                        modifier = Modifier
-                                            .clickable(
-                                                interactionSource = remember { MutableInteractionSource() },
-                                                indication = null,
-                                                onClick = onExploreClick
-                                            )
-                                            .padding(top = ODSVariables.spacingComponent2),
-                                        cornerRadius = ODSCorners(all = 20.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center,
-                                        background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-                                        padding = ODSPadding(
-                                            horizontal = ODSVariables.spacingComponent6,
-                                            vertical = ODSVariables.spacingComponent3
-                                        )
-                                    ) {
-                                        ODSText(
-                                            text = "Explore Profiles",
-                                            style = ODSTextStyles.bodySBold,
-                                            color = HexColor("#FFFFFF", 1.0f)
-                                        )
-                                    }
+                                    ODSButton(
+                                        modifier = Modifier.padding(top = ODSVariables.spacingComponent2),
+                                        scheme = scheme,
+                                        props = ODSButtonProps(
+                                            label = "Explore Profiles",
+                                            variant = ODSButtonVariant.SECONDARY
+                                        ),
+                                        onClick = onExploreClick
+                                    )
                                 }
                             }
                         }

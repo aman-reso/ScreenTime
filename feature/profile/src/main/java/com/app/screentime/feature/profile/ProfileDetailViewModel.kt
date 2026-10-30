@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.core.model.ProfilePrompt
 import com.app.screentime.core.model.User
+import com.app.screentime.core.network.api.DiscoveryApi
+import com.app.screentime.core.network.api.WinterApi
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.feature.profile.domain.usecase.FetchUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,33 +17,19 @@ import javax.inject.Inject
 
 data class ProfileDetailUiState(
     val isLoading: Boolean = false,
-    val user: User? = null,
-    val userId: String = "",
-    val displayName: String = "",
-    val age: Int = 24,
-    val gender: String = "",
-    val bio: String = "",
-    val aboutMe: String = "",
-    val datingIntent: String = "",
-    val heightCm: Int? = null,
-    val heightFormatted: String = "",
-    val city: String = "",
-    val area: String = "",
-    val locationFormatted: String = "Online",
-    val job: String = "",
-    val education: String = "",
-    val interests: List<String> = emptyList(),
-    val languages: List<String> = emptyList(),
-    val photos: List<String> = emptyList(),
-    val prompts: List<ProfilePrompt> = emptyList(),
-    val matchPercentage: Int = 90,
-    val qualityScore: Double = 0.90,
+    val profile: ProfileDetailUiModel = ProfileDetailUiModel(),
+    val isLiked: Boolean = false,
+    val isDisliked: Boolean = false,
+    val isActionInProgress: Boolean = false,
     val error: String? = null
 )
 
 @HiltViewModel
 class ProfileDetailViewModel @Inject constructor(
-    private val fetchUserProfileUseCase: FetchUserProfileUseCase
+    private val fetchUserProfileUseCase: FetchUserProfileUseCase,
+    private val discoveryApi: DiscoveryApi,
+    private val winterApi: WinterApi,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileDetailUiState())
@@ -50,79 +39,38 @@ class ProfileDetailViewModel @Inject constructor(
         val resolvedTargetId = targetUserId.trim()
         _uiState.value = _uiState.value.copy(
             isLoading = true,
-            userId = resolvedTargetId,
-            displayName = initialName.ifBlank { _uiState.value.displayName },
-            age = initialAge,
+            profile = _uiState.value.profile.copy(
+                userId = resolvedTargetId,
+                photos = emptyList(),
+                displayName = initialName.ifBlank { _uiState.value.profile.displayName },
+                headerTitle = if (initialAge > 0 && initialName.isNotBlank()) "$initialName, $initialAge" else initialName.ifBlank { _uiState.value.profile.headerTitle }
+            ),
             error = null
         )
 
         viewModelScope.launch {
             fetchUserProfileUseCase(resolvedTargetId.takeIf { it.isNotBlank() && it != "me" })
                 .onSuccess { user ->
-                    val totalInches = user.heightCm?.let { kotlin.math.round(it / 2.54).toInt() }
-                    val feet = totalInches?.let { it / 12 }
-                    val inches = totalInches?.let { it % 12 }
-                    val heightStr = when {
-                        user.heightCm != null && feet != null && inches != null -> "${user.heightCm} cm ($feet'$inches\")"
-                        !user.height.isNullOrBlank() -> user.height!!
-                        else -> ""
-                    }
-
-                    val locStr = when {
-                        !user.area.isNullOrBlank() && !user.city.isNullOrBlank() -> "${user.area}, ${user.city}"
-                        !user.city.isNullOrBlank() -> user.city!!
-                        !user.area.isNullOrBlank() -> user.area!!
-                        else -> "Online"
-                    }
-
-                    val resolvedPhotos = user.photos.filter { it.isNotBlank() }.ifEmpty {
-                        listOfNotNull(user.avatarUrl).filter { it.isNotBlank() }
-                    }
-
-                    val resolvedAge = user.age ?: user.dateOfBirth?.let { dob ->
-                        try {
-                            val parts = dob.split("-")
-                            if (parts.size >= 3) {
-                                val y = parts[0].toInt()
-                                val m = parts[1].toInt()
-                                val d = parts[2].toInt()
-                                java.time.Period.between(
-                                    java.time.LocalDate.of(y, m, d),
-                                    java.time.LocalDate.now()
-                                ).years
-                            } else null
-                        } catch (_: Exception) {
-                            null
-                        }
-                    } ?: initialAge
-
-                    val matchPct = (user.qualityScore * 100).toInt().coerceIn(75, 99)
-
+                    val uiModel = user.toProfileDetailUiModel(
+                        fallbackUserId = resolvedTargetId,
+                        fallbackName = initialName,
+                        fallbackAge = initialAge
+                    )
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        user = user,
-                        userId = user.id,
-                        displayName = user.name,
-                        age = resolvedAge,
-                        gender = user.gender ?: "",
-                        bio = user.bio ?: "",
-                        aboutMe = user.aboutMe ?: user.bio ?: "",
-                        datingIntent = user.datingIntent ?: user.relationType ?: "",
-                        heightCm = user.heightCm,
-                        heightFormatted = heightStr,
-                        city = user.city ?: "",
-                        area = user.area ?: "",
-                        locationFormatted = locStr,
-                        job = user.job ?: user.occupation ?: "",
-                        education = user.education ?: "",
-                        interests = user.interests,
-                        languages = user.languages,
-                        photos = resolvedPhotos,
-                        prompts = user.prompts,
-                        matchPercentage = if (matchPct > 0) matchPct else 90,
-                        qualityScore = user.qualityScore,
+                        profile = uiModel,
                         error = null
                     )
+                    try {
+                        val token = preferencesManager.getToken().orEmpty()
+                        if (token.isNotBlank()) {
+                            val favorites = winterApi.getFavorites(token)
+                            if (favorites.models.any { it.id == resolvedTargetId }) {
+                                _uiState.value = _uiState.value.copy(isLiked = true)
+                            }
+                        }
+                    } catch (_: Exception) {
+                    }
                 }
                 .onFailure { err ->
                     _uiState.value = _uiState.value.copy(
@@ -131,5 +79,135 @@ class ProfileDetailViewModel @Inject constructor(
                     )
                 }
         }
+    }
+
+    fun likeProfile(onResult: (isMatch: Boolean, message: String) -> Unit) {
+        val targetId = _uiState.value.profile.userId
+        if (targetId.isBlank() || _uiState.value.isActionInProgress) return
+
+        _uiState.value = _uiState.value.copy(isActionInProgress = true)
+
+        viewModelScope.launch {
+            try {
+                val token = preferencesManager.getToken().orEmpty()
+                val currentUserId = resolveUserId(token)
+
+                val response = discoveryApi.interact(
+                    token = token,
+                    targetUserId = targetId,
+                    action = "like",
+                    userId = currentUserId
+                )
+
+                try {
+                    winterApi.addFavorite(token, targetId)
+                } catch (_: Exception) {
+                }
+
+                val isMatch = response.data?.is_match ?: false
+                val msg = if (isMatch) "It's a Match! 🎉" else "Liked!"
+
+                _uiState.value = _uiState.value.copy(
+                    isLiked = true,
+                    isDisliked = false,
+                    isActionInProgress = false
+                )
+                onResult(isMatch, msg)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isActionInProgress = false)
+                onResult(false, "Failed to like profile")
+            }
+        }
+    }
+
+    fun dislikeProfile(onComplete: () -> Unit) {
+        val targetId = _uiState.value.profile.userId
+        if (targetId.isBlank() || _uiState.value.isActionInProgress) {
+            onComplete()
+            return
+        }
+
+        _uiState.value = _uiState.value.copy(isActionInProgress = true)
+
+        viewModelScope.launch {
+            try {
+                val token = preferencesManager.getToken().orEmpty()
+                val currentUserId = resolveUserId(token)
+
+                // 1. Call discovery interact API with action "dismiss"
+                discoveryApi.interact(
+                    token = token,
+                    targetUserId = targetId,
+                    action = "dismiss",
+                    userId = currentUserId
+                )
+
+                _uiState.value = _uiState.value.copy(
+                    isDisliked = true,
+                    isLiked = false,
+                    isActionInProgress = false
+                )
+            } catch (_: Exception) {
+                _uiState.value = _uiState.value.copy(isActionInProgress = false)
+            } finally {
+                onComplete()
+            }
+        }
+    }
+
+    fun reportProfile(reason: String = "Inappropriate behavior", onComplete: (Boolean) -> Unit) {
+        val targetId = _uiState.value.profile.userId
+        if (targetId.isBlank()) {
+            onComplete(false)
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val token = preferencesManager.getToken().orEmpty()
+                val success = winterApi.reportUser(token, targetId, reason)
+                onComplete(success)
+            } catch (e: Exception) {
+                onComplete(false)
+            }
+        }
+    }
+
+    fun blockProfile(onComplete: (Boolean) -> Unit) {
+        val targetId = _uiState.value.profile.userId
+        if (targetId.isBlank()) {
+            onComplete(false)
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val token = preferencesManager.getToken().orEmpty()
+                val currentUserId = resolveUserId(token)
+                // Dismiss from discovery
+                try {
+                    discoveryApi.interact(
+                        token = token,
+                        targetUserId = targetId,
+                        action = "dismiss",
+                        userId = currentUserId
+                    )
+                } catch (_: Exception) {
+                }
+                val success = winterApi.reportUser(token, targetId, "Blocked by user")
+                onComplete(success)
+            } catch (e: Exception) {
+                onComplete(false)
+            }
+        }
+    }
+
+    private fun resolveUserId(token: String): String? {
+        val uid = preferencesManager.getUserId()
+        if (!uid.isNullOrBlank()) return uid
+        if (token.startsWith("token_")) {
+            return token.removePrefix("token_")
+        }
+        return null
     }
 }

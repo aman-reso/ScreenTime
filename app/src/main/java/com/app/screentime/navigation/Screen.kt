@@ -11,13 +11,19 @@ sealed class Screen : NavKey {
     object Home : Screen() // Tab 1: Home Feed (HomeFeedScreen)
 
     @Serializable
-    object DiscoverMap : Screen() // Tab 2: Location-based Discovery (DiscoverMapScreen)
+    object DiscoverMap : Screen() // Legacy alias (redirects to Home)
 
     @Serializable
     object DatingPreferences : Screen() // Screen 1: "Tell us your kind of fun" onboarding / preferences
 
     @Serializable
     object Likes : Screen() // Liked profiles & favorites
+
+    @Serializable
+    object WhoLikedMe : Screen() // People who liked me
+
+    @Serializable
+    object Matches : Screen() // Mutual matches
 
     @Serializable
     object Discover : Screen() // Match discovery card swiping / Legacy alias
@@ -39,6 +45,9 @@ sealed class Screen : NavKey {
 
     @Serializable
     object EditProfile : Screen()
+
+    @Serializable
+    object EditPreferences : Screen()
 
     @Serializable
     object Notifications : Screen()

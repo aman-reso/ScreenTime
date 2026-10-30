@@ -32,6 +32,7 @@ import com.app.screentime.core.ui.security.ScreenshotProtectionManager
 import com.app.screentime.core.ui.util.ODSSnackbarHost
 import com.telekom.odsystem.atoms.ODSBox
 import com.app.screentime.update.InAppUpdateManager
+import com.app.screentime.review.InAppReviewManager
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +56,9 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var inAppUpdateManager: InAppUpdateManager
+
+    @Inject
+    lateinit var inAppReviewManager: InAppReviewManager
 
     @Inject
     lateinit var realtimeChatSyncManager: Lazy<RealtimeChatSyncManager>
@@ -198,6 +202,9 @@ class MainActivity : AppCompatActivity() {
                         pendingNotificationScreen = pendingNotificationScreen,
                         onClearPendingNotificationScreen = { pendingNotificationScreen = null },
                         onLogout = { sessionManager.clearSession() },
+                        onRateApp = {
+                            inAppReviewManager.launchReviewFlow(this@MainActivity, fallbackToPlayStoreOnFailure = true)
+                        },
                         scheme = zonaODSTheme
                     )
                 }

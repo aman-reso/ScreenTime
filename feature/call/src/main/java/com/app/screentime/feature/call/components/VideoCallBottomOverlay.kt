@@ -64,22 +64,15 @@ fun VideoCallBottomOverlay(
 ) {
     ODSBox(
         modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPadding(),
-        cornerRadius = ODSCorners(topLeft = 32.dp, topRight = 32.dp),
+            .fillMaxWidth(),
         background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-        border = ODSBorder(
-            width = 1.dp,
-            colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-        ),
-        padding = ODSPadding(top = 20.dp, bottom = 20.dp, left = 20.dp, right = 20.dp)
+        padding = ODSPadding(16.dp)
     ) {
         ODSColumn(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            gap = 14.dp
+            gap = 12.dp
         ) {
-            // Dialing subtitle info placed cleanly above action buttons
             if (callState.status == CallStatus.DIALING) {
                 ODSColumn(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -98,13 +91,11 @@ fun VideoCallBottomOverlay(
                 }
             }
 
-            // ── Primary Action Buttons Row ──
             ODSRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 1. Microphone Mute / Unmute Button
                 VideoCallActionButton(
                     iconRes = if (callState.isMuted) ODSR.drawable.ic_mic_off else ODSR.drawable.ic_mic,
                     isActive = callState.isMuted,
@@ -115,7 +106,6 @@ fun VideoCallBottomOverlay(
                     onClick = onToggleMute
                 )
 
-                // 2. Camera Toggle (On/Off) Button
                 VideoCallActionButton(
                     iconRes = ODSR.drawable.video,
                     isActive = callState.isCameraOn,
@@ -126,16 +116,6 @@ fun VideoCallBottomOverlay(
                     onClick = onToggleCamera
                 )
 
-                // 3. Camera Flip / Rotate Button
-                VideoCallActionButton(
-                    iconRes = ODSR.drawable.ic_refresh_cw,
-                    isActive = false,
-                    scheme = scheme,
-                    contentDescription = "Switch Camera Front/Back",
-                    onClick = onFlipCamera
-                )
-
-                // 4. Speakerphone Toggle Button
                 VideoCallActionButton(
                     iconRes = ODSR.drawable.ic_volume_2,
                     isActive = callState.isSpeaker,
@@ -146,31 +126,21 @@ fun VideoCallBottomOverlay(
                     onClick = onToggleSpeaker
                 )
 
-                // 5. End Call Button (Large High-Contrast Red Action Button)
                 ODSBox(
                     modifier = Modifier
                         .size(64.dp)
                         .clickable { onEndCall() },
                     cornerRadius = ODSCorners(all = 32.dp),
-                    background = listOf(ODSColorModel(hexColor = HexColor("#FF4D4F", 1.0f))),
+                    background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
                     contentAlignment = Alignment.Center
                 ) {
                     ODSIcon(
                         iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
-                        tint = HexColor("#FFFFFF", 1.0f).getColor(),
+                        tint = scheme.basicTextOnAccent.getColor(),
                         modifier = Modifier.size(28.dp)
                     )
                 }
             }
-
-            // Bottom Drag Handle / Indicator Pill
-            ODSBox(
-                modifier = Modifier
-                    .width(100.dp)
-                    .height(4.dp),
-                cornerRadius = ODSCorners(all = 2.dp),
-                background = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-            )
         }
     }
 }

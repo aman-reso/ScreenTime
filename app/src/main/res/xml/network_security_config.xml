@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true">
+    <!-- Enforce HTTPS only & trust strictly system root CAs to block proxy tools (Charles, Burp, etc.) -->
+    <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
-            <certificates src="user" />
         </trust-anchors>
     </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">winterdating.com</domain>
+        <domain includeSubdomains="true">api.winterdating.com</domain>
+        <domain includeSubdomains="true">run.app</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+    <!-- Allow direct connection to self-hosted LiveKit SFU server for voice/video calls -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">testing.bpscguru.com</domain>
-        <domain includeSubdomains="true">bpscguru.com</domain>
-        <domain includeSubdomains="true">64.227.187.129</domain>
+        <domain includeSubdomains="true">34.142.174.218</domain>
+        <domain includeSubdomains="true">34.180.1.43</domain>
         <domain includeSubdomains="true">10.0.2.2</domain>
         <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">127.0.0.1</domain>
-        <domain includeSubdomains="true">192.168.0.0/16</domain>
-        <domain includeSubdomains="true">ngrok-free.app</domain>
-        <domain includeSubdomains="true">ngrok.io</domain>
-        <domain includeSubdomains="true">apptime.in</domain>
     </domain-config>
 </network-security-config>

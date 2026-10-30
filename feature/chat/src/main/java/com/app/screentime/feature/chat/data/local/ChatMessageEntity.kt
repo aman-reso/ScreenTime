@@ -11,7 +11,8 @@ import com.app.screentime.core.model.MessageType
     indices = [
         Index(value = ["partnerId"]),
         Index(value = ["conversationId"]),
-        Index(value = ["timestamp"])
+        Index(value = ["timestamp"]),
+        Index(value = ["clientMessageId"])
     ]
 )
 data class ChatMessageEntity(
@@ -27,7 +28,8 @@ data class ChatMessageEntity(
     val isSending: Boolean = false,
     val isFailed: Boolean = false,
     val mediaUrl: String? = null,
-    val type: String = "TEXT"
+    val type: String = "TEXT",
+    val clientMessageId: String? = null
 ) {
     fun toDomain(): ChatMessage {
         val msgType = try {
@@ -46,7 +48,8 @@ data class ChatMessageEntity(
             isFailed = isFailed,
             conversationId = conversationId,
             type = msgType,
-            mediaUrl = mediaUrl
+            mediaUrl = mediaUrl,
+            clientMessageId = clientMessageId
         )
     }
 
@@ -64,7 +67,8 @@ data class ChatMessageEntity(
                 isSending = domain.isSending,
                 isFailed = domain.isFailed,
                 mediaUrl = domain.mediaUrl,
-                type = domain.type.name
+                type = domain.type.name,
+                clientMessageId = domain.clientMessageId
             )
         }
     }

@@ -35,6 +35,9 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
     implementation(project(":appdesign"))
+    implementation(project(":ads"))
+    implementation(project(":feature:wallet"))
+    implementation(libs.play.billing.ktx)
 
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))

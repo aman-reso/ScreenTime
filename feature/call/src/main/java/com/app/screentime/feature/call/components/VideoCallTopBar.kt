@@ -54,13 +54,11 @@ fun VideoCallTopBar(
 
     ODSRow(
         modifier = modifier
-            .statusBarsPadding()
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // ── Top-Left Floating Status Pill ──
         ODSRow(
             cornerRadius = ODSCorners(all = 20.dp),
             background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
@@ -72,7 +70,6 @@ fun VideoCallTopBar(
             verticalAlignment = Alignment.CenterVertically,
             gap = 8.dp
         ) {
-            // Pulsing active call indicator
             ODSBox(
                 modifier = Modifier.size(8.dp),
                 cornerRadius = ODSCorners(all = 4.dp),

@@ -56,7 +56,7 @@ fun AccountWalletCard(
         verticalAlignment = Alignment.Top,
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top,
-        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle))
     ) {
         // ── 1. Header: Points Balance Metric ─────────────────────────────────
         ODSRow(
@@ -158,7 +158,7 @@ fun AccountWalletCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle))
             ) {
                 ODSText(
                     text = "Transactions",

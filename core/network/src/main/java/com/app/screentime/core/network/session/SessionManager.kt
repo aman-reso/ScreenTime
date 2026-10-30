@@ -11,11 +11,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
+import com.app.screentime.core.network.NetworkAuthBridge
 
 @Singleton
 class SessionManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val preferencesManager: com.app.screentime.core.network.preferences.PreferencesManager
+    private val preferencesManager: com.app.screentime.core.network.preferences.PreferencesManager,
+    private val e2eCryptoManagerProvider: javax.inject.Provider<com.app.screentime.core.network.security.E2ECryptoManager>
 ) {
     companion object {
         const val TOKEN_LIFETIME_MS = 365L * 24 * 60 * 60 * 1000L // Persistent 365-Day Session
@@ -32,6 +34,19 @@ class SessionManager @Inject constructor(
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val _isLoggedInFlow = MutableStateFlow(hasValidSession())
     val isLoggedInFlow: StateFlow<Boolean> = _isLoggedInFlow.asStateFlow()
+
+    init {
+        NetworkAuthBridge.unauthorizedHandler =
+            object : com.app.screentime.core.network.UnauthorizedHandler {
+                override fun onUnauthorized() {
+                    android.util.Log.w(
+                        "SessionManager",
+                        "🔴 UnauthorizedHandler triggered on 401 -> clearing session"
+                    )
+                    clearSession()
+                }
+            }
+    }
 
     fun getToken(): String? {
         return preferencesManager.getToken()
@@ -73,9 +88,6 @@ class SessionManager @Inject constructor(
         }
         set(value) = prefs.edit { putString(KEY_USER_ROLE, value.name.lowercase()) }
 
-    var tokenExpiresAt: Long
-        get() = prefs.getLong(KEY_EXPIRES_AT, 0L)
-        set(value) = prefs.edit { putLong(KEY_EXPIRES_AT, value) }
 
     var isOnboardingCompleted: Boolean
         get() = prefs.getBoolean(
@@ -126,11 +138,6 @@ class SessionManager @Inject constructor(
 
     fun hasToken(): Boolean = !getToken().isNullOrEmpty()
 
-    fun isTokenExpired(): Boolean {
-        val expiry = tokenExpiresAt
-        return expiry > 0L && System.currentTimeMillis() >= expiry
-    }
-
     fun hasValidSession(): Boolean {
         return hasToken()
     }
@@ -153,9 +160,74 @@ class SessionManager @Inject constructor(
         _isLoggedInFlow.value = true
     }
 
-    fun clearSession() {
+    fun clearSession(isAccountDeletion: Boolean = false) {
         setToken(null)
-        prefs.edit { clear() }
+        preferencesManager.clearAll()
+
+        // Clear session shared prefs
+        try {
+            prefs.edit { clear() }
+        } catch (e: Exception) {
+            // Ignore
+        }
+        try {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { clear() }
+        } catch (e: Exception) {
+            // Ignore
+        }
+        try {
+            context.getSharedPreferences("screentime_prefs", Context.MODE_PRIVATE).edit { clear() }
+        } catch (e: Exception) {
+            // Ignore
+        }
+
+        // Clear onboarding draft preferences
+        try {
+            context.getSharedPreferences("preferences_onboarding_draft", Context.MODE_PRIVATE)
+                .edit { clear() }
+        } catch (e: Exception) {
+            // Ignore
+        }
+
+        // Clear FCM token preferences
+        try {
+            context.getSharedPreferences("fcm_token_prefs", Context.MODE_PRIVATE).edit { clear() }
+        } catch (e: Exception) {
+            // Ignore
+        }
+
+        // Clear active E2EE session from memory on logout (Hardware KeyStore vault stays sealed for next login)
+        // If permanent account deletion, wipe all hardware vaults completely
+        try {
+            if (isAccountDeletion) {
+                e2eCryptoManagerProvider.get().clearAllKeysPermanently()
+            } else {
+                e2eCryptoManagerProvider.get().onLogout()
+            }
+        } catch (e: Exception) {
+            // Ignore
+        }
+
+        // Clear Room database files (Chat history)
+        try {
+            context.deleteDatabase("chat_database.db")
+        } catch (e: Exception) {
+            // Ignore
+        }
+
+        // Clear cached images, selfies and temporary files
+        try {
+            context.cacheDir?.listFiles()?.forEach { file ->
+                try {
+                    file.deleteRecursively()
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
+        } catch (e: Exception) {
+            // Ignore
+        }
+
         _isLoggedInFlow.value = false
     }
 }

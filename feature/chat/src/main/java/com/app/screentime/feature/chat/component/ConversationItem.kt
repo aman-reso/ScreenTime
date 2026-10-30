@@ -67,7 +67,20 @@ fun ConversationItem(
         }
     }
 
-    val messageText = if (conv.lastMessage.isNotBlank()) conv.lastMessage else "Say hello! 👋"
+    val messageText = when {
+        conv.lastMessage.isBlank() -> "Say hello! 👋"
+        conv.lastMessage.endsWith(".m4a", ignoreCase = true) ||
+        conv.lastMessage.endsWith(".mp3", ignoreCase = true) ||
+        conv.lastMessage.endsWith(".aac", ignoreCase = true) ||
+        conv.lastMessage.contains("voice_note", ignoreCase = true) ||
+        conv.lastMessage.contains("/audio/", ignoreCase = true) -> "🎤 Voice message"
+        conv.lastMessage.endsWith(".jpg", ignoreCase = true) ||
+        conv.lastMessage.endsWith(".jpeg", ignoreCase = true) ||
+        conv.lastMessage.endsWith(".png", ignoreCase = true) ||
+        conv.lastMessage.endsWith(".webp", ignoreCase = true) ||
+        conv.lastMessage.contains("/uploads/images/", ignoreCase = true) -> "📷 Photo (View once)"
+        else -> conv.lastMessage
+    }
 
     ODSColumn(
         modifier = Modifier
@@ -120,13 +133,13 @@ fun ConversationItem(
                     } else {
                         ODSBox(
                             modifier = Modifier.fillMaxSize(),
-                            background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
+                            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
                             contentAlignment = Alignment.Center
                         ) {
                             ODSText(
                                 text = conv.modelName.take(1).uppercase(),
                                 style = ODSTextStyles.bodySBold,
-                                color = scheme.basicAccent
+                                color = scheme.basicText
                             )
                         }
                     }

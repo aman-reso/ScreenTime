@@ -31,10 +31,12 @@ android {
 }
 
 dependencies {
+    implementation(project(":config"))
     implementation(project(":core:model"))
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
     implementation(project(":appdesign"))
+    implementation(project(":ads"))
 
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
@@ -43,6 +45,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.constraintlayout.compose)
 
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
@@ -50,7 +53,5 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
-    implementation(libs.maps.compose)
-    implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
 }

@@ -114,7 +114,6 @@ fun TransactionsScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 32.dp)

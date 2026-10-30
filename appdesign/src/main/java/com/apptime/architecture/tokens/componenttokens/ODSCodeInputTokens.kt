@@ -19,12 +19,12 @@ data class ODSCodeInputTokens(
 val defaultODSCodeInputTokens = ODSCodeInputTokens(
     gap = DSVariables.spacingComponent3,
     verticalAlignment = Alignment.Top,
-    horizontalAlignment = Alignment.Start,
+    horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.Top,
     inputContainerGap = DSVariables.spacingComponent3,
-    inputContainerVerticalAlignment = Alignment.Top,
-    inputContainerHorizontalAlignment = Alignment.Start,
-    inputContainerHorizontalArrangement = Arrangement.Start
+    inputContainerVerticalAlignment = Alignment.CenterVertically,
+    inputContainerHorizontalAlignment = Alignment.CenterHorizontally,
+    inputContainerHorizontalArrangement = Arrangement.Center
 )
 
 var DSCodeInputTokens: ODSCodeInputTokens = defaultODSCodeInputTokens

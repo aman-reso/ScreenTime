@@ -33,7 +33,7 @@ val defaultODSTagStaticTokens = ODSTagStaticTokens(
         left = DSVariables.spacingComponent3,
         right = DSVariables.spacingComponent3
     ),
-    borderRadius = ODSCorners(all = DSVariables.radiusExtraSmall),
+    borderRadius = ODSCorners(all = DSVariables.radiusLarge),
     verticalAlignment = Alignment.CenterVertically,
     horizontalAlignment = Alignment.CenterHorizontally,
     horizontalArrangement = Arrangement.Center,

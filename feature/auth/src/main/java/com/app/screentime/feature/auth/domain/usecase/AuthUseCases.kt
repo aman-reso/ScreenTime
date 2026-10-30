@@ -8,6 +8,59 @@ import com.app.screentime.core.network.session.SessionManager
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
+class SendOtpUseCase @Inject constructor(
+    private val api: WinterApi,
+    private val preferencesManager: PreferencesManager
+) {
+    suspend operator fun invoke(phone: String): Result<String> {
+        return try {
+            val response = api.sendOtp(phone)
+            val hint = response.data?.hint ?: ""
+            Result.success(hint)
+        } catch (e: Exception) {
+            Result.success("")
+        }
+    }
+}
+
+class VerifyOtpUseCase @Inject constructor(
+    private val api: WinterApi,
+    private val sessionManager: SessionManager,
+    private val preferencesManager: PreferencesManager
+) {
+    suspend operator fun invoke(phone: String, code: String): Result<User> {
+        val trimmedCode = code.trim()
+
+        return try {
+            val response = api.verifyOtp(phone, trimmedCode)
+            val userDto = response.user
+            val resolvedName = userDto.getResolvedName().ifBlank { "User" }
+            val user = User(
+                id = userDto.id.ifBlank { "user_demo" },
+                phone = userDto.phone.ifBlank { phone },
+                name = resolvedName,
+                role = UserRole.USER,
+                walletBalance = response.wallet?.balance ?: 0.0
+            )
+
+            val isProfileComplete =
+                (response.profile_complete || response.has_profile || userDto.profile_complete || userDto.has_profile) && !response.is_new_user
+            sessionManager.isOnboardingCompleted = isProfileComplete
+            preferencesManager.setOnboardingCompleted(isProfileComplete)
+            sessionManager.saveSession(response.token, user)
+            preferencesManager.setToken(response.token)
+            preferencesManager.setUserId(user.id)
+            preferencesManager.setUsername(user.name)
+            preferencesManager.setPhone(user.phone)
+            preferencesManager.setRole(user.role.name.lowercase())
+            preferencesManager.setPhoneVerified(true)
+            Result.success(user.copy(isPhoneVerified = true))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+}
+
 class LoginUseCase @Inject constructor(
     private val api: WinterApi,
     private val sessionManager: SessionManager,
@@ -15,31 +68,23 @@ class LoginUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(phone: String, name: String, role: String): Result<User> {
         return try {
-            var token = ""
-            var userId = ""
-            var userName = name.ifBlank { "User" }
-            var userPhone = phone
-
-            try {
-                val response = api.registerOrLogin(phone, name, role)
-                token = response.token
-                userId = response.user.id
-                userName = response.user.name
-                userPhone = response.user.phone
-            } catch (_: Exception) {
-                token = "dev_jwt_${System.currentTimeMillis()}"
-                userId = "user_${phone.filter { it.isDigit() }.takeLast(4)}"
-            }
-
+            val response = api.registerOrLogin(phone, name, role)
+            val userDto = response.user
             val user = User(
-                id = userId.ifBlank { "user_demo" },
-                phone = userPhone,
-                name = userName,
+                id = userDto.id.ifBlank { "user_demo" },
+                phone = userDto.phone,
+                name = userDto.name,
                 role = UserRole.USER,
-                walletBalance = 1000.0
+                walletBalance = response.wallet?.balance ?: 1000.0
             )
-            sessionManager.saveSession(token, user)
-            preferencesManager.setToken(token)
+
+            val isProfileComplete =
+                (response.profile_complete || response.has_profile || userDto.profile_complete || userDto.has_profile) && !response.is_new_user
+            sessionManager.isOnboardingCompleted = isProfileComplete
+            preferencesManager.setOnboardingCompleted(isProfileComplete)
+
+            sessionManager.saveSession(response.token, user)
+            preferencesManager.setToken(response.token)
             preferencesManager.setUserId(user.id)
             preferencesManager.setUsername(user.name)
             preferencesManager.setPhone(user.phone)
@@ -82,25 +127,29 @@ class LoginWithGoogleUseCase @Inject constructor(
             val userDto = response.user
             val resolvedName = userDto.getResolvedName().ifBlank { name ?: "User" }
             val user = User(
-                id = userDto.id.ifBlank { googleId ?: idToken ?: "google_${System.currentTimeMillis()}" },
+                id = userDto.id.ifBlank {
+                    googleId ?: idToken ?: "google_${System.currentTimeMillis()}"
+                },
                 phone = userDto.phone.ifBlank { email ?: "" },
                 name = resolvedName,
                 role = UserRole.USER,
                 avatarUrl = userDto.avatar_url ?: avatarUrl,
                 walletBalance = response.wallet?.balance ?: 1000.0
             )
-            val isNewUser = response.is_new_user
-            val onboardingDone = !isNewUser
-            sessionManager.isOnboardingCompleted = onboardingDone
-            preferencesManager.setOnboardingCompleted(onboardingDone)
+
+            val isProfileComplete =
+                (response.profile_complete || response.has_profile || userDto.profile_complete || userDto.has_profile) && !response.is_new_user
+            sessionManager.isOnboardingCompleted = isProfileComplete
+            preferencesManager.setOnboardingCompleted(isProfileComplete)
 
             sessionManager.saveSession(response.token, user)
             preferencesManager.setToken(response.token)
             preferencesManager.setUserId(user.id)
             preferencesManager.setUsername(user.name)
-            preferencesManager.setPhone(user.phone)
-            preferencesManager.setRole(user.role.name.lowercase())
-            Result.success(user)
+            val isPhoneVerified = userDto.is_phone_verified == true || userDto.phone_verified == true
+            preferencesManager.setPhoneVerified(isPhoneVerified)
+            val resolvedUser = user.copy(isPhoneVerified = isPhoneVerified)
+            Result.success(resolvedUser)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -129,8 +178,6 @@ class LogoutUseCase @Inject constructor(
 ) {
     operator fun invoke() {
         sessionManager.clearSession()
-        preferencesManager.clearAuth()
-        sessionManager.isOnboardingCompleted = false
-        preferencesManager.setOnboardingCompleted(false)
+        preferencesManager.clearAll()
     }
 }

@@ -4,6 +4,7 @@ import com.app.screentime.calling.data.model.CallSocketMessage
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
+import io.ktor.client.request.header
 import io.ktor.client.request.url
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
@@ -26,7 +27,8 @@ import javax.inject.Singleton
 
 @Singleton
 class ConnectWebSocketClient @Inject constructor(
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val firebaseConfigManager: com.app.screentime.core.network.config.FirebaseConfigManager
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -49,8 +51,12 @@ class ConnectWebSocketClient @Inject constructor(
         _connectionState.value = ConnectionState.Connecting
 
         try {
+            val apiKey = firebaseConfigManager.getApiKey()
             val wsUrl = buildWsUrl(baseUrl, token)
-            val newSession = httpClient.webSocketSession { url(wsUrl) }
+            val newSession = httpClient.webSocketSession {
+                url(wsUrl)
+                header("apikey", apiKey)
+            }
             session = newSession
             _connectionState.value = ConnectionState.Connected
 

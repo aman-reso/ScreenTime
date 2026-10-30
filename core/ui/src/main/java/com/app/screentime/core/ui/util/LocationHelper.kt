@@ -3,12 +3,23 @@ package com.app.screentime.core.ui.util
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Address
 import android.location.Geocoder
 import android.location.Location
+import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import java.util.Locale
@@ -30,23 +41,23 @@ object LocationHelper {
     }
 
     fun isLocationServiceEnabled(context: Context): Boolean {
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
             ?: return false
-        return androidx.core.location.LocationManagerCompat.isLocationEnabled(locationManager)
+        return LocationManagerCompat.isLocationEnabled(locationManager)
     }
 
     fun promptEnableLocationService(
         context: Context,
-        onResolutionRequired: (com.google.android.gms.common.api.ResolvableApiException) -> Unit,
+        onResolutionRequired: (ResolvableApiException) -> Unit,
         onAlreadyEnabled: () -> Unit = {},
         onFailed: (Exception) -> Unit = {}
     ) {
-        val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
+        val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
             10000L
         ).build()
 
-        val builder = com.google.android.gms.location.LocationSettingsRequest.Builder()
+        val builder = LocationSettingsRequest.Builder()
             .addLocationRequest(locationRequest)
             .setAlwaysShow(true)
 
@@ -56,7 +67,7 @@ object LocationHelper {
                 onAlreadyEnabled()
             }
             .addOnFailureListener { exception ->
-                if (exception is com.google.android.gms.common.api.ResolvableApiException) {
+                if (exception is ResolvableApiException) {
                     onResolutionRequired(exception)
                 } else {
                     onFailed(exception)
@@ -66,7 +77,7 @@ object LocationHelper {
 
     fun requestEnableLocationService(
         context: Context,
-        settingsLauncher: androidx.activity.result.ActivityResultLauncher<androidx.activity.result.IntentSenderRequest>,
+        settingsLauncher: ActivityResultLauncher<IntentSenderRequest>,
         onAlreadyEnabled: () -> Unit = {},
         onFailed: () -> Unit = {}
     ) {
@@ -74,7 +85,7 @@ object LocationHelper {
             context = context,
             onResolutionRequired = { resolvableApiException ->
                 try {
-                    val intentSenderRequest = androidx.activity.result.IntentSenderRequest.Builder(
+                    val intentSenderRequest = IntentSenderRequest.Builder(
                         resolvableApiException.resolution.intentSender
                     ).build()
                     settingsLauncher.launch(intentSenderRequest)
@@ -91,9 +102,9 @@ object LocationHelper {
 
     fun openAppSettings(context: Context) {
         try {
-            val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = android.net.Uri.fromParts("package", context.packageName, null)
-                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)
             context.showODSToast("Please allow Location permission in Settings")
@@ -104,8 +115,8 @@ object LocationHelper {
 
     fun openLocationSettings(context: Context) {
         try {
-            val intent = android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
-                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)
             context.showODSToast("Please turn ON Location (GPS) service")
@@ -116,12 +127,12 @@ object LocationHelper {
 
     fun performLocationAction(
         context: Context,
-        permissionLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>,
-        settingsLauncher: androidx.activity.result.ActivityResultLauncher<androidx.activity.result.IntentSenderRequest>,
-        onResult: (latitude: Double, longitude: Double, cityName: String) -> Unit
+        permissionLauncher: ActivityResultLauncher<Array<String>>,
+        settingsLauncher: ActivityResultLauncher<IntentSenderRequest>,
+        onResult: (latitude: Double?, longitude: Double?, cityName: String?) -> Unit
     ) {
         if (!hasLocationPermission(context)) {
-            // 1. Permission not allowed -> Ask for runtime location permission
+            // Permission not allowed -> Ask for runtime location permission
             permissionLauncher.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -129,7 +140,7 @@ object LocationHelper {
                 )
             )
         } else {
-            // 2. Permission already allowed -> Check / prompt enable location service via native Google Play dialog!
+            // Permission already allowed -> Check / prompt enable location service via native Google Play dialog!
             requestEnableLocationService(
                 context = context,
                 settingsLauncher = settingsLauncher,
@@ -146,15 +157,10 @@ object LocationHelper {
     @SuppressLint("MissingPermission")
     fun fetchCurrentLocation(
         context: Context,
-        onResult: (latitude: Double, longitude: Double, cityName: String) -> Unit
+        onResult: (latitude: Double?, longitude: Double?, cityName: String?) -> Unit
     ) {
-        if (!hasLocationPermission(context)) {
-            onResult(40.7306, -73.9910, "Location Not Set")
-            return
-        }
-
-        if (!isLocationServiceEnabled(context)) {
-            onResult(40.7306, -73.9910, "Location Off")
+        if (!hasLocationPermission(context) || !isLocationServiceEnabled(context)) {
+            onResult(null, null, null)
             return
         }
 
@@ -173,18 +179,18 @@ object LocationHelper {
                         if (lastLoc != null) {
                             processLocation(context, lastLoc.latitude, lastLoc.longitude, onResult)
                         } else {
-                            onResult(40.7306, -73.9910, "Location Off")
+                            onResult(null, null, null)
                         }
                     }.addOnFailureListener {
-                        onResult(40.7306, -73.9910, "Location Off")
+                        onResult(null, null, null)
                     }
                 }
             }.addOnFailureListener {
-                onResult(40.7306, -73.9910, "Location Off")
+                onResult(null, null, null)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            onResult(40.7306, -73.9910, "Location Off")
+            onResult(null, null, null)
         }
     }
 
@@ -192,30 +198,30 @@ object LocationHelper {
         context: Context,
         lat: Double,
         lng: Double,
-        onResult: (latitude: Double, longitude: Double, cityName: String) -> Unit
+        onResult: (latitude: Double?, longitude: Double?, cityName: String?) -> Unit
     ) {
         try {
             val geocoder = Geocoder(context, Locale.getDefault())
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 geocoder.getFromLocation(lat, lng, 1) { addresses ->
                     val address = addresses.firstOrNull()
-                    val cityName = formatAddress(address) ?: "Location Detected"
+                    val cityName = formatAddress(address) ?: "${String.format(Locale.US, "%.2f", lat)}, ${String.format(Locale.US, "%.2f", lng)}"
                     onResult(lat, lng, cityName)
                 }
             } else {
                 @Suppress("DEPRECATION")
                 val addresses = geocoder.getFromLocation(lat, lng, 1)
                 val address = addresses?.firstOrNull()
-                val cityName = formatAddress(address) ?: "Location Detected"
+                val cityName = formatAddress(address) ?: "${String.format(Locale.US, "%.2f", lat)}, ${String.format(Locale.US, "%.2f", lng)}"
                 onResult(lat, lng, cityName)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            onResult(lat, lng, "Location Detected")
+            onResult(lat, lng, "${String.format(Locale.US, "%.2f", lat)}, ${String.format(Locale.US, "%.2f", lng)}")
         }
     }
 
-    private fun formatAddress(address: android.location.Address?): String? {
+    private fun formatAddress(address: Address?): String? {
         if (address == null) return null
         val city = address.locality ?: address.subAdminArea ?: address.adminArea
         val stateOrCountry = address.adminArea ?: address.countryName

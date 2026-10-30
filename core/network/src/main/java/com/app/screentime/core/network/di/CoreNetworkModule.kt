@@ -26,17 +26,47 @@ object CoreNetworkModule {
 
     @Provides
     @Singleton
-    fun provideNetworkClient(
+    fun provideAppConfigManager(
         @ApplicationContext context: Context,
         preferencesManager: PreferencesManager
-    ): NetworkClient = NetworkClient(context, preferencesManager)
+    ): com.app.screentime.core.network.config.AppConfigManager {
+        return com.app.screentime.core.network.config.AppConfigManager(context, preferencesManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseConfigManager(
+        @ApplicationContext context: Context,
+        preferencesManager: PreferencesManager,
+        appConfigManager: com.app.screentime.core.network.config.AppConfigManager
+    ): com.app.screentime.core.network.config.FirebaseConfigManager {
+        return com.app.screentime.core.network.config.FirebaseConfigManager(context, preferencesManager, appConfigManager)
+    }
+
+    @Provides
+    @Singleton
+    fun providePlayIntegrityManager(
+        @ApplicationContext context: Context
+    ): com.app.screentime.core.network.security.PlayIntegrityManager {
+        return com.app.screentime.core.network.security.PlayIntegrityManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNetworkClient(
+        @ApplicationContext context: Context,
+        preferencesManager: PreferencesManager,
+        firebaseConfigManager: com.app.screentime.core.network.config.FirebaseConfigManager,
+        playIntegrityManager: com.app.screentime.core.network.security.PlayIntegrityManager
+    ): NetworkClient = NetworkClient(context, preferencesManager, firebaseConfigManager, playIntegrityManager)
 
     @Provides
     @Singleton
     fun provideSessionManager(
         @ApplicationContext context: Context,
-        preferencesManager: PreferencesManager
-    ): SessionManager = SessionManager(context, preferencesManager)
+        preferencesManager: PreferencesManager,
+        e2eCryptoManagerProvider: javax.inject.Provider<com.app.screentime.core.network.security.E2ECryptoManager>
+    ): SessionManager = SessionManager(context, preferencesManager, e2eCryptoManagerProvider)
 
     @Provides
     @Singleton
@@ -49,8 +79,9 @@ object CoreNetworkModule {
     @Singleton
     fun provideWinterWebSocketClient(
         api: WinterApi,
-        sessionManager: SessionManager
-    ): WinterWebSocketClient = WinterWebSocketClient(api, sessionManager)
+        sessionManager: SessionManager,
+        firebaseConfigManager: com.app.screentime.core.network.config.FirebaseConfigManager
+    ): WinterWebSocketClient = WinterWebSocketClient(api, sessionManager, firebaseConfigManager)
 
     @Provides
     @Singleton

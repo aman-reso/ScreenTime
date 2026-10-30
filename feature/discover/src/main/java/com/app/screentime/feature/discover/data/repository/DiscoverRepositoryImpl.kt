@@ -17,14 +17,18 @@ import javax.inject.Inject
 class DiscoverRepositoryImpl @Inject constructor(
     private val winterApi: WinterApi,
     private val discoveryApi: com.app.screentime.core.network.api.DiscoveryApi,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val quotaLimitManager: com.app.screentime.core.network.quota.QuotaLimitManager
 ) : DiscoverRepository {
 
     private val passedProfileIds = mutableSetOf<String>()
 
     override suspend fun getDiscoveryDeck(page: Int, limit: Int): Result<List<ModelProfile>> {
+        val token = preferencesManager.getToken().orEmpty()
+        if (token.isBlank()) {
+            return Result.failure(Exception("Authentication token required"))
+        }
         return try {
-            val token = preferencesManager.getToken().orEmpty()
             val userId = resolveUserId(token)
 
             val feedResponse = discoveryApi.getFeed(
@@ -34,13 +38,18 @@ class DiscoverRepositoryImpl @Inject constructor(
                 userId = userId
             )
 
-            if (!feedResponse.success || feedResponse.data == null) {
+            val quotaInfo = feedResponse.toQuotaLimitInfo()
+            if (quotaInfo.isLimitReached || quotaInfo.quotaRemaining != null || quotaInfo.quotaLimit != null) {
+                quotaLimitManager.updateHomeQuota(quotaInfo)
+            }
+
+            if (!feedResponse.success) {
                 return Result.failure(Exception(feedResponse.message?.ifBlank { "Failed to load feed" }))
             }
 
-            val candidates = feedResponse.data!!.items.map { dto ->
+            val candidates = feedResponse.data?.items?.map { dto ->
                 dto.toModelProfile()
-            }
+            } ?: emptyList()
 
             Result.success(candidates)
         } catch (e: Exception) {
@@ -49,8 +58,11 @@ class DiscoverRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getFavoriteProfiles(): Result<List<ModelProfile>> {
+        val token = preferencesManager.getToken().orEmpty()
+        if (token.isBlank()) {
+            return Result.success(emptyList())
+        }
         return try {
-            val token = preferencesManager.getToken().orEmpty()
             val response = winterApi.getFavorites(token)
             val favorites = response.models.map { dto ->
                 val avatar = dto.avatar_url.orEmpty()
@@ -87,8 +99,11 @@ class DiscoverRepositoryImpl @Inject constructor(
     }
 
     override suspend fun likeProfile(profileId: String): Result<Boolean> {
+        val token = preferencesManager.getToken().orEmpty()
+        if (token.isBlank()) {
+            return Result.failure(Exception("Authentication token required"))
+        }
         return try {
-            val token = preferencesManager.getToken().orEmpty()
             val userId = resolveUserId(token)
             val response = discoveryApi.interact(
                 token = token,
@@ -96,6 +111,10 @@ class DiscoverRepositoryImpl @Inject constructor(
                 action = "like",
                 userId = userId
             )
+            val quotaInfo = response.toQuotaLimitInfo()
+            if (quotaInfo.isLimitReached || quotaInfo.quotaRemaining != null || quotaInfo.quotaLimit != null) {
+                quotaLimitManager.updateHomeQuota(quotaInfo)
+            }
             val isMatch = response.data?.is_match ?: false
             Result.success(isMatch)
         } catch (e: Exception) {
@@ -104,8 +123,11 @@ class DiscoverRepositoryImpl @Inject constructor(
     }
 
     override suspend fun superLikeProfile(profileId: String): Result<Boolean> {
+        val token = preferencesManager.getToken().orEmpty()
+        if (token.isBlank()) {
+            return Result.failure(Exception("Authentication token required"))
+        }
         return try {
-            val token = preferencesManager.getToken().orEmpty()
             val userId = resolveUserId(token)
             val response = discoveryApi.interact(
                 token = token,
@@ -113,6 +135,10 @@ class DiscoverRepositoryImpl @Inject constructor(
                 action = "superlike",
                 userId = userId
             )
+            val quotaInfo = response.toQuotaLimitInfo()
+            if (quotaInfo.isLimitReached || quotaInfo.quotaRemaining != null || quotaInfo.quotaLimit != null) {
+                quotaLimitManager.updateHomeQuota(quotaInfo)
+            }
             val isMatch = response.data?.is_match ?: true
             Result.success(isMatch)
         } catch (e: Exception) {
@@ -122,15 +148,22 @@ class DiscoverRepositoryImpl @Inject constructor(
 
     override suspend fun dislikeProfile(profileId: String): Result<Unit> {
         passedProfileIds.add(profileId)
+        val token = preferencesManager.getToken().orEmpty()
+        if (token.isBlank()) {
+            return Result.success(Unit)
+        }
         return try {
-            val token = preferencesManager.getToken().orEmpty()
             val userId = resolveUserId(token)
-            discoveryApi.interact(
+            val response = discoveryApi.interact(
                 token = token,
                 targetUserId = profileId,
                 action = "dismiss",
                 userId = userId
             )
+            val quotaInfo = response.toQuotaLimitInfo()
+            if (quotaInfo.isLimitReached || quotaInfo.quotaRemaining != null || quotaInfo.quotaLimit != null) {
+                quotaLimitManager.updateHomeQuota(quotaInfo)
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.success(Unit)
@@ -141,29 +174,36 @@ class DiscoverRepositoryImpl @Inject constructor(
         page: Int,
         limit: Int
     ): Result<List<com.app.screentime.core.model.DiscoveryMatch>> {
-        return try {
-            val token = preferencesManager.getToken().orEmpty()
-            val userId = resolveUserId(token)
-            val response = discoveryApi.getMatches(
-                token = token,
-                page = page,
-                limit = limit,
-                userId = userId
-            )
-            if (response.success && response.data != null) {
-                val matches = response.data!!.items.map { it.toDiscoveryMatch() }
-                Result.success(matches)
-            } else {
-                Result.success(emptyList())
+        val token = preferencesManager.getToken().orEmpty()
+
+        if (token.isNotBlank()) {
+            try {
+                val userId = resolveUserId(token)
+                val response = discoveryApi.getMatches(
+                    token = token,
+                    page = page,
+                    limit = limit,
+                    userId = userId
+                )
+                if (response.success && response.data != null) {
+                    val matches = response.data!!.items.map { it.toDiscoveryMatch() }
+                    return Result.success(matches)
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("DiscoverRepo", "Primary discoveryApi.getMatches failed: ${e.message}")
+                return Result.failure(e)
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
+
+        return Result.success(emptyList())
     }
 
     override suspend fun getProfileDetails(profileId: String): Result<ModelProfile> {
+        val token = preferencesManager.getToken().orEmpty()
+        if (token.isBlank()) {
+            return Result.failure(Exception("Authentication token required"))
+        }
         return try {
-            val token = preferencesManager.getToken().orEmpty()
             val dto = winterApi.getModelProfile(token, profileId)
             val avatar = dto.avatar_url.orEmpty()
             Result.success(

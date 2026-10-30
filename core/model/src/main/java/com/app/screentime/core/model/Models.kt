@@ -25,8 +25,12 @@ data class User(
     val interests: List<String> = emptyList(),
     val datingIntent: String? = null,
     val city: String? = null,
+    val country: String? = null,
     val area: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val qualityScore: Double = 0.0,
+    val profession: String? = null,
     val job: String? = null,
     val occupation: String? = null,
     val height: String? = null,
@@ -37,12 +41,21 @@ data class User(
     val dateOfBirth: String? = null,
     val dob: String? = null,
     val prompts: List<ProfilePrompt> = emptyList(),
+    val likesCount: Int = 0,
+    val matchesCount: Int = 0,
     val voiceRatePerMin: Double = 10.0,
     val chatRatePerMsg: Double = 1.0,
     val isOnline: Boolean = false,
     val isBusy: Boolean = false,
     val walletBalance: Double = 0.0,
-    val createdAt: String = ""
+    val visibility: String = "public",
+    val isPrivate: Boolean = false,
+    val discoveryEnabled: Boolean = true,
+    val createdAt: String = "",
+    val videoUrl: String? = null,
+    val videos: List<String> = emptyList(),
+    val company: String? = null,
+    val isPhoneVerified: Boolean = false
 )
 
 @Serializable
@@ -116,11 +129,12 @@ data class ChatMessage(
     val isFailed: Boolean = false,
     val conversationId: String? = null,
     val type: MessageType = MessageType.TEXT,
-    val mediaUrl: String? = null
+    val mediaUrl: String? = null,
+    val clientMessageId: String? = null
 )
 
 @Serializable
-enum class MessageType { TEXT, IMAGE, STICKER, SYSTEM }
+enum class MessageType { TEXT, IMAGE, AUDIO, STICKER, SYSTEM }
 
 @Serializable
 data class Conversation(

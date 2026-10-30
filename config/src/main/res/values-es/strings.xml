@@ -1,6 +1,6 @@
 <resources>
     <!-- App Name -->
-    <string name="app_name">AppTime</string>
+    <string name="app_name">Winter</string>
     <string name="widget_description">Monitorea tu tiempo de pantalla diario y uso de aplicaciones</string>
     <string name="set_widget">Configurar Widget</string>
 

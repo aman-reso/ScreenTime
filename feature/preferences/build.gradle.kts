@@ -31,9 +31,11 @@ android {
 }
 
 dependencies {
+    implementation(project(":config"))
     implementation(project(":core:model"))
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
+    implementation(project(":core:faceverification"))
     implementation(project(":appdesign"))
 
     implementation(libs.androidx.core.ktx)
@@ -42,6 +44,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.constraintlayout.compose)
 
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
@@ -50,4 +53,13 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
     implementation(libs.play.services.location)
+
+    // CameraX for 100% front-only selfie capture
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.exifinterface)
+    implementation("com.google.guava:guava:31.1-android")
+    implementation("androidx.concurrent:concurrent-futures-ktx:1.2.0")
 }

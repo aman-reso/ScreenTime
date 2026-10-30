@@ -173,6 +173,7 @@ fun VoiceCallScreen(
             callHasStarted = true
         } else if (callState.status == CallStatus.ENDED) {
             if (callHasStarted) {
+                callHasStarted = false
                 viewModel.resetState()
                 onEndCall()
             } else {
@@ -308,7 +309,6 @@ fun VoiceCallScreen(
             scheme = scheme,
             onEndCall = {
                 viewModel.endCall("Ended from PiP")
-                onEndCall()
             },
             onToggleMute = { viewModel.toggleMute() }
         )
@@ -535,7 +535,6 @@ fun VoiceCallScreen(
                         scheme = scheme,
                         onClick = {
                             viewModel.endCall()
-                            onEndCall()
                         })
                 }
             }
@@ -685,7 +684,7 @@ private fun VoiceCallPipLayout(
                 ODSBox(
                     modifier = Modifier
                         .size(40.dp)
-                        .clickable(onClick = onEndCall),
+                        .clickable { viewModel.endCall() },
                     cornerRadius = ODSCorners(all = 20.dp),
                     background = listOf(ODSColorModel(hexColor = HexColor("#FF4D4F", 1.0f))),
                     contentAlignment = Alignment.Center

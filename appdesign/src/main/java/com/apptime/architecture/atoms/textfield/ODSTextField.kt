@@ -17,7 +17,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -27,8 +29,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -90,6 +94,23 @@ fun ODSTextField(
     val internalInputValueColor = style.inputValueColor?.getColor() ?: Color.Transparent
     val internalInputCursorColor = style.inputCursorColor?.getColor() ?: Color.Transparent
 
+    val rawInputText = props.inputText.orEmpty()
+    var textFieldValueState by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = rawInputText,
+                selection = TextRange(rawInputText.length)
+            )
+        )
+    }
+
+    if (textFieldValueState.text != rawInputText) {
+        textFieldValueState = textFieldValueState.copy(
+            text = rawInputText,
+            selection = TextRange(rawInputText.length)
+        )
+    }
+
     val counter = props.counterText?.toIntOrNull()
     val maxCharacterReached = counter != null && counter == props.inputText?.length
     val maxCharacterText = if (maxCharacterReached) {
@@ -106,13 +127,16 @@ fun ODSTextField(
             },
         enabled = !props.disabled,
         textStyle = internalInputValueTextStyle.copy(color = internalInputValueColor),
-        value = props.inputText.orEmpty(),
+        value = textFieldValueState,
         cursorBrush = SolidColor(internalInputCursorColor),
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
-        onValueChange = { newValue ->
-            if (newValue.length <= (counter ?: Int.MAX_VALUE)) {
-                onValueChange?.invoke(newValue)
+        onValueChange = { newTextFieldValue ->
+            if (newTextFieldValue.text.length <= (counter ?: Int.MAX_VALUE)) {
+                textFieldValueState = newTextFieldValue
+                if (newTextFieldValue.text != rawInputText) {
+                    onValueChange?.invoke(newTextFieldValue.text)
+                }
             }
         },
         interactionSource = interactionSource,

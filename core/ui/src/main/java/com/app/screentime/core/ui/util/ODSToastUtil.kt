@@ -17,6 +17,8 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
+import androidx.compose.material3.SnackbarVisuals
+
 /**
  * Data model for ODS Toast events.
  */
@@ -25,6 +27,18 @@ data class ODSToastData(
     val title: String? = null,
     val mode: ODSToastMode = ODSToastMode.SUCCESS
 )
+
+/**
+ * Custom SnackbarVisuals implementation carrying ODSToast data.
+ */
+class ODSSnackbarVisuals(
+    override val message: String,
+    val title: String? = null,
+    val mode: ODSToastMode = ODSToastMode.SUCCESS,
+    override val actionLabel: String? = null,
+    override val duration: SnackbarDuration = SnackbarDuration.Short,
+    override val withDismissAction: Boolean = true
+) : SnackbarVisuals
 
 /**
  * Manager to publish ODS Toast events reactively to Compose UI.
@@ -62,9 +76,14 @@ fun ODSSnackbarHost(
 ) {
     LaunchedEffect(hostState) {
         ODSToastManager.toastEvents.collect { toastData ->
+            hostState.currentSnackbarData?.dismiss()
             hostState.showSnackbar(
-                message = toastData.message,
-                withDismissAction = true
+                ODSSnackbarVisuals(
+                    message = toastData.message,
+                    title = toastData.title,
+                    mode = toastData.mode,
+                    withDismissAction = true
+                )
             )
         }
     }
@@ -73,11 +92,15 @@ fun ODSSnackbarHost(
         hostState = hostState,
         modifier = modifier,
         snackbar = { snackbarData ->
+            val visuals = snackbarData.visuals as? ODSSnackbarVisuals
+            val mode = visuals?.mode ?: ODSToastMode.SUCCESS
+            val title = visuals?.title
             ODSToast(
                 scheme = scheme,
                 props = ODSToastProps(
+                    title = title,
                     text = snackbarData.visuals.message,
-                    mode = ODSToastMode.SUCCESS,
+                    mode = mode,
                     showCloseButton = snackbarData.visuals.withDismissAction
                 ),
                 onDismiss = { snackbarData.dismiss() }
@@ -96,13 +119,18 @@ val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState?> { null
  */
 suspend fun SnackbarHostState.showODSSnackbar(
     message: String,
+    title: String? = null,
     mode: ODSToastMode = ODSToastMode.SUCCESS,
     duration: SnackbarDuration = SnackbarDuration.Short,
     withDismissAction: Boolean = true
 ): SnackbarResult {
     return showSnackbar(
-        message = message,
-        duration = duration,
-        withDismissAction = withDismissAction
+        ODSSnackbarVisuals(
+            message = message,
+            title = title,
+            mode = mode,
+            duration = duration,
+            withDismissAction = withDismissAction
+        )
     )
 }

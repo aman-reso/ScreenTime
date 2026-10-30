@@ -1,6 +1,5 @@
 package com.app.screentime.feature.wallet
 
-import com.app.screentime.core.ui.util.showODSToast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -13,15 +12,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 import com.app.screentime.core.ui.theme.zonaODSTheme
+import com.app.screentime.core.ui.util.showODSToast
 import com.telekom.odsystem.R
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
@@ -29,8 +34,14 @@ import com.telekom.odsystem.atoms.ODSColumn
 import com.telekom.odsystem.atoms.ODSLazyColumn
 import com.telekom.odsystem.atoms.ODSRow
 import com.telekom.odsystem.atoms.ODSText
+import com.telekom.odsystem.atoms.button.ODSButton
+import com.telekom.odsystem.atoms.button.ODSButtonProps
+import com.telekom.odsystem.atoms.button.ODSButtonVariant
 import com.telekom.odsystem.atoms.icon.ODSIcon
 import com.telekom.odsystem.atoms.icon.ODSIconModel
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
+import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
 import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
@@ -39,18 +50,10 @@ import com.telekom.odsystem.foundations.ODSElevation
 import com.telekom.odsystem.foundations.ODSElevationType
 import com.telekom.odsystem.foundations.ODSLinearGradientModel
 import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.foundations.ODSTextStyle
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.ODSVariables
 import com.telekom.odsystem.tokens.tokens.ODSTheme
-
-data class CreditPackage(
-    val id: String,
-    val creditsCount: Int,
-    val priceText: String,
-    val priceAmount: Double,
-    val subtitle: String = "Get priority matches & boosts",
-    val isHot: Boolean = false
-)
 
 /**
  * Add Funds & Top-Up Screen (Matching Figma node-id 21-7: https://figma.com/design/1TELYpr19qLAv99DexRNpi/Untitled?node-id=21-7).
@@ -61,41 +64,38 @@ data class CreditPackage(
  * 3. Max text size is 16sp with Funnel Sans font.
  * 4. Padding, margins, and gaps mapped to ODSVariables.
  * 5. Status bar excluded as requested.
+ * 6. Dynamic data fetched via WalletViewModel from GET /api/wallet/packages.
  */
 @Composable
 fun AddFundsScreen(
     onBack: () -> Unit,
     onPaymentSuccess: () -> Unit = onBack,
     modifier: Modifier = Modifier,
-    scheme: ODSTheme = zonaODSTheme
+    scheme: ODSTheme = zonaODSTheme,
+    viewModel: WalletViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsState()
 
-    val packages = remember {
-        listOf(
-            CreditPackage(
-                id = "pack_50",
-                creditsCount = 50,
-                priceText = "$9.99",
-                priceAmount = 9.99
-            ),
-            CreditPackage(
-                id = "pack_100",
-                creditsCount = 100,
-                priceText = "$18.99",
-                priceAmount = 18.99,
-                isHot = true
-            ),
-            CreditPackage(
-                id = "pack_250",
-                creditsCount = 250,
-                priceText = "$44.99",
-                priceAmount = 44.99
-            )
-        )
+    LaunchedEffect(Unit) {
+        viewModel.loadWallet()
+        viewModel.loadPacks()
     }
 
-    var selectedPackage by remember { mutableStateOf(packages[1]) }
+    LaunchedEffect(uiState.rechargeSuccess) {
+        if (uiState.rechargeSuccess) {
+            context.showODSToast("Payment successful! Coins added to wallet. 🎉")
+            viewModel.resetRechargeStatus()
+            onPaymentSuccess()
+        }
+    }
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let { err ->
+            context.showODSToast(err)
+        }
+    }
 
     ODSColumn(
         modifier = modifier.fillMaxSize(),
@@ -119,8 +119,7 @@ fun AddFundsScreen(
         // ── 1. Top Header Bar (No dummy status bar) ────────────────────────────
         ODSRow(
             modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding(),
+                .fillMaxWidth(),
             padding = ODSPadding(
                 top = ODSVariables.spacingComponent2,
                 bottom = ODSVariables.spacingComponent3,
@@ -154,11 +153,13 @@ fun AddFundsScreen(
 
             ODSText(
                 text = "Buy Points",
-                style = ODSTextStyles.bodyMBold,
-                color = scheme.basicTextDominant
+                style = ODSTextStyle(
+                    fontFamily = R.font.funnelsans_bold,
+                    fontSize = 18,
+                    lineHeight = 18
+                ),
+                color = HexColor("#111827", 1.0f)
             )
-
-            // Symmetric balance spacer box
             ODSBox(modifier = Modifier.size(44.dp))
         }
 
@@ -192,15 +193,15 @@ fun AddFundsScreen(
                         verticalArrangement = Arrangement.Top
                     ) {
                         ODSText(
-                            text = "AVAILABLE POINTS",
+                            text = "AVAILABLE BALANCE",
                             style = ODSTextStyles.microcopyBold,
+                            color = scheme.basicTextRecessive
+                        )
+                        ODSText(
+                            text = "🪙 ${uiState.balance.toInt()} Coins",
+                            style = ODSTextStyles.bodyMBold,
                             color = scheme.basicTextDominant
                         )
-//                        ODSText(
-//                            text = "💎 ${if (walletCoins > 0) walletCoins else 1000} pts",
-//                            style = ODSTextStyles.bodyMBold,
-//                            color = scheme.basicTextDominant
-//                        )
                     }
 
                     ODSColumn(
@@ -210,15 +211,15 @@ fun AddFundsScreen(
                         verticalArrangement = Arrangement.Top
                     ) {
                         ODSText(
-                            text = "WINTER POINTS",
+                            text = "CALL CREDITS",
                             style = ODSTextStyles.microcopyBold,
-                            color = scheme.basicTextDominant
+                            color = scheme.basicTextRecessive
                         )
-//                        ODSText(
-//                            text = "${if (walletCoins > 0) walletCoins else 1000} pts",
-//                            style = ODSTextStyles.bodyMBold,
-//                            color = scheme.basicAccent
-//                        )
+                        ODSText(
+                            text = "✨ ${if (uiState.creditBalance > 0) uiState.creditBalance else uiState.balance.toInt()} Credits",
+                            style = ODSTextStyles.bodyMBold,
+                            color = scheme.basicAccent
+                        )
                     }
                 }
             }
@@ -240,241 +241,154 @@ fun AddFundsScreen(
                         color = scheme.basicTextDominant
                     )
 
-                    ODSColumn(
-                        modifier = Modifier.fillMaxWidth(),
-                        gap = 10.dp,
-                        verticalAlignment = Alignment.Top,
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Top
-                    ) {
-                        packages.forEach { pack ->
-                            val isSelected = pack.id == selectedPackage.id
+                    if (uiState.packs.isEmpty() && uiState.isLoading) {
+                        ODSBox(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ODSLoadingSpinner(
+                                scheme = scheme,
+                                props = ODSLoadingSpinnerProps(size = ODSLoadingSpinnerSize.LARGE)
+                            )
+                        }
+                    } else {
+                        ODSColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            gap = 10.dp,
+                            verticalAlignment = Alignment.Top,
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.Top
+                        ) {
+                            uiState.packs.forEach { pack ->
+                                val isSelected = uiState.selectedPack?.id == pack.id
 
-                            ODSRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                        onClick = { selectedPackage = pack }
+                                ODSRow(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null,
+                                            onClick = { viewModel.selectPack(pack) }
+                                        ),
+                                    padding = ODSPadding(all = ODSVariables.spacingLayout1),
+                                    cornerRadius = ODSCorners(all = 20.dp),
+                                    border = ODSBorder(
+                                        width = 2.dp,
+                                        colorList = listOf(
+                                            ODSColorModel(
+                                                hexColor = if (isSelected) scheme.basicAccent else scheme.basicStroke
+                                            )
+                                        )
                                     ),
-                                padding = ODSPadding(all = ODSVariables.spacingLayout1),
-                                cornerRadius = ODSCorners(all = 20.dp),
-                                border = ODSBorder(
-                                    width = 2.dp,
-                                    colorList = listOf(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    background = listOf(
                                         ODSColorModel(
-                                            hexColor = if (isSelected) scheme.basicAccent else scheme.basicStroke
+                                            hexColor = if (isSelected) scheme.basicBackgroundCard else scheme.basicBackgroundCardSubtle
                                         )
                                     )
-                                ),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                background = listOf(
-                                    ODSColorModel(
-                                        hexColor = if (isSelected) scheme.basicBackgroundCard else scheme.basicBackgroundCardSubtle
-                                    )
-                                )
-                            ) {
-                                ODSRow(
-                                    gap = 12.dp,
-                                    horizontalAlignment = Alignment.Start,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Start
                                 ) {
-                                    // Custom Radio Indicator Circle
-                                    ODSBox(
-                                        modifier = Modifier.size(20.dp),
-                                        cornerRadius = ODSCorners(all = 10.dp),
-                                        border = if (!isSelected) {
-                                            ODSBorder(
-                                                width = 2.dp,
-                                                colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-                                            )
-                                        } else null,
-                                        background = if (isSelected) {
-                                            listOf(ODSColorModel(hexColor = scheme.basicAccent))
-                                        } else emptyList(),
-                                        contentAlignment = Alignment.Center
+                                    ODSRow(
+                                        gap = 12.dp,
+                                        horizontalAlignment = Alignment.Start,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Start
                                     ) {
-                                        if (isSelected) {
-                                            ODSBox(
-                                                modifier = Modifier.size(8.dp),
-                                                cornerRadius = ODSCorners(all = 4.dp),
-                                                background = listOf(ODSColorModel(hexColor = scheme.basicTextOnAccent))
+                                        // Custom Radio Indicator Circle
+                                        ODSBox(
+                                            modifier = Modifier.size(20.dp),
+                                            cornerRadius = ODSCorners(all = 10.dp),
+                                            border = if (!isSelected) {
+                                                ODSBorder(
+                                                    width = 2.dp,
+                                                    colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
+                                                )
+                                            } else null,
+                                            background = if (isSelected) {
+                                                listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                                            } else emptyList(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (isSelected) {
+                                                ODSBox(
+                                                    modifier = Modifier.size(8.dp),
+                                                    cornerRadius = ODSCorners(all = 4.dp),
+                                                    background = listOf(ODSColorModel(hexColor = scheme.basicTextOnAccent))
+                                                )
+                                            }
+                                        }
+
+                                        ODSColumn(
+                                            gap = 2.dp,
+                                            verticalAlignment = Alignment.Top,
+                                            horizontalAlignment = Alignment.Start,
+                                            verticalArrangement = Arrangement.Top
+                                        ) {
+                                            ODSText(
+                                                text = "${pack.effectiveCredits} Credits",
+                                                style = ODSTextStyles.bodyMBold,
+                                                color = scheme.basicTextDominant
+                                            )
+                                            val subtitle = when {
+                                                pack.voice_minutes > 0 && pack.video_minutes > 0 ->
+                                                    "${pack.voice_minutes}m Voice · ${pack.video_minutes}m Video"
+
+                                                pack.description.isNotBlank() ->
+                                                    pack.description
+
+                                                pack.benefits.isNotEmpty() ->
+                                                    pack.benefits.first()
+
+                                                else ->
+                                                    "Instant WebRTC · Never Expires"
+                                            }
+                                            ODSText(
+                                                text = subtitle,
+                                                style = ODSTextStyles.microcopyRegular,
+                                                color = scheme.basicTextRecessive
                                             )
                                         }
                                     }
 
-                                    ODSColumn(
-                                        gap = 2.dp,
-                                        verticalAlignment = Alignment.Top,
-                                        horizontalAlignment = Alignment.Start,
-                                        verticalArrangement = Arrangement.Top
+                                    ODSRow(
+                                        gap = 8.dp,
+                                        horizontalAlignment = Alignment.End,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.End
                                     ) {
+                                        if (pack.isPopularPack) {
+                                            ODSRow(
+                                                padding = ODSPadding(
+                                                    top = 4.dp,
+                                                    bottom = 4.dp,
+                                                    left = 8.dp,
+                                                    right = 8.dp
+                                                ),
+                                                cornerRadius = ODSCorners(all = 8.dp),
+                                                horizontalAlignment = Alignment.Start,
+                                                verticalAlignment = Alignment.Top,
+                                                horizontalArrangement = Arrangement.Start,
+                                                background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
+                                            ) {
+                                                ODSText(
+                                                    text = "POPULAR",
+                                                    style = ODSTextStyles.microcopyBold,
+                                                    color = scheme.basicTextOnAccent
+                                                )
+                                            }
+                                        }
+
                                         ODSText(
-                                            text = "${pack.creditsCount} Credits",
+                                            text = "₹${pack.effectivePrice.toInt()}",
                                             style = ODSTextStyles.bodyMBold,
                                             color = scheme.basicTextDominant
                                         )
-                                        ODSText(
-                                            text = pack.subtitle,
-                                            style = ODSTextStyles.microcopyRegular,
-                                            color = scheme.basicTextRecessive
-                                        )
                                     }
-                                }
-
-                                ODSRow(
-                                    gap = 8.dp,
-                                    horizontalAlignment = Alignment.End,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.End
-                                ) {
-                                    if (pack.isHot) {
-                                        ODSRow(
-                                            padding = ODSPadding(
-                                                top = 4.dp,
-                                                bottom = 4.dp,
-                                                left = 8.dp,
-                                                right = 8.dp
-                                            ),
-                                            cornerRadius = ODSCorners(all = 8.dp),
-                                            horizontalAlignment = Alignment.Start,
-                                            verticalAlignment = Alignment.Top,
-                                            horizontalArrangement = Arrangement.Start,
-                                            background = listOf(ODSColorModel(hexColor = scheme.basicAccent))
-                                        ) {
-                                            ODSText(
-                                                text = "HOT",
-                                                style = ODSTextStyles.microcopyBold,
-                                                color = scheme.basicTextOnAccent
-                                            )
-                                        }
-                                    }
-
-                                    ODSText(
-                                        text = pack.priceText,
-                                        style = ODSTextStyles.bodyMBold,
-                                        color = scheme.basicTextDominant
-                                    )
                                 }
                             }
                         }
-                    }
-                }
-            }
-
-            // ── Item 3: Payment Method Section ─────────────────────────────────
-            item {
-                ODSColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = ODSVariables.spacingLayout1),
-                    gap = ODSVariables.spacingComponent3,
-                    verticalAlignment = Alignment.Top,
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Top
-                ) {
-                    ODSText(
-                        text = "Payment Method",
-                        style = ODSTextStyles.bodyMBold,
-                        color = scheme.basicTextDominant
-                    )
-
-                    ODSRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        padding = ODSPadding(all = ODSVariables.spacingLayout1),
-                        cornerRadius = ODSCorners(all = 16.dp),
-                        border = ODSBorder(
-                            width = 1.dp,
-                            colorList = listOf(ODSColorModel(hexColor = scheme.basicStrokeSubtle))
-                        ),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
-                    ) {
-                        ODSRow(
-                            gap = 12.dp,
-                            horizontalAlignment = Alignment.Start,
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
-                        ) {
-                            // VISA badge container
-                            ODSRow(
-                                cornerRadius = ODSCorners(all = 6.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
-                                background = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary)),
-                                width = 40.dp,
-                                height = 24.dp
-                            ) {
-                                ODSText(
-                                    text = "VISA",
-                                    style = ODSTextStyles.microcopyBold,
-                                    color = scheme.basicTextDominant
-                                )
-                            }
-
-                            ODSColumn(
-                                gap = 2.dp,
-                                verticalAlignment = Alignment.Top,
-                                horizontalAlignment = Alignment.Start,
-                                verticalArrangement = Arrangement.Top
-                            ) {
-                                ODSText(
-                                    text = "Visa ending in •••• 4821",
-                                    style = ODSTextStyles.bodySBold,
-                                    color = scheme.basicTextDominant
-                                )
-                                ODSText(
-                                    text = "Expires 09/28",
-                                    style = ODSTextStyles.microcopyRegular,
-                                    color = scheme.basicTextRecessive
-                                )
-                            }
-                        }
-
-                        ODSIcon(
-                            iconModel = ODSIconModel(
-                                drawableRes = R.drawable.ic_edit_3,
-                                contentDescription = "Edit Card"
-                            ),
-                            tint = scheme.basicTextRecessive.getColor(),
-                            modifier = Modifier
-                                .size(18.dp)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                    onClick = {
-                                        context.showODSToast("Payment method selection")
-                                    }
-                                )
-                        )
-                    }
-
-                    // SSL Secured note
-                    ODSRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        gap = 8.dp,
-                        horizontalAlignment = Alignment.Start,
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        ODSIcon(
-                            iconModel = ODSIconModel(
-                                drawableRes = R.drawable.ic_shield_check,
-                                contentDescription = "Secured"
-                            ),
-                            tint = scheme.basicTextDominant.getColor(),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        ODSText(
-                            text = "SSL Secured payment. Your credentials are encrypted safely.",
-                            style = ODSTextStyles.microcopyRegular,
-                            color = scheme.basicTextRecessive
-                        )
                     }
                 }
             }
@@ -486,10 +400,12 @@ fun AddFundsScreen(
         }
 
         // ── 3. Sticky Bottom CTA & Home Indicator ──────────────────────────────
+        val selectedPack = uiState.selectedPack ?: uiState.packs.firstOrNull()
+        val isEnabled = selectedPack != null && !uiState.isRecharging && !uiState.isVerifyingPayment
+
         ODSColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
                 .padding(
                     horizontal = ODSVariables.spacingLayout1,
                     vertical = ODSVariables.spacingComponent3
@@ -499,58 +415,35 @@ fun AddFundsScreen(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Top
         ) {
-            ODSRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {
-                            context.showODSToast("Successfully purchased ${selectedPackage.creditsCount} credits!")
-                            onPaymentSuccess()
+            ODSButton(
+                modifier = Modifier.fillMaxWidth(),
+                scheme = scheme,
+                props = ODSButtonProps(
+                    label = when {
+                        uiState.isVerifyingPayment -> "Verifying Purchase..."
+                        uiState.isRecharging -> "Connecting to Google Play..."
+                        selectedPack != null -> "Buy with Google Play (₹${selectedPack.effectivePrice.toInt()})"
+                        else -> "Select a Package"
+                    },
+                    variant = ODSButtonVariant.PRIMARY,
+                    disabled = !isEnabled
+                ),
+                onClick = {
+                    val pack = selectedPack ?: return@ODSButton
+                    val activity = context as? android.app.Activity
+                    if (activity == null) {
+                        context.showODSToast("Unable to process purchase on this device")
+                        return@ODSButton
+                    }
+                    viewModel.buyWithGooglePlay(
+                        activity = activity,
+                        pack = pack,
+                        onError = { errorMsg ->
+                            context.showODSToast(errorMsg)
                         }
-                    ),
-                padding = ODSPadding(all = ODSVariables.spacingLayout1),
-                cornerRadius = ODSCorners(all = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-                effect = ODSEffect(
-                    elevations = listOf(
-                        ODSElevation(
-                            x = 0,
-                            y = 6,
-                            blur = 14,
-                            spread = 0,
-                            color = HexColor(0x38D81B60),
-                            type = ODSElevationType.DROP_SHADOW
-                        )
                     )
-                )
-            ) {
-                ODSText(
-                    text = "Pay ${selectedPackage.priceText} Securely",
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicTextOnAccent
-                )
-            }
-
-            // Home indicator bar
-            ODSRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = ODSVariables.spacingComponent4, bottom = ODSVariables.spacingComponent2),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                ODSBox(
-                    modifier = Modifier.size(width = 134.dp, height = 4.dp),
-                    background = listOf(ODSColorModel(hexColor = scheme.basicStroke)),
-                    cornerRadius = ODSCorners(all = ODSVariables.radiusFull)
-                )
-            }
+                }
+            )
         }
     }
 }

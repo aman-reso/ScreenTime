@@ -9,11 +9,54 @@ object AdConfig {
     // App ID
     const val APP_ID = "ca-app-pub-5847819400812479~1194871943"
 
+    @Volatile
+    var adsEnabled: Boolean = true
+
+    @Volatile
+    var swipeAdsEnabled: Boolean = true
+
+    @Volatile
+    var messageAdsEnabled: Boolean = true
+
+    @Volatile
+    private var _swipeAdInterval: Int = 10
+    var swipeAdInterval: Int
+        get() = _swipeAdInterval.coerceAtLeast(1)
+        set(value) { _swipeAdInterval = value }
+
+    @Volatile
+    private var _swipeAdMinInterval: Int = 10
+    var swipeAdMinInterval: Int
+        get() = _swipeAdMinInterval.coerceAtLeast(1)
+        set(value) { _swipeAdMinInterval = value }
+
+    @Volatile
+    private var _swipeAdMaxInterval: Int = 10
+    var swipeAdMaxInterval: Int
+        get() = _swipeAdMaxInterval.coerceAtLeast(swipeAdMinInterval)
+        set(value) { _swipeAdMaxInterval = value }
+
+    @Volatile
+    private var _messageAdInterval: Int = 5
+    var messageAdInterval: Int
+        get() = _messageAdInterval.coerceAtLeast(1)
+        set(value) { _messageAdInterval = value }
+
     /**
-     * Check if ads are enabled.
+     * Check if ads are globally enabled.
      * @return true if ads should be shown, false otherwise
      */
-    fun areAdsEnabled(): Boolean = true
+    fun areAdsEnabled(): Boolean = adsEnabled
+
+    /**
+     * Check if interstitial ads on swipe are enabled.
+     */
+    fun isSwipeAdEnabled(): Boolean = adsEnabled && swipeAdsEnabled
+
+    /**
+     * Check if interstitial ads on messaging are enabled.
+     */
+    fun isMessageAdEnabled(): Boolean = adsEnabled && messageAdsEnabled
 
     // Debug ad unit IDs (test ads)
     private const val DEBUG_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"

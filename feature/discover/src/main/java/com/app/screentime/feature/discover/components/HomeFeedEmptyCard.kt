@@ -1,7 +1,9 @@
 package com.app.screentime.feature.discover.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,9 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.app.screentime.config.R
 import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
@@ -25,22 +28,28 @@ import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
-@Preview(showBackground = true, widthDp = 400)
 @Composable
 fun HomeFeedEmptyCard(
     modifier: Modifier = Modifier,
     scheme: ODSTheme = zonaODSTheme,
+    title: String = stringResource(R.string.home_no_matches_title),
+    description: String = stringResource(R.string.home_no_matches_description),
     onRefreshFeed: () -> Unit = {},
+    onChangePreferences: () -> Unit = {}
 ) {
     ODSBox(
         modifier = modifier
             .fillMaxWidth()
+            .fillMaxHeight()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         padding = ODSPadding(horizontal = 24.dp, vertical = 32.dp),
         contentAlignment = Alignment.Center
     ) {
         ODSColumn(
-            horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             val dashColor = scheme.basicStrokeSubtle.getColor()
             Canvas(modifier = Modifier.size(80.dp)) {
@@ -61,7 +70,7 @@ fun HomeFeedEmptyCard(
             Spacer(Modifier.height(24.dp))
 
             ODSText(
-                text = "That's everyone for now!",
+                text = title,
                 style = ODSTextStyles.bodyMBold,
                 color = scheme.basicText,
                 textAlign = TextAlign.Center
@@ -70,7 +79,7 @@ fun HomeFeedEmptyCard(
             Spacer(Modifier.height(12.dp))
 
             ODSText(
-                text = "You've successfully seen all matches matching your filters. Try expanding your age, distance, or interest criteria.",
+                text = description,
                 style = ODSTextStyles.bodySRegular,
                 color = scheme.basicTextRecessive,
                 textAlign = TextAlign.Center
@@ -82,8 +91,21 @@ fun HomeFeedEmptyCard(
                 modifier = Modifier.fillMaxWidth(),
                 scheme = scheme,
                 props = ODSButtonProps(
-                    label = "Refresh Feed",
+                    label = stringResource(R.string.home_change_preferences),
                     variant = ODSButtonVariant.OUTLINE
+                )
+            ) {
+                onChangePreferences()
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            ODSButton(
+                modifier = Modifier.fillMaxWidth(),
+                scheme = scheme,
+                props = ODSButtonProps(
+                    label = stringResource(R.string.home_refresh_feed),
+                    variant = ODSButtonVariant.SECONDARY
                 )
             ) {
                 onRefreshFeed()

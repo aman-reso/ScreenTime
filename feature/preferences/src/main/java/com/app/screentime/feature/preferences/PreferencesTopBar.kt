@@ -35,14 +35,14 @@ fun PreferencesTopBar(
     totalSteps: Int,
     scheme: ODSTheme,
     onBack: () -> Unit,
-    onHelp: () -> Unit,
+    onHelp: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     ODSColumn(
         modifier = modifier.fillMaxWidth(),
         gap = ODSVariables.spacingComponent4
     ) {
-        // Top Header Row: [Back circular button] -- [Step X of 5] -- [Help circular button]
+        // Top Header Row: [Back circular button] -- [Step X of 5] -- [Symmetrical Placeholder]
         ODSRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -82,32 +82,8 @@ fun PreferencesTopBar(
                 color = scheme.basicTextDominant
             )
 
-            // Circular Help Button
-            ODSBox(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onHelp
-                    ),
-                background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
-                cornerRadius = ODSCorners(all = ODSVariables.radiusLarge),
-                border = ODSBorder(
-                    width = ODSVariables.strokes2,
-                    colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
-                ),
-                contentAlignment = Alignment.Center
-            ) {
-                ODSIcon(
-                    iconModel = ODSIconModel(
-                        drawableRes = R.drawable.ic_help_circle,
-                        contentDescription = "Help"
-                    ),
-                    tint = scheme.basicTextRecessive.getColor(),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            // Symmetrical Empty Placeholder
+            ODSBox(modifier = Modifier.size(44.dp))
         }
 
         // Progress Bar

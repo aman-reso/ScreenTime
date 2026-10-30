@@ -1,5 +1,6 @@
 package com.telekom.odsystem.atoms
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
@@ -248,15 +249,7 @@ fun ODSImage(
             )
         }
     } else if (imageModel.url != null && isGifUrl(imageModel.url)) {
-        val imageLoader = ImageLoader.Builder(LocalContext.current)
-            .networkObserverEnabled(enable = imageModel.networkObserverEnabled)
-            .components {
-                if (SDK_INT >= Build.VERSION_CODES.P) {
-                    add(ImageDecoderDecoder.Factory())
-                } else {
-                    add(GifDecoder.Factory())
-                }
-            }.build()
+        val imageLoader = GifImageLoaderProvider.get(context)
 
         val imageRequestBuilder = ImageRequest.Builder(LocalContext.current)
             .data(imageModel.url)
@@ -334,7 +327,7 @@ class ODSImageModel {
 
     var contentDescription: String? = null
 
-    var networkObserverEnabled: Boolean = true
+    var networkObserverEnabled: Boolean = false
 
     var memoryCachePolicy: CachePolicy = CachePolicy.ENABLED
 
@@ -347,7 +340,7 @@ class ODSImageModel {
         background: List<ODSColorModel>? = null,
         tint: HexColor? = null,
         contentDescription: String? = null,
-        networkObserverEnabled: Boolean = true,
+        networkObserverEnabled: Boolean = false,
         memoryCachePolicy: CachePolicy = CachePolicy.ENABLED,
         diskCachePolicy: CachePolicy = CachePolicy.ENABLED,
     ) {
@@ -418,6 +411,27 @@ class ODSImageModel {
     }
 }
 
+private object GifImageLoaderProvider {
+    @Volatile
+    private var instance: ImageLoader? = null
+
+    fun get(context: Context): ImageLoader {
+        return instance ?: synchronized(this) {
+            instance ?: ImageLoader.Builder(context.applicationContext)
+                .allowHardware(false)
+                .networkObserverEnabled(false)
+                .components {
+                    if (SDK_INT >= Build.VERSION_CODES.P) {
+                        add(ImageDecoderDecoder.Factory())
+                    } else {
+                        add(GifDecoder.Factory())
+                    }
+                }
+                .build().also { instance = it }
+        }
+    }
+}
+
 private fun isGifUrl(url: String?): Boolean {
     try {
         url ?: return false
@@ -433,7 +447,6 @@ private fun isGifUrl(url: String?): Boolean {
     }
 }
 
-@OptIn(ExperimentalEncodingApi::class)
 private fun base64toBitmap(base64: String): Bitmap? {
     try {
         val base64Image = if (base64.startsWith(PNG_BASE64_HEADER)) {

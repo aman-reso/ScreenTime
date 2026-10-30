@@ -16,6 +16,7 @@ import javax.inject.Singleton
 import kotlin.coroutines.resume
 
 import com.app.screentime.core.network.preferences.PreferencesManager
+import androidx.core.content.edit
 
 @Singleton
 class FcmTokenManager @Inject constructor(
@@ -40,7 +41,7 @@ class FcmTokenManager @Inject constructor(
     }
 
     fun invalidateTokenSync() {
-        fcmPrefs.edit().clear().apply()
+        fcmPrefs.edit { clear() }
     }
 
     suspend fun syncFcmToken(overrideFcmToken: String? = null) {
@@ -59,7 +60,6 @@ class FcmTokenManager @Inject constructor(
                 return
             }
 
-            // Persistently check if this exact token was already registered for this user
             val savedToken = fcmPrefs.getString(KEY_LAST_FCM_TOKEN, null)
             val savedUserId = fcmPrefs.getString(KEY_LAST_FCM_USER_ID, null)
 
@@ -68,7 +68,8 @@ class FcmTokenManager @Inject constructor(
                 return
             }
 
-            val deviceId = "${Build.MANUFACTURER}_${Build.MODEL}".replace("\\s+".toRegex(), "_").lowercase()
+            val deviceId =
+                "${Build.MANUFACTURER}_${Build.MODEL}".replace("\\s+".toRegex(), "_").lowercase()
             val appVersion = try {
                 val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
                 pInfo.versionName ?: "1.0.0"
@@ -76,7 +77,10 @@ class FcmTokenManager @Inject constructor(
                 "1.0.0"
             }
 
-            Log.i(tag, "📤 Registering new/updated FCM token: fcmToken=${fcmToken.take(12)}..., deviceId=$deviceId, appVersion=$appVersion")
+            Log.i(
+                tag,
+                "📤 Registering new/updated FCM token: fcmToken=${fcmToken.take(12)}..., deviceId=$deviceId, appVersion=$appVersion"
+            )
             val res = winterApi.registerFcmToken(
                 token = userAuthToken,
                 fcmToken = fcmToken,
@@ -89,29 +93,39 @@ class FcmTokenManager @Inject constructor(
                     .putString(KEY_LAST_FCM_TOKEN, fcmToken)
                     .putString(KEY_LAST_FCM_USER_ID, currentUserId)
                     .apply()
-                Log.i(tag, "✅ FCM device token registered successfully for user: ${res.data?.user_id ?: currentUserId}")
+                Log.i(
+                    tag,
+                    "✅ FCM device token registered successfully for user: ${res.data?.user_id ?: currentUserId}"
+                )
             } else {
-                Log.w(tag, "⚠️ FCM device token registration failed or returned null: ${res?.message}")
+                Log.w(
+                    tag,
+                    "⚠️ FCM device token registration failed or returned null: ${res?.message}"
+                )
             }
         } catch (t: Throwable) {
             Log.e(tag, "❌ Error during FCM token registration: ${t.message}", t)
         }
     }
 
-    private suspend fun fetchFirebaseToken(): String? = suspendCancellableCoroutine { continuation ->
-        try {
-            FirebaseMessaging.getInstance().token
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        continuation.resume(task.result)
-                    } else {
-                        Log.w(tag, "Failed to retrieve FCM token from Firebase SDK: ${task.exception?.message}")
-                        continuation.resume(null)
+    private suspend fun fetchFirebaseToken(): String? =
+        suspendCancellableCoroutine { continuation ->
+            try {
+                FirebaseMessaging.getInstance().token
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            continuation.resume(task.result)
+                        } else {
+                            Log.w(
+                                tag,
+                                "Failed to retrieve FCM token from Firebase SDK: ${task.exception?.message}"
+                            )
+                            continuation.resume(null)
+                        }
                     }
-                }
-        } catch (e: Exception) {
-            Log.e(tag, "Exception fetching Firebase token: ${e.message}", e)
-            continuation.resume(null)
+            } catch (e: Exception) {
+                Log.e(tag, "Exception fetching Firebase token: ${e.message}", e)
+                continuation.resume(null)
+            }
         }
-    }
 }

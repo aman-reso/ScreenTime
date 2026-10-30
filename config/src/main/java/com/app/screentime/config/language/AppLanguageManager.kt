@@ -19,26 +19,38 @@ import java.util.Locale
 import javax.inject.Inject
 
 
-class AppLanguageManager @Inject constructor(@ApplicationContext private val context: Context) {
+class AppLanguageManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val preferencesManager: PreferencesManager
+) {
 
-    fun changeLanguage(context: Context, languageCode: String) {
+    fun changeLanguage(context: Context = this.context, languageCode: String) {
+        preferencesManager.setLanguage(languageCode)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.getSystemService(LocaleManager::class.java).applicationLocales =
-                LocaleList.forLanguageTags(languageCode)
+            val localeManager = context.getSystemService(LocaleManager::class.java)
+            localeManager?.applicationLocales = LocaleList.forLanguageTags(languageCode)
         } else {
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageCode))
         }
     }
 
-    fun getLanguageCode(context: Context): String {
+    fun getLanguageCode(context: Context = this.context): String {
         val locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.getSystemService(LocaleManager::class.java)
-                ?.applicationLocales
-                ?.get(0)
+            val appLocales = context.getSystemService(LocaleManager::class.java)?.applicationLocales
+            if (appLocales != null && !appLocales.isEmpty) {
+                appLocales.get(0)
+            } else {
+                null
+            }
         } else {
-            AppCompatDelegate.getApplicationLocales().get(0)
+            val appLocales = AppCompatDelegate.getApplicationLocales()
+            if (!appLocales.isEmpty) {
+                appLocales.get(0)
+            } else {
+                null
+            }
         }
-        
+
         // Return full language tag including region if present (e.g., "pt-rBR", "zh-rCN")
         // This matches the format used in LanguageUtils
         return locale?.let {
@@ -50,7 +62,7 @@ class AppLanguageManager @Inject constructor(@ApplicationContext private val con
             } else {
                 language
             }
-        } ?: getDefaultLanguageCode()
+        } ?: preferencesManager.getString(KEY_LANGUAGE, getDefaultLanguageCode()) ?: getDefaultLanguageCode()
     }
 
     fun getDefaultLanguageCode(): String {

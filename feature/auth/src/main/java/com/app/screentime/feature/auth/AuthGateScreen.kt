@@ -26,28 +26,43 @@ fun AuthGateScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.resetAuthFlow()
+    }
+
     LaunchedEffect(uiState.isSuccess) {
-        if (uiState.isSuccess) onAuthSuccess()
+        if (uiState.isSuccess) {
+            onAuthSuccess()
+        }
     }
 
     val webClientId = remember(context) {
-        try {
-            val defaultResId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-            val customResId = context.resources.getIdentifier("google_web_client_id", "string", context.packageName)
-            val raw = when {
-                defaultResId != 0 -> context.getString(defaultResId)
-                customResId != 0 -> context.getString(customResId)
-                else -> ""
-            }
-            // A valid Google OAuth Web Client ID has format "<project_number>-<hash>.apps.googleusercontent.com"
-            val parts = raw.substringBefore(".apps.googleusercontent.com").split("-")
-            if (raw.endsWith(".apps.googleusercontent.com") && parts.size >= 2 && parts[1].length >= 10 && !raw.startsWith("YOUR_")) {
-                raw
-            } else {
+        val nativeId = try {
+            com.app.screentime.core.network.security.NativeSecurityVault.getGoogleWebClientId()
+        } catch (_: Throwable) {
+            ""
+        }
+        if (nativeId.isNotBlank()) {
+            nativeId
+        } else {
+            try {
+                val defaultResId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+                val customResId = context.resources.getIdentifier("google_web_client_id", "string", context.packageName)
+                val raw = when {
+                    defaultResId != 0 -> context.getString(defaultResId)
+                    customResId != 0 -> context.getString(customResId)
+                    else -> ""
+                }
+                // A valid Google OAuth Web Client ID has format "<project_number>-<hash>.apps.googleusercontent.com"
+                val parts = raw.substringBefore(".apps.googleusercontent.com").split("-")
+                if (raw.endsWith(".apps.googleusercontent.com") && parts.size >= 2 && parts[1].length >= 10 && !raw.startsWith("YOUR_")) {
+                    raw
+                } else {
+                    ""
+                }
+            } catch (_: Exception) {
                 ""
             }
-        } catch (_: Exception) {
-            ""
         }
     }
 
@@ -75,18 +90,50 @@ fun AuthGateScreen(
                 googleSignInLauncher.launch(googleSignInClient.signInIntent)
             }
         } catch (e: Exception) {
-            viewModel.startGoogleSignInSimulation()
+            viewModel.showGoogleSignInError(e.localizedMessage ?: "Failed to launch Google Sign-In")
         }
     }
 
-    AuthLandingScreen(
-        modifier = modifier.fillMaxSize(),
-        scheme = scheme,
-        uiState = uiState,
-        onGoogleSignInClick = { launchGoogleSignIn() },
-        onRetryClick = {
-            viewModel.clearError()
-            launchGoogleSignIn()
+    when (uiState.step) {
+        AuthStep.PHONE_INPUT, AuthStep.OTP_INPUT -> {
+            AuthPhoneSignInScreen(
+                modifier = modifier.fillMaxSize(),
+                scheme = scheme,
+                uiState = uiState,
+                onPhoneChange = { viewModel.onPhoneChange(it) },
+                onCountryCodeChange = { code, flag -> viewModel.onCountryCodeChange(code, flag) },
+                onOtpChange = { viewModel.onOtpChange(it) },
+                onContinueClick = { phone ->
+                    if (uiState.step == AuthStep.OTP_INPUT) {
+                        viewModel.loginWithPhone(phone)
+                    } else {
+                        viewModel.requestPhoneOtp(phone)
+                    }
+                },
+                onBackClick = {
+                    if (uiState.step == AuthStep.OTP_INPUT) {
+                        viewModel.setAuthStep(AuthStep.PHONE_INPUT)
+                    } else {
+                        viewModel.setAuthStep(AuthStep.GOOGLE_AUTH)
+                    }
+                }
+            )
         }
-    )
+        else -> {
+            AuthLandingScreen(
+                modifier = modifier.fillMaxSize(),
+                scheme = scheme,
+                uiState = uiState,
+                onLanguageChange = { languageCode ->
+                    viewModel.changeLanguage(context, languageCode)
+                },
+                onGoogleSignInClick = { launchGoogleSignIn() },
+                onPhoneSignInClick = { viewModel.setAuthStep(AuthStep.PHONE_INPUT) },
+                onRetryClick = {
+                    viewModel.clearError()
+                    launchGoogleSignIn()
+                }
+            )
+        }
+    }
 }

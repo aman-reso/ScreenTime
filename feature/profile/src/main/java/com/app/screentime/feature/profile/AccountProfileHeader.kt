@@ -41,6 +41,7 @@ import com.telekom.odsystem.tokens.tokens.ODSTheme
 fun AccountProfileHeader(
     userName: String = "User",
     email: String? = null,
+    phone: String? = null,
     subtitle: String = "",
     avatarUrl: String? = null,
     scheme: ODSTheme = zonaODSTheme,
@@ -90,7 +91,7 @@ fun AccountProfileHeader(
             }
         }
 
-        // Name, Email, PRO Badge, and Subscription Details
+        // Name, Email / Phone, PRO Badge, and Subscription Details
         ODSColumn(
             modifier = Modifier.weight(1f),
             gap = ODSVariables.spacingComponent1,
@@ -111,9 +112,10 @@ fun AccountProfileHeader(
                 )
             }
 
-            if (!email.isNullOrBlank()) {
+            val contactText = email.takeIf { !it.isNullOrBlank() } ?: phone.orEmpty()
+            if (contactText.isNotBlank()) {
                 ODSText(
-                    text = email,
+                    text = contactText,
                     style = ODSTextStyles.bodySRegular, // 14sp
                     color = scheme.basicTextRecessive
                 )

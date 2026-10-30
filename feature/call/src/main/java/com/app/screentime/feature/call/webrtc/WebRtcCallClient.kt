@@ -10,7 +10,6 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import livekit.org.webrtc.*
 import java.util.concurrent.Executors
-import kotlin.time.Duration.Companion.milliseconds
 
 class WebRtcCallClient(
     private val context: Context,
@@ -41,6 +40,9 @@ class WebRtcCallClient(
     private var isInitiator = false
     private var isClosed = false
     private var connectionTimeoutJob: Job? = null
+    private val pendingIceCandidates = java.util.Collections.synchronizedList(mutableListOf<IceCandidate>())
+    @Volatile
+    private var isRemoteDescriptionSet = false
 
     init {
         initFactory()
@@ -69,28 +71,46 @@ class WebRtcCallClient(
             createPeerConnection()
             setupMediaTracks()
 
-            if (isCaller) {
-                createOffer()
-            }
+            // Callers do NOT send offer immediately here.
+            // The offer is sent via sendOffer() only after the server confirms CALL_ACCEPTED.
+            // Receivers create their answer inside handleRemoteOffer().
 
-            // Fallback timeout: if P2P does not connect within 10 seconds, trigger LiveKit fallback
+            // Allow up to 15 seconds for Google STUN P2P ICE negotiation.
+            // Mobile networks + NAT traversal can take 10-12 seconds. Only fall back to LiveKit if P2P truly fails.
             connectionTimeoutJob = scope.launch {
-                delay(10000.milliseconds)
+                delay(15000L)
                 if (!isClosed && peerConnection?.iceConnectionState() != PeerConnection.IceConnectionState.CONNECTED &&
                     peerConnection?.iceConnectionState() != PeerConnection.IceConnectionState.COMPLETED
                 ) {
-                    Log.w(tag, "⏱️ P2P WebRTC connection timed out (NAT/firewall). Falling back to LiveKit SFU...")
-                    onFallbackToLiveKit("P2P direct timeout, switched to LiveKit backup")
+                    Log.w(tag, "⏱️ Google STUN P2P timeout after 15s (NAT/firewall). Falling back to LiveKit SFU...")
+                    onFallbackToLiveKit("Google STUN P2P timeout, switched to LiveKit backup")
                 }
             }
         }
     }
 
+    /**
+     * Called by ActiveCallManager after CALL_ACCEPTED to initiate the WebRTC offer.
+     * Only the caller (initiator) should call this. Idempotent — safe to call multiple times.
+     */
+    @Volatile private var offerSent = false
+    fun sendOffer() {
+        if (!isInitiator || offerSent) return
+        offerSent = true
+        executor.execute {
+            Log.i(tag, "📤 Sending WebRTC OFFER as caller (post CALL_ACCEPTED)...")
+            createOffer()
+        }
+    }
+
     private fun createPeerConnection() {
+        // Prioritized Google STUN servers cluster for fastest NAT traversal
         val iceServers = listOf(
             PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
             PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
-            PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer()
+            PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
+            PeerConnection.IceServer.builder("stun:stun3.l.google.com:19302").createIceServer(),
+            PeerConnection.IceServer.builder("stun:stun4.l.google.com:19302").createIceServer()
         )
 
         val rtcConfig = PeerConnection.RTCConfiguration(iceServers).apply {
@@ -100,6 +120,7 @@ class WebRtcCallClient(
             continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
             keyType = PeerConnection.KeyType.ECDSA
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
+            iceCandidatePoolSize = 2
         }
 
         peerConnection = factory?.createPeerConnection(rtcConfig, object : PeerConnection.Observer {
@@ -113,6 +134,7 @@ class WebRtcCallClient(
                     PeerConnection.IceConnectionState.CONNECTED,
                     PeerConnection.IceConnectionState.COMPLETED -> {
                         connectionTimeoutJob?.cancel()
+                        Log.i(tag, "✅ WebRTC Connected Successfully via Google STUN P2P!")
                         scope.launch { onConnected() }
                     }
                     PeerConnection.IceConnectionState.FAILED -> {
@@ -134,6 +156,7 @@ class WebRtcCallClient(
 
             override fun onIceCandidate(candidate: IceCandidate?) {
                 if (candidate != null) {
+                    Log.i(tag, "❄️ Gathered ICE Candidate via Google STUN [${candidate.sdpMid}]: ${candidate.sdp}")
                     sendIceCandidate(candidate)
                 }
             }
@@ -153,6 +176,10 @@ class WebRtcCallClient(
                 if (track is VideoTrack) {
                     Log.i(tag, "🎥 Received Remote VideoTrack via P2P WebRTC!")
                     scope.launch { onRemoteVideoTrackReady(track) }
+                } else if (track is AudioTrack) {
+                    Log.i(tag, "🔊 Received Remote AudioTrack via P2P WebRTC!")
+                    track.setEnabled(true)
+                    track.setVolume(1.0)
                 }
             }
 
@@ -161,6 +188,10 @@ class WebRtcCallClient(
                 if (track is VideoTrack) {
                     Log.i(tag, "🎥 Received Remote VideoTrack via Transceiver!")
                     scope.launch { onRemoteVideoTrackReady(track) }
+                } else if (track is AudioTrack) {
+                    Log.i(tag, "🔊 Received Remote AudioTrack via Transceiver!")
+                    track.setEnabled(true)
+                    track.setVolume(1.0)
                 }
             }
         })
@@ -170,8 +201,13 @@ class WebRtcCallClient(
         val f = factory ?: return
         val pc = peerConnection ?: return
 
-        // Audio Track
-        val audioConstraints = MediaConstraints()
+        // Audio Track with Echo Cancellation and Noise Suppression
+        val audioConstraints = MediaConstraints().apply {
+            mandatory.add(MediaConstraints.KeyValuePair("googEchoCancellation", "true"))
+            mandatory.add(MediaConstraints.KeyValuePair("googAutoGainControl", "true"))
+            mandatory.add(MediaConstraints.KeyValuePair("googHighpassFilter", "true"))
+            mandatory.add(MediaConstraints.KeyValuePair("googNoiseSuppression", "true"))
+        }
         localAudioSource = f.createAudioSource(audioConstraints)
         localAudioTrack = f.createAudioTrack("ARDAMSa0", localAudioSource)
         localAudioTrack?.setEnabled(true)
@@ -205,6 +241,7 @@ class WebRtcCallClient(
         val constraints = MediaConstraints().apply {
             mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
             mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", if (isVideo) "true" else "false"))
+            optional.add(MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"))
         }
 
         peerConnection?.createOffer(object : SdpObserver {
@@ -236,6 +273,8 @@ class WebRtcCallClient(
             peerConnection?.setRemoteDescription(object : SdpObserver {
                 override fun onCreateSuccess(p0: SessionDescription?) {}
                 override fun onSetSuccess() {
+                    isRemoteDescriptionSet = true
+                    drainPendingIceCandidates()
                     createAnswer()
                 }
                 override fun onCreateFailure(p0: String?) {}
@@ -250,6 +289,7 @@ class WebRtcCallClient(
         val constraints = MediaConstraints().apply {
             mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
             mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", if (isVideo) "true" else "false"))
+            optional.add(MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"))
         }
 
         peerConnection?.createAnswer(object : SdpObserver {
@@ -282,6 +322,8 @@ class WebRtcCallClient(
                 override fun onCreateSuccess(p0: SessionDescription?) {}
                 override fun onSetSuccess() {
                     Log.i(tag, "✅ Remote Answer SDP applied successfully!")
+                    isRemoteDescriptionSet = true
+                    drainPendingIceCandidates()
                 }
                 override fun onCreateFailure(p0: String?) {}
                 override fun onSetFailure(err: String?) {
@@ -294,7 +336,23 @@ class WebRtcCallClient(
     fun handleRemoteIceCandidate(sdpMid: String, sdpMLineIndex: Int, candidateStr: String) {
         executor.execute {
             val candidate = IceCandidate(sdpMid, sdpMLineIndex, candidateStr)
-            peerConnection?.addIceCandidate(candidate)
+            if (isRemoteDescriptionSet && peerConnection != null) {
+                peerConnection?.addIceCandidate(candidate)
+            } else {
+                pendingIceCandidates.add(candidate)
+            }
+        }
+    }
+
+    private fun drainPendingIceCandidates() {
+        val pc = peerConnection ?: return
+        synchronized(pendingIceCandidates) {
+            val iterator = pendingIceCandidates.iterator()
+            while (iterator.hasNext()) {
+                val candidate = iterator.next()
+                pc.addIceCandidate(candidate)
+                iterator.remove()
+            }
         }
     }
 
@@ -325,9 +383,31 @@ class WebRtcCallClient(
         localVideoTrack?.setEnabled(isOn)
     }
 
+    fun switchCamera(onCompleted: ((Boolean) -> Unit)? = null) {
+        val cameraCapturer = videoCapturer as? CameraVideoCapturer ?: run {
+            Log.w(tag, "switchCamera called but videoCapturer is not CameraVideoCapturer: $videoCapturer")
+            return
+        }
+        cameraCapturer.switchCamera(object : CameraVideoCapturer.CameraSwitchHandler {
+            override fun onCameraSwitchDone(isFrontCamera: Boolean) {
+                Log.d(tag, "📷 Camera switch completed successfully! isFrontCamera=$isFrontCamera")
+                scope.launch(Dispatchers.Main) {
+                    onCompleted?.invoke(isFrontCamera)
+                }
+            }
+
+            override fun onCameraSwitchError(errorDescription: String?) {
+                Log.e(tag, "❌ Camera switch error: $errorDescription")
+            }
+        })
+    }
+
     fun close() {
         if (isClosed) return
         isClosed = true
+        isRemoteDescriptionSet = false
+        offerSent = false
+        pendingIceCandidates.clear()
         connectionTimeoutJob?.cancel()
         scope.cancel()
 

@@ -60,7 +60,7 @@ enum class ODSCardChoiceType {
  * @property size The size of the radio icon. Defaults to [ODSRadioIconSize.LARGE].
  */
 data class ODSCardChoiceRadioIconProps(
-    var size: ODSRadioIconSize = ODSRadioIconSize.LARGE,
+    var size: ODSRadioIconSize = ODSRadioIconSize.SMALL,
 )
 
 /**
@@ -83,7 +83,7 @@ data class ODSCardChoiceSwitchIconProps(
  * @param size The size of the checkbox icon. Defaults to [ODSCheckboxIconSize.LARGE].
  */
 data class ODSCardChoiceCheckboxIconProps(
-    var size: ODSCheckboxIconSize = ODSCheckboxIconSize.LARGE,
+    var size: ODSCheckboxIconSize = ODSCheckboxIconSize.SMALL,
 )
 
 internal fun ODSCardChoiceRadioIconProps.toODSRadioIconProps(

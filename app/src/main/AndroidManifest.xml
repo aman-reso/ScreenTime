@@ -72,10 +72,6 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/splash_auth_background" />
 
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
-
         <!-- Instruct Google Play Services to download Face Detection model on-demand / install -->
         <meta-data
             android:name="com.google.mlkit.vision.DEPENDENCIES"

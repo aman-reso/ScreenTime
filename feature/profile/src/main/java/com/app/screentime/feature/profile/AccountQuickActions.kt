@@ -119,7 +119,7 @@ private fun AccountQuickActionItem(
                 width = ODSVariables.strokes1,
                 colorList = listOf(ODSColorModel(hexColor = scheme.basicStroke))
             ),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
             contentAlignment = Alignment.Center
         ) {
             ODSIcon(

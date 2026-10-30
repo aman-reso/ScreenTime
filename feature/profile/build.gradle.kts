@@ -31,11 +31,14 @@ android {
 }
 
 dependencies {
+    implementation(project(":config"))
     implementation(project(":core:model"))
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
-    implementation(project(":feature:wallet"))
+    implementation(project(":feature:chat"))
     implementation(project(":appdesign"))
+    implementation(project(":core:faceverification"))
+    implementation(project(":ads"))
 
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))
@@ -47,6 +50,10 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
+
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
     implementation(libs.androidx.biometric)
     implementation(libs.kotlinx.serialization.json)

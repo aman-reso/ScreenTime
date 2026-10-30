@@ -27,24 +27,27 @@ class LocalChatStorage @Inject constructor(
     suspend fun saveMessage(partnerId: String, message: ChatMessage) {
         if (message.text.isBlank()) return
         val entity = ChatMessageEntity.fromDomain(partnerId, message)
+        if (!entity.clientMessageId.isNullOrBlank()) {
+            chatDao.deleteByClientMessageId(entity.clientMessageId)
+        }
         chatDao.insertMessage(entity)
     }
 
     suspend fun replaceOrSaveMessage(partnerId: String, tempId: String, confirmedMessage: ChatMessage) {
         if (confirmedMessage.text.isBlank()) return
-        if (tempId != confirmedMessage.id) {
-            chatDao.deleteMessage(tempId)
-        }
         val entity = ChatMessageEntity.fromDomain(partnerId, confirmedMessage)
-        chatDao.insertMessage(entity)
+        chatDao.replaceTempMessage(tempId, entity)
     }
 
     suspend fun saveMessages(partnerId: String, newMessages: List<ChatMessage>) {
         val validEntities = newMessages
             .filter { it.text.isNotBlank() }
             .map { ChatMessageEntity.fromDomain(partnerId, it) }
-        if (validEntities.isNotEmpty()) {
-            chatDao.insertMessages(validEntities)
+        for (entity in validEntities) {
+            if (!entity.clientMessageId.isNullOrBlank()) {
+                chatDao.deleteByClientMessageId(entity.clientMessageId)
+            }
+            chatDao.insertMessage(entity)
         }
     }
 
@@ -54,6 +57,10 @@ class LocalChatStorage @Inject constructor(
 
     suspend fun clearMessages(partnerId: String) {
         chatDao.clearMessagesForPartner(partnerId)
+    }
+
+    suspend fun clearAllMessages() {
+        chatDao.clearAllMessages()
     }
 
     fun purgeExpired() {

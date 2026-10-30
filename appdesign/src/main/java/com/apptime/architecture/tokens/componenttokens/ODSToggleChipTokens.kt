@@ -62,7 +62,7 @@ val defaultODSToggleChipTokens = ODSToggleChipTokens(
         left = DSVariables.spacingComponent2,
         right = DSVariables.spacingComponent6
     ),
-    toggleChipCornerRadius = ODSCorners(all = DSVariables.radiusSmall),
+    toggleChipCornerRadius = ODSCorners(all = DSVariables.radiusMedium),
     toggleChipBorder = DSVariables.strokes1,
     toggleChipMinHeight = DSVariables.spacingLayout2,
     toggleChipMinWidth = DSVariables.sizingComponent15,

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">AppTime</string>
+    <string name="app_name">Winter</string>
     <string name="widget_description">Monitor your daily screen time and app usage</string>
     <string name="set_widget">Set Widget</string>
     <string name="close">Close</string>

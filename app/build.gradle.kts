@@ -28,8 +28,8 @@ android {
         minSdk = 24
         //noinspection OldTargetApi
         targetSdk = 36
-        versionCode = 94
-        versionName = "9.4"
+        versionCode = 114
+        versionName = "100.11.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -37,24 +37,13 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            "\"${localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:8080")}\""
+            "\"${localProperties.getProperty("API_BASE_URL", "https://api.winterdating.com")}\""
         )
         buildConfigField(
             "String",
             "API_DEV_BASE_URL",
-            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://abd310e69b89.ngrok-free.app")}\""
+            "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://connect-api-test-324708289864.us-central1.run.app")}\""
         )
-        buildConfigField(
-            "String",
-            "TOTP_FALLBACK_SECRET",
-            "\"${localProperties.getProperty("TOTP_FALLBACK_SECRET", "O5YRY4I2737IGHVYOHXM6T7RWWNAW3X7")}\""
-        )
-        buildConfigField(
-            "String",
-            "TOTP_DECODE_SECRET",
-            "\"${localProperties.getProperty("TOTP_DECODE_SECRET", "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")}\""
-        )
-        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "AIzaSyDHHAbUVtn4Q7NiTfXDCivan890cp3xCCg")
         manifestPlaceholders["appLabel"] = "@string/app_name"
     }
 
@@ -81,6 +70,11 @@ android {
 
     buildTypes {
         release {
+            buildConfigField(
+                "String",
+                "API_BASE_URL",
+                "\"${localProperties.getProperty("PROD_API_BASE_URL", localProperties.getProperty("API_BASE_URL", "https://api.winterdating.com"))}\""
+            )
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
@@ -96,6 +90,11 @@ android {
             )
         }
         debug {
+            buildConfigField(
+                "String",
+                "API_BASE_URL",
+                "\"${localProperties.getProperty("API_DEV_BASE_URL", "https://connect-api-test-324708289864.us-central1.run.app")}\""
+            )
             isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources = false
@@ -110,6 +109,7 @@ android {
         abortOnError = false
         checkReleaseBuilds = false
     }
+
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -127,6 +127,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
     }
 
     hilt {
@@ -159,6 +165,7 @@ dependencies {
     implementation(project(":feature:wallet"))
     implementation(project(":feature:profile"))
     implementation(project(":feature:preferences"))
+    implementation(project(":core:faceverification"))
 
     // Config module (translations)
     implementation(project(":config"))
@@ -232,11 +239,14 @@ dependencies {
 
     // Coil for image loading
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
 
 
-    // Google Play In-App Updates
+    // Google Play In-App Updates & Reviews
     implementation(libs.play.app.update)
     implementation(libs.play.app.update.ktx)
+    implementation(libs.play.review)
+    implementation(libs.play.review.ktx)
 
 
     // Biometric Authentication
@@ -261,6 +271,7 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     // Firebase Analytics is now in :analytics module
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.config)
 
     // ConstraintLayout Compose
     implementation(libs.androidx.constraintlayout.compose)

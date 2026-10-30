@@ -98,8 +98,39 @@ data class DiscoveryDataResponse(
 data class DiscoveryApiResponse(
     val success: Boolean,
     val message: String?,
-    val data: DiscoveryDataResponse? = null
-)
+    val data: DiscoveryDataResponse? = null,
+    // Generic limit fields
+    val isLimitReached: Boolean = false,
+    val limitMessage: String? = null,
+    val quotaRemaining: Int? = null,
+    val quotaLimit: Int? = null,
+    // Backend compatibility aliases (snake_case)
+    val is_limit_reached: Boolean? = null,
+    val limit_message: String? = null,
+    val quota_remaining: Int? = null,
+    val quota_limit: Int? = null
+) {
+    val effectiveIsLimitReached: Boolean
+        get() = isLimitReached || is_limit_reached == true
+
+    val effectiveLimitMessage: String?
+        get() = limitMessage ?: limit_message
+
+    val effectiveQuotaRemaining: Int?
+        get() = quotaRemaining ?: quota_remaining
+
+    val effectiveQuotaLimit: Int?
+        get() = quotaLimit ?: quota_limit
+
+    fun toQuotaLimitInfo(): com.app.screentime.core.model.QuotaLimitInfo =
+        com.app.screentime.core.model.QuotaLimitInfo(
+            isLimitReached = effectiveIsLimitReached,
+            limitMessage = effectiveLimitMessage,
+            quotaRemaining = effectiveQuotaRemaining,
+            quotaLimit = effectiveQuotaLimit
+        )
+}
+
 
 @Serializable
 data class DiscoveryInteractRequest(
@@ -121,8 +152,39 @@ data class DiscoveryInteractData(
 data class DiscoveryInteractResponse(
     val success: Boolean = true,
     val message: String = "",
-    val data: DiscoveryInteractData? = null
-)
+    val data: DiscoveryInteractData? = null,
+    // Generic limit fields
+    val isLimitReached: Boolean = false,
+    val limitMessage: String? = null,
+    val quotaRemaining: Int? = null,
+    val quotaLimit: Int? = null,
+    // Backend compatibility aliases (snake_case)
+    val is_limit_reached: Boolean? = null,
+    val limit_message: String? = null,
+    val quota_remaining: Int? = null,
+    val quota_limit: Int? = null
+) {
+    val effectiveIsLimitReached: Boolean
+        get() = isLimitReached || is_limit_reached == true
+
+    val effectiveLimitMessage: String?
+        get() = limitMessage ?: limit_message
+
+    val effectiveQuotaRemaining: Int?
+        get() = quotaRemaining ?: quota_remaining
+
+    val effectiveQuotaLimit: Int?
+        get() = quotaLimit ?: quota_limit
+
+    fun toQuotaLimitInfo(): com.app.screentime.core.model.QuotaLimitInfo =
+        com.app.screentime.core.model.QuotaLimitInfo(
+            isLimitReached = effectiveIsLimitReached,
+            limitMessage = effectiveLimitMessage,
+            quotaRemaining = effectiveQuotaRemaining,
+            quotaLimit = effectiveQuotaLimit
+        )
+}
+
 
 @Serializable
 data class DiscoveryMatchItemDto(
@@ -152,4 +214,35 @@ data class DiscoveryMatchesResponse(
     val success: Boolean = true,
     val message: String = "",
     val data: DiscoveryMatchesData? = null
+)
+
+@Serializable
+data class LikedProfileItemDto(
+    val user_id: String,
+    val display_name: String = "",
+    val age: Int = 0,
+    val city: String = "",
+    val area: String = "",
+    val primary_photo_url: String? = null,
+    val dating_intent: String = "",
+    val bio: String = "",
+    val action: String = "like",
+    val liked_at: String = "",
+    val is_mutual_match: Boolean = false
+)
+
+@Serializable
+data class LikedProfilesData(
+    val items: List<LikedProfileItemDto> = emptyList(),
+    val page: Int = 1,
+    val limit: Int = 10,
+    val total_count: Int = 0,
+    val has_more: Boolean = false
+)
+
+@Serializable
+data class LikedProfilesResponse(
+    val success: Boolean = true,
+    val message: String = "",
+    val data: LikedProfilesData? = null
 )

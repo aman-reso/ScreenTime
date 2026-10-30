@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.telekom.odsystem.atoms.ODSBorder
@@ -132,7 +133,6 @@ private fun ODSButtonContainer(
                 maxWidth = style.maxWidth ?: Dp.Unspecified,
                 maxHeight = style.maxHeight ?: Dp.Unspecified
             )
-            .width(IntrinsicSize.Max)
             .customClickable(
                 isPressed = { isPressed(it) },
                 onClick = onClick,
@@ -168,12 +168,20 @@ private fun ODSButtonContainer(
             verticalAlignment = style.verticalAlignment,
             horizontalAlignment = style.horizontalAlignment,
             horizontalArrangement = style.horizontalArrangement,
-            modifier = Modifier.sizeWithinBounds(
-                minWidth = style.minWidth ?: MIN_WIDTH.dp,
-                minHeight = style.minHeight ?: MIN_HEIGHT.dp,
-                maxWidth = style.maxWidth ?: Dp.Unspecified,
-                maxHeight = style.maxHeight ?: Dp.Unspecified
-            )
+            modifier = Modifier
+                .then(
+                    if (props.buttonType == ODSButtonButtonType.STANDARD) {
+                        Modifier.fillMaxWidth()
+                    } else {
+                        Modifier
+                    }
+                )
+                .sizeWithinBounds(
+                    minWidth = style.minWidth ?: MIN_WIDTH.dp,
+                    minHeight = style.minHeight ?: MIN_HEIGHT.dp,
+                    maxWidth = style.maxWidth ?: Dp.Unspecified,
+                    maxHeight = style.maxHeight ?: Dp.Unspecified
+                )
         ) {
             if (props.buttonType == ODSButtonButtonType.STANDARD) {
                 ODSStandardButton(
@@ -231,6 +239,7 @@ private fun ODSStandardButton(
     props: ODSButtonProps,
 ) {
     ODSRow(
+        modifier = Modifier.fillMaxWidth(),
         gap = style.contentGap,
         padding = style.contentPadding,
         verticalAlignment = style.contentVerticalAlignment,
@@ -250,11 +259,10 @@ private fun ODSStandardButton(
         }
         if (!props.label.isNullOrEmpty()) {
             ODSText(
-                modifier = Modifier.weight(weight = 1f, fill = false),
                 text = props.label,
                 style = style.buttonLabelTextStyle,
                 color = style.buttonLabelColor,
-                textAlign = style.buttonLabelTextAlign,
+                textAlign = style.buttonLabelTextAlign ?: TextAlign.Center,
                 maxLines = SINGLE_LINE,
                 overflow = style.buttonLabelTextOverflow
             )

@@ -34,57 +34,145 @@ class MessagesApi @Inject constructor(
         userId: String? = null
     ): MessageConversationsResponse {
         return try {
-            httpClient.get("$baseUrl${ApiEndpoints.Messages.CONVERSATIONS}") {
+            httpClient.get("$baseUrl${ApiEndpoints.Messages.CONVERSATIONS_V2}") {
                 bearerAuth(token)
-                if (!userId.isNullOrBlank()) {
-                    header("X-User-Id", userId)
-                }
                 parameter("page", page)
                 parameter("limit", limit)
             }.body()
         } catch (t: Throwable) {
-            Log.e(tag, "Failed to get conversations: ${t.message}", t)
-            MessageConversationsResponse(success = false, message = t.message ?: "Unknown error")
+            try {
+                httpClient.get("$baseUrl${ApiEndpoints.Messages.CONVERSATIONS}") {
+                    bearerAuth(token)
+                    if (!userId.isNullOrBlank()) {
+                        header("X-User-Id", userId)
+                    }
+                    parameter("page", page)
+                    parameter("limit", limit)
+                }.body()
+            } catch (fallbackErr: Throwable) {
+                Log.e(tag, "Failed to get conversations: ${fallbackErr.message}", fallbackErr)
+                MessageConversationsResponse(success = false, message = fallbackErr.message ?: "Unknown error")
+            }
         }
     }
 
     suspend fun getConversationMessages(
         token: String,
         conversationId: String,
+        page: Int? = null,
+        limit: Int? = 20,
+        before: String? = null,
         userId: String? = null
     ): ConversationDetailResponse {
         return try {
-            val endpoint = ApiEndpoints.Messages.conversationDetail(conversationId)
-            httpClient.get("$baseUrl$endpoint") {
+            val endpoint = ApiEndpoints.Messages.conversationMessagesV2(conversationId)
+            val response: ConversationDetailResponse = httpClient.get("$baseUrl$endpoint") {
                 bearerAuth(token)
-                if (!userId.isNullOrBlank()) {
-                    header("X-User-Id", userId)
+                if (page != null) {
+                    parameter("page", page)
+                }
+                if (limit != null) {
+                    parameter("limit", limit)
+                }
+                if (!before.isNullOrBlank()) {
+                    parameter("before", before)
                 }
             }.body()
+
+            if (!response.success && response.getMessageList().isEmpty()) {
+                val legacyEndpoint = ApiEndpoints.Messages.legacyConversationMessages(conversationId)
+                httpClient.get("$baseUrl$legacyEndpoint") {
+                    bearerAuth(token)
+                    if (!userId.isNullOrBlank()) {
+                        header("X-User-Id", userId)
+                    }
+                    if (page != null) parameter("page", page)
+                    if (limit != null) parameter("limit", limit)
+                    if (!before.isNullOrBlank()) parameter("before", before)
+                }.body()
+            } else {
+                response
+            }
         } catch (t: Throwable) {
-            Log.e(tag, "Failed to get conversation messages: ${t.message}", t)
-            ConversationDetailResponse(success = false, message = t.message ?: "Unknown error")
+            try {
+                val legacyEndpoint = ApiEndpoints.Messages.legacyConversationMessages(conversationId)
+                httpClient.get("$baseUrl$legacyEndpoint") {
+                    bearerAuth(token)
+                    if (!userId.isNullOrBlank()) {
+                        header("X-User-Id", userId)
+                    }
+                    if (page != null) parameter("page", page)
+                    if (limit != null) parameter("limit", limit)
+                    if (!before.isNullOrBlank()) parameter("before", before)
+                }.body()
+            } catch (t2: Throwable) {
+                Log.e(tag, "Failed to get conversation messages: ${t2.message}", t2)
+                ConversationDetailResponse(success = false, message = t2.message ?: "Unknown error")
+            }
         }
     }
 
     suspend fun sendMessage(
         token: String,
-        conversationId: String,
+        conversationId: String? = null,
         content: String,
-        userId: String? = null
+        userId: String? = null,
+        receiverId: String? = null,
+        clientMessageId: String? = null
     ): SendMessageResponse {
         return try {
-            httpClient.post("$baseUrl${ApiEndpoints.Messages.SEND}") {
+            httpClient.post("$baseUrl${ApiEndpoints.Messages.SEND_V2}") {
                 bearerAuth(token)
-                if (!userId.isNullOrBlank()) {
+                contentType(ContentType.Application.Json)
+                setBody(SendMessageRequest(
+                    conversation_id = conversationId?.takeIf { it.isNotBlank() },
+                    receiver_id = receiverId?.takeIf { it.isNotBlank() },
+                    content = content,
+                    client_message_id = clientMessageId
+                ))
+            }.body()
+        } catch (t: Throwable) {
+            try {
+                httpClient.post("$baseUrl${ApiEndpoints.Messages.SEND}") {
+                    bearerAuth(token)
+                    if (!userId.isNullOrBlank()) {
+                        header("X-User-Id", userId)
+                    }
+                    contentType(ContentType.Application.Json)
+                    setBody(SendMessageRequest(
+                        conversation_id = conversationId?.takeIf { it.isNotBlank() },
+                        receiver_id = receiverId?.takeIf { it.isNotBlank() },
+                        content = content,
+                        client_message_id = clientMessageId
+                    ))
+                }.body()
+            } catch (t2: Throwable) {
+                Log.e(tag, "Failed to send message: ${t2.message}", t2)
+                SendMessageResponse(success = false, message = t2.message ?: "Unknown error")
+            }
+        }
+    }
+
+    suspend fun claimAdReward(
+        token: String,
+        userId: String,
+        reward: Int = 5
+    ): Boolean {
+        return try {
+            httpClient.post("$baseUrl/api/messages/reward/claim") {
+                if (token.isNotBlank()) {
+                    bearerAuth(token)
+                }
+                if (userId.isNotBlank()) {
                     header("X-User-Id", userId)
                 }
                 contentType(ContentType.Application.Json)
-                setBody(SendMessageRequest(conversation_id = conversationId, content = content))
-            }.body()
+                setBody(mapOf("user_id" to userId, "reward" to reward.toString()))
+            }
+            true
         } catch (t: Throwable) {
-            Log.e(tag, "Failed to send message: ${t.message}", t)
-            SendMessageResponse(success = false, message = t.message ?: "Unknown error")
+            Log.e(tag, "Failed to claim ad reward: ${t.message}")
+            false
         }
     }
 }

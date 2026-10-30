@@ -25,9 +25,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -63,7 +64,6 @@ import com.app.screentime.core.model.ModelProfile
 import com.app.screentime.core.ui.theme.ZonaColors
 import com.app.screentime.core.ui.theme.zonaODSTheme
 import androidx.compose.runtime.LaunchedEffect
-import com.app.screentime.feature.discover.components.FeedTabsHeader
 import com.app.screentime.feature.discover.components.FollowingFeedCard
 import com.app.screentime.feature.discover.components.HomeFeedCard
 import com.app.screentime.feature.discover.components.HomeFeedEmptyCard
@@ -72,8 +72,11 @@ import com.app.screentime.feature.discover.components.MatchFeedCard
 import com.app.screentime.feature.discover.components.QuickViewProfileDialog
 import com.app.screentime.feature.discover.components.StoriesRow
 import com.app.screentime.feature.discover.tabs.ForYouTabContent
-import com.app.screentime.feature.discover.tabs.FollowingTabContent
-import com.app.screentime.feature.discover.tabs.MatchesTabContent
+import android.content.Context
+import com.app.screentime.core.ui.util.showODSToast
+import com.telekom.odsystem.organisms.toast.ODSToastMode
+import kotlinx.coroutines.delay
+import com.telekom.odsystem.DSVariables
 import com.telekom.odsystem.atoms.ODSBorder
 import com.telekom.odsystem.atoms.ODSBox
 import com.telekom.odsystem.atoms.ODSColumn
@@ -91,6 +94,9 @@ import com.telekom.odsystem.atoms.icon.ODSIconModel
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinner
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerProps
 import com.telekom.odsystem.atoms.loadingspinner.ODSLoadingSpinnerSize
+import com.telekom.odsystem.atoms.skeleton.ODSSkeleton
+import com.telekom.odsystem.atoms.skeleton.ODSSkeletonProps
+import com.telekom.odsystem.atoms.skeleton.ODSSkeletonVariant
 import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
@@ -153,58 +159,33 @@ fun Modifier.zonaShimmer(): Modifier = composed {
 fun HomeFeedScreen(
     modifier: Modifier = Modifier,
     scheme: ODSTheme = zonaODSTheme,
+    forYouViewModel: ForYouFeedViewModel = hiltViewModel(),
     onNavigateToChat: (modelId: String, modelName: String) -> Unit = { _, _ -> },
     onNavigateToProfile: (userId: String, userName: String) -> Unit = { _, _ -> },
     onNavigateToPreferences: () -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
+    onRateApp: () -> Unit = {}
 ) {
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
-    val coroutineScope = rememberCoroutineScope()
-    val density = LocalDensity.current
+    val uiState by forYouViewModel.uiState.collectAsState()
+    val defaultTopBarHeight = 42.dp
+    val context = LocalContext.current
 
-    val defaultTopBarHeight = 64.dp
-    var topBarHeightPx by remember { mutableFloatStateOf(with(density) { defaultTopBarHeight.toPx() }) }
-    var topBarOffsetHeightPx by remember { mutableFloatStateOf(0f) }
-
-    val nestedScrollConnection = remember(topBarHeightPx) {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                // When scrolling UP (delta < 0), collapse the Winter top bar first
-                if (delta < 0f && topBarOffsetHeightPx > -topBarHeightPx) {
-                    val newOffset = (topBarOffsetHeightPx + delta).coerceIn(-topBarHeightPx, 0f)
-                    val consumed = newOffset - topBarOffsetHeightPx
-                    topBarOffsetHeightPx = newOffset
-                    return Offset(0f, consumed)
-                }
-                return Offset.Zero
-            }
-
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource
-            ): Offset {
-                // When scrolling DOWN (available.y > 0) and the child feed is at the top,
-                // smoothly expand the Winter top bar back into view
-                if (available.y > 0f && topBarOffsetHeightPx < 0f) {
-                    val newOffset =
-                        (topBarOffsetHeightPx + available.y).coerceIn(-topBarHeightPx, 0f)
-                    val consumedY = newOffset - topBarOffsetHeightPx
-                    topBarOffsetHeightPx = newOffset
-                    return Offset(0f, consumedY)
-                }
-                return Offset.Zero
-            }
+    LaunchedEffect(Unit) {
+        delay(2500L)
+        val prefs = context.getSharedPreferences("rating_toast_prefs", Context.MODE_PRIVATE)
+        val lastShown = prefs.getLong("last_rating_toast_shown", 0L)
+        val now = System.currentTimeMillis()
+        if (now - lastShown > 24 * 60 * 60 * 1000L) {
+            prefs.edit().putLong("last_rating_toast_shown", now).apply()
+            context.showODSToast(
+                message = "Enjoying app please rate us",
+                title = "Rate Us",
+                mode = ODSToastMode.INFORMATIVE,
+                scheme = scheme
+            )
+            onRateApp()
         }
     }
-
-    val currentTopBarHeight = with(density) {
-        (topBarHeightPx + topBarOffsetHeightPx).coerceIn(0f, topBarHeightPx).toDp()
-    }
-    val topBarProgress = if (topBarHeightPx > 0f) {
-        ((topBarHeightPx + topBarOffsetHeightPx) / topBarHeightPx).coerceIn(0f, 1f)
-    } else 1f
 
     ODSBox(
         modifier = modifier.fillMaxSize(),
@@ -215,96 +196,37 @@ fun HomeFeedScreen(
         ODSColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
-                .nestedScroll(nestedScrollConnection)
         ) {
-            Box(
+            ODSBox(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(currentTopBarHeight)
-                    .clipToBounds()
+                    .fillMaxWidth(),
+                clipContent = true
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset { IntOffset(x = 0, y = topBarOffsetHeightPx.roundToInt()) }
-                        .alpha(topBarProgress)
-                        .onGloballyPositioned { coordinates ->
-                            val measured = coordinates.size.height.toFloat()
-                            if (measured > 0f && (topBarHeightPx == 0f || (topBarOffsetHeightPx == 0f && topBarHeightPx != measured))) {
-                                topBarHeightPx = measured
-                            }
-                        }
-                ) {
-                    HomeTopBar(
-                        modifier = Modifier,
-                        scheme = scheme,
-                        onNotificationsClick = onNavigateToNotifications,
-                        onPreferencesClick = onNavigateToPreferences
-                    )
-                }
+                HomeTopBar(
+                    modifier = Modifier.fillMaxWidth(),
+                    scheme = scheme,
+                    canUndo = uiState.canUndo,
+                    onUndoClick = { forYouViewModel.onUndo() },
+                    onNotificationsClick = onNavigateToNotifications,
+                    onPreferencesClick = onNavigateToPreferences
+                )
             }
 
-            // Sticky Tabs Header - stays pinned at the top when scrolling cards
-            FeedTabsHeader(
-                modifier = Modifier,
-                selectedTab = pagerState.currentPage,
-                onTabSelect = { index ->
-                    if (index == pagerState.currentPage && topBarOffsetHeightPx < 0f) {
-                        coroutineScope.launch {
-                            androidx.compose.animation.core.animate(
-                                initialValue = topBarOffsetHeightPx,
-                                targetValue = 0f,
-                                animationSpec = androidx.compose.animation.core.tween(durationMillis = 250)
-                            ) { value, _ ->
-                                topBarOffsetHeightPx = value
-                            }
-                        }
-                    } else {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
-                    }
-                },
-                scheme = scheme
+            uiState.quotaLimit?.let { quotaInfo ->
+                HomeQuotaLimitBanner(
+                    quotaLimitInfo = quotaInfo,
+                    scheme = scheme
+                )
+            }
+
+            ForYouTabContent(
+                modifier = Modifier.fillMaxSize(),
+                scheme = scheme,
+                viewModel = forYouViewModel,
+                onNavigateToChat = onNavigateToChat,
+                onNavigateToProfile = onNavigateToProfile,
+                onNavigateToPreferences = onNavigateToPreferences
             )
-
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize()
-            ) { page ->
-                when (page) {
-                    0 -> {
-                        ForYouTabContent(
-                            scheme = scheme,
-                            onNavigateToChat = onNavigateToChat,
-                            onNavigateToProfile = onNavigateToProfile
-                        )
-                    }
-
-                    1 -> {
-                        FollowingTabContent(
-                            scheme = scheme,
-                            onNavigateToChat = onNavigateToChat,
-                            onNavigateToProfile = onNavigateToProfile,
-                            onExploreClick = {
-                                coroutineScope.launch { pagerState.animateScrollToPage(0) }
-                            }
-                        )
-                    }
-
-                    2 -> {
-                        MatchesTabContent(
-                            scheme = scheme,
-                            onNavigateToChat = onNavigateToChat,
-                            onNavigateToProfile = onNavigateToProfile,
-                            onExploreClick = {
-                                coroutineScope.launch { pagerState.animateScrollToPage(0) }
-                            }
-                        )
-                    }
-                }
-            }
         }
     }
 }
@@ -312,143 +234,67 @@ fun HomeFeedScreen(
 
 /**
  * Shimmer Loading State Component.
- * Faithfully matches Right side of media_1789901587908.png with colors from media_1789901625814.png:
- * - 5 story avatar circles with rings and name placeholders
- * - 1 card shimmer (photo area + match badge + header + bio + 3 action buttons)
+ * Implemented using 100% Telekom ODSSkeleton components:
+ * - Shows 2 skeleton profile cards
+ * - Photo placeholder, match badge, profile header, location, bio, and action pills
  */
 @Composable
-fun HomeFeedShimmerContent(modifier: Modifier = Modifier) {
+fun HomeFeedShimmerContent(
+    modifier: Modifier = Modifier,
+    scheme: ODSTheme = zonaODSTheme
+) {
     ODSColumn(
         modifier = modifier
             .fillMaxWidth(),
         gap = 16.dp,
-        padding = ODSPadding(bottom = 96.dp)
+        padding = ODSPadding(
+            horizontal = DSVariables.spacingComponent4,
+            vertical = DSVariables.spacingComponent4
+        )
     ) {
-
-        ODSBox(
+        ODSSkeleton(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp), background = listOf(
-                ODSColorModel(ZonaColors.SurfaceElevated)
-            ), cornerRadius = ODSCorners(all = 26.dp), border = ODSBorder(
-                width = 1.dp, colorList = listOf(
-                    ODSColorModel(ZonaColors.Border)
-                )
-            ), clipContent = true
-        ) {
-            ODSColumn(modifier = Modifier.fillMaxWidth()) {
-                // Photo Area Shimmer
-                ODSBox(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(230.dp)
-                        .zonaShimmer()
-                ) {
-                    // Match badge placeholder top-left
-                    ODSBox(
-                        modifier = Modifier
-                            .padding(start = 14.dp, top = 14.dp)
-                            .width(78.dp)
-                            .height(26.dp), background = listOf(
-                            ODSColorModel(ZonaColors.SurfaceElevated)
-                        ), cornerRadius = ODSCorners(all = 13.dp), border = ODSBorder(
-                            width = 1.dp, colorList = listOf(
-                                ODSColorModel(ZonaColors.ActionPrimary)
-                            )
-                        )
-                    )
-                }
+                .height(240.dp)
+                .clip(RoundedCornerShape(DSVariables.spacingComponent4)),
+            scheme = scheme,
+            props = ODSSkeletonProps(variant = ODSSkeletonVariant.FULL)
+        )
 
-                // Card Content Shimmer
-                ODSColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    padding = ODSPadding(horizontal = 18.dp, vertical = 16.dp),
-                    gap = 12.dp
-                ) {
-                    // Profile Header (Name bar + verified circle)
-                    ODSRow(
-                        gap = 8.dp, verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ODSBox(
-                            modifier = Modifier
-                                .width(160.dp)
-                                .height(20.dp)
-                                .zonaShimmer(),
-                            cornerRadius = ODSCorners(all = 10.dp),
-                            clipContent = true
-                        )
-                        ODSBox(
-                            modifier = Modifier
-                                .size(18.dp)
-                                .zonaShimmer(),
-                            cornerRadius = ODSCorners(all = 9.dp),
-                            clipContent = true
-                        )
-                    }
+        ODSSkeleton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .clip(RoundedCornerShape(DSVariables.spacingComponent4)),
+            scheme = scheme,
+            props = ODSSkeletonProps(variant = ODSSkeletonVariant.MEDIUM)
+        )
+        ODSSkeleton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .clip(RoundedCornerShape(DSVariables.spacingComponent4)),
+            scheme = scheme,
+            props = ODSSkeletonProps(variant = ODSSkeletonVariant.SMALL)
+        )
 
-                    // Location Tag Bar
-                    ODSBox(
-                        modifier = Modifier
-                            .width(110.dp)
-                            .height(14.dp)
-                            .zonaShimmer(),
-                        cornerRadius = ODSCorners(all = 7.dp),
-                        clipContent = true
-                    )
+        ODSSkeleton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+                .clip(RoundedCornerShape(DSVariables.spacingComponent4)),
+            scheme = scheme,
+            props = ODSSkeletonProps(variant = ODSSkeletonVariant.FULL)
+        )
 
-                    // Bio multi-line bars
-                    ODSColumn(gap = 6.dp) {
-                        ODSBox(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(12.dp)
-                                .zonaShimmer(),
-                            cornerRadius = ODSCorners(all = 6.dp),
-                            clipContent = true
-                        )
-                        ODSBox(
-                            modifier = Modifier
-                                .fillMaxWidth(0.65f)
-                                .height(12.dp)
-                                .zonaShimmer(),
-                            cornerRadius = ODSCorners(all = 6.dp),
-                            clipContent = true
-                        )
-                    }
-
-                    // Actions Row Shimmer
-                    ODSRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp, bottom = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ODSBox(
-                            modifier = Modifier
-                                .size(54.dp)
-                                .zonaShimmer(),
-                            cornerRadius = ODSCorners(all = 27.dp),
-                            clipContent = true
-                        )
-                        ODSBox(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .zonaShimmer(),
-                            cornerRadius = ODSCorners(all = 32.dp),
-                            clipContent = true
-                        )
-                        ODSBox(
-                            modifier = Modifier
-                                .size(54.dp)
-                                .zonaShimmer(),
-                            cornerRadius = ODSCorners(all = 27.dp),
-                            clipContent = true
-                        )
-                    }
-                }
-            }
-        }
+        ODSSkeleton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .clip(RoundedCornerShape(DSVariables.spacingComponent4)),
+            scheme = scheme,
+            props = ODSSkeletonProps(variant = ODSSkeletonVariant.MEDIUM)
+        )
     }
 }
 
@@ -495,7 +341,6 @@ fun ConnectionLostContent(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // Headline
         ODSText(
             text = "Something went wrong",
             style = ODSTextStyles.titleS,
@@ -530,4 +375,60 @@ fun ConnectionLostContent(
         }
     }
 }
+
+@Composable
+fun HomeQuotaLimitBanner(
+    quotaLimitInfo: com.app.screentime.core.model.QuotaLimitInfo,
+    scheme: ODSTheme,
+    modifier: Modifier = Modifier
+) {
+    if (quotaLimitInfo.isLimitReached) {
+        ODSBox(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = DSVariables.spacingComponent4,
+                    vertical = DSVariables.spacingComponent2
+                ),
+            cornerRadius = ODSCorners(all = ODSVariables.radiusMedium),
+            background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard)),
+            padding = ODSPadding(
+                horizontal = DSVariables.spacingComponent4,
+                vertical = DSVariables.spacingComponent3
+            )
+        ) {
+            ODSRow(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                gap = DSVariables.spacingComponent3
+            ) {
+                ODSIcon(
+                    iconModel = ODSIconModel(
+                        drawableRes = com.telekom.odsystem.R.drawable.ic_alert_triangle,
+                        contentDescription = "Daily Limit"
+                    ),
+                    tint = scheme.functionalDestructiveStandard.getColor(),
+                    modifier = Modifier.size(ODSVariables.sizingComponent8)
+                )
+                ODSColumn(
+                    modifier = Modifier.weight(1f),
+                    gap = ODSVariables.spacingComponent1
+                ) {
+                    ODSText(
+                        text = "Daily Profile Limit Reached",
+                        style = ODSTextStyles.bodySBold,
+                        color = scheme.functionalDestructiveStandard
+                    )
+                    ODSText(
+                        text = quotaLimitInfo.limitMessage
+                            ?: "You've reached your daily profile limit. Come back tomorrow for new matches!",
+                        style = ODSTextStyles.microcopyRegular,
+                        color = scheme.basicTextRecessive
+                    )
+                }
+            }
+        }
+    }
+}
+
 

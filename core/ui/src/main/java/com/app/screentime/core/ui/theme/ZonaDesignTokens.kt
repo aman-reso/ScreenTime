@@ -382,7 +382,9 @@ val zonaDarkODSTheme: ODSTheme = darkMode.copy(
 /**
  * Telekom ODSTheme instance configured for Light Mode.
  */
-val zonaLightODSTheme: ODSTheme = lightMode.copy(
+val zonaLightODSTheme: ODSTheme = lightMode
+
+val x = lightMode.copy(
     name = "zonaLightTheme",
     basicAccent = ZonaLightTokens.actionPrimary,
     basicAccentSecondary = ZonaLightTokens.actionSoft,
@@ -482,7 +484,8 @@ val zonaLightODSTheme: ODSTheme = lightMode.copy(
 /**
  * Default ODSTheme export (defaults to Dark Mode).
  */
-val zonaODSTheme: ODSTheme = zonaLightODSTheme
+val zonaODSTheme: ODSTheme = lightMode
+//    zonaLightODSTheme
 val winterODSTheme: ODSTheme = zonaODSTheme
 
 /**

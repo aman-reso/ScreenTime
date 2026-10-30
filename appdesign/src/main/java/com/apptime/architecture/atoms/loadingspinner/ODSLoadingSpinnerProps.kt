@@ -51,6 +51,6 @@ enum class ODSLoadingSpinnerVariant {
 data class ODSLoadingSpinnerProps(
     var labelAlignment: ODSLoadingSpinnerLabelAlignment = ODSLoadingSpinnerLabelAlignment.NONE,
     var labelText: String? = null,
-    var size: ODSLoadingSpinnerSize = ODSLoadingSpinnerSize.LARGE,
+    var size: ODSLoadingSpinnerSize = ODSLoadingSpinnerSize.SMALL,
     var variant: ODSLoadingSpinnerVariant = ODSLoadingSpinnerVariant.STANDARD,
 )

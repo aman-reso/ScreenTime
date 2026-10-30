@@ -21,8 +21,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.config.R as ConfigR
 import com.app.screentime.core.ui.theme.ZonaColors
 import com.app.screentime.core.ui.theme.zonaODSTheme
 import com.telekom.odsystem.DSVariables
@@ -88,8 +90,6 @@ fun ControlAccountScreen(
         ODSColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
         ) {
             // ── 1. Top Bar with Back Chevron & Title ──────────────────────
             ODSRow(
@@ -122,7 +122,7 @@ fun ControlAccountScreen(
                     )
 
                     ODSText(
-                        text = "Control Account",
+                        text = stringResource(ConfigR.string.account_control_account),
                         style = ODSTextStyles.bodyMBold,
                         color = scheme.basicTextDominant
                     )
@@ -153,7 +153,7 @@ fun ControlAccountScreen(
                             width = ODSVariables.strokes1,
                             colorList = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary))
                         ),
-                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle))
                     ) {
                         ODSRow(
                             modifier = Modifier.fillMaxWidth(),
@@ -204,7 +204,7 @@ fun ControlAccountScreen(
                                 background = listOf(ODSColorModel(hexColor = ZonaColors.ActiveLime))
                             ) {
                                 ODSText(
-                                    text = "Active",
+                                    text = stringResource(ConfigR.string.account_active_status),
                                     style = ODSTextStyles.microcopyBold,
                                     color = ZonaColors.TextInverse
                                 )
@@ -216,7 +216,7 @@ fun ControlAccountScreen(
                 // ── Session Controls Header ────────────────────────────────
                 item {
                     ODSText(
-                        text = "Session Controls",
+                        text = stringResource(ConfigR.string.account_sessions_section),
                         style = ODSTextStyles.bodySBold,
                         color = scheme.basicTextDominant,
                         modifier = Modifier.padding(top = ODSVariables.spacingComponent2)
@@ -234,7 +234,7 @@ fun ControlAccountScreen(
                             width = ODSVariables.strokes1,
                             colorList = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary))
                         ),
-                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle))
                     ) {
                         ODSRow(
                             modifier = Modifier
@@ -266,7 +266,7 @@ fun ControlAccountScreen(
                                 ) {
                                     ODSIcon(
                                         iconModel = ODSIconModel(
-                                            drawableRes = R.drawable.ic_close,
+                                            drawableRes = R.drawable.ic_log_out,
                                             contentDescription = "Logout"
                                         ),
                                         tint = ZonaColors.ActionPrimary.getColor(),
@@ -276,7 +276,7 @@ fun ControlAccountScreen(
 
                                 ODSColumn(gap = 2.dp) {
                                     ODSText(
-                                        text = "Log Out",
+                                        text = stringResource(ConfigR.string.account_log_out),
                                         style = ODSTextStyles.bodySBold,
                                         color = ZonaColors.ActionPrimary
                                     )
@@ -320,7 +320,7 @@ fun ControlAccountScreen(
                             width = ODSVariables.strokes1,
                             colorList = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary))
                         ),
-                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle))
                     ) {
                         // Switch Account Row
                         ODSRow(
@@ -464,21 +464,38 @@ fun ControlAccountScreen(
                     bodyText = "Are you sure you want to log out? You can sign back in anytime using your phone or Google account."
                 ),
                 actionSlot = {
-                    ODSButton(
+                    ODSColumn(
                         modifier = Modifier.fillMaxWidth(),
-                        scheme = scheme,
-                        props = ODSButtonProps(
-                            label = "Log Out",
-                            buttonType = ODSButtonButtonType.STANDARD,
-                            variant = ODSButtonVariant.PRIMARY,
-                            size = ODSButtonSize.SMALL
-                        ),
-                        onClick = {
-                            showLogoutConfirmDialog = false
-                            viewModel.logout()
-                            onLogout()
-                        }
-                    )
+                        gap = ODSVariables.spacingComponent3
+                    ) {
+                        ODSButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = "Log Out",
+                                buttonType = ODSButtonButtonType.STANDARD,
+                                variant = ODSButtonVariant.PRIMARY,
+                                size = ODSButtonSize.SMALL
+                            ),
+                            onClick = {
+                                showLogoutConfirmDialog = false
+                                viewModel.logout()
+                                onLogout()
+                            }
+                        )
+
+                        ODSButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            scheme = scheme,
+                            props = ODSButtonProps(
+                                label = "Cancel",
+                                buttonType = ODSButtonButtonType.STANDARD,
+                                variant = ODSButtonVariant.SECONDARY,
+                                size = ODSButtonSize.SMALL
+                            ),
+                            onClick = { showLogoutConfirmDialog = false }
+                        )
+                    }
                 }
             )
         }

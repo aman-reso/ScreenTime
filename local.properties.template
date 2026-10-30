@@ -16,10 +16,10 @@ sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
 # These values are used by BuildConfig in build.gradle.kts
 
 # Production API Base URL
-API_BASE_URL=https://api.apptime.in
+API_BASE_URL=https://api.winterdating.com
 
-# Development/Testing API Base URL (ngrok)
-API_DEV_BASE_URL=https://your-ngrok-url.ngrok-free.app
+# Development/Testing API Base URL (Test Environment)
+API_DEV_BASE_URL=https://connect-api-test-324708289864.us-central1.run.app
 
 # TOTP Fallback Secret (only used if server secret unavailable)
 TOTP_FALLBACK_SECRET=YOUR_TOTP_FALLBACK_SECRET_HERE

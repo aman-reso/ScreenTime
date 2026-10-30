@@ -134,4 +134,58 @@ class DiscoveryApi @Inject constructor(
             )
         }
     }
+
+    suspend fun getFollowing(
+        token: String,
+        page: Int = 1,
+        limit: Int = 20,
+        userId: String? = null
+    ): com.app.screentime.core.network.dto.LikedProfilesResponse {
+        return try {
+            httpClient.get("$baseUrl/api/discovery/following") {
+                if (!token.isNullOrBlank()) {
+                    bearerAuth(token)
+                }
+                accept(ContentType.Application.Json)
+                if (!userId.isNullOrBlank()) {
+                    header("X-User-Id", userId)
+                }
+                parameter("page", page)
+                parameter("limit", limit)
+            }.body()
+        } catch (t: Throwable) {
+            Log.e(tag, "Failed to get following profiles: ${t.message}", t)
+            com.app.screentime.core.network.dto.LikedProfilesResponse(
+                success = false,
+                message = t.message ?: "Failed to retrieve following profiles"
+            )
+        }
+    }
+
+    suspend fun getFollowers(
+        token: String,
+        page: Int = 1,
+        limit: Int = 20,
+        userId: String? = null
+    ): com.app.screentime.core.network.dto.LikedProfilesResponse {
+        return try {
+            httpClient.get("$baseUrl/api/discovery/followers") {
+                if (!token.isNullOrBlank()) {
+                    bearerAuth(token)
+                }
+                accept(ContentType.Application.Json)
+                if (!userId.isNullOrBlank()) {
+                    header("X-User-Id", userId)
+                }
+                parameter("page", page)
+                parameter("limit", limit)
+            }.body()
+        } catch (t: Throwable) {
+            Log.e(tag, "Failed to get followers profiles: ${t.message}", t)
+            com.app.screentime.core.network.dto.LikedProfilesResponse(
+                success = false,
+                message = t.message ?: "Failed to retrieve followers profiles"
+            )
+        }
+    }
 }

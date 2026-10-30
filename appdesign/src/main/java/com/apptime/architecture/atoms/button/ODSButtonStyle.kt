@@ -585,6 +585,14 @@ class ODSButtonStyle {
         // Custom addition
         style.scaleFactor = DSButtonTokens.scaleFactor
         style.buttonLabelTextOverflow = DSButtonTokens.buttonLabelTextOverflow
+        if (props.height != null) {
+            style.minHeight = props.height
+            style.buttonBgHeight = props.height
+        }
+        if (props.cornerRadius != null) {
+            style.borderRadius = props.cornerRadius
+            style.buttonBgBorderRadius = props.cornerRadius
+        }
         return style
     }
 }

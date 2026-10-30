@@ -450,11 +450,17 @@ fun ScreenTimeNavigation(
                         scheme = scheme,
                         onBack = {
                             callViewModel.resetState()
-                            if (backStack.size > 1) backStack.removeLastOrNull() else backStack[0] = Screen.Home
+                            if (backStack.lastOrNull() is Screen.VoiceCall) {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                                else backStack[0] = Screen.Chat(key.modelId, key.modelName)
+                            }
                         },
                         onEndCall = {
                             callViewModel.resetState()
-                            if (backStack.size > 1) backStack.removeLastOrNull() else backStack[0] = Screen.Home
+                            if (backStack.lastOrNull() is Screen.VoiceCall) {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                                else backStack[0] = Screen.Chat(key.modelId, key.modelName)
+                            }
                         }
                     )
                 }
@@ -470,7 +476,10 @@ fun ScreenTimeNavigation(
                         scheme = scheme,
                         onEndCall = {
                             callViewModel.resetState()
-                            if (backStack.size > 1) backStack.removeLastOrNull() else backStack[0] = Screen.Home
+                            if (backStack.lastOrNull() is Screen.VideoCall) {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                                else backStack[0] = Screen.Chat(key.modelId, key.modelName)
+                            }
                         }
                     )
                 }

@@ -2,6 +2,7 @@ package com.telekom.odsystem.molecules.codeinput
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -89,12 +90,14 @@ fun ODSCodeInput(
         }
     ) {
         ODSColumn(
+            modifier = Modifier.fillMaxWidth(),
             gap = style.gap,
             horizontalAlignment = style.horizontalAlignment,
             verticalAlignment = style.verticalAlignment,
             verticalArrangement = style.verticalArrangement
         ) {
             ODSRow(
+                modifier = Modifier.fillMaxWidth(),
                 gap = style.inputContainerGap,
                 horizontalAlignment = style.inputContainerHorizontalAlignment,
                 horizontalArrangement = style.inputContainerHorizontalArrangement,

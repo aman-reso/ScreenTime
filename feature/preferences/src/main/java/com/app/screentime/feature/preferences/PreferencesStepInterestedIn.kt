@@ -59,7 +59,7 @@ fun PreferencesStepInterestedIn(
             ODSText(
                 modifier = Modifier.fillMaxWidth(),
                 text = "Who are you interested in?",
-                style = ODSTextStyles.titleL,
+                style = ODSTextStyles.bodyL,
                 color = primaryTextColor
             )
             ODSText(

@@ -31,6 +31,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":config"))
     implementation(project(":core:model"))
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
@@ -42,6 +43,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.constraintlayout.compose)
 
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)

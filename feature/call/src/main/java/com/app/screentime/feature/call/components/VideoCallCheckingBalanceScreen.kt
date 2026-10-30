@@ -37,33 +37,26 @@ fun VideoCallCheckingBalanceScreen(
 ) {
     ODSBox(
         modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding(),
+            .fillMaxSize(),
         background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
         contentAlignment = Alignment.Center
     ) {
         ODSColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            gap = 20.dp
+            gap = 16.dp
         ) {
             ODSLoadingSpinner(
                 scheme = scheme,
-                props = ODSLoadingSpinnerProps(size = ODSLoadingSpinnerSize.LARGE)
+                props = ODSLoadingSpinnerProps(size = ODSLoadingSpinnerSize.SMALL)
             )
 
             ODSText(
                 text = "Checking Wallet Balance...",
-                style = ODSTextStyles.bodyL,
+                style = ODSTextStyles.microcopyRegular,
                 color = scheme.basicText
-            )
-
-            ODSText(
-                text = "Verifying coins for video call with ${modelName.ifBlank { "User" }} ($${ratePerMin.toInt()}/min)",
-                style = ODSTextStyles.bodyMRegular,
-                color = scheme.basicTextRecessive
             )
         }
     }

@@ -35,7 +35,7 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:ui"))
     implementation(project(":appdesign"))
-    implementation(project(":feature:wallet"))
+    // implementation(project(":feature:wallet"))
 
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.androidx.compose.bom))

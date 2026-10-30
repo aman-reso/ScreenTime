@@ -87,6 +87,6 @@ data class ODSRadioButtonProps(
     var mode: ODSRadioButtonMode = ODSRadioButtonMode.STANDARD,
     var readOnly: Boolean = false,
     var selected: Boolean = false,
-    var size: ODSRadioButtonSize = ODSRadioButtonSize.LARGE,
+    var size: ODSRadioButtonSize = ODSRadioButtonSize.SMALL,
     var supportMessageProps: ODSRadioButtonSupportMessageProps? = null
 )

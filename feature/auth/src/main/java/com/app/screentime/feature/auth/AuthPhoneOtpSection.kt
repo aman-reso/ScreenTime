@@ -27,6 +27,10 @@ import com.telekom.odsystem.atoms.textfield.ODSTextFieldSize
 import com.telekom.odsystem.foundations.ODSColorModel
 import com.telekom.odsystem.foundations.ODSCorners
 import com.telekom.odsystem.foundations.ODSPadding
+import com.telekom.odsystem.molecules.codeinput.ODSCodeInput
+import com.telekom.odsystem.molecules.codeinput.ODSCodeInputMode
+import com.telekom.odsystem.molecules.codeinput.ODSCodeInputProps
+import com.telekom.odsystem.molecules.codeinput.ODSInputItemModel
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 
@@ -54,16 +58,26 @@ fun AuthPhoneOtpSection(
             onValueChange = onPhoneChange
         )
 
-        ODSTextField(
+        ODSCodeInput(
+            modifier = Modifier.fillMaxWidth(),
             scheme = scheme,
-            props = ODSTextFieldProps(
-                label = "OTP Code",
-                inputText = uiState.otp,
-                size = ODSTextFieldSize.SMALL,
-                leftIcon = ODSIconModel(drawableRes = ODSR.drawable.ic_shield_check)
+            props = ODSCodeInputProps(
+                masked = false,
+                mode = if (!uiState.error.isNullOrBlank()) ODSCodeInputMode.ERROR else ODSCodeInputMode.STANDARD,
+                errorMessage = uiState.error ?: "",
+                inputItems = List(6) { index ->
+                    ODSInputItemModel(
+                        inputText = uiState.otp.getOrNull(index)?.toString(),
+                        placeHolder = "•"
+                    )
+                }
             ),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-            onValueChange = onOtpChange
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            onValueChange = onOtpChange,
+            onCodeFilled = { filledCode ->
+                onOtpChange(filledCode)
+                onVerifyAndLogin()
+            }
         )
 
         if (!uiState.error.isNullOrEmpty()) {
@@ -91,7 +105,7 @@ fun AuthPhoneOtpSection(
                 label = if (uiState.isLoading) "Verifying..." else "Verify & Continue",
                 variant = ODSButtonVariant.PRIMARY,
                 size = ODSButtonSize.SMALL,
-                disabled = uiState.isLoading
+                disabled = uiState.isLoading || uiState.otp.filter { it.isDigit() }.length != 6
             ),
             onClick = onVerifyAndLogin
         )

@@ -36,6 +36,9 @@ data class CallUiState(
     val isLowBalanceWarning: Boolean = false,
     val isP2PConnected: Boolean = false,
     val isUsingLiveKitFallback: Boolean = false,
+    val livekitUrl: String? = null,
+    val livekitToken: String? = null,
+    val roomName: String? = null,
     val endReason: String? = null
 )
 

@@ -212,6 +212,7 @@ fun VideoCallScreen(
             callHasStarted = true
         } else if (callState.status == CallStatus.ENDED) {
             if (callHasStarted) {
+                callHasStarted = false
                 viewModel.resetState()
                 onEndCall()
             } else {
@@ -309,8 +310,6 @@ fun VideoCallScreen(
             onToggleSpeaker = { viewModel.toggleSpeaker() },
             onEndCall = {
                 viewModel.endCall()
-                viewModel.resetState()
-                onEndCall()
             },
             modifier = Modifier.align(Alignment.BottomCenter)
         )

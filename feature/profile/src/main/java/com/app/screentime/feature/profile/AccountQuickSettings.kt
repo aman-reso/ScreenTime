@@ -157,7 +157,7 @@ fun QuickSettingsCard(
             width = ODSVariables.strokes1,
             colorList = listOf(ODSColorModel(hexColor = scheme.basicAccentSecondary))
         ),
-        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundCard))
+        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle))
     ) {
         // ── 1. Theme Row ───────────────────────────────────────────────────
         QuickSettingsRow(
