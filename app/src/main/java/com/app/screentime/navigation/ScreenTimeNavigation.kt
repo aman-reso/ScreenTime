@@ -446,8 +446,12 @@ fun ScreenTimeNavigation(
                         avatarUrl = key.avatarUrl,
                         modifier = Modifier.fillMaxSize(),
                         scheme = scheme,
-                        onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
-                        onEndCall = { if (backStack.size > 1) backStack.removeLastOrNull() }
+                        onBack = {
+                            if (backStack.size > 1) backStack.removeLastOrNull() else backStack[0] = Screen.Home
+                        },
+                        onEndCall = {
+                            if (backStack.size > 1) backStack.removeLastOrNull() else backStack[0] = Screen.Home
+                        }
                     )
                 }
 
@@ -460,7 +464,9 @@ fun ScreenTimeNavigation(
                         avatarUrl = key.avatarUrl,
                         modifier = Modifier.fillMaxSize(),
                         scheme = scheme,
-                        onEndCall = { if (backStack.size > 1) backStack.removeLastOrNull() }
+                        onEndCall = {
+                            if (backStack.size > 1) backStack.removeLastOrNull() else backStack[0] = Screen.Home
+                        }
                     )
                 }
 

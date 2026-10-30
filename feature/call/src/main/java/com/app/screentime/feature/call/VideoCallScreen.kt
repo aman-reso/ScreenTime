@@ -25,7 +25,6 @@ import com.app.screentime.feature.call.components.SelfViewPipCard
 import com.app.screentime.feature.call.components.VideoCallBottomOverlay
 import com.app.screentime.feature.call.components.VideoCallCheckingBalanceScreen
 import com.app.screentime.feature.call.components.VideoCallDialingOverlay
-import com.app.screentime.feature.call.components.VideoCallEndedScreen
 import com.app.screentime.feature.call.components.VideoCallInsufficientBalanceScreen
 import com.app.screentime.feature.call.components.VideoCallTopBar
 import com.app.screentime.feature.call.components.VideoSurfaceContainer
@@ -85,7 +84,8 @@ fun VideoCallScreen(
     val remoteRtcVideoTrack by viewModel.remoteWebRtcVideoTrack.collectAsState()
     val eglBase = viewModel.webRtcEglBase
 
-    val isRemoteVideoActive = remoteVideoTrack != null || (remoteRtcVideoTrack != null && eglBase != null)
+    val isRemoteVideoActive =
+        remoteVideoTrack != null || (remoteRtcVideoTrack != null && eglBase != null)
 
     // ── Permission Management ──
     val permissionsToRequest = remember {
@@ -104,15 +104,24 @@ fun VideoCallScreen(
 
     var hasCameraPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
         )
     }
 
     var hasNotificationPermission by remember {
         mutableStateOf(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
             } else {
                 true
             }
@@ -137,16 +146,25 @@ fun VideoCallScreen(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
         val cameraGranted = (result[Manifest.permission.CAMERA] == true ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) &&
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED) &&
                 (result[Manifest.permission.RECORD_AUDIO] == true ||
-                        ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED)
         hasCameraPermission = cameraGranted
         if (cameraGranted) {
             viewModel.setCameraEnabled(true)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             hasNotificationPermission = result[Manifest.permission.POST_NOTIFICATIONS] == true ||
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
         }
         if (cameraGranted && callState.status == CallStatus.INCOMING) {
             viewModel.acceptIncomingCall()
@@ -180,7 +198,14 @@ fun VideoCallScreen(
         }
     }
 
-    // ── 1. CHECKING BALANCE SCREEN ──
+    // ── Auto-navigate back to previous screen immediately when call ends ──
+    LaunchedEffect(callState.status) {
+        if (callState.status == CallStatus.ENDED) {
+            viewModel.resetState()
+            onEndCall()
+        }
+    }
+
     if (callState.status == CallStatus.CHECKING_BALANCE) {
         VideoCallCheckingBalanceScreen(
             modelName = modelName,
@@ -191,7 +216,6 @@ fun VideoCallScreen(
         return
     }
 
-    // ── 2. INSUFFICIENT BALANCE SCREEN ──
     if (callState.status == CallStatus.INSUFFICIENT_BALANCE) {
         VideoCallInsufficientBalanceScreen(
             callState = callState,
@@ -211,25 +235,9 @@ fun VideoCallScreen(
         return
     }
 
-    // ── 3. CALL ENDED SCREEN ──
-    if (callState.status == CallStatus.ENDED && hasInitiatedCall) {
-        VideoCallEndedScreen(
-            callState = callState,
-            scheme = scheme,
-            onClose = {
-                viewModel.resetState()
-                onEndCall()
-            },
-            modifier = modifier
-        )
-        return
-    }
-
-    // ── 4. ACTIVE / DIALING VIDEO CALL SCREEN ──
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        // Main Full-Screen Video Surface
         VideoSurfaceContainer(
             room = room,
             callState = callState,
@@ -244,7 +252,6 @@ fun VideoCallScreen(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Centered Dialing Overlay (while waiting for remote answer)
         if (!isRemoteVideoActive) {
             VideoCallDialingOverlay(
                 callState = callState,
@@ -255,7 +262,6 @@ fun VideoCallScreen(
             )
         }
 
-        // Top Bar Overlay: Status Pill & Camera Flip
         VideoCallTopBar(
             callState = callState,
             modelName = modelName,
@@ -265,7 +271,6 @@ fun VideoCallScreen(
             modifier = Modifier.align(Alignment.TopCenter)
         )
 
-        // Floating PiP Self-View Window (Visible when remote video is active)
         if (isRemoteVideoActive) {
             SelfViewPipCard(
                 room = room,
@@ -279,7 +284,6 @@ fun VideoCallScreen(
             )
         }
 
-        // ── Floating Bottom Overlay Dock with All Action Buttons ──
         VideoCallBottomOverlay(
             callState = callState,
             modelName = modelName,

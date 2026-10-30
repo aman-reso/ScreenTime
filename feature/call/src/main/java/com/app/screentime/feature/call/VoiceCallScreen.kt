@@ -53,7 +53,6 @@ import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.tokens.ODSTextStyles
 import com.telekom.odsystem.tokens.tokens.ODSTheme
 import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
 import com.telekom.odsystem.R as ODSR
 
 /**
@@ -163,69 +162,9 @@ fun VoiceCallScreen(
 
     LaunchedEffect(callState.status) {
         if (callState.status == CallStatus.ENDED) {
-            delay(2500L.milliseconds)
             viewModel.resetState()
             onEndCall()
         }
-    }
-
-    if (callState.status == CallStatus.ENDED) {
-        ODSBox(
-            modifier = modifier
-                .fillMaxSize(),
-            background = listOf(ODSColorModel(hexColor = scheme.basicBackground)),
-            contentAlignment = Alignment.Center
-        ) {
-            ODSColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                gap = 20.dp
-            ) {
-                ODSBox(
-                    modifier = Modifier.size(80.dp),
-                    cornerRadius = ODSCorners(all = 40.dp),
-                    background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ODSIcon(
-                        iconModel = ODSIconModel(drawableRes = ODSR.drawable.ic_phone_off),
-                        tint = scheme.basicText.getColor(),
-                        modifier = Modifier.size(36.dp)
-                    )
-                }
-
-                ODSText(
-                    text = "Call Ended",
-                    style = ODSTextStyles.bodyL,
-                    color = scheme.basicText
-                )
-
-                ODSText(
-                    text = callState.endReason
-                        ?: "Call with ${modelName.ifBlank { "User" }} has ended.",
-                    style = ODSTextStyles.bodyMRegular,
-                    color = scheme.basicTextRecessive
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                ODSButton(
-                    modifier = Modifier.fillMaxWidth(0.6f),
-                    scheme = scheme,
-                    props = ODSButtonProps(
-                        label = "Close",
-                        variant = ODSButtonVariant.SECONDARY
-                    ),
-                    onClick = {
-                        viewModel.resetState()
-                        onEndCall()
-                    }
-                )
-            }
-        }
-        return
     }
 
     if (callState.status == CallStatus.INSUFFICIENT_BALANCE) {
