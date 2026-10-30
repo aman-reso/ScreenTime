@@ -128,7 +128,8 @@ fun VideoCallScreen(
         )
     }
 
-    var hasInitiatedCall by rememberSaveable { mutableStateOf(false) }
+    var hasInitiatedCall by remember { mutableStateOf(false) }
+    var callHasStarted by remember { mutableStateOf(false) }
 
     val targetId = when {
         modelId.isNotBlank() -> modelId
@@ -175,6 +176,9 @@ fun VideoCallScreen(
     }
 
     LaunchedEffect(Unit) {
+        if (callState.status == CallStatus.ENDED) {
+            viewModel.resetState()
+        }
         if (callState.status == CallStatus.INCOMING) {
             if (hasCameraPermission) {
                 viewModel.setCameraEnabled(true)
@@ -200,9 +204,20 @@ fun VideoCallScreen(
 
     // ── Auto-navigate back to previous screen immediately when call ends ──
     LaunchedEffect(callState.status) {
-        if (callState.status == CallStatus.ENDED) {
-            viewModel.resetState()
-            onEndCall()
+        if (callState.status == CallStatus.DIALING ||
+            callState.status == CallStatus.ACTIVE ||
+            callState.status == CallStatus.INCOMING ||
+            callState.status == CallStatus.CHECKING_BALANCE
+        ) {
+            callHasStarted = true
+        } else if (callState.status == CallStatus.ENDED) {
+            if (callHasStarted) {
+                viewModel.resetState()
+                onEndCall()
+            } else {
+                // Stale ENDED status from previous session; reset state to IDLE so this call can proceed
+                viewModel.resetState()
+            }
         }
     }
 

@@ -418,9 +418,11 @@ fun ScreenTimeNavigation(
                             navigateToProfile(key.modelId, key.modelName)
                         },
                         onVoiceCallClick = {
+                            callViewModel.resetState()
                             backStack.add(Screen.VoiceCall(key.modelId, key.modelName))
                         },
                         onVideoCallClick = {
+                            callViewModel.resetState()
                             backStack.add(Screen.VideoCall(key.modelId, key.modelName))
                         }
                     )
@@ -447,9 +449,11 @@ fun ScreenTimeNavigation(
                         modifier = Modifier.fillMaxSize(),
                         scheme = scheme,
                         onBack = {
+                            callViewModel.resetState()
                             if (backStack.size > 1) backStack.removeLastOrNull() else backStack[0] = Screen.Home
                         },
                         onEndCall = {
+                            callViewModel.resetState()
                             if (backStack.size > 1) backStack.removeLastOrNull() else backStack[0] = Screen.Home
                         }
                     )
@@ -465,6 +469,7 @@ fun ScreenTimeNavigation(
                         modifier = Modifier.fillMaxSize(),
                         scheme = scheme,
                         onEndCall = {
+                            callViewModel.resetState()
                             if (backStack.size > 1) backStack.removeLastOrNull() else backStack[0] = Screen.Home
                         }
                     )
