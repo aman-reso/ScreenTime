@@ -17,11 +17,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -97,7 +100,7 @@ private val bottomNavRoutes: Set<Screen> = setOf(
  * Root navigation composable for Chatty Dating App.
  * Manages Onboarding Preferences, Discovery Deck, Chats, and Flat Bottom Bar.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ScreenTimeNavigation(
@@ -106,6 +109,7 @@ fun ScreenTimeNavigation(
     pendingNotificationScreen: Screen? = null,
     onClearPendingNotificationScreen: () -> Unit = {},
     onLogout: () -> Unit = {},
+    onRateApp: () -> Unit = {},
     scheme: ODSTheme = zonaODSTheme
 ) {
     val context = LocalContext.current
@@ -201,6 +205,36 @@ fun ScreenTimeNavigation(
         }
     }
 
+    val navigateToChat: (modelId: String, modelName: String, conversationId: String?) -> Unit = { modelId, modelName, conversationId ->
+        val existingIndex = backStack.indexOfLast { it is Screen.Chat && it.modelId == modelId }
+        if (existingIndex >= 0) {
+            while (backStack.lastIndex > existingIndex) {
+                backStack.removeLastOrNull()
+            }
+            if (conversationId != null) {
+                val current = backStack[existingIndex] as? Screen.Chat
+                if (current != null && current.conversationId != conversationId) {
+                    backStack[existingIndex] = current.copy(conversationId = conversationId)
+                }
+            }
+        } else if (backStack.lastOrNull() is Screen.ProfileDetail && (backStack.lastOrNull() as Screen.ProfileDetail).userId == modelId) {
+            backStack[backStack.lastIndex] = Screen.Chat(modelId, modelName, conversationId)
+        } else {
+            backStack.add(Screen.Chat(modelId, modelName, conversationId))
+        }
+    }
+
+    val navigateToProfile: (userId: String, userName: String) -> Unit = { userId, userName ->
+        val existingIndex = backStack.indexOfLast { it is Screen.ProfileDetail && it.userId == userId }
+        if (existingIndex >= 0) {
+            while (backStack.lastIndex > existingIndex) {
+                backStack.removeLastOrNull()
+            }
+        } else {
+            backStack.add(Screen.ProfileDetail(userId, userName))
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = scheme.basicBackground.getColor(),
@@ -234,18 +268,27 @@ fun ScreenTimeNavigation(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            NavDisplay(modifier = Modifier.fillMaxSize(), backStack = backStack, onBack = {
-                if (!isOnboardingDone) {
-                    showExitWarningDialog = true
-                    return@NavDisplay
-                }
-                val top = backStack.lastOrNull()
-                if (top in bottomNavRoutes && top != Screen.Home) {
-                    backStack[backStack.lastIndex] = Screen.Home
-                } else if (backStack.size > 1) {
-                    backStack.removeLastOrNull()
-                }
-            }, entryProvider = entryProvider {
+            SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+                CompositionLocalProvider(LocalNavSharedTransitionScope provides this) {
+                    NavDisplay(
+                        modifier = Modifier.fillMaxSize(),
+                        backStack = backStack,
+                        transitionSpec = appForwardTransitionSpec(bottomNavRoutes),
+                        popTransitionSpec = appPopTransitionSpec(bottomNavRoutes),
+                        predictivePopTransitionSpec = appPredictivePopTransitionSpec(),
+                        onBack = {
+                            if (!isOnboardingDone) {
+                                showExitWarningDialog = true
+                                return@NavDisplay
+                            }
+                            val top = backStack.lastOrNull()
+                            if (top in bottomNavRoutes && top != Screen.Home) {
+                                backStack[backStack.lastIndex] = Screen.Home
+                            } else if (backStack.size > 1) {
+                                backStack.removeLastOrNull()
+                            }
+                        },
+                        entryProvider = entryProvider {
                 entry<Screen.DatingPreferences> {
                     PreferencesScreen(modifier = Modifier.fillMaxSize(), scheme = scheme, onBack = {
                         if (!isOnboardingDone) {
@@ -279,17 +322,18 @@ fun ScreenTimeNavigation(
                         modifier = modifier,
                         scheme = scheme,
                         onNavigateToChat = { modelId, modelName ->
-                            backStack.add(Screen.Chat(modelId, modelName))
+                            navigateToChat(modelId, modelName, null)
                         },
                         onNavigateToProfile = { userId, userName ->
-                            backStack.add(Screen.ProfileDetail(userId, userName))
+                            navigateToProfile(userId, userName)
                         },
                         onNavigateToPreferences = {
                             backStack.add(Screen.EditPreferences)
                         },
                         onNavigateToNotifications = {
                             backStack.add(Screen.Notifications)
-                        }
+                        },
+                        onRateApp = onRateApp
                     )
                 }
 
@@ -299,17 +343,18 @@ fun ScreenTimeNavigation(
                         modifier = Modifier.fillMaxSize(),
                         scheme = scheme,
                         onNavigateToChat = { modelId, modelName ->
-                            backStack.add(Screen.Chat(modelId, modelName))
+                            navigateToChat(modelId, modelName, null)
                         },
                         onNavigateToProfile = { userId, userName ->
-                            backStack.add(Screen.ProfileDetail(userId, userName))
+                            navigateToProfile(userId, userName)
                         },
                         onNavigateToPreferences = {
                             backStack.add(Screen.EditPreferences)
                         },
                         onNavigateToNotifications = {
                             backStack.add(Screen.Notifications)
-                        }
+                        },
+                        onRateApp = onRateApp
                     )
                 }
 
@@ -319,17 +364,18 @@ fun ScreenTimeNavigation(
                         modifier = Modifier.fillMaxSize(),
                         scheme = scheme,
                         onNavigateToChat = { modelId, modelName ->
-                            backStack.add(Screen.Chat(modelId, modelName))
+                            navigateToChat(modelId, modelName, null)
                         },
                         onNavigateToProfile = { userId, userName ->
-                            backStack.add(Screen.ProfileDetail(userId, userName))
+                            navigateToProfile(userId, userName)
                         },
                         onNavigateToPreferences = {
                             backStack.add(Screen.EditPreferences)
                         },
                         onNavigateToNotifications = {
                             backStack.add(Screen.Notifications)
-                        }
+                        },
+                        onRateApp = onRateApp
                     )
                 }
 
@@ -349,10 +395,10 @@ fun ScreenTimeNavigation(
                         modifier = Modifier.fillMaxSize(),
                         scheme = scheme,
                         onNavigateToChat = { modelId, modelName, conversationId ->
-                            backStack.add(Screen.Chat(modelId, modelName, conversationId))
+                            navigateToChat(modelId, modelName, conversationId)
                         },
                         onNavigateToProfile = { userId, userName ->
-                            backStack.add(Screen.ProfileDetail(userId, userName))
+                            navigateToProfile(userId, userName)
                         },
                         onNavigateToDiscover = {
                             backStack[backStack.lastIndex] = Screen.Home
@@ -369,7 +415,7 @@ fun ScreenTimeNavigation(
                         scheme = scheme,
                         onBackClick = { if (backStack.size > 1) backStack.removeLastOrNull() },
                         onOpenProfile = {
-                            backStack.add(Screen.ProfileDetail(key.modelId, key.modelName))
+                            navigateToProfile(key.modelId, key.modelName)
                         },
                         onVoiceCallClick = {
                             backStack.add(Screen.VoiceCall(key.modelId, key.modelName))
@@ -426,7 +472,7 @@ fun ScreenTimeNavigation(
                         isMyProfile = key.userId == "me",
                         onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
                         onNavigateToChat = { modelId, modelName ->
-                            backStack.add(Screen.Chat(modelId, modelName))
+                            navigateToChat(modelId, modelName, null)
                         },
                         onNavigateToEditProfile = {
                             backStack.add(Screen.EditProfile)
@@ -481,10 +527,10 @@ fun ScreenTimeNavigation(
                     NotificationsScreen(
                         onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
                         onNavigateToChat = { modelId, modelName ->
-                            backStack.add(Screen.Chat(modelId, modelName))
+                            navigateToChat(modelId, modelName, null)
                         },
                         onNavigateToProfile = { userId, userName ->
-                            backStack.add(Screen.ProfileDetail(userId, userName))
+                            navigateToProfile(userId, userName)
                         },
                         scheme = scheme
                     )
@@ -500,7 +546,7 @@ fun ScreenTimeNavigation(
                             else backStack[0] = Screen.Home
                         },
                         onNavigateToChat = { modelId, modelName ->
-                            backStack.add(Screen.Chat(modelId, modelName))
+                            navigateToChat(modelId, modelName, null)
                         },
                         onNavigateToEditProfile = {
                             backStack.add(Screen.EditProfile)
@@ -514,7 +560,19 @@ fun ScreenTimeNavigation(
                     UserProfileScreen(
                         modifier = Modifier.fillMaxSize(),
                         scheme = scheme,
+                        onBackClick = {
+                            if (backStack.contains(Screen.Home)) {
+                                while (backStack.lastOrNull() != Screen.Home && backStack.size > 1) {
+                                    backStack.removeLastOrNull()
+                                }
+                            } else if (backStack.isNotEmpty()) {
+                                backStack[backStack.lastIndex] = Screen.Home
+                            } else {
+                                backStack.add(Screen.Home)
+                            }
+                        },
                         onLogoutClick = onLogout,
+                        onRateAppClick = onRateApp,
                         // onNavigateToTopUp = { backStack.add(Screen.AddFunds) },
                         // onNavigateToTransactions = { backStack.add(Screen.Transactions) },
                         onNavigateToEditProfile = { backStack.add(Screen.EditProfile) },
@@ -525,7 +583,7 @@ fun ScreenTimeNavigation(
                         onNavigateToNotifications = { backStack.add(Screen.Notifications) },
                         onNavigateToControlAccount = { backStack.add(Screen.ControlAccount) },
                         onNavigateToProfileDetail = { userId, userName ->
-                            backStack.add(Screen.ProfileDetail(userId, userName))
+                            navigateToProfile(userId, userName)
                         })
                 }
 
@@ -536,10 +594,10 @@ fun ScreenTimeNavigation(
                         scheme = scheme,
                         initialTab = 0,
                         onNavigateToProfile = { userId, userName ->
-                            backStack.add(Screen.ProfileDetail(userId, userName))
+                            navigateToProfile(userId, userName)
                         },
                         onNavigateToChat = { modelId, modelName ->
-                            backStack.add(Screen.Chat(modelId, modelName))
+                            navigateToChat(modelId, modelName, null)
                         },
                         onNavigateToDiscover = {
                             backStack[backStack.lastIndex] = Screen.Home
@@ -553,10 +611,10 @@ fun ScreenTimeNavigation(
                         scheme = scheme,
                         initialTab = 0,
                         onNavigateToProfile = { userId, userName ->
-                            backStack.add(Screen.ProfileDetail(userId, userName))
+                            navigateToProfile(userId, userName)
                         },
                         onNavigateToChat = { modelId, modelName ->
-                            backStack.add(Screen.Chat(modelId, modelName))
+                            navigateToChat(modelId, modelName, null)
                         },
                         onNavigateToDiscover = {
                             backStack[backStack.lastIndex] = Screen.Home
@@ -571,10 +629,10 @@ fun ScreenTimeNavigation(
                         scheme = scheme,
                         onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
                         onNavigateToProfile = { userId, userName ->
-                            backStack.add(Screen.ProfileDetail(userId, userName))
+                            navigateToProfile(userId, userName)
                         },
                         onNavigateToChat = { modelId, modelName ->
-                            backStack.add(Screen.Chat(modelId, modelName))
+                            navigateToChat(modelId, modelName, null)
                         },
                         onNavigateToDiscover = {
                             backStack[backStack.lastIndex] = Screen.Home
@@ -590,6 +648,8 @@ fun ScreenTimeNavigation(
                     )
                 }
             })
+                }
+            }
 
             if (callState.status == CallStatus.INCOMING) {
                 IncomingCallGlobalOverlay(
