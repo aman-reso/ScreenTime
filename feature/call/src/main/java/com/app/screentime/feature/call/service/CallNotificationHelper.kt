@@ -238,16 +238,6 @@ object CallNotificationHelper {
             .setVibrate(longArrayOf(0, 1000, 600, 1000, 600, 1000))
             .setFullScreenIntent(acceptPendingIntent, true)
             .setContentIntent(acceptPendingIntent)
-            .addAction(
-                R.drawable.ic_call_decline_dynamic,
-                "Reject",
-                rejectPendingIntent
-            )
-            .addAction(
-                R.drawable.ic_call_answer_dynamic,
-                "Accept",
-                acceptPendingIntent
-            )
             .build()
 
         val notificationManager =
