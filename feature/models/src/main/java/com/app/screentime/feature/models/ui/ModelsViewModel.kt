@@ -16,6 +16,7 @@ data class ModelsUiState(
     val isRefreshing: Boolean = false,
     val models: List<ModelGirl> = emptyList(),
     val isCurrentUserModel: Boolean = false,
+    val userName: String = "Friend",
     val error: String? = null,
     val rateUpdateMessage: String? = null
 )
@@ -28,7 +29,8 @@ class ModelsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(
         ModelsUiState(
             isLoading = true,
-            isCurrentUserModel = repository.isCurrentUserModel()
+            isCurrentUserModel = repository.isCurrentUserModel(),
+            userName = repository.getCurrentUserName()?.takeIf { it.isNotBlank() } ?: "Friend"
         )
     )
     val uiState: StateFlow<ModelsUiState> = _uiState.asStateFlow()

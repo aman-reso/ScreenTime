@@ -66,4 +66,8 @@ class ModelsRepository @Inject constructor(
     fun isCurrentUserModel(): Boolean {
         return sessionManager.userRole == UserRole.MODEL
     }
+
+    fun getCurrentUserName(): String? {
+        return sessionManager.userName
+    }
 }
