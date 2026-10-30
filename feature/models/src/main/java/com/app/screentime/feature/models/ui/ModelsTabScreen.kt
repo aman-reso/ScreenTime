@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -44,7 +43,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.app.screentime.core.ui.theme.zonaODSTheme
@@ -67,8 +65,6 @@ import com.telekom.odsystem.atoms.togglechip.ODSToggleChip
 import com.telekom.odsystem.atoms.togglechip.ODSToggleChipProps
 import com.telekom.odsystem.foundations.HexColor
 import com.telekom.odsystem.foundations.ODSColorModel
-import com.telekom.odsystem.foundations.ODSCorners
-import com.telekom.odsystem.foundations.ODSPadding
 import com.telekom.odsystem.molecules.searchbar.ODSSearchBar
 import com.telekom.odsystem.molecules.searchbar.ODSSearchBarProps
 import com.telekom.odsystem.tokens.ODSTextStyles
@@ -88,14 +84,9 @@ private enum class ModelFilter(val label: String) {
 /**
  * ModelsTabScreen
  *
- * Designed with modern aesthetic matching user's requested layout:
- * - Friendly greeting ("Hello [Name] 👋") & Live counter widget
- * - Tagline ("TALK & CONNECT")
- * - Big bold headline ("Share Your Feelings", "Talk to someone real")
- * - Search bar ("Search companions, moods, languages...")
- * - Quick category toggle chips
- * - 2-span Staggered Grid with rich visual cards, status indicators, and call buttons
- * - ODS Design System components used throughout
+ * Clean, consistent UI with unified 16.dp horizontal padding and 12.dp item gaps.
+ * Top area features an ODS Search Bar and quick filter chips.
+ * Displays models in a 2-span Staggered Masonry Grid format.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,10 +127,6 @@ fun ModelsTabScreen(
         }
     }
 
-    val liveCount = remember(uiState.models) {
-        uiState.models.count { it.isOnline }
-    }
-
     ODSBox(
         modifier = modifier.fillMaxSize(),
         background = listOf(ODSColorModel(hexColor = scheme.basicBackground))
@@ -149,136 +136,49 @@ fun ModelsTabScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
         ) {
-            // ── Top Header Section: Greeting & Live Counter Widget ──
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // ── Top Search Bar Row (Clean & Prominent) ──
             ODSRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(horizontal = 16.dp),
+                gap = 8.dp,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ODSText(
-                    text = "Hello ${uiState.userName} 👋",
-                    style = ODSTextStyles.titleS,
-                    color = scheme.basicText
+                ODSSearchBar(
+                    modifier = Modifier.weight(1f),
+                    scheme = scheme,
+                    props = ODSSearchBarProps(
+                        placeholder = "Search companions, cities...",
+                        input = searchQuery
+                    ),
+                    onValueChange = { searchQuery = it }
                 )
 
-                ODSRow(
-                    gap = 8.dp,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Live Status Widget (matching weather pill from inspiration layout)
-                    ODSBox(
-                        background = listOf(ODSColorModel(hexColor = scheme.basicBackgroundSubtle)),
-                        cornerRadius = ODSCorners(all = 20.dp),
-                        padding = ODSPadding(horizontal = 10.dp, vertical = 6.dp)
-                    ) {
-                        ODSRow(
-                            gap = 6.dp,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ODSBox(
-                                width = 8.dp,
-                                height = 8.dp,
-                                cornerRadius = ODSCorners(all = 4.dp),
-                                background = listOf(ODSColorModel(hexColor = HexColor("#10B981")))
-                            )
-                            ODSText(
-                                text = if (liveCount > 0) "$liveCount Live" else "Offline",
-                                style = ODSTextStyles.microcopyBold,
-                                color = scheme.basicText
-                            )
-                        }
-                    }
-
-                    // My Rates Button (only visible if logged-in user is a registered model)
-                    if (uiState.isCurrentUserModel) {
-                        ODSBox(
-                            background = listOf(ODSColorModel(hexColor = scheme.basicAccent)),
-                            cornerRadius = ODSCorners(all = 20.dp),
-                            padding = ODSPadding(horizontal = 10.dp, vertical = 6.dp),
-                            modifier = Modifier.clickable { showRateDialog = true }
-                        ) {
-                            ODSText(
-                                text = "⚙️ Rates",
-                                style = ODSTextStyles.microcopyBold,
-                                color = HexColor("#FFFFFF")
-                            )
-                        }
-                    }
-
-                    // Refresh Button
-                    ODSBox(
+                // Model rates config shortcut (only for registered models)
+                if (uiState.isCurrentUserModel) {
+                    Box(
                         modifier = Modifier
-                            .size(34.dp)
-                            .clip(CircleShape)
-                            .background(scheme.basicBackgroundSubtle.getColor())
-                            .clickable { viewModel.refresh() },
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(scheme.basicAccent.getColor())
+                            .clickable { showRateDialog = true }
+                            .padding(horizontal = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         ODSText(
-                            text = "🔄",
-                            style = ODSTextStyles.bodySBold
+                            text = "⚙️ Rates",
+                            style = ODSTextStyles.microcopyBold,
+                            color = HexColor("#FFFFFF")
                         )
                     }
                 }
             }
 
-            // ── Inspiring Headline & Tagline (as requested: "Share Your Feelings", "Talk") ──
-            ODSColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                gap = 2.dp
-            ) {
-                ODSRow(
-                    gap = 6.dp,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ODSText(
-                        text = "💬",
-                        style = ODSTextStyles.microcopyBold
-                    )
-                    ODSText(
-                        text = "REAL CONVERSATIONS",
-                        style = ODSTextStyles.microcopyBold,
-                        color = scheme.basicAccent
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(2.dp))
-
-                ODSText(
-                    text = "Share Your Feelings",
-                    style = ODSTextStyles.titleL,
-                    color = scheme.basicText
-                )
-
-                ODSText(
-                    text = "Talk to someone special right now",
-                    style = ODSTextStyles.bodyMBold,
-                    color = scheme.basicTextRecessive
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // ── ODS Search Bar ──
-            ODSSearchBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                scheme = scheme,
-                props = ODSSearchBarProps(
-                    placeholder = "Search companions, moods, languages...",
-                    input = searchQuery
-                ),
-                onValueChange = { searchQuery = it }
-            )
-
             Spacer(modifier = Modifier.height(10.dp))
 
-            // ── Filter Chips (Scrollable Row) ──
+            // ── Filter Chips Row ──
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 16.dp),
@@ -296,7 +196,7 @@ fun ModelsTabScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // ── Content Area: 2-Span Staggered Grid ──
             if (uiState.isLoading && uiState.models.isEmpty()) {
@@ -310,7 +210,7 @@ fun ModelsTabScreen(
                         scheme = scheme,
                         props = ODSLoadingSpinnerProps(
                             size = ODSLoadingSpinnerSize.SMALL,
-                            labelText = "Connecting with companions..."
+                            labelText = "Loading companions..."
                         )
                     )
                 }
@@ -392,7 +292,7 @@ fun ModelsTabScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalItemSpacing = 12.dp
                 ) {
@@ -442,8 +342,7 @@ fun ModelsTabScreen(
 }
 
 /**
- * 2-Span Masonry Card for Each Model
- * Follows the aesthetics of the inspiration layout with badges, gradients, and action buttons.
+ * 2-Span Masonry Card for each Model with consistent padding, typography, and action buttons
  */
 @Composable
 private fun ModelMasonryCard(
@@ -455,7 +354,7 @@ private fun ModelMasonryCard(
     onVideoCallClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Staggered dynamic heights for natural masonry feel
+    // Dynamic height based on index for true masonry layout
     val cardHeight = when (index % 4) {
         0 -> 245.dp
         1 -> 285.dp
@@ -466,9 +365,9 @@ private fun ModelMasonryCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable { onCardClick() },
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = scheme.basicBackgroundCard.getColor()
         ),
@@ -479,7 +378,7 @@ private fun ModelMasonryCard(
                 .fillMaxWidth()
                 .height(cardHeight)
         ) {
-            // ── Background Photo ──
+            // ── Photo Background ──
             if (model.avatarUrl.isNotBlank()) {
                 AsyncImage(
                     model = model.avatarUrl,
@@ -502,14 +401,14 @@ private fun ModelMasonryCard(
                 }
             }
 
-            // ── Smooth Dark Gradient for Text Legibility ──
+            // ── Consistent Dark Gradient for Text Contrast ──
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.25f),
+                                Color.Black.copy(alpha = 0.2f),
                                 Color.Transparent,
                                 Color.Black.copy(alpha = 0.45f),
                                 Color.Black.copy(alpha = 0.88f)
@@ -519,7 +418,7 @@ private fun ModelMasonryCard(
                     )
             )
 
-            // ── Top Bar: Status Badge (Left) & Star/Favorite Icon (Right) ──
+            // ── Top Bar: Online/City Badge (Left) & Star Favorite (Right) ──
             ODSRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -527,7 +426,7 @@ private fun ModelMasonryCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Online/Location Badge
+                // Online/Offline Pill
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
@@ -556,7 +455,7 @@ private fun ModelMasonryCard(
                     }
                 }
 
-                // Glassmorphic Star / Favorite Circle
+                // Star Badge
                 Box(
                     modifier = Modifier
                         .size(28.dp)
@@ -571,7 +470,7 @@ private fun ModelMasonryCard(
                 }
             }
 
-            // ── Bottom Information & Calling Action Buttons ──
+            // ── Bottom Information & Direct Call Actions ──
             ODSColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -582,13 +481,13 @@ private fun ModelMasonryCard(
                 // Name & Age
                 ODSText(
                     text = "${model.name}, ${model.age}",
-                    style = ODSTextStyles.bodyLBold,
+                    style = ODSTextStyles.bodyMBold,
                     color = HexColor("#FFFFFF"),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Rates transparent row
+                // Call Rates
                 ODSText(
                     text = "📞 🪙${model.audioRate.toInt()}/m  •  📹 🪙${model.videoRate.toInt()}/m",
                     style = ODSTextStyles.microcopyMedium,
@@ -599,12 +498,12 @@ private fun ModelMasonryCard(
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                // Instant Call Buttons (Audio & Video)
+                // Action Call Buttons (Voice Call & Video Call)
                 ODSRow(
                     modifier = Modifier.fillMaxWidth(),
                     gap = 6.dp
                 ) {
-                    // Audio Call Action
+                    // Audio Call
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -631,7 +530,7 @@ private fun ModelMasonryCard(
                         }
                     }
 
-                    // Video Call Action
+                    // Video Call
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -659,7 +558,7 @@ private fun ModelMasonryCard(
                     }
                 }
 
-                // Carousel Dots Indicator (as seen at the bottom of the reference cards)
+                // Carousel Dots
                 ODSRow(
                     modifier = Modifier
                         .fillMaxWidth()
