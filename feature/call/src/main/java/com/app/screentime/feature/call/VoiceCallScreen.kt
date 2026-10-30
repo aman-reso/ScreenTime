@@ -684,7 +684,7 @@ private fun VoiceCallPipLayout(
                 ODSBox(
                     modifier = Modifier
                         .size(40.dp)
-                        .clickable { viewModel.endCall() },
+                        .clickable(onClick = onEndCall),
                     cornerRadius = ODSCorners(all = 20.dp),
                     background = listOf(ODSColorModel(hexColor = HexColor("#FF4D4F", 1.0f))),
                     contentAlignment = Alignment.Center
