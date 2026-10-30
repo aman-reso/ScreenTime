@@ -57,6 +57,8 @@ class ActiveCallManager @Inject constructor(
 
     private var localTimerJob: Job? = null
     private var liveKitRoom: Room? = null
+    private val _roomFlow = MutableStateFlow<Room?>(null)
+    val roomFlow: StateFlow<Room?> = _roomFlow.asStateFlow()
 
     // ── LiveKit Mode (P2P Removed - Pure Cloud SFU) ─────────────────────────
     val localWebRtcVideoTrack = MutableStateFlow<RtcVideoTrack?>(null)
@@ -75,7 +77,9 @@ class ActiveCallManager @Inject constructor(
 
     fun getRoom(): Room {
         if (liveKitRoom == null) {
-            liveKitRoom = LiveKit.create(context.applicationContext)
+            val room = LiveKit.create(context.applicationContext)
+            liveKitRoom = room
+            _roomFlow.value = room
         }
         return liveKitRoom!!
     }
@@ -766,6 +770,7 @@ class ActiveCallManager @Inject constructor(
 
         val roomToRelease = liveKitRoom
         liveKitRoom = null
+        _roomFlow.value = null
         scope.launch(Dispatchers.IO) {
             try {
                 roomToRelease?.disconnect()
@@ -785,6 +790,17 @@ class ActiveCallManager @Inject constructor(
 
     fun resetState() {
         _callState.value = CallUiState()
+        if (liveKitRoom != null) {
+            val roomToRelease = liveKitRoom
+            liveKitRoom = null
+            _roomFlow.value = null
+            scope.launch(Dispatchers.IO) {
+                try {
+                    roomToRelease?.disconnect()
+                    roomToRelease?.release()
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     private fun formatDuration(sec: Int): String {

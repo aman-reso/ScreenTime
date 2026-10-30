@@ -9,6 +9,7 @@ import io.livekit.android.room.track.Track
 import io.livekit.android.room.track.VideoTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,79 +33,97 @@ class ObserveVideoTracksUseCase @Inject constructor(
     private val _localVideoTrack = MutableStateFlow<VideoTrack?>(null)
     val localVideoTrack: StateFlow<VideoTrack?> = _localVideoTrack.asStateFlow()
 
+    private var activeRoomJob: Job? = null
+
     /**
      * Start observing video tracks from the room reactively and with periodic sync fallback.
+     * Reacts dynamically to room changes so subsequent calls cleanly bind to new Room instances.
      */
     fun startObserving(scope: CoroutineScope) {
-        val room = activeCallManager.getRoom()
-
-        // 1. Reactive room events listener
         scope.launch(Dispatchers.Main) {
-            try {
-                room.events.events.collect { event ->
-                    when (event) {
-                        is RoomEvent.TrackSubscribed -> {
-                            val vt = event.track as? VideoTrack
-                            if (vt != null) {
-                                Log.i("ObserveVideoTracks", "🎥 TrackSubscribed: $vt")
-                                _remoteVideoTrack.value = vt
+            activeCallManager.roomFlow.collect { room ->
+                activeRoomJob?.cancel()
+                activeRoomJob = null
+                _remoteVideoTrack.value = null
+                _localVideoTrack.value = null
+
+                if (room == null) {
+                    Log.d("ObserveVideoTracks", "No active LiveKit room to observe")
+                    return@collect
+                }
+
+                Log.i("ObserveVideoTracks", "🎥 Starting observation on new LiveKit room: $room")
+                activeRoomJob = launch {
+                    // 1. Reactive room events listener
+                    launch {
+                        try {
+                            room.events.events.collect { event ->
+                                when (event) {
+                                    is RoomEvent.TrackSubscribed -> {
+                                        val vt = event.track as? VideoTrack
+                                        if (vt != null) {
+                                            Log.i("ObserveVideoTracks", "🎥 TrackSubscribed: $vt")
+                                            _remoteVideoTrack.value = vt
+                                        }
+                                    }
+                                    is RoomEvent.TrackUnsubscribed -> {
+                                        if (event.track == _remoteVideoTrack.value) {
+                                            Log.i("ObserveVideoTracks", "🎥 TrackUnsubscribed: ${event.track}")
+                                            _remoteVideoTrack.value = findRemoteVideoTrack(room)
+                                        }
+                                    }
+                                    is RoomEvent.TrackPublished -> {
+                                        (event.publication as? RemoteTrackPublication)?.setSubscribed(true)
+                                        val r = findRemoteVideoTrack(room)
+                                        if (r != null) _remoteVideoTrack.value = r
+                                    }
+                                    is RoomEvent.ParticipantConnected, is RoomEvent.Connected -> {
+                                        val r = findRemoteVideoTrack(room)
+                                        if (r != null) _remoteVideoTrack.value = r
+                                        val l = findLocalVideoTrack(room)
+                                        if (l != null) _localVideoTrack.value = l
+                                    }
+                                    else -> {
+                                        val r = findRemoteVideoTrack(room)
+                                        if (r != null && r != _remoteVideoTrack.value) {
+                                            _remoteVideoTrack.value = r
+                                        }
+                                        val l = findLocalVideoTrack(room)
+                                        if (l != null && l != _localVideoTrack.value) {
+                                            _localVideoTrack.value = l
+                                        }
+                                    }
+                                }
                             }
+                        } catch (e: Exception) {
+                            Log.w("ObserveVideoTracks", "Room events collection ended: ${e.message}")
                         }
-                        is RoomEvent.TrackUnsubscribed -> {
-                            if (event.track == _remoteVideoTrack.value) {
-                                Log.i("ObserveVideoTracks", "🎥 TrackUnsubscribed: ${event.track}")
-                                _remoteVideoTrack.value = findRemoteVideoTrack(room)
-                            }
-                        }
-                        is RoomEvent.TrackPublished -> {
-                            (event.publication as? RemoteTrackPublication)?.setSubscribed(true)
+                    }
+
+                    // 2. Periodic sync check (every 250ms) to ensure timely track binding and camera activation
+                    launch {
+                        while (isActive) {
                             val r = findRemoteVideoTrack(room)
-                            if (r != null) _remoteVideoTrack.value = r
-                        }
-                        is RoomEvent.ParticipantConnected, is RoomEvent.Connected -> {
-                            val r = findRemoteVideoTrack(room)
-                            if (r != null) _remoteVideoTrack.value = r
-                            val l = findLocalVideoTrack(room)
-                            if (l != null) _localVideoTrack.value = l
-                        }
-                        else -> {
-                            val r = findRemoteVideoTrack(room)
-                            if (r != null && r != _remoteVideoTrack.value) {
+                            if (r != _remoteVideoTrack.value) {
                                 _remoteVideoTrack.value = r
                             }
+
                             val l = findLocalVideoTrack(room)
-                            if (l != null && l != _localVideoTrack.value) {
+                            if (l != _localVideoTrack.value) {
                                 _localVideoTrack.value = l
                             }
+
+                            val callState = activeCallManager.callState.value
+                            if (callState.isCameraOn && l == null && room.state == Room.State.CONNECTED) {
+                                try {
+                                    room.localParticipant.setCameraEnabled(true)
+                                } catch (_: Exception) {}
+                            }
+
+                            delay(250.milliseconds)
                         }
                     }
                 }
-            } catch (e: Exception) {
-                Log.w("ObserveVideoTracks", "Room events collection ended: ${e.message}")
-            }
-        }
-
-        // 2. Periodic sync check (every 250ms) to ensure timely track binding and camera activation
-        scope.launch(Dispatchers.Main) {
-            while (isActive) {
-                val r = findRemoteVideoTrack(room)
-                if (r != _remoteVideoTrack.value) {
-                    _remoteVideoTrack.value = r
-                }
-
-                val l = findLocalVideoTrack(room)
-                if (l != _localVideoTrack.value) {
-                    _localVideoTrack.value = l
-                }
-
-                val callState = activeCallManager.callState.value
-                if (callState.isCameraOn && l == null && room.state == Room.State.CONNECTED) {
-                    try {
-                        room.localParticipant.setCameraEnabled(true)
-                    } catch (_: Exception) {}
-                }
-
-                delay(250.milliseconds)
             }
         }
     }

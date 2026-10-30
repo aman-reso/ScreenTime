@@ -72,7 +72,8 @@ fun VideoCallScreen(
 ) {
     val callState by viewModel.callState.collectAsState()
     val context = LocalContext.current
-    val room = viewModel.room
+    val currentRoom by viewModel.roomFlow.collectAsState()
+    val room = currentRoom ?: viewModel.room
     val isCurrentUserModel = viewModel.isCurrentUserModel()
 
     // ── Reactive Video Tracks from UseCase ──

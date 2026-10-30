@@ -32,6 +32,8 @@ class CallViewModel @Inject constructor(
     val room: Room
         get() = activeCallManager.getRoom()
 
+    val roomFlow: StateFlow<Room?> = activeCallManager.roomFlow
+
     // LiveKit Video Tracks observed via ObserveVideoTracksUseCase
     val remoteVideoTrack: StateFlow<LiveKitVideoTrack?> = observeVideoTracksUseCase.remoteVideoTrack
     val localVideoTrack: StateFlow<LiveKitVideoTrack?> = observeVideoTracksUseCase.localVideoTrack
