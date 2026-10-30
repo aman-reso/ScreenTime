@@ -141,10 +141,9 @@ class GooglePlayBillingManager @Inject constructor(
 
         if (!billingClient.isReady) {
             startConnection()
-            // Wait up to 3 seconds for connection
             for (i in 1..30) {
                 if (billingClient.isReady) break
-                delay(100)
+                delay(100L)
             }
             if (!billingClient.isReady) {
                 Log.e(tag, "Cannot query products: BillingClient is not ready")

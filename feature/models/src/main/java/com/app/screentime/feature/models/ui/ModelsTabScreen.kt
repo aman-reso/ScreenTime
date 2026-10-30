@@ -134,7 +134,6 @@ fun ModelsTabScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
         ) {
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -198,7 +197,6 @@ fun ModelsTabScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // ── Content Area: 2-Span Staggered Grid ──
             if (uiState.isLoading && uiState.models.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -261,7 +259,7 @@ fun ModelsTabScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         ODSText(
-                            text = "✨ No companions found",
+                            text = "No companions found",
                             style = ODSTextStyles.bodyMBold,
                             color = scheme.basicText
                         )

@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * UseCase responsible for discovering, subscribing to, and monitoring
@@ -120,7 +119,7 @@ class ObserveVideoTracksUseCase @Inject constructor(
                                 } catch (_: Exception) {}
                             }
 
-                            delay(250.milliseconds)
+                            delay(250L)
                         }
                     }
                 }
