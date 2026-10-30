@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -180,6 +181,12 @@ fun VoiceCallScreen(
                 viewModel.resetState()
             }
         }
+    }
+
+    BackHandler {
+        viewModel.endCall("User navigated back")
+        viewModel.resetState()
+        onEndCall()
     }
 
     if (callState.status == CallStatus.INSUFFICIENT_BALANCE) {

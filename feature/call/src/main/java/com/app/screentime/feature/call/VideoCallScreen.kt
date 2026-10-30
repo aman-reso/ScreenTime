@@ -3,6 +3,7 @@ package com.app.screentime.feature.call
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -224,6 +225,12 @@ fun VideoCallScreen(
                 viewModel.resetState()
             }
         }
+    }
+
+    BackHandler {
+        viewModel.endCall("User navigated back")
+        viewModel.resetState()
+        onEndCall()
     }
 
     if (callState.status == CallStatus.CHECKING_BALANCE) {
