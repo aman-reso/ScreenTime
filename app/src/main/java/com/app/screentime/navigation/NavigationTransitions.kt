@@ -31,6 +31,20 @@ import androidx.navigationevent.NavigationEvent
 val LocalNavSharedTransitionScope: ProvidableCompositionLocal<SharedTransitionScope?> =
     staticCompositionLocalOf { null }
 
+private fun isBottomNavKey(keyOrContent: Any?, bottomNavRoutes: Set<Screen>): Boolean {
+    if (keyOrContent == null) return false
+    val str = keyOrContent.toString()
+    return bottomNavRoutes.any { route ->
+        keyOrContent == route || (route::class.simpleName?.let { str.contains(it) } == true)
+    }
+}
+
+private fun isModalKey(keyOrContent: Any?): Boolean {
+    if (keyOrContent == null) return false
+    val str = keyOrContent.toString()
+    return str.contains("VoiceCall") || str.contains("VideoCall")
+}
+
 /**
  * Forward Navigation Transition Spec.
  *
@@ -42,13 +56,11 @@ val LocalNavSharedTransitionScope: ProvidableCompositionLocal<SharedTransitionSc
 fun appForwardTransitionSpec(
     bottomNavRoutes: Set<Screen>
 ): AnimatedContentTransitionScope<Scene<NavKey>>.() -> ContentTransform = {
-    val initialScreen = initialState.key as? Screen
-        ?: (initialState.entries.lastOrNull()?.contentKey as? Screen)
-    val targetScreen = targetState.key as? Screen
-        ?: (targetState.entries.lastOrNull()?.contentKey as? Screen)
+    val initialKey = initialState.key ?: initialState.entries.lastOrNull()?.contentKey
+    val targetKey = targetState.key ?: targetState.entries.lastOrNull()?.contentKey
 
-    val isTabSwitch = initialScreen in bottomNavRoutes && targetScreen in bottomNavRoutes
-    val isModalScreen = targetScreen is Screen.VoiceCall || targetScreen is Screen.VideoCall
+    val isTabSwitch = isBottomNavKey(initialKey, bottomNavRoutes) && isBottomNavKey(targetKey, bottomNavRoutes)
+    val isModalScreen = isModalKey(targetKey)
 
     when {
         // Tab-to-Tab switch: quick crossfade with subtle scale
@@ -95,13 +107,11 @@ fun appForwardTransitionSpec(
 fun appPopTransitionSpec(
     bottomNavRoutes: Set<Screen>
 ): AnimatedContentTransitionScope<Scene<NavKey>>.() -> ContentTransform = {
-    val initialScreen = initialState.key as? Screen
-        ?: (initialState.entries.lastOrNull()?.contentKey as? Screen)
-    val targetScreen = targetState.key as? Screen
-        ?: (targetState.entries.lastOrNull()?.contentKey as? Screen)
+    val initialKey = initialState.key ?: initialState.entries.lastOrNull()?.contentKey
+    val targetKey = targetState.key ?: targetState.entries.lastOrNull()?.contentKey
 
-    val isTabSwitch = initialScreen in bottomNavRoutes && targetScreen in bottomNavRoutes
-    val isExitingModal = initialScreen is Screen.VoiceCall || initialScreen is Screen.VideoCall
+    val isTabSwitch = isBottomNavKey(initialKey, bottomNavRoutes) && isBottomNavKey(targetKey, bottomNavRoutes)
+    val isExitingModal = isModalKey(initialKey)
 
     when {
         // Tab-to-Tab switch: quick crossfade

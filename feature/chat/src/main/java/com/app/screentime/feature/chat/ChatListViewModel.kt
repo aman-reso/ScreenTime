@@ -33,14 +33,13 @@ class ChatListViewModel @Inject constructor(
 
     init {
         realtimeChatSyncManager.ensureConnected()
-        loadConversations(force = true)
     }
 
     fun loadConversations(force: Boolean = false) {
         if (fetchJob?.isActive == true && !force) return
         fetchJob = viewModelScope.launch {
-            val showLoading = _uiState.value.conversations.isEmpty() || force
-            if (showLoading) {
+            // Only show full loading spinner if we don't already have cached conversations
+            if (_uiState.value.conversations.isEmpty()) {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             }
             val list = getConversationsUseCase()
