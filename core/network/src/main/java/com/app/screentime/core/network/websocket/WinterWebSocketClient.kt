@@ -318,10 +318,11 @@ class WinterWebSocketClient @Inject constructor(
     /**
      * Accept Call (Receiver → Server: call_accept & call_answered)
      */
-    fun acceptCall(targetId: String, sessionId: String) {
+    fun acceptCall(targetId: String, sessionId: String, callType: String = "voice") {
         val dataObj = buildJsonObject {
             put("session_id", sessionId)
             put("call_id", sessionId)
+            put("call_type", callType)
             if (targetId.isNotBlank()) put("target_id", targetId)
         }
         // Send call_accept (primary)
@@ -332,6 +333,7 @@ class WinterWebSocketClient @Inject constructor(
                 target_id = targetId,
                 session_id = sessionId,
                 call_id = sessionId,
+                call_type = callType,
                 data = dataObj
             )
         )
@@ -343,6 +345,7 @@ class WinterWebSocketClient @Inject constructor(
                 target_id = targetId,
                 session_id = sessionId,
                 call_id = sessionId,
+                call_type = callType,
                 data = dataObj
             )
         )

@@ -168,7 +168,10 @@ fun VideoCallScreen(
                     ) == PackageManager.PERMISSION_GRANTED
         }
         if (cameraGranted && callState.status == CallStatus.INCOMING) {
+            viewModel.setCameraEnabled(true)
             viewModel.acceptIncomingCall()
+        } else if (cameraGranted && callState.status == CallStatus.ACTIVE) {
+            viewModel.setCameraEnabled(true)
         } else if (cameraGranted && !hasInitiatedCall && targetId.isNotBlank() && !isIncomingOrActive) {
             hasInitiatedCall = true
             viewModel.startOutgoingCall(targetId, modelName, ratePerMin, CallType.VIDEO)

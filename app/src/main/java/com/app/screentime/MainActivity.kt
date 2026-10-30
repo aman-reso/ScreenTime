@@ -263,14 +263,16 @@ class MainActivity : AppCompatActivity() {
             ?: intent.getStringExtra("action")
             ?: "").trim()
 
-        val partnerId = (intent.getStringExtra("partner_id")
+        val partnerId = (intent.getStringExtra("caller_id")
+            ?: intent.getStringExtra("partner_id")
             ?: intent.getStringExtra("sender_id")
             ?: intent.getStringExtra("model_id")
             ?: intent.getStringExtra("user_id")
             ?: intent.getStringExtra("from_user_id")
             ?: "").trim()
 
-        val partnerName = (intent.getStringExtra("partner_name")
+        val partnerName = (intent.getStringExtra("caller_name")
+            ?: intent.getStringExtra("partner_name")
             ?: intent.getStringExtra("sender_name")
             ?: intent.getStringExtra("model_name")
             ?: intent.getStringExtra("user_name")

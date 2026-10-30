@@ -2,7 +2,10 @@ package com.app.screentime.core.network.websocket
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 /**
  * Generic WebSocket Envelope Schema matching the standard backend specification:
@@ -85,6 +88,63 @@ data class WSMessage(
 
     val effectiveConversationId: String?
         get() = conversation_id ?: room_id
+
+    val effectiveCallerId: String?
+        get() {
+            if (!caller_id.isNullOrBlank()) return caller_id
+            if (!sender_id.isNullOrBlank()) return sender_id
+            if (!user_id.isNullOrBlank()) return user_id
+            if (!target_user_id.isNullOrBlank()) return target_user_id
+            if (!targetUserId.isNullOrBlank()) return targetUserId
+            return extractStringFromDataOrPayload("caller_id")
+                ?: extractStringFromDataOrPayload("sender_id")
+                ?: extractStringFromDataOrPayload("user_id")
+        }
+
+    val effectiveCallerName: String?
+        get() {
+            if (!caller_name.isNullOrBlank()) return caller_name
+            return extractStringFromDataOrPayload("caller_name")
+                ?: extractStringFromDataOrPayload("sender_name")
+                ?: extractStringFromDataOrPayload("name")
+        }
+
+    val effectiveCallId: String?
+        get() {
+            if (!call_id.isNullOrBlank()) return call_id
+            if (!session_id.isNullOrBlank()) return session_id
+            return extractStringFromDataOrPayload("call_id")
+                ?: extractStringFromDataOrPayload("session_id")
+        }
+
+    val effectiveCallType: String?
+        get() {
+            if (!call_type.isNullOrBlank()) return call_type
+            val fromDataOrPayload = extractStringFromDataOrPayload("call_type")
+            if (!fromDataOrPayload.isNullOrBlank()) return fromDataOrPayload
+            if (payloadAsString().contains("video", ignoreCase = true) ||
+                dataAsString().contains("video", ignoreCase = true)
+            ) {
+                return "video"
+            }
+            return null
+        }
+
+    val effectiveRoomName: String?
+        get() {
+            if (!room_name.isNullOrBlank()) return room_name
+            val fromDataOrPayload = extractStringFromDataOrPayload("room_name")
+            if (!fromDataOrPayload.isNullOrBlank()) return fromDataOrPayload
+            return effectiveCallId
+        }
+
+    private fun extractStringFromDataOrPayload(key: String): String? {
+        val fromData = (data as? JsonObject)?.get(key)?.jsonPrimitive?.contentOrNull
+        if (!fromData.isNullOrBlank()) return fromData
+        val fromPayload = (payload as? JsonObject)?.get(key)?.jsonPrimitive?.contentOrNull
+        if (!fromPayload.isNullOrBlank()) return fromPayload
+        return null
+    }
 
     fun payloadAsString(): String {
         return when (val p = payload) {

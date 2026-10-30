@@ -36,11 +36,11 @@ class StartCallUseCase @Inject constructor(
 class AcceptCallUseCase @Inject constructor(
     private val wsClient: WinterWebSocketClient
 ) {
-    operator fun invoke(callId: String, callerId: String? = null) {
+    operator fun invoke(callId: String, callerId: String? = null, callType: String = "voice") {
         if (!callerId.isNullOrBlank()) {
-            wsClient.acceptCall(targetId = callerId, sessionId = callId)
+            wsClient.acceptCall(targetId = callerId, sessionId = callId, callType = callType)
         } else {
-            wsClient.acceptCall(callId, callerId ?: "")
+            wsClient.acceptCall(targetId = callerId ?: "", sessionId = callId, callType = callType)
         }
     }
 }

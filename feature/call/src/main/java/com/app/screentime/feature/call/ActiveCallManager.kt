@@ -98,8 +98,8 @@ class ActiveCallManager @Inject constructor(
         Log.d("ActiveCallManager", "Incoming WS event: ${msg.type}, call_id=${msg.call_id}")
         when (msg.type) {
             WSEventTypes.INCOMING_CALL -> {
-                val callerId = msg.caller_id ?: msg.user_id ?: msg.target_user_id ?: ""
-                val incomingCallId = msg.call_id ?: msg.session_id ?: ""
+                val callerId = msg.effectiveCallerId ?: ""
+                val incomingCallId = msg.effectiveCallId ?: ""
 
                 // If already on an active call, immediately decline as BUSY to protect the ongoing conversation
                 if (_callState.value.status == CallStatus.ACTIVE) {
@@ -117,33 +117,35 @@ class ActiveCallManager @Inject constructor(
                 }
 
                 val rate = msg.rate_per_min ?: 15.0
-                val callerName = msg.caller_name?.ifBlank { null }
-                    ?: msg.caller_id?.ifBlank { null }
+                val callerName = msg.effectiveCallerName?.ifBlank { null }
+                    ?: callerId.ifBlank { null }
                     ?: "Incoming Call"
-                val isVideo = msg.call_type?.contains("video", ignoreCase = true) == true ||
+                val rawCallType = msg.effectiveCallType ?: ""
+                val isVideo = rawCallType.contains("video", ignoreCase = true) ||
                         msg.payloadAsString().contains("video", ignoreCase = true) ||
                         msg.dataAsString().contains("video", ignoreCase = true) ||
                         msg.type.contains("video", ignoreCase = true) ||
                         msg.event?.contains("video", ignoreCase = true) == true
                 val callType = if (isVideo) CallType.VIDEO else CallType.VOICE
+                val roomName = msg.effectiveRoomName ?: incomingCallId
 
                 _callState.value = CallUiState(
                     status = CallStatus.INCOMING,
                     callType = callType,
-                    callId = msg.call_id,
+                    callId = incomingCallId,
                     remoteUserId = callerId,
                     remoteUserName = callerName,
                     ratePerMin = rate,
                     isCameraOn = isVideo,
                     livekitUrl = msg.livekit_url,
                     livekitToken = msg.livekit_token ?: msg.token,
-                    roomName = msg.room_name
+                    roomName = roomName
                 )
 
                 // High-priority notification with ringing & full-screen intent
                 CallNotificationHelper.showIncomingCallNotification(
                     context = context,
-                    callId = msg.call_id ?: "",
+                    callId = incomingCallId,
                     callerId = callerId,
                     callerName = callerName,
                     callType = if (callType == CallType.VIDEO) "video" else "voice"
@@ -169,24 +171,25 @@ class ActiveCallManager @Inject constructor(
                 audioHelper.stopDialingTone()
                 audioHelper.playCallConnectedTone()
                 val isVideo = _callState.value.callType == CallType.VIDEO ||
-                        msg.call_type?.contains("video", ignoreCase = true) == true ||
+                        msg.effectiveCallType?.contains("video", ignoreCase = true) == true ||
                         msg.payloadAsString().contains("video", ignoreCase = true) ||
                         msg.dataAsString().contains("video", ignoreCase = true)
                 audioHelper.startCallAudio(isSpeaker = isVideo)
 
-                val callId = msg.call_id ?: msg.session_id ?: _callState.value.callId
+                val callId = msg.effectiveCallId ?: _callState.value.callId
                 ?: "call_${System.currentTimeMillis()}"
                 val myId = sessionManager.userId ?: ""
                 val remoteId = when {
                     !msg.caller_id.isNullOrBlank() && msg.caller_id != myId -> msg.caller_id
+                    !msg.sender_id.isNullOrBlank() && msg.sender_id != myId -> msg.sender_id
                     !msg.receiver_id.isNullOrBlank() && msg.receiver_id != myId -> msg.receiver_id
                     _callState.value.remoteUserId.isNotBlank() -> _callState.value.remoteUserId
-                    else -> msg.caller_id ?: msg.receiver_id ?: ""
+                    else -> msg.effectiveCallerId ?: ""
                 }
                 val serverUrl = msg.livekit_url ?: _callState.value.livekitUrl
                 val serverToken = msg.livekit_token ?: msg.token ?: _callState.value.livekitToken
                 val roomName =
-                    msg.room_name ?: msg.session_id ?: _callState.value.roomName ?: callId
+                    msg.effectiveRoomName ?: _callState.value.roomName ?: callId
 
                 _callState.value = _callState.value.copy(
                     status = CallStatus.ACTIVE,
@@ -316,9 +319,11 @@ class ActiveCallManager @Inject constructor(
                             "LiveKit room $roomName already connected or connecting"
                         )
                         if (_callState.value.callType == CallType.VIDEO || _callState.value.isCameraOn) {
-                            try {
-                                room.localParticipant.setCameraEnabled(true)
-                            } catch (_: Exception) {
+                            withContext(Dispatchers.Main) {
+                                try {
+                                    room.localParticipant.setCameraEnabled(true)
+                                } catch (_: Exception) {
+                                }
                             }
                         }
                         return@launch
@@ -584,7 +589,7 @@ class ActiveCallManager @Inject constructor(
                 }
             }
             try {
-                acceptCallUseCase(callId, callerId)
+                acceptCallUseCase(callId, callerId, if (isVideo) "video" else "voice")
                 CallForegroundService.start(
                     context = context,
                     callerName = state.remoteUserName.ifBlank { "Incoming Call" },
