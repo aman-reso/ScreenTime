@@ -27,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,6 +68,10 @@ fun WinterRechargeCoinsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadPackages()
+    }
 
     val effectiveBalance = currentBalance ?: when (val state = uiState) {
         is WinterWalletUiState.Success -> state.coinBalance
@@ -121,7 +126,7 @@ fun WinterRechargeCoinsScreen(
                 } else {
                     EmptyPackagesSection(
                         isLoading = uiState is WinterWalletUiState.Loading,
-                        onRetry = { viewModel.loadWallet() }
+                        onRetry = { viewModel.loadPackages() }
                     )
                 }
             }

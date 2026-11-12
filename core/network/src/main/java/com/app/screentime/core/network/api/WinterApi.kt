@@ -786,13 +786,27 @@ class WinterApi @Inject constructor(
         }
     }
 
+    suspend fun getWinterRechargePackages(): Result<List<WinterRechargePackageDto>> {
+        return try {
+            val res: WinterRechargePackagesResponse = httpClient.get("$baseUrl/api/v1/foryou/wallet/packages").body()
+            val list = if (res.packages.isNotEmpty()) res.packages else res.data
+            if (res.success) {
+                Result.success(list)
+            } else {
+                Result.failure(Exception(res.message.ifBlank { "Failed to load packages" }))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun purchaseCoins(packageId: String, token: String? = null, gateway: String = "google_play", purchaseToken: String? = null): Result<WalletPurchaseResultDto> {
         return try {
             val res: WalletPurchaseResponseDto = httpClient.post("$baseUrl/api/v1/foryou/wallet/purchase") {
                 if (!token.isNullOrBlank()) {
                     bearerAuth(token)
                 }
-                contentType(io.ktor.http.ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
                 setBody(WalletPurchaseRequestDto(
                     package_id = packageId,
                     payment_gateway = gateway,

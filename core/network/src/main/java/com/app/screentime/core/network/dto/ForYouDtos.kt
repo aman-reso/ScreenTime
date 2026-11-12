@@ -151,6 +151,14 @@ data class WinterRechargePackageDto(
 )
 
 @Serializable
+data class WinterRechargePackagesResponse(
+    val success: Boolean = true,
+    val message: String = "",
+    val packages: List<WinterRechargePackageDto> = emptyList(),
+    val data: List<WinterRechargePackageDto> = emptyList()
+)
+
+@Serializable
 data class WalletPurchaseRequestDto(
     val package_id: String,
     val payment_gateway: String = "google_play",
