@@ -343,15 +343,14 @@ fun WinterNav3Navigation(
                                 backStack.add(
                                     WinterNav3Screen.RechargeProcessing(
                                         packageId = pack.id,
-                                        packCoins = "%,d".format(pack.coins),
-                                        packPrice = "₹${pack.priceInr}"
+                                        packCoins = "%,d".format(pack.credits),
+                                        packPrice = "₹${pack.price_inr}"
                                     )
                                 )
                             }
                         )
                     }
 
-                    // 6. Recharge Processing Screen (Figma Node 176:7)
                     entry<WinterNav3Screen.RechargeProcessing> { key ->
                         WinterRechargeProcessingScreen(
                             packageId = key.packageId,

@@ -43,20 +43,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.app.screentime.core.network.dto.WinterRechargePackageDto
 import com.app.screentime.feature.newdesign.R
 import com.app.screentime.feature.newdesign.components.FunnelSans
 import com.app.screentime.feature.newdesign.components.WinterTokens
-
-/**
- * Data model representing a coin package in [WinterRechargeCoinsScreen].
- */
-data class WinterRechargePack(
-    val id: String,
-    val coins: Int,
-    val priceInr: Int,
-    val name: String = "",
-    val isPopular: Boolean = false
-)
 
 /**
  * Winter · Recharge Coins Screen (Figma Node 176:2).
@@ -73,7 +63,7 @@ fun WinterRechargeCoinsScreen(
     currentBalance: Int? = null,
     viewModel: WinterWalletViewModel = hiltViewModel(),
     onBackClick: () -> Unit = {},
-    onPayClick: (WinterRechargePack) -> Unit = {}
+    onPayClick: (WinterRechargePackageDto) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -83,23 +73,10 @@ fun WinterRechargeCoinsScreen(
         else -> 0
     }
 
-    val availablePacks = when (val state = uiState) {
-        is WinterWalletUiState.Success -> {
-            state.packages.map { dto ->
-                WinterRechargePack(
-                    id = dto.id,
-                    coins = dto.credits,
-                    priceInr = dto.price_inr,
-                    name = dto.name,
-                    isPopular = dto.popular_badge
-                )
-            }
-        }
-        else -> emptyList()
-    }
+    val availablePacks = (uiState as? WinterWalletUiState.Success)?.packages.orEmpty()
 
     var selectedPackId by remember(availablePacks) {
-        mutableStateOf(availablePacks.firstOrNull { it.isPopular }?.id ?: availablePacks.firstOrNull()?.id.orEmpty())
+        mutableStateOf(availablePacks.firstOrNull { it.popular_badge }?.id ?: availablePacks.firstOrNull()?.id.orEmpty())
     }
     val selectedPack = availablePacks.firstOrNull { it.id == selectedPackId } ?: availablePacks.firstOrNull()
 
@@ -274,7 +251,7 @@ private fun PackIntroSection(modifier: Modifier = Modifier) {
 
 @Composable
 private fun CoinPacksListSection(
-    packs: List<WinterRechargePack>,
+    packs: List<WinterRechargePackageDto>,
     selectedPackId: String,
     onPackSelected: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -295,7 +272,7 @@ private fun CoinPacksListSection(
 
 @Composable
 private fun CoinPackItemCard(
-    pack: WinterRechargePack,
+    pack: WinterRechargePackageDto,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -360,14 +337,14 @@ private fun CoinPackItemCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "%,d coins".format(pack.coins),
+                            text = "%,d coins".format(pack.credits),
                             fontFamily = FunnelSans,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp,
                             color = WinterTokens.textPrimary
                         )
 
-                        if (pack.isPopular) {
+                        if (pack.popular_badge) {
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
@@ -398,7 +375,7 @@ private fun CoinPackItemCard(
             }
 
             Text(
-                text = "₹${pack.priceInr}",
+                text = "₹${pack.price_inr}",
                 fontFamily = FunnelSans,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
@@ -410,7 +387,7 @@ private fun CoinPackItemCard(
 
 @Composable
 private fun RechargeBottomPaySection(
-    selectedPack: WinterRechargePack,
+    selectedPack: WinterRechargePackageDto,
     onPayClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -453,7 +430,7 @@ private fun RechargeBottomPaySection(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Pay ₹${selectedPack.priceInr}",
+                text = "Pay ₹${selectedPack.price_inr}",
                 fontFamily = FunnelSans,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
