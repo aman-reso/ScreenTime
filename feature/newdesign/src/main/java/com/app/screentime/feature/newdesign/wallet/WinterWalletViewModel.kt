@@ -63,14 +63,7 @@ class WinterWalletViewModel @Inject constructor(
                     selectedCategory = category
                 )
             }.onFailure { err ->
-                // Graceful fallback with zero balance
-                _uiState.value = WinterWalletUiState.Success(
-                    coinBalance = 0,
-                    transactions = emptyList(),
-                    packages = emptyList(),
-                    selectedCategory = category,
-                    userMessage = err.message
-                )
+                _uiState.value = WinterWalletUiState.Error(err.message ?: "Failed to load wallet")
             }
         }
     }

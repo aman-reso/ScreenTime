@@ -95,7 +95,7 @@ fun WinterWalletScreen(
 
     val effectiveCoinBalance = coinBalance ?: when (val state = uiState) {
         is WinterWalletUiState.Success -> state.coinBalance
-        else -> 2480
+        else -> 0
     }
 
     val transactionsList = when (val state = uiState) {

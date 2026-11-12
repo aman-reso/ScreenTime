@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -84,37 +85,23 @@ fun WinterRechargeCoinsScreen(
 
     val availablePacks = when (val state = uiState) {
         is WinterWalletUiState.Success -> {
-            if (state.packages.isNotEmpty()) {
-                state.packages.map { dto ->
-                    WinterRechargePack(
-                        id = dto.id,
-                        coins = dto.credits,
-                        priceInr = dto.price_inr,
-                        name = dto.name,
-                        isPopular = dto.popular_badge
-                    )
-                }
-            } else {
-                listOf(
-                    WinterRechargePack("product_19_rupees", 190, 19, "190 Message"),
-                    WinterRechargePack("product_49_rupees", 490, 49, "490 Profile View", isPopular = true),
-                    WinterRechargePack("pack_99", 1000, 99, "Starter Calling Pack"),
-                    WinterRechargePack("pack_199", 2500, 199, "Popular Connection Pack")
+            state.packages.map { dto ->
+                WinterRechargePack(
+                    id = dto.id,
+                    coins = dto.credits,
+                    priceInr = dto.price_inr,
+                    name = dto.name,
+                    isPopular = dto.popular_badge
                 )
             }
         }
-        else -> listOf(
-            WinterRechargePack("product_19_rupees", 190, 19, "190 Message"),
-            WinterRechargePack("product_49_rupees", 490, 49, "490 Profile View", isPopular = true),
-            WinterRechargePack("pack_99", 1000, 99, "Starter Calling Pack"),
-            WinterRechargePack("pack_199", 2500, 199, "Popular Connection Pack")
-        )
+        else -> emptyList()
     }
 
     var selectedPackId by remember(availablePacks) {
         mutableStateOf(availablePacks.firstOrNull { it.isPopular }?.id ?: availablePacks.firstOrNull()?.id.orEmpty())
     }
-    val selectedPack = availablePacks.firstOrNull { it.id == selectedPackId } ?: availablePacks.first()
+    val selectedPack = availablePacks.firstOrNull { it.id == selectedPackId } ?: availablePacks.firstOrNull()
 
     Box(
         modifier = modifier
@@ -141,18 +128,25 @@ fun WinterRechargeCoinsScreen(
             ) {
                 PackIntroSection()
 
-                CoinPacksListSection(
-                    packs = availablePacks,
-                    selectedPackId = selectedPackId,
-                    onPackSelected = { selectedPackId = it }
-                )
+                if (availablePacks.isNotEmpty() && selectedPack != null) {
+                    CoinPacksListSection(
+                        packs = availablePacks,
+                        selectedPackId = selectedPackId,
+                        onPackSelected = { selectedPackId = it }
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                RechargeBottomPaySection(
-                    selectedPack = selectedPack,
-                    onPayClick = { onPayClick(selectedPack) }
-                )
+                    RechargeBottomPaySection(
+                        selectedPack = selectedPack,
+                        onPayClick = { onPayClick(selectedPack) }
+                    )
+                } else {
+                    EmptyPackagesSection(
+                        isLoading = uiState is WinterWalletUiState.Loading,
+                        onRetry = { viewModel.loadWallet() }
+                    )
+                }
             }
         }
     }
@@ -465,6 +459,77 @@ private fun RechargeBottomPaySection(
                 fontSize = 16.sp,
                 color = WinterTokens.textOnAccent
             )
+        }
+    }
+}
+
+@Composable
+private fun EmptyPackagesSection(
+    isLoading: Boolean,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                color = WinterTokens.actionPrimary,
+                modifier = Modifier.size(36.dp)
+            )
+            Text(
+                text = "Loading packages...",
+                fontFamily = FunnelSans,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                color = WinterTokens.textSecondary
+            )
+        } else {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_triangle_alert),
+                contentDescription = null,
+                tint = WinterTokens.textSecondary,
+                modifier = Modifier.size(36.dp)
+            )
+            Text(
+                text = "No coin packages available",
+                fontFamily = FunnelSans,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp,
+                color = WinterTokens.textPrimary
+            )
+            Text(
+                text = "Packages are currently unavailable. Please check your connection and try again.",
+                fontFamily = FunnelSans,
+                fontWeight = FontWeight.Normal,
+                fontSize = 13.sp,
+                color = WinterTokens.textSecondary,
+                textAlign = TextAlign.Center
+            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(WinterTokens.surfaceCard)
+                    .border(1.dp, WinterTokens.borderDefault, RoundedCornerShape(20.dp))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onRetry
+                    )
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = "Retry",
+                    fontFamily = FunnelSans,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = WinterTokens.textPrimary
+                )
+            }
         }
     }
 }
