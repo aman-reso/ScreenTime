@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,11 +36,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.app.screentime.feature.call.CallStatus
+import com.app.screentime.feature.call.CallType
+import com.app.screentime.feature.call.CallViewModel
 import com.app.screentime.feature.newdesign.auth.WinterWelcomeAuthScreen
 import com.app.screentime.feature.newdesign.call.WinterAudioCallScreen
 import com.app.screentime.feature.newdesign.call.WinterVideoCallScreen
@@ -50,6 +56,7 @@ import com.app.screentime.feature.newdesign.components.WinterTokens
 import com.app.screentime.feature.newdesign.models.WinterFindingModelScreen
 import com.app.screentime.feature.newdesign.profile.CreatorProfileDetails
 import com.app.screentime.feature.newdesign.profile.WinterModelProfileScreen
+import com.app.screentime.feature.newdesign.profile.WinterModelSetupScreen
 import com.app.screentime.feature.newdesign.profile.WinterProfileDetailScreen
 import com.app.screentime.feature.newdesign.wallet.WinterRechargeCoinsScreen
 import com.app.screentime.feature.newdesign.wallet.WinterRechargeProcessingScreen
@@ -118,6 +125,9 @@ sealed class WinterNav3Screen : NavKey {
     data object ModelProfile : WinterNav3Screen()
 
     @Serializable
+    data object ModelSetup : WinterNav3Screen()
+
+    @Serializable
     data class AudioCall(
         val callerName: String = "Ananya Sharma"
     ) : WinterNav3Screen()
@@ -149,16 +159,42 @@ sealed class WinterNav3Screen : NavKey {
 @Composable
 fun WinterNav3Navigation(
     modifier: Modifier = Modifier,
-    initialScreen: WinterNav3Screen = WinterNav3Screen.Welcome
+    initialScreen: WinterNav3Screen = WinterNav3Screen.Welcome,
+    callViewModel: CallViewModel = hiltViewModel()
 ) {
     val backStack = rememberNavBackStack(initialScreen)
     var showQuickSwitcher by remember { mutableStateOf(false) }
+
+    val callState by callViewModel.callState.collectAsStateWithLifecycle()
+    val room by callViewModel.roomFlow.collectAsStateWithLifecycle()
+    val remoteVideoTrack by callViewModel.remoteVideoTrack.collectAsStateWithLifecycle()
+    val localVideoTrack by callViewModel.localVideoTrack.collectAsStateWithLifecycle()
 
     val currentScreen = backStack.lastOrNull() ?: initialScreen
 
     // Handle Android system back button
     BackHandler(enabled = backStack.size > 1) {
+        val top = backStack.lastOrNull()
+        if (top is WinterNav3Screen.AudioCall || top is WinterNav3Screen.VideoCall) {
+            callViewModel.endCall("User navigated back")
+            callViewModel.resetState()
+        }
         backStack.removeLastOrNull()
+    }
+
+    // Auto-handle Insufficient Balance or Call End events
+    LaunchedEffect(callState.status) {
+        if (callState.status == CallStatus.INSUFFICIENT_BALANCE) {
+            callViewModel.resetState()
+            backStack.add(WinterNav3Screen.RechargeCoins)
+        } else if (callState.status == CallStatus.ENDED) {
+            val top = backStack.lastOrNull()
+            if (top is WinterNav3Screen.AudioCall || top is WinterNav3Screen.VideoCall) {
+                if (backStack.size > 1) {
+                    backStack.removeLastOrNull()
+                }
+            }
+        }
     }
 
     WinterTheme {
@@ -211,9 +247,21 @@ fun WinterNav3Navigation(
                                 backStack.add(WinterNav3Screen.FindingModel)
                             },
                             onStartAudioCall = { name ->
+                                callViewModel.startOutgoingCall(
+                                    modelId = name.lowercase().replace(" ", "_"),
+                                    modelName = name,
+                                    ratePerMin = 20.0,
+                                    callType = CallType.VOICE
+                                )
                                 backStack.add(WinterNav3Screen.AudioCall(callerName = name))
                             },
                             onStartVideoCall = { name ->
+                                callViewModel.startOutgoingCall(
+                                    modelId = name.lowercase().replace(" ", "_"),
+                                    modelName = name,
+                                    ratePerMin = 40.0,
+                                    callType = CallType.VIDEO
+                                )
                                 backStack.add(WinterNav3Screen.VideoCall(callerName = name))
                             },
                             onManageMembershipClick = {
@@ -309,9 +357,23 @@ fun WinterNav3Navigation(
                                 backStack.add(WinterNav3Screen.ChatThread(recipientName = key.creatorName))
                             },
                             onStartAudioCall = {
+                                val targetId = key.creatorId.ifBlank { key.creatorName.lowercase().replace(" ", "_") }
+                                callViewModel.startOutgoingCall(
+                                    modelId = targetId,
+                                    modelName = key.creatorName,
+                                    ratePerMin = 20.0,
+                                    callType = CallType.VOICE
+                                )
                                 backStack.add(WinterNav3Screen.AudioCall(callerName = key.creatorName))
                             },
                             onStartVideoCall = {
+                                val targetId = key.creatorId.ifBlank { key.creatorName.lowercase().replace(" ", "_") }
+                                callViewModel.startOutgoingCall(
+                                    modelId = targetId,
+                                    modelName = key.creatorName,
+                                    ratePerMin = 40.0,
+                                    callType = CallType.VIDEO
+                                )
                                 backStack.add(WinterNav3Screen.VideoCall(callerName = key.creatorName))
                             }
                         )
@@ -325,9 +387,21 @@ fun WinterNav3Navigation(
                                 if (backStack.size > 1) backStack.removeLastOrNull()
                             },
                             onAudioCallClick = {
+                                callViewModel.startOutgoingCall(
+                                    modelId = key.recipientName.lowercase().replace(" ", "_"),
+                                    modelName = key.recipientName,
+                                    ratePerMin = 20.0,
+                                    callType = CallType.VOICE
+                                )
                                 backStack.add(WinterNav3Screen.AudioCall(callerName = key.recipientName))
                             },
                             onVideoCallClick = {
+                                callViewModel.startOutgoingCall(
+                                    modelId = key.recipientName.lowercase().replace(" ", "_"),
+                                    modelName = key.recipientName,
+                                    ratePerMin = 40.0,
+                                    callType = CallType.VIDEO
+                                )
                                 backStack.add(WinterNav3Screen.VideoCall(callerName = key.recipientName))
                             }
                         )
@@ -390,6 +464,12 @@ fun WinterNav3Navigation(
                             onBackClick = {
                                 if (backStack.size > 1) backStack.removeLastOrNull()
                             },
+                            onEditProfileClick = {
+                                backStack.add(WinterNav3Screen.ModelSetup)
+                            },
+                            onEditRatesClick = {
+                                backStack.add(WinterNav3Screen.ModelSetup)
+                            },
                             onEarningsClick = {
                                 backStack.add(WinterNav3Screen.Main(initialTab = "EARNINGS"))
                             },
@@ -400,18 +480,48 @@ fun WinterNav3Navigation(
                         )
                     }
 
+                    // 9. Model Setup Screen (Figma Node 198:2)
+                    entry<WinterNav3Screen.ModelSetup> {
+                        WinterModelSetupScreen(
+                            onBackClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onSaveProfile = { _, _, _, _ ->
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            }
+                        )
+                    }
+
                     // 9. Audio Call Screen (Figma Node 149:11)
                     entry<WinterNav3Screen.AudioCall> { key ->
                         WinterAudioCallScreen(
-                            callerName = key.callerName,
+                            callerName = callState.remoteUserName.ifBlank { key.callerName },
+                            callRateText = "₹${callState.ratePerMin.toInt()} / min · Audio call",
+                            durationSeconds = callState.durationSec,
+                            remainingSec = callState.remainingSec,
+                            isLowBalanceWarning = callState.isLowBalanceWarning,
+                            isMuted = callState.isMuted,
+                            isSpeakerOn = callState.isSpeaker,
                             onMinimizeClick = {
                                 if (backStack.size > 1) backStack.removeLastOrNull()
                             },
+                            onToggleMute = {
+                                callViewModel.toggleMute()
+                            },
+                            onToggleSpeaker = {
+                                callViewModel.toggleSpeaker()
+                            },
                             onToggleVideoClick = {
+                                callViewModel.toggleCamera()
                                 backStack.add(WinterNav3Screen.VideoCall(callerName = key.callerName))
                             },
                             onEndCallClick = {
+                                callViewModel.endCall("User ended call")
+                                callViewModel.resetState()
                                 if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onQuickRechargeClick = {
+                                backStack.add(WinterNav3Screen.RechargeCoins)
                             }
                         )
                     }
@@ -419,15 +529,39 @@ fun WinterNav3Navigation(
                     // 10. Video Call Screen (Figma Node 149:15)
                     entry<WinterNav3Screen.VideoCall> { key ->
                         WinterVideoCallScreen(
-                            callerName = key.callerName,
+                            callerName = callState.remoteUserName.ifBlank { key.callerName },
+                            callRateText = "₹${callState.ratePerMin.toInt()} / min · Video call",
+                            durationSeconds = callState.durationSec,
+                            remainingSec = callState.remainingSec,
+                            isLowBalanceWarning = callState.isLowBalanceWarning,
+                            isMuted = callState.isMuted,
+                            isCameraOff = !callState.isCameraOn,
+                            isFrontCamera = callState.isFrontCamera,
+                            room = room ?: callViewModel.room,
+                            remoteVideoTrack = remoteVideoTrack,
+                            localVideoTrack = localVideoTrack,
                             onMinimizeClick = {
                                 if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onToggleMute = {
+                                callViewModel.toggleMute()
+                            },
+                            onFlipCamera = {
+                                callViewModel.flipCamera()
+                            },
+                            onToggleCamera = {
+                                callViewModel.toggleCamera()
                             },
                             onOpenChatClick = {
                                 backStack.add(WinterNav3Screen.ChatThread(recipientName = key.callerName))
                             },
                             onEndCallClick = {
+                                callViewModel.endCall("User ended call")
+                                callViewModel.resetState()
                                 if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onQuickRechargeClick = {
+                                backStack.add(WinterNav3Screen.RechargeCoins)
                             }
                         )
                     }
@@ -463,6 +597,7 @@ private fun screenDisplayName(screen: Any): String {
         is WinterNav3Screen.Earnings -> "Earnings"
         is WinterNav3Screen.UserSpace -> "User Profile"
         is WinterNav3Screen.ModelProfile -> "Model Profile"
+        is WinterNav3Screen.ModelSetup -> "Model Setup"
         is WinterNav3Screen.AudioCall -> "Audio Call"
         is WinterNav3Screen.VideoCall -> "Video Call"
         else -> "Screen"
