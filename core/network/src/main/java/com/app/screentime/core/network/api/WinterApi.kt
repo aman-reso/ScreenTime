@@ -122,6 +122,37 @@ class WinterApi @Inject constructor(
     }
 
     // ── 2. Models ─────────────────────────────────────────────────────────────
+    suspend fun getForYouFeed(token: String? = null, page: Int = 1, limit: Int = 20): ForYouResponse {
+        return try {
+            val res: ForYouResponse = httpClient.get("$baseUrl/api/v1/foryou") {
+                if (!token.isNullOrBlank()) {
+                    bearerAuth(token)
+                }
+                parameter("page", page)
+                parameter("limit", limit)
+            }.body()
+            res
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to load foryou feed: ${e.message}", e)
+            ForYouResponse(success = false)
+        }
+    }
+
+    suspend fun sendPresencePing(token: String? = null, modelId: String, status: String = "online"): Boolean {
+        return try {
+            httpClient.post("$baseUrl/api/v1/presence/ping") {
+                if (!token.isNullOrBlank()) {
+                    bearerAuth(token)
+                }
+                contentType(ContentType.Application.Json)
+                setBody(mapOf("model_id" to modelId, "status" to status))
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     suspend fun getModels(token: String, page: Int = 1, limit: Int = 20): ModelListResponse {
         val res: ApiResponse<ModelListResponse> = httpClient.get("$baseUrl/api/models") {
             bearerAuth(token)
@@ -131,17 +162,42 @@ class WinterApi @Inject constructor(
         return res.data ?: ModelListResponse(count = 0, models = emptyList())
     }
 
+    suspend fun getActiveUsers(token: String, page: Int = 1, limit: Int = 20): ActiveUserListResponse {
+        return try {
+            val res: ApiResponse<ActiveUserListResponse> = httpClient.get("$baseUrl/api/models/active-users") {
+                bearerAuth(token)
+                parameter("page", page)
+                parameter("limit", limit)
+            }.body()
+            res.data ?: ActiveUserListResponse(count = 0, users = emptyList())
+        } catch (e: Exception) {
+            ActiveUserListResponse(count = 0, users = emptyList())
+        }
+    }
+
+    suspend fun getCreatorConfig(token: String): CreatorPricingConfigDto {
+        return try {
+            val res: ApiResponse<CreatorPricingConfigDto> = httpClient.get("$baseUrl/api/models/creator-config") {
+                bearerAuth(token)
+            }.body()
+            res.data ?: CreatorPricingConfigDto()
+        } catch (e: Exception) {
+            CreatorPricingConfigDto()
+        }
+    }
+
     suspend fun updateModelRates(
         token: String,
         audioRate: Int,
-        videoRate: Int
+        videoRate: Int,
+        upiId: String = ""
     ): UpdateRatesResponseDto {
         val res: ApiResponse<UpdateRatesResponseDto> = httpClient.put("$baseUrl/api/models/rates") {
             bearerAuth(token)
             contentType(ContentType.Application.Json)
-            setBody(UpdateRatesRequestDto(audio_rate = audioRate, video_rate = videoRate))
+            setBody(UpdateRatesRequestDto(audio_rate = audioRate, video_rate = videoRate, upi_id = upiId))
         }.body()
-        return res.data ?: UpdateRatesResponseDto(success = true, audio_rate = audioRate, video_rate = videoRate)
+        return res.data ?: UpdateRatesResponseDto(success = true, audio_rate = audioRate, video_rate = videoRate, upi_id = upiId)
     }
 
     suspend fun updateProfile(token: String, request: ProfileUpdateRequest): ProfileUpdateResponse {
@@ -243,6 +299,14 @@ class WinterApi @Inject constructor(
             setBody(RechargeRequest(amount = amount))
         }.body()
         return res.data ?: throw Exception(res.error ?: res.message.ifBlank { "Recharge failed" })
+    }
+
+    suspend fun updateTestBalance(token: String, amount: Int): WalletDto {
+        val res: ApiResponse<WalletDto> = httpClient.post("$baseUrl/api/wallet/test/update-balance") {
+            bearerAuth(token)
+            setBody(UpdateBalanceRequest(amount = amount, balance = amount))
+        }.body()
+        return res.data ?: throw Exception(res.error ?: res.message.ifBlank { "Failed to update test balance" })
     }
 
     suspend fun verifyGooglePlayPurchase(
@@ -369,6 +433,41 @@ class WinterApi @Inject constructor(
             res.error ?: res.message.ifBlank { "Failed to fetch transactions" })
     }
 
+    suspend fun withdrawFunds(
+        token: String,
+        amount: Int,
+        upiId: String
+    ): Result<WithdrawResponseDto> = runCatching {
+        val req = WithdrawRequestDto(amount = amount, upi_id = upiId)
+        val res: ApiResponse<WithdrawResponseDto> =
+            httpClient.post("$baseUrl${ApiEndpoints.Wallet.WITHDRAW}") {
+                bearerAuth(token)
+                contentType(ContentType.Application.Json)
+                accept(ContentType.Application.Json)
+                setBody(req)
+            }.body()
+
+        if (res.success && res.data != null) {
+            res.data
+        } else {
+            throw Exception(res.error ?: res.message.ifBlank { "Withdrawal failed" })
+        }
+    }
+
+    suspend fun getCreatorEarnings(token: String): Result<CreatorEarningsDto> = runCatching {
+        val res: ApiResponse<CreatorEarningsDto> =
+            httpClient.get("$baseUrl${ApiEndpoints.Wallet.EARNINGS}") {
+                bearerAuth(token)
+                accept(ContentType.Application.Json)
+            }.body()
+
+        if (res.success && res.data != null) {
+            res.data
+        } else {
+            throw Exception(res.error ?: res.message.ifBlank { "Failed to load creator earnings" })
+        }
+    }
+
     // ── 4. Calls & Balance Check ──────────────────────────────────────────────
     suspend fun checkCallBalance(
         token: String,
@@ -384,10 +483,12 @@ class WinterApi @Inject constructor(
             res.error ?: res.message.ifBlank { "Balance check failed" })
     }
 
-    suspend fun getCallHistory(token: String): CallHistoryResponse {
+    suspend fun getCallHistory(token: String, page: Int = 1, limit: Int = 20): CallHistoryResponse {
         val res: ApiResponse<CallHistoryResponse> =
             httpClient.get("$baseUrl/api/history/calls") {
                 bearerAuth(token)
+                parameter("page", page)
+                parameter("limit", limit)
             }.body()
         return res.data ?: CallHistoryResponse()
     }
@@ -646,5 +747,66 @@ class WinterApi @Inject constructor(
     fun getWsUrl(token: String): String {
         val wsBase = baseUrl.replace("http://", "ws://").replace("https://", "wss://")
         return "$wsBase/ws?token=$token"
+    }
+
+    suspend fun getForyouUserDetail(userId: String, token: String? = null): Result<ForyouUserDetailDto> {
+        return try {
+            val res: ForyouUserDetailResponse = httpClient.get("$baseUrl/api/v1/foryou/users/$userId") {
+                if (!token.isNullOrBlank()) {
+                    bearerAuth(token)
+                }
+            }.body()
+            val data = res.data
+            if (data != null && res.success) {
+                Result.success(data)
+            } else {
+                Result.failure(Exception(res.message.ifBlank { "Failed to load user details" }))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getWinterWalletDetails(token: String? = null, category: String = "All"): Result<WinterWalletDataDto> {
+        return try {
+            val res: WinterWalletResponse = httpClient.get("$baseUrl/api/v1/foryou/wallet") {
+                if (!token.isNullOrBlank()) {
+                    bearerAuth(token)
+                }
+                parameter("category", category)
+            }.body()
+            val data = res.data
+            if (data != null && res.success) {
+                Result.success(data)
+            } else {
+                Result.failure(Exception(res.message.ifBlank { "Failed to load wallet details" }))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun purchaseCoins(packageId: String, token: String? = null, gateway: String = "google_play", purchaseToken: String? = null): Result<WalletPurchaseResultDto> {
+        return try {
+            val res: WalletPurchaseResponseDto = httpClient.post("$baseUrl/api/v1/foryou/wallet/purchase") {
+                if (!token.isNullOrBlank()) {
+                    bearerAuth(token)
+                }
+                contentType(io.ktor.http.ContentType.Application.Json)
+                setBody(WalletPurchaseRequestDto(
+                    package_id = packageId,
+                    payment_gateway = gateway,
+                    purchase_token = purchaseToken
+                ))
+            }.body()
+            val data = res.data
+            if (data != null && res.success) {
+                Result.success(data)
+            } else {
+                Result.failure(Exception(res.message.ifBlank { "Failed to purchase coins" }))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
