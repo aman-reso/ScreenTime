@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.core.network.api.WinterApi
 import com.app.screentime.core.network.dto.CreatorEarningsDto
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.core.network.session.SessionManager
 import com.app.screentime.feature.newdesign.R
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +23,7 @@ data class WinterEarningsUiState(
     val totalEarnedSummary: String = "₹0 earned · ₹0 withdrawn",
     val audioCallDuration: String = "0m",
     val videoCallDuration: String = "0m",
+    val savedUpiId: String = "",
     val allItems: List<EarningHistoryItem> = emptyList(),
     val selectedFilter: String = "All activity",
     val isSubmittingWithdrawal: Boolean = false,
@@ -38,10 +40,15 @@ data class WinterEarningsUiState(
 @HiltViewModel
 class WinterEarningsViewModel @Inject constructor(
     private val winterApi: WinterApi,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(WinterEarningsUiState())
+    private val _uiState = MutableStateFlow(
+        WinterEarningsUiState(
+            savedUpiId = preferencesManager.getSavedUpiId()
+        )
+    )
     val uiState: StateFlow<WinterEarningsUiState> = _uiState.asStateFlow()
 
     init {
@@ -85,6 +92,13 @@ class WinterEarningsViewModel @Inject constructor(
                     formatMinutes(dto.video_call_minutes)
                 }
 
+                val savedUpi = if (dto.saved_upi_id.isNotBlank()) {
+                    preferencesManager.setSavedUpiId(dto.saved_upi_id)
+                    dto.saved_upi_id
+                } else {
+                    preferencesManager.getSavedUpiId()
+                }
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -93,6 +107,7 @@ class WinterEarningsViewModel @Inject constructor(
                         totalEarnedSummary = totalSummary,
                         audioCallDuration = audioDur,
                         videoCallDuration = videoDur,
+                        savedUpiId = savedUpi,
                         allItems = mappedItems,
                         errorMessage = null
                     )
@@ -112,7 +127,7 @@ class WinterEarningsViewModel @Inject constructor(
         _uiState.update { it.copy(selectedFilter = filter) }
     }
 
-    fun submitWithdrawal(amount: Int, upiId: String, onSuccess: () -> Unit = {}) {
+    fun submitWithdrawal(amount: Int, upiId: String = "", onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             if (amount < 50) {
                 _uiState.update { it.copy(withdrawalMessage = "Minimum withdrawal amount is ₹50") }
@@ -123,14 +138,29 @@ class WinterEarningsViewModel @Inject constructor(
                 _uiState.update { it.copy(withdrawalMessage = "Insufficient balance (Available: ₹$balance)") }
                 return@launch
             }
-            if (upiId.isBlank() || !upiId.contains("@")) {
+
+            val finalUpi = if (upiId.isNotBlank()) {
+                upiId.trim()
+            } else {
+                _uiState.value.savedUpiId.ifBlank { preferencesManager.getSavedUpiId() }
+            }
+
+            if (finalUpi.isBlank() || !finalUpi.contains("@")) {
                 _uiState.update { it.copy(withdrawalMessage = "Please enter a valid UPI ID (e.g. name@upi)") }
                 return@launch
             }
 
-            _uiState.update { it.copy(isSubmittingWithdrawal = true, withdrawalMessage = null) }
+            preferencesManager.setSavedUpiId(finalUpi)
+            _uiState.update {
+                it.copy(
+                    isSubmittingWithdrawal = true,
+                    savedUpiId = finalUpi,
+                    withdrawalMessage = null
+                )
+            }
+
             val token = sessionManager.getToken().orEmpty()
-            val res = winterApi.withdrawFunds(token, amount, upiId)
+            val res = winterApi.withdrawFunds(token, amount, finalUpi)
 
             res.onSuccess { resp ->
                 _uiState.update {

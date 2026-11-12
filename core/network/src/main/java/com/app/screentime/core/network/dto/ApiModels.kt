@@ -438,6 +438,7 @@ data class CreatorEarningsDto(
     val video_call_minutes: Int = 0,
     val total_withdrawals: Int = 0,
     val pending_withdrawals: Int = 0,
+    val saved_upi_id: String = "",
     val available_earnings_formatted: String = "",
     val total_earned_summary: String = "",
     val audio_call_duration: String = "",

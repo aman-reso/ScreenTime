@@ -48,6 +48,8 @@ class PreferencesManager @Inject constructor(
         private const val KEY_FORCE_UPDATE = "force_update"
         private const val KEY_UPDATE_URL = "update_url"
         private const val KEY_APP_CONFIG_JSON = "app_config_json"
+        private const val KEY_IS_APP_RATED = "is_app_rated"
+        private const val KEY_SAVED_UPI_ID = "saved_upi_id"
     }
 
     private val prefs: SharedPreferences by lazy {
@@ -307,6 +309,16 @@ class PreferencesManager @Inject constructor(
     fun getAppConfigJson(): String? = prefs.getString(KEY_APP_CONFIG_JSON, null)
     fun setAppConfigJson(json: String?) {
         prefs.edit { putString(KEY_APP_CONFIG_JSON, json) }
+    }
+
+    fun isAppRated(): Boolean = prefs.getBoolean(KEY_IS_APP_RATED, false)
+    fun setAppRated(rated: Boolean = true) {
+        prefs.edit { putBoolean(KEY_IS_APP_RATED, rated) }
+    }
+
+    fun getSavedUpiId(): String = prefs.getString(KEY_SAVED_UPI_ID, "") ?: ""
+    fun setSavedUpiId(upiId: String) {
+        prefs.edit { putString(KEY_SAVED_UPI_ID, upiId) }
     }
 }
 
