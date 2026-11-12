@@ -1,0 +1,471 @@
+package com.app.screentime.feature.newdesign.navigation
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import com.app.screentime.feature.newdesign.auth.WinterWelcomeAuthScreen
+import com.app.screentime.feature.newdesign.call.WinterAudioCallScreen
+import com.app.screentime.feature.newdesign.call.WinterVideoCallScreen
+import com.app.screentime.feature.newdesign.chats.WinterChatThreadScreen
+import com.app.screentime.feature.newdesign.components.WinterNavItem
+import com.app.screentime.feature.newdesign.components.WinterTheme
+import com.app.screentime.feature.newdesign.components.WinterTokens
+import com.app.screentime.feature.newdesign.models.WinterFindingModelScreen
+import com.app.screentime.feature.newdesign.profile.CreatorProfileDetails
+import com.app.screentime.feature.newdesign.profile.WinterModelProfileScreen
+import com.app.screentime.feature.newdesign.profile.WinterProfileDetailScreen
+import com.app.screentime.feature.newdesign.wallet.WinterRechargeCoinsScreen
+import com.app.screentime.feature.newdesign.wallet.WinterRechargeProcessingScreen
+import kotlinx.serialization.Serializable
+
+/**
+ * Navigation 3 Keys for the new Winter Design System.
+ */
+@Serializable
+sealed class WinterNav3Screen : NavKey {
+
+    @Serializable
+    data object Welcome : WinterNav3Screen()
+
+    /**
+     * Parent screen hosting the main tab destinations (Discover, Wallet, Earnings, Chats, Calls, Profile)
+     * with a single, shared [WinterFloatingNavigation].
+     */
+    @Serializable
+    data class Main(
+        val initialTab: String = "DISCOVER"
+    ) : WinterNav3Screen()
+
+    @Serializable
+    data object Models : WinterNav3Screen()
+
+    @Serializable
+    data class ProfileDetail(
+        val creatorId: String = "",
+        val creatorName: String = "Elena Rostova",
+        val creatorHandle: String = "@elena_dance"
+    ) : WinterNav3Screen()
+
+    @Serializable
+    data object Chats : WinterNav3Screen()
+
+    @Serializable
+    data class ChatThread(
+        val recipientName: String = "Ananya Sharma"
+    ) : WinterNav3Screen()
+
+    @Serializable
+    data object Wallet : WinterNav3Screen()
+
+    @Serializable
+    data object RechargeCoins : WinterNav3Screen()
+
+    @Serializable
+    data class RechargeProcessing(
+        val packageId: String = "",
+        val packCoins: String = "490",
+        val packPrice: String = "₹49",
+        val currentBalance: String = ""
+    ) : WinterNav3Screen()
+
+    @Serializable
+    data object FindingModel : WinterNav3Screen()
+
+    @Serializable
+    data object Earnings : WinterNav3Screen()
+
+    @Serializable
+    data object UserSpace : WinterNav3Screen()
+
+    @Serializable
+    data object ModelProfile : WinterNav3Screen()
+
+    @Serializable
+    data class AudioCall(
+        val callerName: String = "Ananya Sharma"
+    ) : WinterNav3Screen()
+
+    @Serializable
+    data class VideoCall(
+        val callerName: String = "Ananya Sharma"
+    ) : WinterNav3Screen()
+}
+
+/**
+ * WinterNav3Navigation - Navigation 3 Root Graph for all new Figma screens.
+ *
+ * Implements a backstack with smooth routing across all designed screens:
+ * - Welcome / Auth Gate (`Welcome`)
+ * - Main Parent Container (`Main`) hosting Discover, Wallet, Earnings, Chats, Calls, and Profile
+ *   with ONE single shared [WinterFloatingNavigation]
+ * - Creator Profile Details (`ProfileDetail`)
+ * - Direct 1-on-1 Chat Thread (`ChatThread` - Node 149:7)
+ * - Buy / Recharge Coins (`RechargeCoins` - Node 176:2)
+ * - Recharge Processing (`RechargeProcessing` - Node 176:7)
+ * - Finding a Model Radar (`FindingModel` - Node 176:12)
+ * - Model Profile (`ModelProfile` - Node 134:9)
+ * - Audio Call (`AudioCall` - Node 149:11)
+ * - Video Call (`VideoCall` - Node 149:15)
+ *
+ * Includes an interactive quick switcher header so you can preview any screen instantly.
+ */
+@Composable
+fun WinterNav3Navigation(
+    modifier: Modifier = Modifier,
+    initialScreen: WinterNav3Screen = WinterNav3Screen.Welcome
+) {
+    val backStack = rememberNavBackStack(initialScreen)
+    var showQuickSwitcher by remember { mutableStateOf(false) }
+
+    val currentScreen = backStack.lastOrNull() ?: initialScreen
+
+    // Handle Android system back button
+    BackHandler(enabled = backStack.size > 1) {
+        backStack.removeLastOrNull()
+    }
+
+    WinterTheme {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(WinterTokens.backgroundCanvas)
+        ) {
+            // Navigation 3 Host
+            NavDisplay(
+                modifier = Modifier.fillMaxSize(),
+                backStack = backStack,
+                onBack = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
+                    }
+                },
+                entryProvider = entryProvider {
+                    // 1. Welcome Screen
+                    entry<WinterNav3Screen.Welcome> {
+                        WinterWelcomeAuthScreen(
+                            onAuthSuccess = {
+                                backStack.add(WinterNav3Screen.Main(initialTab = "DISCOVER"))
+                            }
+                        )
+                    }
+
+                    entry<WinterNav3Screen.Main> { key ->
+                        WinterMainParentScreen(
+                            initialTab = mapTabStringToNavItem(key.initialTab),
+                            onCreatorClick = { creator ->
+                                backStack.add(
+                                    WinterNav3Screen.ProfileDetail(
+                                        creatorId = creator.id,
+                                        creatorName = creator.name,
+                                        creatorHandle = "@${creator.name.lowercase().replace(" ", "_")}"
+                                    )
+                                )
+                            },
+                            onConversationClick = { conv ->
+                                backStack.add(WinterNav3Screen.ChatThread(recipientName = conv.name))
+                            },
+                            onComposeClick = {
+                                backStack.add(WinterNav3Screen.ChatThread(recipientName = "Ananya Sharma"))
+                            },
+                            onRechargeClick = {
+                                backStack.add(WinterNav3Screen.RechargeCoins)
+                            },
+                            onSearchClick = {
+                                backStack.add(WinterNav3Screen.FindingModel)
+                            },
+                            onStartAudioCall = { name ->
+                                backStack.add(WinterNav3Screen.AudioCall(callerName = name))
+                            },
+                            onStartVideoCall = { name ->
+                                backStack.add(WinterNav3Screen.VideoCall(callerName = name))
+                            },
+                            onManageMembershipClick = {
+                                backStack.add(WinterNav3Screen.Main(initialTab = "EARNINGS"))
+                            },
+                            onSettingsClick = {
+                                backStack.add(WinterNav3Screen.ModelProfile)
+                            },
+                            onSignOutClick = {
+                                while (backStack.isNotEmpty()) backStack.removeLastOrNull()
+                                backStack.add(WinterNav3Screen.Welcome)
+                            }
+                        )
+                    }
+
+                    // Backward-compatible entries mapping to Main Parent Screen
+                    entry<WinterNav3Screen.Models> {
+                        WinterMainParentScreen(
+                            initialTab = WinterNavItem.DISCOVER,
+                            onCreatorClick = { creator ->
+                                backStack.add(
+                                    WinterNav3Screen.ProfileDetail(
+                                        creatorId = creator.id,
+                                        creatorName = creator.name,
+                                        creatorHandle = "@${creator.name.lowercase().replace(" ", "_")}"
+                                    )
+                                )
+                            },
+                            onRechargeClick = {
+                                backStack.add(WinterNav3Screen.RechargeCoins)
+                            },
+                            onSearchClick = {
+                                backStack.add(WinterNav3Screen.FindingModel)
+                            },
+                            onStartVideoCall = { name ->
+                                backStack.add(WinterNav3Screen.VideoCall(callerName = name))
+                            }
+                        )
+                    }
+
+                    entry<WinterNav3Screen.Chats> {
+                        WinterMainParentScreen(
+                            initialTab = WinterNavItem.CHATS,
+                            onConversationClick = { conv ->
+                                backStack.add(WinterNav3Screen.ChatThread(recipientName = conv.name))
+                            },
+                            onComposeClick = {
+                                backStack.add(WinterNav3Screen.ChatThread(recipientName = "Ananya Sharma"))
+                            }
+                        )
+                    }
+
+                    entry<WinterNav3Screen.Wallet> {
+                        WinterMainParentScreen(
+                            initialTab = WinterNavItem.WALLET,
+                            onRechargeClick = {
+                                backStack.add(WinterNav3Screen.RechargeCoins)
+                            }
+                        )
+                    }
+
+                    entry<WinterNav3Screen.Earnings> {
+                        WinterMainParentScreen(
+                            initialTab = WinterNavItem.EARNINGS
+                        )
+                    }
+
+                    entry<WinterNav3Screen.UserSpace> {
+                        WinterMainParentScreen(
+                            initialTab = WinterNavItem.PROFILE,
+                            onRechargeClick = {
+                                backStack.add(WinterNav3Screen.RechargeCoins)
+                            },
+                            onSettingsClick = {
+                                backStack.add(WinterNav3Screen.ModelProfile)
+                            },
+                            onSignOutClick = {
+                                while (backStack.isNotEmpty()) backStack.removeLastOrNull()
+                                backStack.add(WinterNav3Screen.Welcome)
+                            }
+                        )
+                    }
+
+                    // 3. Creator Profile Detail Screen
+                    entry<WinterNav3Screen.ProfileDetail> { key ->
+                        WinterProfileDetailScreen(
+                            creatorId = key.creatorId,
+                            creatorName = key.creatorName,
+                            onBackClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onMessageClick = {
+                                backStack.add(WinterNav3Screen.ChatThread(recipientName = key.creatorName))
+                            },
+                            onStartAudioCall = {
+                                backStack.add(WinterNav3Screen.AudioCall(callerName = key.creatorName))
+                            },
+                            onStartVideoCall = {
+                                backStack.add(WinterNav3Screen.VideoCall(callerName = key.creatorName))
+                            }
+                        )
+                    }
+
+                    // 4. 1-on-1 Chat Thread Screen (Figma Node 149:7)
+                    entry<WinterNav3Screen.ChatThread> { key ->
+                        WinterChatThreadScreen(
+                            creatorName = key.recipientName,
+                            onBackClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onAudioCallClick = {
+                                backStack.add(WinterNav3Screen.AudioCall(callerName = key.recipientName))
+                            },
+                            onVideoCallClick = {
+                                backStack.add(WinterNav3Screen.VideoCall(callerName = key.recipientName))
+                            }
+                        )
+                    }
+
+                    // 5. Recharge Coins Screen (Figma Node 176:2)
+                    entry<WinterNav3Screen.RechargeCoins> {
+                        WinterRechargeCoinsScreen(
+                            onBackClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onPayClick = { pack ->
+                                backStack.add(
+                                    WinterNav3Screen.RechargeProcessing(
+                                        packageId = pack.id,
+                                        packCoins = "%,d".format(pack.coins),
+                                        packPrice = "₹${pack.priceInr}"
+                                    )
+                                )
+                            }
+                        )
+                    }
+
+                    // 6. Recharge Processing Screen (Figma Node 176:7)
+                    entry<WinterNav3Screen.RechargeProcessing> { key ->
+                        WinterRechargeProcessingScreen(
+                            packageId = key.packageId,
+                            packCoins = key.packCoins,
+                            packPrice = key.packPrice,
+                            onBackClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onPaymentSuccess = {
+                                while (backStack.isNotEmpty() && (backStack.last() is WinterNav3Screen.RechargeProcessing || backStack.last() is WinterNav3Screen.RechargeCoins)) {
+                                    backStack.removeLastOrNull()
+                                }
+                            }
+                        )
+                    }
+
+                    // 7. Finding a Model Radar Screen (Figma Node 176:12)
+                    entry<WinterNav3Screen.FindingModel> {
+                        WinterFindingModelScreen(
+                            onBackClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onCancelClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onModelFound = { modelName ->
+                                backStack.removeLastOrNull()
+                                backStack.add(WinterNav3Screen.VideoCall(callerName = modelName))
+                            }
+                        )
+                    }
+
+                    // 8. Model Profile Screen (Figma Node 134:9)
+                    entry<WinterNav3Screen.ModelProfile> {
+                        WinterModelProfileScreen(
+                            showBottomNav = false,
+                            onBackClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onEarningsClick = {
+                                backStack.add(WinterNav3Screen.Main(initialTab = "EARNINGS"))
+                            },
+                            onSignOutClick = {
+                                while (backStack.isNotEmpty()) backStack.removeLastOrNull()
+                                backStack.add(WinterNav3Screen.Welcome)
+                            }
+                        )
+                    }
+
+                    // 9. Audio Call Screen (Figma Node 149:11)
+                    entry<WinterNav3Screen.AudioCall> { key ->
+                        WinterAudioCallScreen(
+                            callerName = key.callerName,
+                            onMinimizeClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onToggleVideoClick = {
+                                backStack.add(WinterNav3Screen.VideoCall(callerName = key.callerName))
+                            },
+                            onEndCallClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            }
+                        )
+                    }
+
+                    // 10. Video Call Screen (Figma Node 149:15)
+                    entry<WinterNav3Screen.VideoCall> { key ->
+                        WinterVideoCallScreen(
+                            callerName = key.callerName,
+                            onMinimizeClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onOpenChatClick = {
+                                backStack.add(WinterNav3Screen.ChatThread(recipientName = key.callerName))
+                            },
+                            onEndCallClick = {
+                                if (backStack.size > 1) backStack.removeLastOrNull()
+                            }
+                        )
+                    }
+                }
+            )
+        }
+    }
+}
+
+private fun mapTabStringToNavItem(tabName: String): WinterNavItem {
+    return when (tabName.uppercase()) {
+        "WALLET" -> WinterNavItem.WALLET
+        "EARNINGS" -> WinterNavItem.EARNINGS
+        "CHATS" -> WinterNavItem.CHATS
+        "CALLS" -> WinterNavItem.CALLS
+        "PROFILE" -> WinterNavItem.PROFILE
+        else -> WinterNavItem.DISCOVER
+    }
+}
+
+private fun screenDisplayName(screen: Any): String {
+    return when (screen) {
+        is WinterNav3Screen.Welcome -> "Login"
+        is WinterNav3Screen.Main -> "Main Hub (${screen.initialTab})"
+        is WinterNav3Screen.Models -> "Discover"
+        is WinterNav3Screen.FindingModel -> "Finding Model"
+        is WinterNav3Screen.ProfileDetail -> "Profile Detail"
+        is WinterNav3Screen.Chats -> "Chats"
+        is WinterNav3Screen.ChatThread -> "Chat Thread"
+        is WinterNav3Screen.Wallet -> "Wallet"
+        is WinterNav3Screen.RechargeCoins -> "Recharge"
+        is WinterNav3Screen.RechargeProcessing -> "Recharge Processing"
+        is WinterNav3Screen.Earnings -> "Earnings"
+        is WinterNav3Screen.UserSpace -> "User Profile"
+        is WinterNav3Screen.ModelProfile -> "Model Profile"
+        is WinterNav3Screen.AudioCall -> "Audio Call"
+        is WinterNav3Screen.VideoCall -> "Video Call"
+        else -> "Screen"
+    }
+}

@@ -65,7 +65,7 @@ class WinterWalletViewModel @Inject constructor(
             }.onFailure { err ->
                 // Graceful fallback with zero balance
                 _uiState.value = WinterWalletUiState.Success(
-                    coinBalance = 2480,
+                    coinBalance = 0,
                     transactions = emptyList(),
                     packages = emptyList(),
                     selectedCategory = category,
