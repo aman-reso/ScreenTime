@@ -50,6 +50,8 @@ class PreferencesManager @Inject constructor(
         private const val KEY_APP_CONFIG_JSON = "app_config_json"
         private const val KEY_IS_APP_RATED = "is_app_rated"
         private const val KEY_SAVED_UPI_ID = "saved_upi_id"
+        private const val KEY_USER_GENDER = "user_gender"
+        private const val KEY_GENDER_ASKED = "gender_asked"
     }
 
     private val prefs: SharedPreferences by lazy {
@@ -319,6 +321,16 @@ class PreferencesManager @Inject constructor(
     fun getSavedUpiId(): String = prefs.getString(KEY_SAVED_UPI_ID, "") ?: ""
     fun setSavedUpiId(upiId: String) {
         prefs.edit { putString(KEY_SAVED_UPI_ID, upiId) }
+    }
+
+    fun getUserGender(): String? = prefs.getString(KEY_USER_GENDER, null)
+    fun setUserGender(gender: String) {
+        prefs.edit { putString(KEY_USER_GENDER, gender) }
+    }
+
+    fun isGenderAsked(): Boolean = prefs.getBoolean(KEY_GENDER_ASKED, false)
+    fun setGenderAsked(asked: Boolean = true) {
+        prefs.edit { putBoolean(KEY_GENDER_ASKED, asked) }
     }
 }
 
