@@ -123,15 +123,14 @@ fun WinterEarningsScreen(
     if (showWithdrawModal) {
         WinterWithdrawalDialog(
             availableBalance = uiState.rawAvailableBalance,
-            savedUpiId = uiState.savedUpiId,
             isSubmitting = uiState.isSubmittingWithdrawal,
             errorMessage = uiState.withdrawalMessage,
             onDismiss = {
                 showWithdrawModal = false
                 viewModel.clearWithdrawalMessage()
             },
-            onSubmit = { amount, upiId ->
-                viewModel.submitWithdrawal(amount, upiId) {
+            onSubmit = { amount ->
+                viewModel.submitWithdrawal(amount) {
                     showWithdrawModal = false
                 }
             }
@@ -290,15 +289,12 @@ fun WinterEarningsScreenContent(
 @Composable
 fun WinterWithdrawalDialog(
     availableBalance: Int,
-    savedUpiId: String = "",
     isSubmitting: Boolean,
     errorMessage: String?,
     onDismiss: () -> Unit,
-    onSubmit: (amount: Int, upiId: String) -> Unit
+    onSubmit: (amount: Int) -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
-    var upiIdText by remember(savedUpiId) { mutableStateOf(savedUpiId) }
-    var isEditingUpi by remember { mutableStateOf(savedUpiId.isBlank()) }
     val quickAmounts = remember { listOf(100, 500, 1000) }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -329,7 +325,7 @@ fun WinterWithdrawalDialog(
                     color = WinterTokens.textSecondary
                 )
 
-                // 1. Amount Input (Primary required field)
+                // Amount Input
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { amountText = it.filter { ch -> ch.isDigit() } },
@@ -345,7 +341,6 @@ fun WinterWithdrawalDialog(
                     )
                 )
 
-                // Quick amount preset chips
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -399,63 +394,6 @@ fun WinterWithdrawalDialog(
                     }
                 }
 
-                // 2. UPI Section: If already saved, show persistent UPI card with option to edit
-                if (!isEditingUpi && savedUpiId.isNotBlank()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(WinterTokens.surfaceControl)
-                            .border(1.dp, WinterTokens.borderSubtle, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = "Transfer to UPI",
-                                fontFamily = FunnelSans,
-                                fontSize = 11.sp,
-                                color = WinterTokens.textSecondary
-                            )
-                            Text(
-                                text = savedUpiId,
-                                fontFamily = FunnelSans,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
-                                color = WinterTokens.textPrimary
-                            )
-                        }
-
-                        Text(
-                            text = "Edit",
-                            fontFamily = FunnelSans,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 12.sp,
-                            color = WinterTokens.actionPrimary,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { isEditingUpi = true }
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
-                        )
-                    }
-                } else {
-                    // First time or user tapped Edit to change their UPI
-                    OutlinedTextField(
-                        value = upiIdText,
-                        onValueChange = { upiIdText = it.trim() },
-                        label = { Text("UPI ID (e.g. name@upi)", color = WinterTokens.textSecondary) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = WinterTokens.textPrimary,
-                            unfocusedTextColor = WinterTokens.textPrimary,
-                            focusedBorderColor = WinterTokens.borderDefault,
-                            unfocusedBorderColor = WinterTokens.borderSubtle
-                        )
-                    )
-                }
-
                 if (!errorMessage.isNullOrBlank()) {
                     Text(
                         text = errorMessage,
@@ -488,8 +426,7 @@ fun WinterWithdrawalDialog(
                             .background(WinterTokens.actionPrimary)
                             .clickable(enabled = !isSubmitting) {
                                 val amt = amountText.toIntOrNull() ?: 0
-                                val targetUpi = if (isEditingUpi || savedUpiId.isBlank()) upiIdText else savedUpiId
-                                onSubmit(amt, targetUpi)
+                                onSubmit(amt)
                             }
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         contentAlignment = Alignment.Center
@@ -517,10 +454,6 @@ fun WinterWithdrawalDialog(
 }
 
 
-/**
- * Top Header Section matching Figma Node 130:43.
- * Background: surfaceHeader (#222222), flat across width with zero corner radius.
- */
 @Composable
 private fun EarningsHeaderSection(
     statusBarPadding: Dp,
