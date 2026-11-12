@@ -184,7 +184,8 @@ data class UserDto(
     val videos: List<String> = emptyList(),
     val company: String? = null,
     val is_phone_verified: Boolean? = null,
-    val phone_verified: Boolean? = null
+    val phone_verified: Boolean? = null,
+    val wallet_balance: Int = 0
 ) {
     fun getResolvedName(): String {
         return name.ifBlank { display_name ?: "User" }
@@ -393,7 +394,56 @@ data class TransactionDto(
     val balance_after: Double = 0.0,
     val created_at: String = "",
     val call_id: String? = null,
-    val room_id: String? = null
+    val room_id: String? = null,
+    val status: String = "COMPLETED"
+)
+
+@Serializable
+data class WithdrawRequestDto(
+    val amount: Int,
+    val upi_id: String
+)
+
+@Serializable
+data class WithdrawResponseDto(
+    val success: Boolean = false,
+    val transaction_id: String = "",
+    val amount: Int = 0,
+    val upi_id: String = "",
+    val status: String = "COMPLETED",
+    val new_balance: Int = 0,
+    val message: String = ""
+)
+
+@Serializable
+data class CreatorEarningsActivityDto(
+    val id: String = "",
+    val title: String = "",
+    val details: String = "",
+    val amount_formatted: String = "",
+    val is_positive: Boolean = true,
+    val icon_type: String = "",
+    val category: String = "All activity",
+    val created_at: String = ""
+)
+
+@Serializable
+data class CreatorEarningsDto(
+    val total_earnings: Int = 0,
+    val available_balance: Int = 0,
+    val monthly_earnings: Int = 0,
+    val voice_call_earnings: Int = 0,
+    val voice_call_minutes: Int = 0,
+    val video_call_earnings: Int = 0,
+    val video_call_minutes: Int = 0,
+    val total_withdrawals: Int = 0,
+    val pending_withdrawals: Int = 0,
+    val available_earnings_formatted: String = "",
+    val total_earned_summary: String = "",
+    val audio_call_duration: String = "",
+    val video_call_duration: String = "",
+    val recent_activity: List<TransactionDto> = emptyList(),
+    val activity_items: List<CreatorEarningsActivityDto> = emptyList()
 )
 
 @Serializable
@@ -417,20 +467,62 @@ data class PaginationDto(
 
 @Serializable
 data class WalletResponse(
-    val wallet: WalletDto?,
-    val transactions: List<TransactionDto>? = null
-)
+    val wallet: WalletDto? = null,
+    val transactions: List<TransactionDto>? = null,
+    val credit_balance: Int = 0,
+    val voice_minutes_available: Int = 0,
+    val video_minutes_available: Int = 0,
+    val packages: List<WalletPackDto> = emptyList(),
+    val recent_transactions: List<TransactionDto> = emptyList()
+) {
+    fun getEffectiveWallet(): WalletDto {
+        return wallet ?: WalletDto(
+            balance = credit_balance.toDouble(),
+            bonus_given = 0.0,
+            total_spent = 0.0,
+            total_earned = 0.0
+        )
+    }
+}
 
 @Serializable
 data class ModelListResponse(
     val count: Int = 0,
+    val total_count: Int = 0,
+    val page: Int = 1,
+    val limit: Int = 20,
+    val has_more: Boolean = false,
     val models: List<UserDto> = emptyList()
+)
+
+@Serializable
+data class ActiveUserListResponse(
+    val count: Int = 0,
+    val total_count: Int = 0,
+    val page: Int = 1,
+    val limit: Int = 20,
+    val has_more: Boolean = false,
+    val users: List<UserDto> = emptyList()
+)
+
+@Serializable
+data class CreatorPricingConfigDto(
+    val creator_share_percentage: Int = 80,
+    val platform_fee_percentage: Int = 20,
+    val min_rate: Int = 1,
+    val max_rate: Int = 100,
+    val currency: String = "INR",
+    val currency_symbol: String = "₹",
+    val audio_rate: Int = 10,
+    val video_rate: Int = 20,
+    val upi_id: String = ""
 )
 
 @Serializable
 data class UpdateRatesRequestDto(
     val audio_rate: Int,
-    val video_rate: Int
+    val video_rate: Int,
+    val upi_id: String = ""
 )
 
 @Serializable
@@ -438,6 +530,7 @@ data class UpdateRatesResponseDto(
     val success: Boolean = true,
     val audio_rate: Int = 10,
     val video_rate: Int = 20,
+    val upi_id: String = "",
     val message: String = ""
 )
 
@@ -454,9 +547,18 @@ data class CallRecordDto(
 @Serializable
 data class CallHistoryResponse(
     val count: Int = 0,
+    val total_count: Int = 0,
+    val page: Int = 1,
+    val limit: Int = 20,
+    val has_more: Boolean = false,
     val calls: List<CallRecordDto> = emptyList(),
+    val items: List<CallRecordDto> = emptyList(),
     val privacy_notice: String = ""
-)
+) {
+    fun getRecords(): List<CallRecordDto> {
+        return calls.ifEmpty { items }
+    }
+}
 
 @Serializable
 data class GroupRoomDto(
