@@ -1,11 +1,15 @@
 package com.app.screentime.feature.newdesign.wallet
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.screentime.core.network.api.WinterApi
+import com.app.screentime.core.network.dto.VerifyGooglePurchaseRequest
 import com.app.screentime.core.network.dto.WinterRechargePackageDto
 import com.app.screentime.core.network.session.SessionManager
 import com.app.screentime.feature.newdesign.R
+import com.app.screentime.feature.wallet.billing.BillingPurchaseResult
+import com.app.screentime.feature.wallet.billing.GooglePlayBillingManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +33,8 @@ sealed interface WinterWalletUiState {
 @HiltViewModel
 class WinterWalletViewModel @Inject constructor(
     private val winterApi: WinterApi,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    val googlePlayBillingManager: GooglePlayBillingManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<WinterWalletUiState>(WinterWalletUiState.Loading)
@@ -37,12 +42,88 @@ class WinterWalletViewModel @Inject constructor(
 
     init {
         loadWallet()
+        observeBillingEvents()
+    }
+
+    private fun observeBillingEvents() {
+        viewModelScope.launch {
+            googlePlayBillingManager.purchaseEvents.collect { result ->
+                when (result) {
+                    is BillingPurchaseResult.Success -> {
+                        handleBillingSuccess(result)
+                    }
+                    is BillingPurchaseResult.Cancelled -> {
+                        val current = _uiState.value
+                        if (current is WinterWalletUiState.Success) {
+                            _uiState.value = current.copy(
+                                isRecharging = false,
+                                userMessage = "Payment cancelled"
+                            )
+                        }
+                    }
+                    is BillingPurchaseResult.Failed -> {
+                        val current = _uiState.value
+                        if (current is WinterWalletUiState.Success) {
+                            _uiState.value = current.copy(
+                                isRecharging = false,
+                                userMessage = result.message
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleBillingSuccess(result: BillingPurchaseResult.Success) {
+        viewModelScope.launch {
+            val currentState = _uiState.value
+            if (currentState is WinterWalletUiState.Success) {
+                _uiState.value = currentState.copy(isRecharging = true, userMessage = null)
+            }
+
+            val token = sessionManager.getToken().orEmpty()
+            val verifyReq = VerifyGooglePurchaseRequest(
+                package_name = "com.app.screentime",
+                product_id = result.productId,
+                purchase_token = result.purchaseToken,
+                type = "inapp"
+            )
+
+            val verifyRes = winterApi.verifyGooglePurchase(token, verifyReq)
+            verifyRes.onSuccess { data ->
+                // Consume purchase on Google Play so user can purchase again
+                googlePlayBillingManager.consumePurchase(result.purchaseToken)
+
+                val newBalance = if (data.credit_balance > 0) {
+                    data.credit_balance
+                } else {
+                    val currentBal = (currentState as? WinterWalletUiState.Success)?.coinBalance ?: 0
+                    currentBal + data.credits_added
+                }
+
+                if (currentState is WinterWalletUiState.Success) {
+                    _uiState.value = currentState.copy(
+                        coinBalance = newBalance,
+                        isRecharging = false,
+                        userMessage = "Recharge successful! +${data.credits_added} coins added."
+                    )
+                }
+                loadWallet()
+            }.onFailure { err ->
+                if (currentState is WinterWalletUiState.Success) {
+                    _uiState.value = currentState.copy(
+                        isRecharging = false,
+                        userMessage = err.message ?: "Purchase verification failed"
+                    )
+                }
+            }
+        }
     }
 
     fun loadWallet(category: String = "All") {
         viewModelScope.launch {
-            _uiState.value = WinterWalletUiState.Loading
-            val token = sessionManager.getToken()
+            val token = sessionManager.getToken().orEmpty()
             val walletRes = winterApi.getWinterWalletDetails(token, category)
             val packagesRes = winterApi.getWinterRechargePackages()
 
@@ -65,6 +146,9 @@ class WinterWalletViewModel @Inject constructor(
                     packagesRes.getOrDefault(emptyList())
                 }
 
+                // Query product details from Google Play in background
+                queryGooglePlayProducts(finalPackages)
+
                 _uiState.value = WinterWalletUiState.Success(
                     coinBalance = data.coin_balance,
                     transactions = mappedTxs,
@@ -74,6 +158,7 @@ class WinterWalletViewModel @Inject constructor(
             }.onFailure { err ->
                 val fallbackPackages = packagesRes.getOrDefault(emptyList())
                 if (fallbackPackages.isNotEmpty()) {
+                    queryGooglePlayProducts(fallbackPackages)
                     _uiState.value = WinterWalletUiState.Success(
                         coinBalance = 0,
                         transactions = emptyList(),
@@ -96,6 +181,8 @@ class WinterWalletViewModel @Inject constructor(
 
             val packagesRes = winterApi.getWinterRechargePackages()
             packagesRes.onSuccess { packs ->
+                queryGooglePlayProducts(packs)
+
                 when (val state = _uiState.value) {
                     is WinterWalletUiState.Success -> {
                         _uiState.value = state.copy(packages = packs)
@@ -116,24 +203,50 @@ class WinterWalletViewModel @Inject constructor(
         }
     }
 
-    fun purchasePackage(packageId: String) {
+    private fun queryGooglePlayProducts(packages: List<WinterRechargePackageDto>) {
+        if (packages.isEmpty()) return
+        val productSkus = packages.map { mapToGooglePlaySku(it.id) }.distinct()
         viewModelScope.launch {
-            val currentState = _uiState.value
-            if (currentState is WinterWalletUiState.Success) {
-                _uiState.value = currentState.copy(isRecharging = true)
-            }
+            googlePlayBillingManager.queryProducts(productSkus)
+        }
+    }
 
-            val res = winterApi.purchaseCoins(packageId, sessionManager.getToken(), "google_play")
-            res.onSuccess { result ->
-                loadWallet()
-            }.onFailure { err ->
-                if (currentState is WinterWalletUiState.Success) {
-                    _uiState.value = currentState.copy(
-                        isRecharging = false,
-                        userMessage = err.message ?: "Recharge failed"
-                    )
+    fun launchGooglePlayPurchase(
+        activity: Activity,
+        packageId: String,
+        onError: (String) -> Unit = {}
+    ) {
+        val sku = mapToGooglePlaySku(packageId)
+        val currentState = _uiState.value
+        if (currentState is WinterWalletUiState.Success) {
+            _uiState.value = currentState.copy(isRecharging = true, userMessage = null)
+        }
+
+        googlePlayBillingManager.launchBillingFlow(
+            activity = activity,
+            productId = sku,
+            onLaunchFailed = { errorMsg ->
+                val s = _uiState.value
+                if (s is WinterWalletUiState.Success) {
+                    _uiState.value = s.copy(isRecharging = false, userMessage = errorMsg)
                 }
+                onError(errorMsg)
             }
+        )
+    }
+
+    private fun mapToGooglePlaySku(packageId: String): String {
+        return when (packageId) {
+            "pack_99" -> "product_99_rupees"
+            "pack_199" -> "product_199_rupees"
+            else -> packageId
+        }
+    }
+
+    fun clearUserMessage() {
+        val current = _uiState.value
+        if (current is WinterWalletUiState.Success) {
+            _uiState.value = current.copy(userMessage = null)
         }
     }
 }

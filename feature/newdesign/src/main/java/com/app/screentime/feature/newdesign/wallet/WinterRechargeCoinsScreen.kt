@@ -1,5 +1,9 @@
 package com.app.screentime.feature.newdesign.wallet
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,7 +52,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.app.screentime.core.network.dto.WinterRechargePackageDto
 import com.app.screentime.feature.newdesign.R
 import com.app.screentime.feature.newdesign.components.FunnelSans
+import com.app.screentime.feature.newdesign.components.WinterPageLoadingScreen
+import com.app.screentime.feature.newdesign.components.WinterPageLoadingStatus
 import com.app.screentime.feature.newdesign.components.WinterTokens
+
+private fun Context.findActivity(): Activity? {
+    var ctx = this
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
 
 /**
  * Winter · Recharge Coins Screen (Figma Node 176:2).
@@ -68,6 +84,18 @@ fun WinterRechargeCoinsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val statusBarPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+
+    val userMessage = (uiState as? WinterWalletUiState.Success)?.userMessage
+    LaunchedEffect(userMessage) {
+        if (!userMessage.isNullOrBlank()) {
+            Toast.makeText(context, userMessage, Toast.LENGTH_LONG).show()
+            viewModel.clearUserMessage()
+        }
+    }
+
+    val isRecharging = (uiState as? WinterWalletUiState.Success)?.isRecharging == true
 
     LaunchedEffect(Unit) {
         viewModel.loadPackages()
@@ -121,12 +149,61 @@ fun WinterRechargeCoinsScreen(
 
                     RechargeBottomPaySection(
                         selectedPack = selectedPack,
-                        onPayClick = { onPayClick(selectedPack) }
+                        onPayClick = {
+                            if (activity != null) {
+                                viewModel.launchGooglePlayPurchase(
+                                    activity = activity,
+                                    packageId = selectedPack.id,
+                                    onError = { err ->
+                                        Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            } else {
+                                onPayClick(selectedPack)
+                            }
+                        }
                     )
                 } else {
                     EmptyPackagesSection(
                         isLoading = uiState is WinterWalletUiState.Loading,
                         onRetry = { viewModel.loadPackages() }
+                    )
+                }
+            }
+        }
+
+        if (isRecharging) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(WinterTokens.surfaceCard)
+                        .border(1.dp, WinterTokens.borderDefault, RoundedCornerShape(20.dp))
+                        .padding(horizontal = 32.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(36.dp),
+                        color = WinterTokens.actionPrimary,
+                        strokeWidth = 3.dp
+                    )
+                    Text(
+                        text = "Connecting to Google Play Store…",
+                        fontFamily = FunnelSans,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp,
+                        color = WinterTokens.textPrimary
                     )
                 }
             }
@@ -459,16 +536,8 @@ private fun EmptyPackagesSection(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (isLoading) {
-            CircularProgressIndicator(
-                color = WinterTokens.actionPrimary,
-                modifier = Modifier.size(36.dp)
-            )
-            Text(
-                text = "Loading packages...",
-                fontFamily = FunnelSans,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                color = WinterTokens.textSecondary
+            WinterPageLoadingStatus(
+                subtitle = "Fetching recharge packages…"
             )
         } else {
             Icon(

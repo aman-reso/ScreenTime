@@ -57,6 +57,8 @@ dependencies {
     implementation(project(":feature:preferences"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:call"))
+    implementation(project(":feature:wallet"))
+    implementation(libs.play.billing.ktx)
     implementation(project(":core:model"))
     implementation(libs.play.services.auth)
     implementation("io.livekit:livekit-android:2.28.1")

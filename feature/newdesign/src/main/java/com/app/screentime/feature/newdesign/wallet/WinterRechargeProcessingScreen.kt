@@ -86,12 +86,28 @@ fun WinterRechargeProcessingScreen(
         }
     }
 
-    LaunchedEffect(packageId) {
-        if (packageId.isNotBlank()) {
-            viewModel.purchasePackage(packageId)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val activity = remember(context) {
+        var c = context
+        while (c is android.content.ContextWrapper) {
+            if (c is android.app.Activity) break
+            c = c.baseContext
         }
-        delay(2500L)
-        onPaymentSuccess()
+        c as? android.app.Activity
+    }
+
+    LaunchedEffect(packageId) {
+        if (packageId.isNotBlank() && activity != null) {
+            viewModel.launchGooglePlayPurchase(activity, packageId)
+        }
+    }
+
+    val userMessage = (uiState as? WinterWalletUiState.Success)?.userMessage
+    LaunchedEffect(userMessage) {
+        if (userMessage?.contains("successful", ignoreCase = true) == true) {
+            delay(1000L)
+            onPaymentSuccess()
+        }
     }
 
     Box(
