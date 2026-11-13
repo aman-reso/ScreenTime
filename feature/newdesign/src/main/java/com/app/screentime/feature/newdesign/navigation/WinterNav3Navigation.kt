@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,6 +44,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.app.screentime.core.network.preferences.PreferencesManager
 import com.app.screentime.feature.call.CallStatus
 import com.app.screentime.feature.call.CallType
 import com.app.screentime.feature.call.CallViewModel
@@ -53,6 +55,8 @@ import com.app.screentime.feature.newdesign.chats.WinterChatThreadScreen
 import com.app.screentime.feature.newdesign.components.WinterNavItem
 import com.app.screentime.feature.newdesign.components.WinterTheme
 import com.app.screentime.feature.newdesign.components.WinterTokens
+import com.app.screentime.feature.newdesign.dialogs.GenderOption
+import com.app.screentime.feature.newdesign.dialogs.WinterGenderDialog
 import com.app.screentime.feature.newdesign.models.WinterFindingModelScreen
 import com.app.screentime.feature.newdesign.profile.CreatorProfileDetails
 import com.app.screentime.feature.newdesign.profile.WinterModelProfileScreen
@@ -160,6 +164,7 @@ sealed class WinterNav3Screen : NavKey {
 fun WinterNav3Navigation(
     modifier: Modifier = Modifier,
     initialScreen: WinterNav3Screen = WinterNav3Screen.Welcome,
+    onSignOut: () -> Unit = {},
     callViewModel: CallViewModel = hiltViewModel()
 ) {
     val backStack = rememberNavBackStack(initialScreen)
@@ -217,6 +222,7 @@ fun WinterNav3Navigation(
                     entry<WinterNav3Screen.Welcome> {
                         WinterWelcomeAuthScreen(
                             onAuthSuccess = {
+                                while (backStack.isNotEmpty()) backStack.removeLastOrNull()
                                 backStack.add(WinterNav3Screen.Main(initialTab = "DISCOVER"))
                             }
                         )
@@ -270,7 +276,11 @@ fun WinterNav3Navigation(
                             onSettingsClick = {
                                 backStack.add(WinterNav3Screen.ModelProfile)
                             },
+                            onJoinAsModelClick = {
+                                backStack.add(WinterNav3Screen.ModelSetup)
+                            },
                             onSignOutClick = {
+                                onSignOut()
                                 while (backStack.isNotEmpty()) backStack.removeLastOrNull()
                                 backStack.add(WinterNav3Screen.Welcome)
                             }
@@ -338,7 +348,11 @@ fun WinterNav3Navigation(
                             onSettingsClick = {
                                 backStack.add(WinterNav3Screen.ModelProfile)
                             },
+                            onJoinAsModelClick = {
+                                backStack.add(WinterNav3Screen.ModelSetup)
+                            },
                             onSignOutClick = {
+                                onSignOut()
                                 while (backStack.isNotEmpty()) backStack.removeLastOrNull()
                                 backStack.add(WinterNav3Screen.Welcome)
                             }
@@ -459,10 +473,19 @@ fun WinterNav3Navigation(
 
                     // 8. Model Profile Screen (Figma Node 134:9)
                     entry<WinterNav3Screen.ModelProfile> {
+                        val context = LocalContext.current
+                        val prefsManager = remember(context) { PreferencesManager(context.applicationContext) }
+                        var showGenderDialog by remember { mutableStateOf(false) }
+
                         WinterModelProfileScreen(
                             showBottomNav = false,
+                            isModel = false,
+                            showJoinAsModelBanner = true,
                             onBackClick = {
                                 if (backStack.size > 1) backStack.removeLastOrNull()
+                            },
+                            onJoinAsModelClick = {
+                                backStack.add(WinterNav3Screen.ModelSetup)
                             },
                             onEditProfileClick = {
                                 backStack.add(WinterNav3Screen.ModelSetup)
@@ -470,14 +493,35 @@ fun WinterNav3Navigation(
                             onEditRatesClick = {
                                 backStack.add(WinterNav3Screen.ModelSetup)
                             },
+                            onChangeGenderClick = {
+                                showGenderDialog = true
+                            },
                             onEarningsClick = {
                                 backStack.add(WinterNav3Screen.Main(initialTab = "EARNINGS"))
                             },
                             onSignOutClick = {
+                                onSignOut()
                                 while (backStack.isNotEmpty()) backStack.removeLastOrNull()
                                 backStack.add(WinterNav3Screen.Welcome)
                             }
                         )
+
+                        if (showGenderDialog) {
+                            WinterGenderDialog(
+                                initialGender = GenderOption.WOMAN,
+                                onDismissRequest = { showGenderDialog = false },
+                                onContinue = { option ->
+                                    val newGender = if (option == GenderOption.WOMAN) "female" else "male"
+                                    prefsManager.setUserGender(newGender)
+                                    prefsManager.setGenderAsked(true)
+                                    showGenderDialog = false
+                                    if (newGender == "male") {
+                                        if (backStack.size > 1) backStack.removeLastOrNull()
+                                        backStack.add(WinterNav3Screen.Main(initialTab = "PROFILE"))
+                                    }
+                                }
+                            )
+                        }
                     }
 
                     // 9. Model Setup Screen (Figma Node 198:2)

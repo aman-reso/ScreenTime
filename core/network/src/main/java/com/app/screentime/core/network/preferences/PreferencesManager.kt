@@ -104,7 +104,7 @@ class PreferencesManager @Inject constructor(
     fun setToken(token: String) {
         synchronized(authLock) {
             cachedToken = token
-            prefs.edit { putString(KEY_TOKEN, token) }
+            prefs.edit(commit = true) { putString(KEY_TOKEN, token) }
         }
     }
 

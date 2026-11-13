@@ -1,9 +1,12 @@
 package com.app.screentime
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import android.util.Log
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -38,12 +41,15 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.lifecycle.lifecycleScope
+import com.app.screentime.core.network.BuildConfig
 import com.app.screentime.core.network.UnauthorizedHandler
 import com.app.screentime.core.network.config.AppConfigManager
 import com.app.screentime.core.network.security.PlayIntegrityManager
 import com.app.screentime.core.network.session.FcmTokenManager
 import com.app.screentime.feature.auth.WinterSplashScreen
 import com.app.screentime.feature.chat.domain.usecase.RealtimeChatSyncManager
+import com.app.screentime.feature.newdesign.navigation.WinterNav3Navigation
+import com.app.screentime.feature.newdesign.navigation.WinterNav3Screen
 import com.app.screentime.security.SecurityBlockScreen
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -75,15 +81,18 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var e2eCryptoManager: Lazy<com.app.screentime.core.network.security.E2ECryptoManager>
 
-    private var pendingNotificationScreen by mutableStateOf<Screen?>(null)
-    private lateinit var screenshotProtectionManager: ScreenshotProtectionManager
+    @Inject
+    lateinit var activeCallManager: Lazy<com.app.screentime.feature.call.ActiveCallManager>
 
-    private var isIntegrityVerified by mutableStateOf(com.app.screentime.core.network.BuildConfig.DEBUG)
+    private var pendingNotificationScreen by mutableStateOf<Screen?>(null)
+    private val screenshotProtectionManager: ScreenshotProtectionManager by lazy { ScreenshotProtectionManager(this) }
+
+    private var isIntegrityVerified by mutableStateOf(true)
     private var integrityCheckFailed by mutableStateOf(false)
     private var integrityErrorText by mutableStateOf("")
 
     private fun verifyAppIntegrityMandatory() {
-        if (com.app.screentime.core.network.BuildConfig.DEBUG) {
+        if (BuildConfig.DEBUG) {
             isIntegrityVerified = true
             return
         }
@@ -110,13 +119,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val t0 = System.currentTimeMillis()
+        setupLockScreenFlags()
         val splashScreen = installSplashScreen()
         splashScreen.setKeepOnScreenCondition { false }
         super.onCreate(savedInstanceState)
-
-        screenshotProtectionManager = ScreenshotProtectionManager(this)
-        screenshotProtectionManager.applySecureFlag()
+//        screenshotProtectionManager.applySecureFlag()
 
         try {
             inAppUpdateManager.initialize(this)
@@ -124,10 +131,6 @@ class MainActivity : AppCompatActivity() {
             Log.e("MainActivity", "InAppUpdate initialize failed: ${e.message}")
         }
 
-        try {
-            appConfigManager.get().fetchConfigAsync()
-        } catch (_: Throwable) {
-        }
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
@@ -135,32 +138,20 @@ class MainActivity : AppCompatActivity() {
         ODSystem.colors.value = zonaODSTheme
 
         pendingNotificationScreen = extractScreenFromIntent(intent)
-
-        if (!com.app.screentime.core.network.BuildConfig.DEBUG) {
-            verifyAppIntegrityMandatory()
-        }
-
+        
         NetworkAuthBridge.unauthorizedHandler =
             object : UnauthorizedHandler {
                 override fun onUnauthorized() {
                     runOnUiThread {
-                        Log.w(
-                            "MainActivity",
-                            "🔴 401 Unauthorized -> Clearing session and returning to Login screen"
-                        )
                         sessionManager.clearSession()
                     }
                 }
             }
 
         setContent {
-
-            WinterTheme {
+            val useNewDesignNav3 = true
+            if (useNewDesignNav3) {
                 val isLoggedIn by sessionManager.isLoggedInFlow.collectAsState()
-                Log.i(
-                    "STARTUP_TRACE",
-                    "👤 [${System.currentTimeMillis() - t0}ms] isLoggedIn=$isLoggedIn, integrityVerified=$isIntegrityVerified"
-                )
 
                 LaunchedEffect(isLoggedIn) {
                     if (isLoggedIn) {
@@ -175,38 +166,74 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                if (!isIntegrityVerified && !com.app.screentime.core.network.BuildConfig.DEBUG) {
-                    if (integrityCheckFailed) {
-                        SecurityBlockScreen(
-                            errorMessage = integrityErrorText,
-                            onRetry = { verifyAppIntegrityMandatory() }
-                        )
+                val initialScreen = remember {
+                    if (sessionManager.hasValidSession()) {
+                        WinterNav3Screen.Main(initialTab = "DISCOVER")
                     } else {
-                        WinterSplashScreen()
+                        WinterNav3Screen.Welcome
                     }
-                } else if (!isLoggedIn) {
-                    ODSBox(modifier = Modifier.fillMaxSize()) {
-                        AuthGateScreen(
+                }
+
+                WinterNav3Navigation(
+                    modifier = Modifier.fillMaxSize(),
+                    initialScreen = initialScreen,
+                    onSignOut = {
+                        sessionManager.clearSession()
+                    }
+                )
+            } else {
+                WinterTheme {
+                    val isLoggedIn by sessionManager.isLoggedInFlow.collectAsState()
+
+                    LaunchedEffect(isLoggedIn) {
+                        if (isLoggedIn) {
+                            withContext(Dispatchers.IO) {
+                                realtimeChatSyncManager.get().ensureConnected()
+                                fcmTokenManager.get().syncFcmToken()
+                                val token = sessionManager.getToken().orEmpty()
+                                if (token.isNotBlank()) {
+                                    e2eCryptoManager.get().registerPublicKeyIfNeeded(token)
+                                }
+                            }
+                        }
+                    }
+
+                    if (!isIntegrityVerified && !BuildConfig.DEBUG) {
+                        if (integrityCheckFailed) {
+                            SecurityBlockScreen(
+                                errorMessage = integrityErrorText,
+                                onRetry = { verifyAppIntegrityMandatory() }
+                            )
+                        } else {
+                            WinterSplashScreen()
+                        }
+                    } else if (!isLoggedIn) {
+                        ODSBox(modifier = Modifier.fillMaxSize()) {
+                            AuthGateScreen(
+                                modifier = Modifier.fillMaxSize(),
+                                scheme = zonaODSTheme
+                            )
+                            ODSSnackbarHost(
+                                hostState = remember { SnackbarHostState() },
+                                scheme = zonaODSTheme,
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            )
+                        }
+                    } else {
+                        ScreenTimeNavigation(
                             modifier = Modifier.fillMaxSize(),
+                            pendingNotificationScreen = pendingNotificationScreen,
+                            onClearPendingNotificationScreen = { pendingNotificationScreen = null },
+                            onLogout = { sessionManager.clearSession() },
+                            onRateApp = {
+                                inAppReviewManager.launchReviewFlow(
+                                    this@MainActivity,
+                                    fallbackToPlayStoreOnFailure = true
+                                )
+                            },
                             scheme = zonaODSTheme
                         )
-                        ODSSnackbarHost(
-                            hostState = remember { SnackbarHostState() },
-                            scheme = zonaODSTheme,
-                            modifier = Modifier.align(Alignment.BottomCenter)
-                        )
                     }
-                } else {
-                    ScreenTimeNavigation(
-                        modifier = Modifier.fillMaxSize(),
-                        pendingNotificationScreen = pendingNotificationScreen,
-                        onClearPendingNotificationScreen = { pendingNotificationScreen = null },
-                        onLogout = { sessionManager.clearSession() },
-                        onRateApp = {
-                            inAppReviewManager.launchReviewFlow(this@MainActivity, fallbackToPlayStoreOnFailure = true)
-                        },
-                        scheme = zonaODSTheme
-                    )
                 }
             }
         }
@@ -214,22 +241,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        screenshotProtectionManager.startListening()
+       // screenshotProtectionManager.startListening()
     }
 
     override fun onStop() {
         super.onStop()
-        screenshotProtectionManager.stopListening()
+       // screenshotProtectionManager.stopListening()
     }
 
     override fun onPause() {
         super.onPause()
-        screenshotProtectionManager.onAppBackgrounded()
+     //   screenshotProtectionManager.onAppBackgrounded()
     }
 
     override fun onResume() {
         super.onResume()
-        screenshotProtectionManager.onAppForegrounded()
+       // screenshotProtectionManager.onAppForegrounded()
         try {
             inAppUpdateManager.onResume(this)
         } catch (_: Exception) {
@@ -239,15 +266,38 @@ class MainActivity : AppCompatActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            screenshotProtectionManager.onAppForegrounded()
+          //  screenshotProtectionManager.onAppForegrounded()
         } else {
-            screenshotProtectionManager.onAppBackgrounded()
+         //   screenshotProtectionManager.onAppBackgrounded()
+        }
+    }
+
+    private fun setupLockScreenFlags() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            )
+        }
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+        )
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            keyguardManager?.requestDismissKeyguard(this, null)
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        setupLockScreenFlags()
         val targetScreen = extractScreenFromIntent(intent)
         if (targetScreen != null) {
             pendingNotificationScreen = targetScreen
@@ -262,6 +312,30 @@ class MainActivity : AppCompatActivity() {
             ?: intent.getStringExtra("event")
             ?: intent.getStringExtra("action")
             ?: "").trim()
+
+        if (intent.action == "com.app.screentime.ACTION_INCOMING_CALL" ||
+            intent.action == "com.app.screentime.action.SHOW_INCOMING_CALL" ||
+            screenKey.equals("incoming_call", ignoreCase = true)
+        ) {
+            val callId = (intent.getStringExtra("call_id") ?: "").trim()
+            val callerId = (intent.getStringExtra("caller_id") ?: "").trim()
+            val callerName = (intent.getStringExtra("caller_name") ?: "Incoming Call").trim()
+            val callType = (intent.getStringExtra("call_type") ?: "voice").trim()
+            if (callId.isNotBlank()) {
+                try {
+                    activeCallManager.get().registerIncomingCall(
+                        callId = callId,
+                        callerId = callerId,
+                        callerName = callerName,
+                        callType = callType
+                    )
+                } catch (e: Exception) {
+                    Log.w("MainActivity", "Failed to register incoming call from intent: ${e.message}")
+                }
+            }
+            // Keep pendingNotificationScreen null so ScreenTimeNavigation renders the IncomingCallGlobalOverlay top banner capsule.
+            return null
+        }
 
         val partnerId = (intent.getStringExtra("caller_id")
             ?: intent.getStringExtra("partner_id")
@@ -299,6 +373,7 @@ class MainActivity : AppCompatActivity() {
             "video_call" -> {
                 Screen.VideoCall(modelId = partnerId, modelName = partnerName)
             }
+
             "voice_call", "call", "incoming_call" -> {
                 if (isVideoCall) {
                     Screen.VideoCall(modelId = partnerId, modelName = partnerName)
@@ -306,6 +381,7 @@ class MainActivity : AppCompatActivity() {
                     Screen.VoiceCall(modelId = partnerId, modelName = partnerName)
                 }
             }
+
             "chat", "direct_message", "incoming_message", "message", "chat_message", "chat_message_received" -> {
                 if (partnerId.isNotBlank()) {
                     Screen.Chat(
@@ -330,12 +406,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            "discover", "discover_map", "map" -> {
-                Screen.Home
+            "discover", "discover_map", "map", "models", "call", "explore" -> {
+                Screen.Models
             }
 
             "home", "feed", "like_received", "new_like", "likes" -> {
-                Screen.Home
+                Screen.Models
             }
 
             "profile", "user_profile", "profile_detail" -> {

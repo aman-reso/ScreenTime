@@ -105,7 +105,7 @@ class SessionManager @Inject constructor(
         get() = Double.fromBits(
             prefs.getLong(
                 "wallet_balance_bits",
-                java.lang.Double.doubleToRawLongBits(1000.0)
+                java.lang.Double.doubleToRawLongBits(0.0)
             )
         )
         set(value) = prefs.edit {
@@ -146,7 +146,7 @@ class SessionManager @Inject constructor(
         val expiry = System.currentTimeMillis() + TOKEN_LIFETIME_MS
         setToken(token)
         preferencesManager.setUserId(user.id)
-        prefs.edit {
+        prefs.edit(commit = true) {
             putString(KEY_USER_ID, user.id)
                 .putString(KEY_USER_NAME, user.name)
                 .putString(KEY_USER_PHONE, user.phone)
