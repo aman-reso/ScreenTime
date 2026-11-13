@@ -25,7 +25,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -55,9 +54,13 @@ import com.app.screentime.feature.newdesign.R
 import com.app.screentime.feature.newdesign.components.FunnelSans
 import com.app.screentime.feature.newdesign.components.WinterFloatingNavDefaults
 import com.app.screentime.feature.newdesign.components.WinterFloatingNavigation
+import com.app.screentime.feature.newdesign.components.WinterLoadingSpinner
 import com.app.screentime.feature.newdesign.components.WinterNavItem
 import com.app.screentime.feature.newdesign.components.WinterNavRole
+import com.app.screentime.feature.newdesign.components.WinterPageLoadingScreen
+import com.app.screentime.feature.newdesign.components.WinterPageLoadingStatus
 import com.app.screentime.feature.newdesign.components.WinterTokens
+import com.app.screentime.feature.newdesign.dialogs.WinterWithdrawAmountDialog
 
 
 /**
@@ -101,36 +104,44 @@ fun WinterEarningsScreen(
         viewModel.loadEarnings()
     }
 
-    WinterEarningsScreenContent(
-        modifier = modifier,
-        availableEarnings = uiState.availableEarnings,
-        totalEarnedSummary = uiState.totalEarnedSummary,
-        audioCallDuration = uiState.audioCallDuration,
-        videoCallDuration = uiState.videoCallDuration,
-        earningsList = uiState.filteredItems,
-        selectedFilter = uiState.selectedFilter,
-        isLoading = uiState.isLoading,
-        errorMessage = uiState.errorMessage,
-        showBottomNav = showBottomNav,
-        contentBottomPadding = contentBottomPadding,
-        onBackClick = onBackClick,
-        onWithdrawClick = { showWithdrawModal = true },
-        onFilterSelected = { viewModel.setFilter(it) },
-        onDateFilterClick = onDateFilterClick,
-        onNavItemSelected = onNavItemSelected
-    )
+    if (uiState.isLoading && uiState.filteredItems.isEmpty() && uiState.rawAvailableBalance == 0) {
+        WinterPageLoadingScreen(
+            modifier = modifier,
+            contentBottomPadding = if (showBottomNav) WinterFloatingNavDefaults.Height + 48.dp else contentBottomPadding
+        )
+    } else {
+        WinterEarningsScreenContent(
+            modifier = modifier,
+            availableEarnings = uiState.availableEarnings,
+            totalEarnedSummary = uiState.totalEarnedSummary,
+            audioCallDuration = uiState.audioCallDuration,
+            videoCallDuration = uiState.videoCallDuration,
+            earningsList = uiState.filteredItems,
+            selectedFilter = uiState.selectedFilter,
+            isLoading = uiState.isLoading,
+            errorMessage = uiState.errorMessage,
+            showBottomNav = showBottomNav,
+            contentBottomPadding = contentBottomPadding,
+            onBackClick = onBackClick,
+            onWithdrawClick = { showWithdrawModal = true },
+            onFilterSelected = { viewModel.setFilter(it) },
+            onDateFilterClick = onDateFilterClick,
+            onNavItemSelected = onNavItemSelected
+        )
+    }
 
     if (showWithdrawModal) {
-        WinterWithdrawalDialog(
-            availableBalance = uiState.rawAvailableBalance,
+        WinterWithdrawAmountDialog(
+            availableEarnings = uiState.rawAvailableBalance.toLong(),
+            initialAmount = if (uiState.rawAvailableBalance >= 1000) 1000L else uiState.rawAvailableBalance.toLong(),
             isSubmitting = uiState.isSubmittingWithdrawal,
             errorMessage = uiState.withdrawalMessage,
-            onDismiss = {
+            onDismissRequest = {
                 showWithdrawModal = false
                 viewModel.clearWithdrawalMessage()
             },
-            onSubmit = { amount ->
-                viewModel.submitWithdrawal(amount) {
+            onConfirmWithdrawal = { amount ->
+                viewModel.submitWithdrawal(amount.toInt()) {
                     showWithdrawModal = false
                 }
             }
@@ -211,14 +222,10 @@ fun WinterEarningsScreenContent(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(32.dp),
+                            .padding(vertical = 40.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(
-                            color = WinterTokens.actionPrimary,
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(28.dp)
-                        )
+                        WinterPageLoadingStatus()
                     }
                 }
             }
@@ -432,10 +439,11 @@ fun WinterWithdrawalDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         if (isSubmitting) {
-                            CircularProgressIndicator(
+                            WinterLoadingSpinner(
                                 modifier = Modifier.size(16.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
+                                strokeWidth = 2.dp,
+                                trackColor = Color(0x33FFFFFF),
+                                spinnerColor = Color.White
                             )
                         } else {
                             Text(

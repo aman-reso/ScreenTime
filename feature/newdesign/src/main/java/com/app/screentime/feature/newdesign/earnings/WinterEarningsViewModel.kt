@@ -145,12 +145,14 @@ class WinterEarningsViewModel @Inject constructor(
                 _uiState.value.savedUpiId.ifBlank { preferencesManager.getSavedUpiId() }
             }
 
-            if (finalUpi.isBlank() || !finalUpi.contains("@")) {
+            if (finalUpi.isNotBlank() && !finalUpi.contains("@")) {
                 _uiState.update { it.copy(withdrawalMessage = "Please enter a valid UPI ID (e.g. name@upi)") }
                 return@launch
             }
 
-            preferencesManager.setSavedUpiId(finalUpi)
+            if (finalUpi.isNotBlank()) {
+                preferencesManager.setSavedUpiId(finalUpi)
+            }
             _uiState.update {
                 it.copy(
                     isSubmittingWithdrawal = true,
