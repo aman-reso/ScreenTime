@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -145,30 +146,49 @@ fun WinterRechargeCoinsScreen(
                         onPackSelected = { selectedPackId = it }
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    RechargeBottomPaySection(
-                        selectedPack = selectedPack,
-                        onPayClick = {
-                            if (activity != null) {
-                                viewModel.launchGooglePlayPurchase(
-                                    activity = activity,
-                                    packageId = selectedPack.id,
-                                    onError = { err ->
-                                        Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
-                                    }
-                                )
-                            } else {
-                                onPayClick(selectedPack)
-                            }
-                        }
-                    )
+                    // Spacing at the bottom so content can be scrolled fully above the sticky pay button
+                    Spacer(modifier = Modifier.height(116.dp))
                 } else {
                     EmptyPackagesSection(
                         isLoading = uiState is WinterWalletUiState.Loading,
                         onRetry = { viewModel.loadPackages() }
                     )
                 }
+            }
+        }
+
+        // Sticky Pay Section pinned to bottom
+        if (availablePacks.isNotEmpty() && selectedPack != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            0.0f to WinterTokens.backgroundCanvas.copy(alpha = 0f),
+                            0.2f to WinterTokens.backgroundCanvas.copy(alpha = 0.85f),
+                            0.45f to WinterTokens.backgroundCanvas,
+                            1.0f to WinterTokens.backgroundCanvas
+                        )
+                    )
+                    .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 16.dp)
+            ) {
+                RechargeBottomPaySection(
+                    selectedPack = selectedPack,
+                    onPayClick = {
+                        if (activity != null) {
+                            viewModel.launchGooglePlayPurchase(
+                                activity = activity,
+                                packageId = selectedPack.id,
+                                onError = { err ->
+                                    Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        } else {
+                            onPayClick(selectedPack)
+                        }
+                    }
+                )
             }
         }
 
