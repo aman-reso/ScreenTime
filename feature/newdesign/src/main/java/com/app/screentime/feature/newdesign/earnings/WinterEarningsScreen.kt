@@ -135,15 +135,16 @@ fun WinterEarningsScreen(
             availableEarnings = uiState.rawAvailableBalance.toLong(),
             initialAmount = if (uiState.rawAvailableBalance >= 1000) 1000L else uiState.rawAvailableBalance.toLong(),
             isSubmitting = uiState.isSubmittingWithdrawal,
-            errorMessage = uiState.withdrawalMessage,
+            errorMessage = if (!uiState.withdrawalSuccess) uiState.withdrawalMessage else null,
+            isSuccess = uiState.withdrawalSuccess,
+            successMessage = if (uiState.withdrawalSuccess) uiState.withdrawalMessage else null,
+            withdrawnAmount = uiState.lastWithdrawnAmount.toLong(),
             onDismissRequest = {
                 showWithdrawModal = false
                 viewModel.clearWithdrawalMessage()
             },
             onConfirmWithdrawal = { amount ->
-                viewModel.submitWithdrawal(amount.toInt()) {
-                    showWithdrawModal = false
-                }
+                viewModel.submitWithdrawal(amount.toInt())
             }
         )
     }

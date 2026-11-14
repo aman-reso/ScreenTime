@@ -28,6 +28,8 @@ data class WinterEarningsUiState(
     val selectedFilter: String = "All activity",
     val isSubmittingWithdrawal: Boolean = false,
     val withdrawalMessage: String? = null,
+    val withdrawalSuccess: Boolean = false,
+    val lastWithdrawnAmount: Int = 0,
     val errorMessage: String? = null
 ) {
     val filteredItems: List<EarningHistoryItem>
@@ -168,7 +170,9 @@ class WinterEarningsViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isSubmittingWithdrawal = false,
-                        withdrawalMessage = resp.message.ifBlank { "Withdrawal submitted (Pending approval)" }
+                        withdrawalSuccess = true,
+                        lastWithdrawnAmount = amount,
+                        withdrawalMessage = resp.message.ifBlank { "Withdrawal request submitted successfully" }
                     )
                 }
                 loadEarnings()
@@ -177,6 +181,7 @@ class WinterEarningsViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isSubmittingWithdrawal = false,
+                        withdrawalSuccess = false,
                         withdrawalMessage = err.message ?: "Failed to submit withdrawal request"
                     )
                 }
@@ -185,7 +190,13 @@ class WinterEarningsViewModel @Inject constructor(
     }
 
     fun clearWithdrawalMessage() {
-        _uiState.update { it.copy(withdrawalMessage = null) }
+        _uiState.update {
+            it.copy(
+                withdrawalMessage = null,
+                withdrawalSuccess = false,
+                lastWithdrawnAmount = 0
+            )
+        }
     }
 
     private fun mapDtoToHistoryItems(dto: CreatorEarningsDto): List<EarningHistoryItem> {
